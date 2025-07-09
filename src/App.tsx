@@ -9,6 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import Agenda from "./pages/Agenda";
 import Pacientes from "./pages/Pacientes";
 import Profissionais from "./pages/Profissionais";
+import Procedimentos from "./pages/Procedimentos";
+import Prontuario from "./pages/Prontuario";
+import Configuracoes from "./pages/Configuracoes";
 import Assinatura from "./pages/Assinatura";
 import NotFound from "./pages/NotFound";
 
@@ -26,9 +29,9 @@ const App = () => (
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/pacientes" element={<Pacientes />} />
             <Route path="/profissionais" element={<Profissionais />} />
-            <Route path="/procedimentos" element={<div>Procedimentos (Em desenvolvimento)</div>} />
-            <Route path="/prontuario" element={<div>Prontuário (Em desenvolvimento)</div>} />
-            <Route path="/configuracoes" element={<div>Configurações (Em desenvolvimento)</div>} />
+            <Route path="/procedimentos" element={<Procedimentos />} />
+            <Route path="/prontuario" element={<Prontuario />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/assinatura" element={<Assinatura />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

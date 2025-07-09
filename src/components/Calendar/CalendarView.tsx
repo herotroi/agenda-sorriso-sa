@@ -1,177 +1,259 @@
 
-import { useState } from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales: { ptBR },
-});
+interface Professional {
+  id: string;
+  name: string;
+  color: string;
+}
 
-const messages = {
-  allDay: 'Dia todo',
-  previous: 'Anterior',
-  next: 'Próximo',
-  today: 'Hoje',
-  month: 'Mês',
-  week: 'Semana',
-  day: 'Dia',
-  agenda: 'Agenda',
-  date: 'Data',
-  time: 'Hora',
-  event: 'Evento',
-  noEventsInRange: 'Não há eventos neste período.',
-  showMore: (total: number) => `+ Ver mais (${total})`,
-};
-
-// Dados mockados para demonstração
-const mockEvents = [
-  {
-    id: 1,
-    title: 'João Silva - Limpeza',
-    start: new Date(2024, 0, 15, 9, 0),
-    end: new Date(2024, 0, 15, 10, 0),
-    resource: 'dr-silva',
-  },
-  {
-    id: 2,
-    title: 'Maria Santos - Canal',
-    start: new Date(2024, 0, 15, 14, 0),
-    end: new Date(2024, 0, 15, 16, 0),
-    resource: 'dr-silva',
-  },
-  {
-    id: 3,
-    title: 'Pedro Oliveira - Extração',
-    start: new Date(2024, 0, 16, 10, 30),
-    end: new Date(2024, 0, 16, 11, 30),
-    resource: 'dr-costa',
-  },
-];
-
-const professionals = [
-  { id: 'all', name: 'Todos os Profissionais' },
-  { id: 'dr-silva', name: 'Dr. Silva' },
-  { id: 'dr-costa', name: 'Dra. Costa' },
-  { id: 'dr-santos', name: 'Dr. Santos' },
-];
+interface Appointment {
+  id: string;
+  patient_id: string;
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  patients: { full_name: string };
+  procedures: { name: string } | null;
+}
 
 export function CalendarView() {
-  const [selectedProfessional, setSelectedProfessional] = useState('all');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const eventStyleGetter = (event: any) => {
-    let backgroundColor = '#3b82f6';
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  const fetchProfessionals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      setProfessionals(data || []);
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+    }
+  };
+
+  const fetchAppointments = async () => {
+    try {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients(full_name),
+          procedures(name)
+        `)
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString())
+        .order('start_time');
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar agendamentos',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfessionals();
+  }, []);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [selectedDate]);
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+    setSelectedDate(newDate);
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const getAppointmentsForProfessional = (professionalId: string) => {
+    return appointments.filter(apt => apt.professional_id === professionalId);
+  };
+
+  const getAppointmentPosition = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
     
-    if (event.resource === 'dr-silva') backgroundColor = '#10b981';
-    if (event.resource === 'dr-costa') backgroundColor = '#f59e0b';
-    if (event.resource === 'dr-santos') backgroundColor = '#ef4444';
-
+    const startHour = start.getHours() + start.getMinutes() / 60;
+    const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
     return {
-      style: {
-        backgroundColor,
-        borderRadius: '6px',
-        opacity: 0.8,
-        color: 'white',
-        border: '0px',
-        display: 'block',
-      },
+      top: `${startHour * 60}px`,
+      height: `${duration * 60}px`
     };
   };
 
-  const filteredEvents = selectedProfessional === 'all' 
-    ? mockEvents 
-    : mockEvents.filter(event => event.resource === selectedProfessional);
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    fetchAppointments();
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {professionals.map((prof) => (
-                <SelectItem key={prof.id} value={prof.id}>
-                  {prof.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={goToToday}>
               Hoje
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
+            <span className="text-lg font-semibold ml-4">
+              {selectedDate.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant={view === 'day' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setView('day')}
-          >
-            Dia
-          </Button>
-          <Button
-            variant={view === 'week' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setView('week')}
-          >
-            Semana
-          </Button>
-          <Button
-            variant={view === 'month' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setView('month')}
-          >
-            Mês
-          </Button>
-          <Button size="sm" className="ml-4">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Agendamento
-          </Button>
-        </div>
+        <Button onClick={() => setIsFormOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Agendamento
+        </Button>
       </div>
 
+      {/* Professional tabs */}
+      <ScrollArea className="w-full">
+        <div className="flex space-x-2 pb-2">
+          {professionals.map((prof) => (
+            <div
+              key={prof.id}
+              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ 
+                backgroundColor: prof.color + '20',
+                color: prof.color,
+                border: `1px solid ${prof.color}40`
+              }}
+            >
+              {prof.name}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Calendar Grid */}
       <Card>
-        <CardContent className="p-6">
-          <div style={{ height: '600px' }}>
-            <Calendar
-              localizer={localizer}
-              events={filteredEvents}
-              startAccessor="start"
-              endAccessor="end"
-              messages={messages}
-              view={view}
-              onView={setView}
-              date={currentDate}
-              onNavigate={setCurrentDate}
-              eventPropGetter={eventStyleGetter}
-              culture="pt-BR"
-              className="bg-white"
-            />
+        <CardContent className="p-0">
+          <div className="grid" style={{ gridTemplateColumns: `60px repeat(${professionals.length}, 1fr)` }}>
+            {/* Hours column */}
+            <div className="border-r">
+              <div className="h-12 border-b"></div>
+              {hours.map((hour) => (
+                <div
+                  key={hour}
+                  className="h-[60px] border-b flex items-start justify-center pt-1 text-xs text-gray-500"
+                >
+                  {hour.toString().padStart(2, '0')}:00
+                </div>
+              ))}
+            </div>
+
+            {/* Professional columns */}
+            {professionals.map((prof) => {
+              const profAppointments = getAppointmentsForProfessional(prof.id);
+              
+              return (
+                <div key={prof.id} className="border-r relative">
+                  <div className="h-12 border-b flex items-center justify-center font-medium text-sm p-2">
+                    {prof.name}
+                  </div>
+                  
+                  <div className="relative">
+                    {hours.map((hour) => (
+                      <div
+                        key={hour}
+                        className="h-[60px] border-b border-gray-100"
+                      />
+                    ))}
+                    
+                    {/* Appointments */}
+                    {profAppointments.map((appointment) => {
+                      const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
+                      
+                      return (
+                        <div
+                          key={appointment.id}
+                          className="absolute left-1 right-1 rounded p-2 text-xs text-white cursor-pointer hover:opacity-80"
+                          style={{
+                            ...position,
+                            backgroundColor: prof.color,
+                            minHeight: '40px'
+                          }}
+                        >
+                          <div className="font-medium truncate">
+                            {appointment.patients?.full_name}
+                          </div>
+                          <div className="truncate opacity-90">
+                            {appointment.procedures?.name}
+                          </div>
+                          <div className="text-xs opacity-75">
+                            {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
+
+      <AppointmentForm
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        selectedDate={selectedDate}
+      />
     </div>
   );
 }

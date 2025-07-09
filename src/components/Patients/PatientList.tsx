@@ -1,140 +1,178 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Phone, Mail, Edit, Eye } from 'lucide-react';
+import { Plus, Edit, Phone, Mail, Search } from 'lucide-react';
+import { PatientForm } from './PatientForm';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const mockPatients = [
-  {
-    id: '1',
-    fullName: 'João Silva Santos',
-    phone: '(11) 99999-9999',
-    email: 'joao@email.com',
-    cpf: '123.456.789-00',
-    lastVisit: '2024-01-10',
-    status: 'ativo',
-  },
-  {
-    id: '2',
-    fullName: 'Maria Oliveira Costa',
-    phone: '(11) 88888-8888',
-    email: 'maria@email.com',
-    cpf: '987.654.321-00',
-    lastVisit: '2024-01-08',
-    status: 'ativo',
-  },
-  {
-    id: '3',
-    fullName: 'Pedro Rodrigues Lima',
-    phone: '(11) 77777-7777',
-    email: '',
-    cpf: '456.789.123-00',
-    lastVisit: '2023-12-15',
-    status: 'inativo',
-  },
-];
+interface Patient {
+  id: string;
+  full_name: string;
+  cpf?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+  sus_card?: string;
+  health_insurance?: string;
+  birth_date?: string;
+  medical_history?: string;
+  notes?: string;
+}
 
 export function PatientList() {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [patients] = useState(mockPatients);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filteredPatients = patients.filter(patient =>
-    patient.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm) ||
-    patient.cpf.includes(searchTerm)
-  );
+  const fetchPatients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .order('full_name');
+
+      if (error) throw error;
+      setPatients(data || []);
+      setFilteredPatients(data || []);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar pacientes',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    const filtered = patients.filter(patient =>
+      patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.cpf?.includes(searchTerm) ||
+      patient.phone?.includes(searchTerm) ||
+      patient.whatsapp?.includes(searchTerm)
+    );
+    setFilteredPatients(filtered);
+  }, [searchTerm, patients]);
+
+  const handleEdit = (patient: Patient) => {
+    setEditingPatient(patient);
+    setIsFormOpen(true);
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setEditingPatient(null);
+    fetchPatients();
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Pacientes</h2>
-          <p className="text-gray-600">Gerencie o cadastro de pacientes</p>
+          <h1 className="text-3xl font-bold text-gray-900">Pacientes</h1>
+          <p className="text-gray-600">Gerencie os pacientes da clínica</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Paciente
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Lista de Pacientes</CardTitle>
-            <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar por nome, telefone ou CPF..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-gray-600">Nome Completo</th>
-                  <th className="text-left p-4 font-medium text-gray-600">Contato</th>
-                  <th className="text-left p-4 font-medium text-gray-600">CPF</th>
-                  <th className="text-left p-4 font-medium text-gray-600">Última Consulta</th>
-                  <th className="text-left p-4 font-medium text-gray-600">Status</th>
-                  <th className="text-left p-4 font-medium text-gray-600">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPatients.map((patient) => (
-                  <tr key={patient.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4">
-                      <div className="font-medium text-gray-900">{patient.fullName}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="h-3 w-3 mr-1" />
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          type="text"
+          placeholder="Buscar por nome, CPF ou telefone..."
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="grid gap-4">
+        {filteredPatients.map((patient) => (
+          <Card key={patient.id}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">{patient.full_name}</h3>
+                  <div className="mt-2 space-y-1">
+                    {patient.cpf && (
+                      <p className="text-sm text-gray-600">CPF: {patient.cpf}</p>
+                    )}
+                    {patient.birth_date && (
+                      <p className="text-sm text-gray-600">
+                        Nascimento: {new Date(patient.birth_date).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      {patient.phone && (
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-1" />
                           {patient.phone}
                         </div>
-                        {patient.email && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="h-3 w-3 mr-1" />
-                            {patient.email}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">{patient.cpf}</td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {new Date(patient.lastVisit).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="p-4">
-                      <Badge 
-                        variant={patient.status === 'ativo' ? 'default' : 'secondary'}
-                      >
-                        {patient.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                      )}
+                      {patient.email && (
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 mr-1" />
+                          {patient.email}
+                        </div>
+                      )}
+                    </div>
+                    {patient.health_insurance && (
+                      <p className="text-sm text-gray-600">
+                        Plano: {patient.health_insurance}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(patient)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredPatients.length === 0 && !loading && (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">
+              {searchTerm ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <PatientForm
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        patient={editingPatient}
+      />
     </div>
   );
 }
