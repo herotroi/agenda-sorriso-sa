@@ -66,7 +66,14 @@ export default function Prontuario() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRecords(data || []);
+      
+      // Convert the data to match our PatientRecord interface
+      const formattedRecords: PatientRecord[] = (data || []).map(record => ({
+        ...record,
+        files: Array.isArray(record.files) ? record.files : []
+      }));
+      
+      setRecords(formattedRecords);
     } catch (error) {
       console.error('Error fetching records:', error);
       toast({
