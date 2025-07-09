@@ -1,10 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
+import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
+import { ProfessionalDetailView } from './ProfessionalDetailView';
+import { DraggableAppointment } from './DraggableAppointment';
+import { DroppableTimeSlot } from './DroppableTimeSlot';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +34,8 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -123,6 +128,27 @@ export function CalendarView() {
     fetchAppointments();
   };
 
+  const handleDetailsClose = () => {
+    setSelectedAppointment(null);
+    fetchAppointments();
+  };
+
+  const handleProfessionalClick = (professionalId: string) => {
+    setSelectedProfessional(professionalId);
+  };
+
+  if (selectedProfessional) {
+    const professional = professionals.find(p => p.id === selectedProfessional);
+    return (
+      <ProfessionalDetailView
+        professional={professional!}
+        onBack={() => setSelectedProfessional(null)}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+      />
+    );
+  }
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">Carregando...</div>;
   }
@@ -162,9 +188,10 @@ export function CalendarView() {
       <ScrollArea className="w-full">
         <div className="flex space-x-2 pb-2">
           {professionals.map((prof) => (
-            <div
+            <button
               key={prof.id}
-              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium"
+              onClick={() => handleProfessionalClick(prof.id)}
+              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity"
               style={{ 
                 backgroundColor: prof.color + '20',
                 color: prof.color,
@@ -172,7 +199,7 @@ export function CalendarView() {
               }}
             >
               {prof.name}
-            </div>
+            </button>
           ))}
         </div>
       </ScrollArea>
@@ -183,7 +210,9 @@ export function CalendarView() {
           <div className="grid" style={{ gridTemplateColumns: `60px repeat(${professionals.length}, 1fr)` }}>
             {/* Hours column */}
             <div className="border-r">
-              <div className="h-12 border-b"></div>
+              <div className="h-12 border-b flex items-center justify-center text-sm font-medium">
+                Hora
+              </div>
               {hours.map((hour) => (
                 <div
                   key={hour}
@@ -205,40 +234,35 @@ export function CalendarView() {
                   </div>
                   
                   <div className="relative">
-                    {hours.map((hour) => (
-                      <div
-                        key={hour}
-                        className="h-[60px] border-b border-gray-100"
-                      />
-                    ))}
+                    {hours.map((hour) => {
+                      const hasAppointment = profAppointments.some(apt => {
+                        const startHour = new Date(apt.start_time).getHours();
+                        return startHour === hour;
+                      });
+
+                      return (
+                        <DroppableTimeSlot
+                          key={hour}
+                          hour={hour}
+                          professionalId={prof.id}
+                          date={selectedDate}
+                          hasAppointment={hasAppointment}
+                        />
+                      );
+                    })}
                     
                     {/* Appointments */}
                     {profAppointments.map((appointment) => {
                       const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
                       
                       return (
-                        <div
+                        <DraggableAppointment
                           key={appointment.id}
-                          className="absolute left-1 right-1 rounded p-2 text-xs text-white cursor-pointer hover:opacity-80"
-                          style={{
-                            ...position,
-                            backgroundColor: prof.color,
-                            minHeight: '40px'
-                          }}
-                        >
-                          <div className="font-medium truncate">
-                            {appointment.patients?.full_name}
-                          </div>
-                          <div className="truncate opacity-90">
-                            {appointment.procedures?.name}
-                          </div>
-                          <div className="text-xs opacity-75">
-                            {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </div>
-                        </div>
+                          appointment={appointment}
+                          professionalColor={prof.color}
+                          position={position}
+                          onClick={() => setSelectedAppointment(appointment)}
+                        />
                       );
                     })}
                   </div>
@@ -254,6 +278,14 @@ export function CalendarView() {
         onClose={handleFormClose}
         selectedDate={selectedDate}
       />
+
+      {selectedAppointment && (
+        <AppointmentDetails
+          appointment={selectedAppointment}
+          isOpen={!!selectedAppointment}
+          onClose={handleDetailsClose}
+        />
+      )}
     </div>
   );
 }
