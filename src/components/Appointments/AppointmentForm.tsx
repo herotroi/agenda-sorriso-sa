@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,8 +30,9 @@ interface Procedure {
 interface AppointmentFormProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedDate: Date;
-  appointment?: any;
+  selectedDate?: Date;
+  appointmentToEdit?: any;
+  selectedProfessionalId?: string;
 }
 
 const statusOptions = [
@@ -41,13 +43,19 @@ const statusOptions = [
   { value: 'Finalizado', label: 'Finalizado' }
 ];
 
-export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: AppointmentFormProps) {
+export function AppointmentForm({ 
+  isOpen, 
+  onClose, 
+  selectedDate = new Date(), 
+  appointmentToEdit,
+  selectedProfessionalId 
+}: AppointmentFormProps) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [formData, setFormData] = useState({
     patient_id: '',
-    professional_id: '',
+    professional_id: selectedProfessionalId || '',
     procedure_id: '',
     start_time: '',
     duration: '60',
@@ -82,27 +90,27 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
   useEffect(() => {
     if (isOpen) {
       fetchData();
-      if (appointment) {
+      if (appointmentToEdit) {
         // Edit mode
-        const startTime = new Date(appointment.start_time);
-        const endTime = new Date(appointment.end_time);
+        const startTime = new Date(appointmentToEdit.start_time);
+        const endTime = new Date(appointmentToEdit.end_time);
         const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
         
         setFormData({
-          patient_id: appointment.patient_id || '',
-          professional_id: appointment.professional_id || '',
-          procedure_id: appointment.procedure_id || '',
+          patient_id: appointmentToEdit.patient_id || '',
+          professional_id: appointmentToEdit.professional_id || '',
+          procedure_id: appointmentToEdit.procedure_id || '',
           start_time: startTime.toISOString().slice(0, 16),
           duration: duration.toString(),
-          notes: appointment.notes || '',
-          status: appointment.status || 'Confirmado',
+          notes: appointmentToEdit.notes || '',
+          status: appointmentToEdit.status || 'Confirmado',
         });
       } else {
         // Create mode
         const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
         setFormData({
           patient_id: '',
-          professional_id: '',
+          professional_id: selectedProfessionalId || '',
           procedure_id: '',
           start_time: defaultTime,
           duration: '60',
@@ -111,7 +119,7 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
         });
       }
     }
-  }, [isOpen, selectedDate, appointment]);
+  }, [isOpen, selectedDate, appointmentToEdit, selectedProfessionalId]);
 
   const handleProcedureChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
@@ -153,7 +161,7 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
       formData.professional_id,
       startTime.toISOString(),
       endTime.toISOString(),
-      appointment?.id
+      appointmentToEdit?.id
     );
     setIsValidating(false);
 
@@ -195,12 +203,12 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
       };
 
       let error;
-      if (appointment) {
+      if (appointmentToEdit) {
         // Update existing appointment
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointment.id);
+          .eq('id', appointmentToEdit.id);
         error = updateError;
       } else {
         // Create new appointment
@@ -214,7 +222,7 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
 
       toast({
         title: 'Sucesso',
-        description: appointment ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
+        description: appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
       });
 
       onClose();
@@ -235,7 +243,7 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {appointment ? 'Editar Agendamento' : 'Novo Agendamento'}
+            {appointmentToEdit ? 'Editar Agendamento' : 'Novo Agendamento'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -345,7 +353,7 @@ export function AppointmentForm({ isOpen, onClose, selectedDate, appointment }: 
               type="submit" 
               disabled={loading || isValidating || !formData.patient_id || !formData.professional_id}
             >
-              {loading || isValidating ? 'Validando...' : appointment ? 'Atualizar' : 'Agendar'}
+              {loading || isValidating ? 'Validando...' : appointmentToEdit ? 'Atualizar' : 'Agendar'}
             </Button>
           </div>
         </form>
