@@ -56,6 +56,8 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
     if (onUpdate) {
       onUpdate();
     }
+    // Close the appointment details dialog as well
+    onClose();
   };
 
   return (
