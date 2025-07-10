@@ -13,7 +13,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Edit2, Save, X } from 'lucide-react';
 
@@ -38,6 +37,11 @@ interface EditingCell {
   value: string;
 }
 
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
 export function AppointmentsTable() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,9 +49,11 @@ export function AppointmentsTable() {
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [procedures, setProcedures] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
+    console.log('🔄 Fetching appointments data...');
     try {
       const [appointmentsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
         supabase
@@ -71,12 +77,19 @@ export function AppointmentsTable() {
       if (proceduresRes.error) throw proceduresRes.error;
       if (statusesRes.error) throw statusesRes.error;
 
+      console.log('✅ Data fetched successfully:', {
+        appointments: appointmentsRes.data?.length,
+        professionals: professionalsRes.data?.length,
+        procedures: proceduresRes.data?.length,
+        statuses: statusesRes.data?.length
+      });
+
       setAppointments(appointmentsRes.data || []);
       setProfessionals(professionalsRes.data || []);
       setProcedures(proceduresRes.data || []);
       setStatuses(statusesRes.data || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('❌ Error fetching data:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao carregar agendamentos',
@@ -91,15 +104,82 @@ export function AppointmentsTable() {
     fetchData();
   }, []);
 
+  const validateFieldValue = (field: string, value: string): ValidationResult => {
+    console.log(`🔍 Validating field ${field} with value:`, value);
+
+    switch (field) {
+      case 'professional_id':
+        const professionalExists = professionals.find(p => p.id === value);
+        if (!professionalExists) {
+          return { isValid: false, error: 'Profissional não encontrado' };
+        }
+        break;
+      
+      case 'procedure_id':
+        if (value && value !== '') {
+          const procedureExists = procedures.find(p => p.id === value);
+          if (!procedureExists) {
+            return { isValid: false, error: 'Procedimento não encontrado' };
+          }
+        }
+        break;
+      
+      case 'status_id':
+        const statusId = parseInt(value);
+        if (isNaN(statusId)) {
+          return { isValid: false, error: 'Status inválido' };
+        }
+        const statusExists = statuses.find(s => s.id === statusId);
+        if (!statusExists) {
+          return { isValid: false, error: 'Status não encontrado' };
+        }
+        break;
+      
+      case 'start_time':
+        const startDate = new Date(value);
+        if (isNaN(startDate.getTime())) {
+          return { isValid: false, error: 'Data/hora inválida' };
+        }
+        if (startDate < new Date()) {
+          return { isValid: false, error: 'Não é possível agendar para o passado' };
+        }
+        break;
+    }
+
+    return { isValid: true };
+  };
+
   const handleCellClick = (appointmentId: string, field: string, currentValue: string) => {
+    console.log(`📝 Starting edit for appointment ${appointmentId}, field ${field}, current value:`, currentValue);
     setEditingCell({ appointmentId, field, value: currentValue });
   };
 
   const handleCellSave = async () => {
-    if (!editingCell) return;
+    if (!editingCell || isUpdating) {
+      console.log('⚠️ Cannot save: no editing cell or already updating');
+      return;
+    }
+
+    console.log('💾 Starting save process for:', editingCell);
+    setIsUpdating(true);
 
     try {
-      const updateData: any = {};
+      // Validate the new value
+      const validation = validateFieldValue(editingCell.field, editingCell.value);
+      if (!validation.isValid) {
+        console.log('❌ Validation failed:', validation.error);
+        toast({
+          title: 'Erro de Validação',
+          description: validation.error,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Prepare update data
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
       
       if (editingCell.field === 'start_time') {
         const startTime = new Date(editingCell.value);
@@ -123,37 +203,76 @@ export function AppointmentsTable() {
         updateData.notes = editingCell.value || null;
       }
 
-      const { error } = await supabase
+      console.log('📤 Sending update to Supabase:', {
+        appointmentId: editingCell.appointmentId,
+        updateData
+      });
+
+      const { data, error } = await supabase
         .from('appointments')
         .update(updateData)
-        .eq('id', editingCell.appointmentId);
+        .eq('id', editingCell.appointmentId)
+        .select(`
+          *,
+          patients(full_name),
+          professionals(name),
+          procedures(name),
+          appointment_statuses(label, color)
+        `);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
+
+      console.log('✅ Update successful, updated data:', data);
+
+      // Update local state with the returned data
+      if (data && data[0]) {
+        setAppointments(prev => prev.map(appointment => 
+          appointment.id === editingCell.appointmentId 
+            ? { ...appointment, ...data[0] }
+            : appointment
+        ));
+      }
 
       toast({
         title: 'Sucesso',
         description: 'Agendamento atualizado com sucesso',
       });
 
-      // Atualizar a lista local
-      await fetchData();
       setEditingCell(null);
-    } catch (error) {
-      console.error('Erro ao atualizar agendamento:', error);
+    } catch (error: any) {
+      console.error('❌ Error updating appointment:', error);
+      
+      let errorMessage = 'Erro ao atualizar agendamento';
+      
+      if (error.code === '23503') {
+        errorMessage = 'Erro de referência: verifique se os dados selecionados existem';
+      } else if (error.code === '23505') {
+        errorMessage = 'Conflito de dados: já existe um registro similar';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar agendamento',
+        description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleCellCancel = () => {
+    console.log('❌ Cancelling edit');
     setEditingCell(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleCellSave();
     } else if (e.key === 'Escape') {
       handleCellCancel();
@@ -182,10 +301,10 @@ export function AppointmentsTable() {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleCellSave}>
+            <Button size="sm" onClick={handleCellSave} disabled={isUpdating}>
               <Save className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCellCancel}>
+            <Button size="sm" variant="outline" onClick={handleCellCancel} disabled={isUpdating}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -209,10 +328,10 @@ export function AppointmentsTable() {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleCellSave}>
+            <Button size="sm" onClick={handleCellSave} disabled={isUpdating}>
               <Save className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCellCancel}>
+            <Button size="sm" variant="outline" onClick={handleCellCancel} disabled={isUpdating}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -235,10 +354,10 @@ export function AppointmentsTable() {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={handleCellSave}>
+            <Button size="sm" onClick={handleCellSave} disabled={isUpdating}>
               <Save className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCellCancel}>
+            <Button size="sm" variant="outline" onClick={handleCellCancel} disabled={isUpdating}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -253,11 +372,12 @@ export function AppointmentsTable() {
               onKeyDown={handleKeyDown}
               className="h-8"
               autoFocus
+              disabled={isUpdating}
             />
-            <Button size="sm" onClick={handleCellSave}>
+            <Button size="sm" onClick={handleCellSave} disabled={isUpdating}>
               <Save className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCellCancel}>
+            <Button size="sm" variant="outline" onClick={handleCellCancel} disabled={isUpdating}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -267,17 +387,26 @@ export function AppointmentsTable() {
 
     return (
       <div 
-        className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-1 rounded"
-        onClick={() => handleCellClick(appointment.id, field, actualValue)}
+        className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-1 rounded min-h-[32px]"
+        onClick={() => !isUpdating && handleCellClick(appointment.id, field, actualValue)}
       >
-        <span>{displayValue}</span>
+        <span className="truncate">{displayValue}</span>
         <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+            <p>Carregando agendamentos...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -286,70 +415,84 @@ export function AppointmentsTable() {
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Tabela de Agendamentos
+          {isUpdating && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Salvando...
+            </div>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Paciente</TableHead>
-              <TableHead>Profissional</TableHead>
-              <TableHead>Procedimento</TableHead>
-              <TableHead>Data/Hora</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Observações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {appointments.map((appointment) => (
-              <TableRow key={appointment.id}>
-                <TableCell className="font-medium">
-                  {appointment.patients?.full_name}
-                </TableCell>
-                <TableCell>
-                  {renderEditableCell(
-                    appointment,
-                    'professional_id',
-                    appointment.professionals?.name || 'N/A',
-                    appointment.professional_id
-                  )}
-                </TableCell>
-                <TableCell>
-                  {renderEditableCell(
-                    appointment,
-                    'procedure_id',
-                    appointment.procedures?.name || 'Nenhum',
-                    appointment.procedure_id || ''
-                  )}
-                </TableCell>
-                <TableCell>
-                  {renderEditableCell(
-                    appointment,
-                    'start_time',
-                    new Date(appointment.start_time).toLocaleString('pt-BR'),
-                    new Date(appointment.start_time).toISOString().slice(0, 16)
-                  )}
-                </TableCell>
-                <TableCell>
-                  {renderEditableCell(
-                    appointment,
-                    'status_id',
-                    appointment.appointment_statuses?.label || 'N/A',
-                    appointment.status_id.toString()
-                  )}
-                </TableCell>
-                <TableCell>
-                  {renderEditableCell(
-                    appointment,
-                    'notes',
-                    appointment.notes || 'Sem observações',
-                    appointment.notes || ''
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {appointments.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Nenhum agendamento encontrado
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Paciente</TableHead>
+                  <TableHead>Profissional</TableHead>
+                  <TableHead>Procedimento</TableHead>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Observações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {appointments.map((appointment) => (
+                  <TableRow key={appointment.id}>
+                    <TableCell className="font-medium">
+                      {appointment.patients?.full_name || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(
+                        appointment,
+                        'professional_id',
+                        appointment.professionals?.name || 'N/A',
+                        appointment.professional_id
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(
+                        appointment,
+                        'procedure_id',
+                        appointment.procedures?.name || 'Nenhum',
+                        appointment.procedure_id || ''
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(
+                        appointment,
+                        'start_time',
+                        new Date(appointment.start_time).toLocaleString('pt-BR'),
+                        new Date(appointment.start_time).toISOString().slice(0, 16)
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(
+                        appointment,
+                        'status_id',
+                        appointment.appointment_statuses?.label || 'N/A',
+                        appointment.status_id.toString()
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(
+                        appointment,
+                        'notes',
+                        appointment.notes || 'Sem observações',
+                        appointment.notes || ''
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
