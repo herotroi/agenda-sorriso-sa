@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, RefreshCw, Plus } from 'lucide-react';
+import { Calendar, RefreshCw, Plus, Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -24,16 +24,25 @@ export function AppointmentsTable() {
   } = useAppointmentsData();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState(null);
 
   const handleCreate = () => {
     console.log('Opening create form');
+    setAppointmentToEdit(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (appointment: any) => {
+    console.log('Opening edit form for appointment:', appointment.id);
+    setAppointmentToEdit(appointment);
     setIsFormOpen(true);
   };
 
   const handleFormClose = () => {
     console.log('Closing form');
     setIsFormOpen(false);
-    // Refresh the data after creating
+    setAppointmentToEdit(null);
+    // Refresh the data after creating/editing
     handleManualRefresh();
   };
 
@@ -102,6 +111,7 @@ export function AppointmentsTable() {
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Observações</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -139,6 +149,16 @@ export function AppointmentsTable() {
                           ) : 'Sem observações'}
                         </span>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(appointment)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -148,11 +168,12 @@ export function AppointmentsTable() {
         </CardContent>
       </Card>
 
-      {/* Formulário de Criação */}
+      {/* Formulário de Criação/Edição */}
       <AppointmentForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
         selectedDate={new Date()}
+        appointmentToEdit={appointmentToEdit}
       />
     </>
   );
