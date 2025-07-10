@@ -63,26 +63,47 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
       return;
     }
 
-    console.log('Atualizando status do agendamento:', {
+    console.log('Tentando atualizar status:', {
       appointmentId: appointment.id,
-      currentStatus: appointment.status,
-      newStatus: selectedStatus
+      statusAtual: appointment.status,
+      novoStatus: selectedStatus,
+      statusValidos: statusOptions
     });
 
     try {
       setIsUpdatingStatus(true);
       
+      // Primeiro, vamos verificar se o appointment existe
+      const { data: existingAppointment, error: fetchError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('id', appointment.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar agendamento:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Agendamento encontrado:', existingAppointment);
+
+      // Agora vamos tentar a atualização
       const { data, error } = await supabase
         .from('appointments')
         .update({ 
-          status: selectedStatus,
-          updated_at: new Date().toISOString()
+          status: selectedStatus
         })
         .eq('id', appointment.id)
-        .select();
+        .select('*');
 
       if (error) {
-        console.error('Erro na atualização:', error);
+        console.error('Erro detalhado na atualização:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
 
@@ -99,11 +120,20 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
       // Forçar recarregamento da página para mostrar as mudanças
       window.location.reload();
 
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+    } catch (error: any) {
+      console.error('Erro completo ao atualizar status:', error);
+      
+      let errorMessage = 'Erro desconhecido ao atualizar status';
+      
+      if (error.code === '23514') {
+        errorMessage = 'Status inválido. Verifique se o valor está correto.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: `Erro ao atualizar status: ${error.message || 'Erro desconhecido'}`,
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -205,7 +235,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
 
           <div className="space-y-3">
             <div>
-              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Label htmlFor="status" className="text-sm font-medium">Alterar Status</Label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione o status" />
@@ -224,6 +254,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
               onClick={handleStatusUpdate}
               disabled={isUpdatingStatus || selectedStatus === appointment.status}
               className="w-full"
+              variant="default"
             >
               {isUpdatingStatus ? 'Salvando...' : 'Salvar Status'}
             </Button>
