@@ -1,6 +1,5 @@
 
 import { Button } from '@/components/ui/button';
-import { Save, Loader2 } from 'lucide-react';
 import { FormData } from '@/types/appointment-form';
 
 interface AppointmentFormActionsProps {
@@ -24,14 +23,11 @@ export function AppointmentFormActions({
       <Button type="submit" disabled={isSaving || !formData.patient_id || !formData.professional_id}>
         {isSaving ? (
           <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             <span>Salvando...</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            <span>{appointmentToEdit ? 'Salvar' : 'Criar'}</span>
-          </div>
+          <span>{appointmentToEdit ? 'Salvar' : 'Criar'}</span>
         )}
       </Button>
     </div>

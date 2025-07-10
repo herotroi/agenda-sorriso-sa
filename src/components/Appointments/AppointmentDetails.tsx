@@ -53,9 +53,8 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
   const handleEditFormClose = () => {
     setIsEditFormOpen(false);
-    if (onUpdate) {
-      onUpdate();
-    }
+    // Fechar tanto o formulário quanto a tela de detalhes após editar
+    handleClose();
   };
 
   return (
