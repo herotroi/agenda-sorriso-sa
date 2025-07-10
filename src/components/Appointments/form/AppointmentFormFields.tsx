@@ -41,56 +41,46 @@ export function AppointmentFormFields({
     return originalData[field];
   };
 
-  const getPatientDisplayName = () => {
-    if (!originalData || !fieldModified || fieldModified.patient_id) {
-      const patient = patients.find(p => p.id === formData.patient_id);
-      return patient ? patient.full_name : 'Selecione o paciente';
-    }
-    
-    const originalPatient = patients.find(p => p.id === originalData.patient_id);
-    return originalPatient ? originalPatient.full_name : 'Selecione o paciente';
+  const getCurrentPatientName = () => {
+    if (!originalData) return '';
+    const patient = patients.find(p => p.id === originalData.patient_id);
+    return patient ? patient.full_name : '';
   };
 
-  const getProfessionalDisplayName = () => {
-    if (!originalData || !fieldModified || fieldModified.professional_id) {
-      const professional = professionals.find(p => p.id === formData.professional_id);
-      return professional ? professional.name : 'Selecione o profissional';
-    }
-    
-    const originalProfessional = professionals.find(p => p.id === originalData.professional_id);
-    return originalProfessional ? originalProfessional.name : 'Selecione o profissional';
+  const getCurrentProfessionalName = () => {
+    if (!originalData) return '';
+    const professional = professionals.find(p => p.id === originalData.professional_id);
+    return professional ? professional.name : '';
   };
 
-  const getProcedureDisplayName = () => {
-    if (!originalData || !fieldModified || fieldModified.procedure_id) {
-      const procedure = procedures.find(p => p.id === formData.procedure_id);
-      return procedure ? `${procedure.name} - R$ ${procedure.price.toFixed(2)}` : 'Selecione o procedimento';
-    }
-    
-    const originalProcedure = procedures.find(p => p.id === originalData.procedure_id);
-    return originalProcedure ? `${originalProcedure.name} - R$ ${originalProcedure.price.toFixed(2)}` : 'Selecione o procedimento';
+  const getCurrentProcedureName = () => {
+    if (!originalData) return '';
+    const procedure = procedures.find(p => p.id === originalData.procedure_id);
+    return procedure ? `${procedure.name} - R$ ${procedure.price.toFixed(2)}` : '';
   };
 
-  const getStatusDisplayName = () => {
-    if (!originalData || !fieldModified || fieldModified.status_id) {
-      const status = statuses.find(s => s.id === formData.status_id);
-      return status ? status.label : 'Selecione o status';
-    }
-    
-    const originalStatus = statuses.find(s => s.id === originalData.status_id);
-    return originalStatus ? originalStatus.label : 'Selecione o status';
+  const getCurrentStatusName = () => {
+    if (!originalData) return '';
+    const status = statuses.find(s => s.id === originalData.status_id);
+    return status ? status.label : '';
   };
 
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="patient">Paciente *</Label>
+        <Label htmlFor="patient">
+          Paciente * {originalData && getCurrentPatientName() && (
+            <span className="text-sm text-muted-foreground font-normal">
+              (Atual: {getCurrentPatientName()})
+            </span>
+          )}
+        </Label>
         <Select 
-          value={fieldModified?.patient_id ? formData.patient_id : (originalData?.patient_id || formData.patient_id)}
+          value={fieldModified?.patient_id ? formData.patient_id : ''}
           onValueChange={(value) => handleFieldChange('patient_id', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder={getPatientDisplayName()} />
+            <SelectValue placeholder="Selecione o paciente" />
           </SelectTrigger>
           <SelectContent>
             {patients.map((patient) => (
@@ -103,13 +93,19 @@ export function AppointmentFormFields({
       </div>
 
       <div>
-        <Label htmlFor="professional">Profissional *</Label>
+        <Label htmlFor="professional">
+          Profissional * {originalData && getCurrentProfessionalName() && (
+            <span className="text-sm text-muted-foreground font-normal">
+              (Atual: {getCurrentProfessionalName()})
+            </span>
+          )}
+        </Label>
         <Select 
-          value={fieldModified?.professional_id ? formData.professional_id : (originalData?.professional_id || formData.professional_id)}
+          value={fieldModified?.professional_id ? formData.professional_id : ''}
           onValueChange={(value) => handleFieldChange('professional_id', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder={getProfessionalDisplayName()} />
+            <SelectValue placeholder="Selecione o profissional" />
           </SelectTrigger>
           <SelectContent>
             {professionals.map((prof) => (
@@ -122,13 +118,19 @@ export function AppointmentFormFields({
       </div>
 
       <div>
-        <Label htmlFor="procedure">Procedimento</Label>
+        <Label htmlFor="procedure">
+          Procedimento {originalData && getCurrentProcedureName() && (
+            <span className="text-sm text-muted-foreground font-normal">
+              (Atual: {getCurrentProcedureName()})
+            </span>
+          )}
+        </Label>
         <Select 
-          value={fieldModified?.procedure_id ? formData.procedure_id : (originalData?.procedure_id || formData.procedure_id)}
+          value={fieldModified?.procedure_id ? formData.procedure_id : ''}
           onValueChange={(value) => onProcedureChange(value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder={getProcedureDisplayName()} />
+            <SelectValue placeholder="Selecione o procedimento" />
           </SelectTrigger>
           <SelectContent>
             {procedures.map((procedure) => (
@@ -142,7 +144,13 @@ export function AppointmentFormFields({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="start_time">Data e Hora *</Label>
+          <Label htmlFor="start_time">
+            Data e Hora * {originalData && originalData.start_time && (
+              <span className="text-sm text-muted-foreground font-normal">
+                (Atual: {new Date(originalData.start_time).toLocaleString('pt-BR')})
+              </span>
+            )}
+          </Label>
           <Input
             id="start_time"
             type="datetime-local"
@@ -152,7 +160,13 @@ export function AppointmentFormFields({
           />
         </div>
         <div>
-          <Label htmlFor="duration">Duração (min)</Label>
+          <Label htmlFor="duration">
+            Duração (min) {originalData && originalData.duration && (
+              <span className="text-sm text-muted-foreground font-normal">
+                (Atual: {originalData.duration} min)
+              </span>
+            )}
+          </Label>
           <Input
             id="duration"
             type="number"
@@ -165,13 +179,19 @@ export function AppointmentFormFields({
       </div>
 
       <div>
-        <Label htmlFor="status">Status</Label>
+        <Label htmlFor="status">
+          Status {originalData && getCurrentStatusName() && (
+            <span className="text-sm text-muted-foreground font-normal">
+              (Atual: {getCurrentStatusName()})
+            </span>
+          )}
+        </Label>
         <Select 
-          value={(fieldModified?.status_id ? formData.status_id : (originalData?.status_id || formData.status_id)).toString()}
+          value={fieldModified?.status_id ? formData.status_id.toString() : ''}
           onValueChange={(value) => handleFieldChange('status_id', parseInt(value))}
         >
           <SelectTrigger>
-            <SelectValue placeholder={getStatusDisplayName()} />
+            <SelectValue placeholder="Selecione o status" />
           </SelectTrigger>
           <SelectContent>
             {statuses.map((status) => (
@@ -184,12 +204,18 @@ export function AppointmentFormFields({
       </div>
 
       <div>
-        <Label htmlFor="notes">Observações</Label>
+        <Label htmlFor="notes">
+          Observações {originalData && originalData.notes && (
+            <span className="text-sm text-muted-foreground font-normal">
+              (Atual: {originalData.notes.length > 30 ? originalData.notes.substring(0, 30) + '...' : originalData.notes})
+            </span>
+          )}
+        </Label>
         <Textarea
           id="notes"
           value={getDisplayValue('notes', formData.notes) as string}
           onChange={(e) => handleFieldChange('notes', e.target.value)}
-          placeholder={originalData?.notes ? `Original: ${originalData.notes}` : 'Digite suas observações...'}
+          placeholder="Digite suas observações..."
           rows={3}
         />
       </div>
