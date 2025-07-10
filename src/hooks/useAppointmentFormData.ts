@@ -135,9 +135,10 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Setting original appointment data for editing:', editFormData);
+      console.log('Setting form data for editing appointment:', appointmentToEdit.id, editFormData);
+      // Garantir que ambos originalData e formData sejam definidos com os mesmos valores
       setOriginalData(editFormData);
-      setFormData(editFormData); // Manter os mesmos dados no formData inicialmente
+      setFormData(editFormData);
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
@@ -156,7 +157,7 @@ export function useAppointmentFormData(
       setOriginalData(null);
       resetFieldModifications();
     }
-  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
+  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId, setFormData, setOriginalData, resetFieldModifications]);
 
   return {
     patients,

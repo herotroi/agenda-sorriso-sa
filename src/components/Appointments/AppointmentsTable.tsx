@@ -24,7 +24,7 @@ export function AppointmentsTable() {
   } = useAppointmentsData();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [appointmentToEdit, setAppointmentToEdit] = useState(null);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<any>(null);
 
   const handleCreate = () => {
     console.log('Opening create form');
@@ -33,8 +33,10 @@ export function AppointmentsTable() {
   };
 
   const handleEdit = (appointment: any, event: React.MouseEvent) => {
-    console.log('Edit button clicked for appointment:', appointment.id);
-    // Prevent event bubbling to avoid conflicts with any row click handlers
+    console.log('=== EDIT CLICKED ===');
+    console.log('Appointment to edit:', appointment);
+    
+    // Prevent event bubbling
     event.preventDefault();
     event.stopPropagation();
     
@@ -43,7 +45,7 @@ export function AppointmentsTable() {
   };
 
   const handleFormClose = () => {
-    console.log('Closing form');
+    console.log('=== FORM CLOSING ===');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
     // Refresh the data after creating/editing

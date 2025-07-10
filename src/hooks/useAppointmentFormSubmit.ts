@@ -70,6 +70,11 @@ export function useAppointmentFormSubmit(
   const handleSubmit = async (e: React.FormEvent, formData: FormData) => {
     e.preventDefault();
     
+    console.log('=== SUBMIT DEBUG ===');
+    console.log('appointmentToEdit:', appointmentToEdit);
+    console.log('formData:', formData);
+    console.log('Is editing?', !!appointmentToEdit);
+    
     const isFormValid = await validateForm(formData);
     if (!isFormValid) return;
 
@@ -92,21 +97,28 @@ export function useAppointmentFormSubmit(
         status_id: formData.status_id
       };
 
+      console.log('Appointment data to save:', appointmentData);
+
       let error;
-      if (appointmentToEdit) {
+      if (appointmentToEdit && appointmentToEdit.id) {
+        console.log('UPDATING appointment with ID:', appointmentToEdit.id);
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
           .eq('id', appointmentToEdit.id);
         error = updateError;
       } else {
+        console.log('CREATING new appointment');
         const { error: insertError } = await supabase
           .from('appointments')
           .insert(appointmentData);
         error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
       toast({
         title: 'Sucesso',
