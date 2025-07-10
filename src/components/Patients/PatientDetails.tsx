@@ -39,6 +39,19 @@ interface PatientRecord {
   } | null;
 }
 
+interface AppointmentRecord {
+  id: string;
+  start_time: string;
+  notes?: string;
+  procedures: {
+    name: string;
+  } | null;
+  professionals: {
+    name: string;
+    specialty?: string;
+  } | null;
+}
+
 interface PatientDetailsProps {
   patient: Patient | null;
   isOpen: boolean;
@@ -47,12 +60,14 @@ interface PatientDetailsProps {
 
 export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps) {
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
+  const [appointmentRecords, setAppointmentRecords] = useState<AppointmentRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchPatientRecords = async (patientId: string) => {
+  const fetchPatientHistory = async (patientId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Buscar registros de prontuário
+      const { data: recordsData, error: recordsError } = await supabase
         .from('patient_records')
         .select(`
           id,
@@ -67,11 +82,32 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setPatientRecords(data || []);
+      if (recordsError) throw recordsError;
+
+      // Buscar agendamentos do paciente
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          start_time,
+          notes,
+          procedures(name),
+          professionals(name, specialty)
+        `)
+        .eq('patient_id', patientId)
+        .order('start_time', { ascending: false });
+
+      if (appointmentsError) throw appointmentsError;
+
+      console.log('Registros encontrados:', recordsData);
+      console.log('Agendamentos encontrados:', appointmentsData);
+
+      setPatientRecords(recordsData || []);
+      setAppointmentRecords(appointmentsData || []);
     } catch (error) {
-      console.error('Error fetching patient records:', error);
+      console.error('Error fetching patient history:', error);
       setPatientRecords([]);
+      setAppointmentRecords([]);
     } finally {
       setLoading(false);
     }
@@ -79,7 +115,7 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
 
   useEffect(() => {
     if (patient && isOpen) {
-      fetchPatientRecords(patient.id);
+      fetchPatientHistory(patient.id);
     }
   }, [patient, isOpen]);
 
@@ -94,6 +130,8 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
   };
 
   if (!patient) return null;
+
+  const hasHistory = patientRecords.length > 0 || appointmentRecords.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -183,15 +221,16 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
             <CardContent>
               {loading ? (
                 <div className="text-center py-4">Carregando histórico...</div>
-              ) : patientRecords.length === 0 ? (
+              ) : !hasHistory ? (
                 <div className="text-center py-4 text-gray-500">
                   Nenhum procedimento registrado
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Registros de Prontuário */}
                   {patientRecords.map((record) => (
                     <div
-                      key={record.id}
+                      key={`record-${record.id}`}
                       className="border rounded-lg p-4 hover:bg-gray-50"
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -240,6 +279,60 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
                           <p className="text-sm text-gray-600 mt-1">{record.prescription}</p>
                         </div>
                       )}
+                    </div>
+                  ))}
+
+                  {/* Agendamentos */}
+                  {appointmentRecords.map((appointment) => (
+                    <div
+                      key={`appointment-${appointment.id}`}
+                      className="border rounded-lg p-4 hover:bg-gray-50 bg-blue-50"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-blue-400" />
+                          <span className="text-sm font-medium">
+                            {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(appointment.start_time).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        {appointment.procedures?.name && (
+                          <Badge variant="outline" className="bg-blue-100">
+                            {appointment.procedures.name}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {appointment.professionals && (
+                        <div className="mb-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            Profissional: Dr(a). {appointment.professionals.name}
+                          </span>
+                          {appointment.professionals.specialty && (
+                            <span className="text-sm text-gray-500 ml-2">
+                              ({appointment.professionals.specialty})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {appointment.notes && (
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Observações:</span>
+                          <p className="text-sm text-gray-600 mt-1">{appointment.notes}</p>
+                        </div>
+                      )}
+
+                      <div className="mt-2">
+                        <Badge variant="secondary" className="text-xs">
+                          Agendamento
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
