@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
-import { FormData } from './useAppointmentFormData';
+import { FormData } from '@/types/appointment-form';
 
 interface Procedure {
   id: string;
@@ -36,7 +36,6 @@ export function useAppointmentFormSubmit(
     const endTime = new Date(startTime);
     endTime.setMinutes(endTime.getMinutes() + parseInt(formData.duration));
 
-    // Validate time slot
     const { isValid, message } = validateTimeSlot(startTime.toISOString(), endTime.toISOString());
     if (!isValid) {
       toast({
@@ -47,7 +46,6 @@ export function useAppointmentFormSubmit(
       return false;
     }
 
-    // Check for conflicts
     setIsValidating(true);
     const { hasConflict, message: conflictMessage } = await checkTimeConflict(
       formData.professional_id,
@@ -96,14 +94,12 @@ export function useAppointmentFormSubmit(
 
       let error;
       if (appointmentToEdit) {
-        // Update existing appointment
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
           .eq('id', appointmentToEdit.id);
         error = updateError;
       } else {
-        // Create new appointment
         const { error: insertError } = await supabase
           .from('appointments')
           .insert(appointmentData);
@@ -117,7 +113,7 @@ export function useAppointmentFormSubmit(
         description: appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
       });
 
-      onClose(true); // Pass success flag
+      onClose(true);
     } catch (error) {
       console.error('Error saving appointment:', error);
       toast({
@@ -125,7 +121,7 @@ export function useAppointmentFormSubmit(
         description: 'Erro ao salvar agendamento',
         variant: 'destructive',
       });
-      onClose(false); // Pass failure flag
+      onClose(false);
     } finally {
       setLoading(false);
     }

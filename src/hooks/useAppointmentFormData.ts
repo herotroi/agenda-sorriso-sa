@@ -1,38 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Patient {
-  id: string;
-  full_name: string;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-}
-
-interface Procedure {
-  id: string;
-  name: string;
-  price: number;
-  default_duration: number;
-}
-
-interface AppointmentStatus {
-  id: number;
-  label: string;
-  key: string;
-}
-
-export interface FormData {
-  patient_id: string;
-  professional_id: string;
-  procedure_id: string;
-  start_time: string;
-  duration: string;
-  notes: string;
-  status_id: number;
-}
+import { useAppointmentFormState } from './useAppointmentFormState';
+import { Patient, Professional, Procedure, AppointmentStatus, FormData } from '@/types/appointment-form';
 
 export function useAppointmentFormData(
   isOpen: boolean,
@@ -44,31 +14,16 @@ export function useAppointmentFormData(
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
-  
-  // Estado principal dos dados do formulário
-  const [formData, setFormData] = useState<FormData>({
-    patient_id: '',
-    professional_id: selectedProfessionalId || '',
-    procedure_id: '',
-    start_time: '',
-    duration: '60',
-    notes: '',
-    status_id: 1,
-  });
 
-  // Estados para armazenar os valores originais (para máscara)
-  const [originalData, setOriginalData] = useState<FormData | null>(null);
-  
-  // Estados para controlar se o campo foi modificado pelo usuário
-  const [fieldModified, setFieldModified] = useState<Record<keyof FormData, boolean>>({
-    patient_id: false,
-    professional_id: false,
-    procedure_id: false,
-    start_time: false,
-    duration: false,
-    notes: false,
-    status_id: false,
-  });
+  const {
+    formData,
+    setFormData,
+    originalData,
+    setOriginalData,
+    fieldModified,
+    setFieldModified,
+    resetFieldModifications
+  } = useAppointmentFormState(selectedProfessionalId);
 
   const fetchData = async () => {
     try {
@@ -102,17 +57,60 @@ export function useAppointmentFormData(
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Função para resetar os estados de modificação
-  const resetFieldModifications = () => {
-    setFieldModified({
-      patient_id: false,
-      professional_id: false,
-      procedure_id: false,
-      start_time: false,
-      duration: false,
-      notes: false,
-      status_id: false,
+  const handleProcedureChange = (procedureId: string) => {
+    const procedure = procedures.find(p => p.id === procedureId);
+    const duration = procedure ? procedure.default_duration.toString() : formData.duration;
+    
+    console.log('Procedure selection changed:', procedureId);
+    setFormData(prev => ({
+      ...prev,
+      procedure_id: procedureId,
+      duration: duration
+    }));
+    
+    setFieldModified(prev => ({
+      ...prev,
+      procedure_id: true,
+      duration: true
+    }));
+  };
+
+  const handleFieldChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+    console.log(`Field ${field} changed to:`, value);
+    
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    setFieldModified(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  const getFinalFieldValue = (field: keyof FormData) => {
+    if (fieldModified[field] || !originalData) {
+      return formData[field];
+    }
+    return originalData[field];
+  };
+
+  const getFinalFormData = (): FormData => {
+    if (!originalData) {
+      return formData;
+    }
+
+    const finalData: FormData = { ...originalData };
+    
+    (Object.keys(fieldModified) as Array<keyof FormData>).forEach((field) => {
+      if (fieldModified[field]) {
+        (finalData as any)[field] = formData[field];
+      }
     });
+
+    console.log('Final form data for submission:', finalData);
+    return finalData;
   };
 
   useEffect(() => {
@@ -123,7 +121,6 @@ export function useAppointmentFormData(
 
   useEffect(() => {
     if (isOpen && appointmentToEdit) {
-      // Edit mode - initialize with original data
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
@@ -143,7 +140,6 @@ export function useAppointmentFormData(
       setFormData(editFormData);
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
-      // Create mode - reset form with default values
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
       const newFormData = {
         patient_id: '',
@@ -162,68 +158,6 @@ export function useAppointmentFormData(
     }
   }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
-  const handleProcedureChange = (procedureId: string) => {
-    const procedure = procedures.find(p => p.id === procedureId);
-    const duration = procedure ? procedure.default_duration.toString() : formData.duration;
-    
-    console.log('Procedure selection changed:', procedureId);
-    setFormData(prev => ({
-      ...prev,
-      procedure_id: procedureId,
-      duration: duration
-    }));
-    
-    // Marcar campos como modificados
-    setFieldModified(prev => ({
-      ...prev,
-      procedure_id: true,
-      duration: true
-    }));
-  };
-
-  // Função para atualizar campos individuais com tipos corretos
-  const handleFieldChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
-    console.log(`Field ${field} changed to:`, value);
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Marcar o campo como modificado
-    setFieldModified(prev => ({
-      ...prev,
-      [field]: true
-    }));
-  };
-
-  // Função para obter o valor final do campo (novo se modificado, original se não)
-  const getFinalFieldValue = (field: keyof FormData) => {
-    if (fieldModified[field] || !originalData) {
-      return formData[field];
-    }
-    return originalData[field];
-  };
-
-  // Função para obter dados finais para submissão
-  const getFinalFormData = (): FormData => {
-    if (!originalData) {
-      return formData;
-    }
-
-    const finalData: FormData = { ...originalData };
-    
-    // Aplicar apenas os campos que foram modificados usando type assertion segura
-    (Object.keys(fieldModified) as Array<keyof FormData>).forEach((field) => {
-      if (fieldModified[field]) {
-        finalData[field] = formData[field];
-      }
-    });
-
-    console.log('Final form data for submission:', finalData);
-    return finalData;
-  };
-
   return {
     patients,
     professionals,
@@ -240,3 +174,5 @@ export function useAppointmentFormData(
     resetFieldModifications
   };
 }
+
+export type { FormData };

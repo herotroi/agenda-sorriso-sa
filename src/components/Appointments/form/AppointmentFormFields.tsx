@@ -3,39 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-
-interface Patient {
-  id: string;
-  full_name: string;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-}
-
-interface Procedure {
-  id: string;
-  name: string;
-  price: number;
-  default_duration: number;
-}
-
-interface AppointmentStatus {
-  id: number;
-  label: string;
-  key: string;
-}
-
-interface FormData {
-  patient_id: string;
-  professional_id: string;
-  procedure_id: string;
-  start_time: string;
-  duration: string;
-  notes: string;
-  status_id: number;
-}
+import { Patient, Professional, Procedure, AppointmentStatus, FormData } from '@/types/appointment-form';
 
 interface AppointmentFormFieldsProps {
   formData: FormData;
@@ -63,20 +31,16 @@ export function AppointmentFormFields({
   fieldModified
 }: AppointmentFormFieldsProps) {
   
-  // Função para obter o placeholder/valor de exibição
   const getDisplayValue = (field: keyof FormData, currentValue: string | number) => {
     if (!originalData || !fieldModified) return currentValue;
     
-    // Se o campo foi modificado, mostrar o novo valor
     if (fieldModified[field]) {
       return currentValue;
     }
     
-    // Se não foi modificado, mostrar o valor original como placeholder/valor
     return originalData[field];
   };
 
-  // Função para obter o nome do paciente original
   const getPatientDisplayName = () => {
     if (!originalData || !fieldModified || fieldModified.patient_id) {
       const patient = patients.find(p => p.id === formData.patient_id);
@@ -87,7 +51,6 @@ export function AppointmentFormFields({
     return originalPatient ? originalPatient.full_name : 'Selecione o paciente';
   };
 
-  // Função para obter o nome do profissional original
   const getProfessionalDisplayName = () => {
     if (!originalData || !fieldModified || fieldModified.professional_id) {
       const professional = professionals.find(p => p.id === formData.professional_id);
@@ -98,7 +61,6 @@ export function AppointmentFormFields({
     return originalProfessional ? originalProfessional.name : 'Selecione o profissional';
   };
 
-  // Função para obter o nome do procedimento original
   const getProcedureDisplayName = () => {
     if (!originalData || !fieldModified || fieldModified.procedure_id) {
       const procedure = procedures.find(p => p.id === formData.procedure_id);
@@ -109,7 +71,6 @@ export function AppointmentFormFields({
     return originalProcedure ? `${originalProcedure.name} - R$ ${originalProcedure.price.toFixed(2)}` : 'Selecione o procedimento';
   };
 
-  // Função para obter o nome do status original
   const getStatusDisplayName = () => {
     if (!originalData || !fieldModified || fieldModified.status_id) {
       const status = statuses.find(s => s.id === formData.status_id);
