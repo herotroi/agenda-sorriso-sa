@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Edit2, Save, X } from 'lucide-react';
+import { Calendar, Edit2, Save, X, RefreshCw } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -49,10 +50,12 @@ export function AppointmentsTable() {
   const [procedures, setProcedures] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
 
   const fetchData = async () => {
     console.log('🔄 Fetching appointments data...');
+    setRefreshing(true);
     try {
       const [appointmentsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
         supabase
@@ -96,12 +99,14 @@ export function AppointmentsTable() {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  // Carrega dados apenas uma vez na inicialização
   useEffect(() => {
     fetchData();
-  }, []);
+  }, []); // Removido qualquer dependência que causava re-fetch automático
 
   const validateFieldValue = (field: string, value: string): ValidationResult => {
     console.log(`🔍 Validating field ${field} with value:`, value);
@@ -285,6 +290,10 @@ export function AppointmentsTable() {
     }
   };
 
+  const handleManualRefresh = () => {
+    fetchData();
+  };
+
   const renderEditableCell = (appointment: Appointment, field: string, displayValue: string, actualValue: string) => {
     const isEditing = editingCell?.appointmentId === appointment.id && editingCell?.field === field;
 
@@ -418,15 +427,26 @@ export function AppointmentsTable() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Tabela de Agendamentos
-          {isUpdating && (
-            <div className="flex items-center gap-2 text-sm text-blue-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              Salvando...
-            </div>
-          )}
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Tabela de Agendamentos
+            {isUpdating && (
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                Salvando...
+              </div>
+            )}
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
