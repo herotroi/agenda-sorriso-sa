@@ -57,8 +57,19 @@ export function useAppointmentFormData(
     status_id: 1,
   });
 
-  // Estados temporários para edição fluida
-  const [tempFormData, setTempFormData] = useState<FormData | null>(null);
+  // Estados para armazenar os valores originais (para máscara)
+  const [originalData, setOriginalData] = useState<FormData | null>(null);
+  
+  // Estados para controlar se o campo foi modificado pelo usuário
+  const [fieldModified, setFieldModified] = useState<Record<keyof FormData, boolean>>({
+    patient_id: false,
+    professional_id: false,
+    procedure_id: false,
+    start_time: false,
+    duration: false,
+    notes: false,
+    status_id: false,
+  });
 
   const fetchData = async () => {
     try {
@@ -92,9 +103,28 @@ export function useAppointmentFormData(
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Função para inicializar dados temporários
-  const initializeTempData = () => {
-    if (appointmentToEdit) {
+  // Função para resetar os estados de modificação
+  const resetFieldModifications = () => {
+    setFieldModified({
+      patient_id: false,
+      professional_id: false,
+      procedure_id: false,
+      start_time: false,
+      duration: false,
+      notes: false,
+      status_id: false,
+    });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && appointmentToEdit) {
+      // Edit mode - initialize with original data
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
@@ -109,42 +139,10 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Initializing temp data for editing:', editFormData);
-      setTempFormData(editFormData);
+      console.log('Setting original appointment data for editing:', editFormData);
+      setOriginalData(editFormData);
       setFormData(editFormData);
-    }
-  };
-
-  // Função para resetar dados temporários
-  const resetTempData = () => {
-    console.log('Resetting temp data');
-    setTempFormData(null);
-  };
-
-  // Função para atualizar dados temporários
-  const updateTempData = (field: keyof FormData, value: string | number) => {
-    if (tempFormData) {
-      const updatedTempData = { ...tempFormData, [field]: value };
-      console.log(`Updating temp data field ${field}:`, value);
-      setTempFormData(updatedTempData);
-      setFormData(updatedTempData);
-    } else {
-      const updatedFormData = { ...formData, [field]: value };
-      console.log(`Updating form data field ${field}:`, value);
-      setFormData(updatedFormData);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen && appointmentToEdit) {
-      // Edit mode - initialize temp data
-      initializeTempData();
+      resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
       // Create mode - reset form with default values
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
@@ -158,23 +156,74 @@ export function useAppointmentFormData(
         status_id: 1,
       };
       
-      console.log('Setting default form data:', newFormData);
+      console.log('Setting default form data for new appointment:', newFormData);
       setFormData(newFormData);
-      setTempFormData(null);
+      setOriginalData(null);
+      resetFieldModifications();
     }
   }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   const handleProcedureChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
-    const duration = procedure ? procedure.default_duration.toString() : (tempFormData?.duration || formData.duration);
+    const duration = procedure ? procedure.default_duration.toString() : formData.duration;
     
-    updateTempData('procedure_id', procedureId);
-    updateTempData('duration', duration);
+    console.log('Procedure selection changed:', procedureId);
+    setFormData(prev => ({
+      ...prev,
+      procedure_id: procedureId,
+      duration: duration
+    }));
+    
+    // Marcar campos como modificados
+    setFieldModified(prev => ({
+      ...prev,
+      procedure_id: true,
+      duration: true
+    }));
   };
 
-  // Função personalizada para atualizar campos
+  // Função para atualizar campos individuais
   const handleFieldChange = (field: keyof FormData, value: string | number) => {
-    updateTempData(field, value);
+    console.log(`Field ${field} changed to:`, value);
+    
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Marcar o campo como modificado
+    setFieldModified(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  // Função para obter o valor final do campo (novo se modificado, original se não)
+  const getFinalFieldValue = (field: keyof FormData) => {
+    if (fieldModified[field] || !originalData) {
+      return formData[field];
+    }
+    return originalData[field];
+  };
+
+  // Função para obter dados finais para submissão
+  const getFinalFormData = (): FormData => {
+    if (!originalData) {
+      return formData;
+    }
+
+    const finalData: FormData = { ...originalData };
+    
+    // Aplicar apenas os campos que foram modificados
+    Object.keys(fieldModified).forEach((key) => {
+      const field = key as keyof FormData;
+      if (fieldModified[field]) {
+        finalData[field] = formData[field];
+      }
+    });
+
+    console.log('Final form data for submission:', finalData);
+    return finalData;
   };
 
   return {
@@ -186,8 +235,10 @@ export function useAppointmentFormData(
     setFormData,
     handleProcedureChange,
     handleFieldChange,
-    tempFormData,
-    resetTempData,
-    initializeTempData
+    originalData,
+    fieldModified,
+    getFinalFieldValue,
+    getFinalFormData,
+    resetFieldModifications
   };
 }

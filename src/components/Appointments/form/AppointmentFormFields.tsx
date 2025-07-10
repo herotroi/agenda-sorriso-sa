@@ -45,7 +45,9 @@ interface AppointmentFormFieldsProps {
   procedures: Procedure[];
   statuses: AppointmentStatus[];
   onProcedureChange: (procedureId: string) => void;
-  handleFieldChange?: (field: keyof FormData, value: string | number) => void;
+  handleFieldChange: (field: keyof FormData, value: string | number) => void;
+  originalData?: FormData | null;
+  fieldModified?: Record<keyof FormData, boolean>;
 }
 
 export function AppointmentFormFields({
@@ -56,18 +58,66 @@ export function AppointmentFormFields({
   procedures,
   statuses,
   onProcedureChange,
-  handleFieldChange
+  handleFieldChange,
+  originalData,
+  fieldModified
 }: AppointmentFormFieldsProps) {
   
-  const updateField = (field: keyof FormData, value: string | number) => {
-    if (handleFieldChange) {
-      handleFieldChange(field, value);
-    } else {
-      console.log(`Changing field ${field} to:`, value);
-      const updatedFormData = { ...formData, [field]: value };
-      console.log('Updated form data:', updatedFormData);
-      setFormData(updatedFormData);
+  // Função para obter o placeholder/valor de exibição
+  const getDisplayValue = (field: keyof FormData, currentValue: string | number) => {
+    if (!originalData || !fieldModified) return currentValue;
+    
+    // Se o campo foi modificado, mostrar o novo valor
+    if (fieldModified[field]) {
+      return currentValue;
     }
+    
+    // Se não foi modificado, mostrar o valor original como placeholder/valor
+    return originalData[field];
+  };
+
+  // Função para obter o nome do paciente original
+  const getPatientDisplayName = () => {
+    if (!originalData || !fieldModified || fieldModified.patient_id) {
+      const patient = patients.find(p => p.id === formData.patient_id);
+      return patient ? patient.full_name : 'Selecione o paciente';
+    }
+    
+    const originalPatient = patients.find(p => p.id === originalData.patient_id);
+    return originalPatient ? originalPatient.full_name : 'Selecione o paciente';
+  };
+
+  // Função para obter o nome do profissional original
+  const getProfessionalDisplayName = () => {
+    if (!originalData || !fieldModified || fieldModified.professional_id) {
+      const professional = professionals.find(p => p.id === formData.professional_id);
+      return professional ? professional.name : 'Selecione o profissional';
+    }
+    
+    const originalProfessional = professionals.find(p => p.id === originalData.professional_id);
+    return originalProfessional ? originalProfessional.name : 'Selecione o profissional';
+  };
+
+  // Função para obter o nome do procedimento original
+  const getProcedureDisplayName = () => {
+    if (!originalData || !fieldModified || fieldModified.procedure_id) {
+      const procedure = procedures.find(p => p.id === formData.procedure_id);
+      return procedure ? `${procedure.name} - R$ ${procedure.price.toFixed(2)}` : 'Selecione o procedimento';
+    }
+    
+    const originalProcedure = procedures.find(p => p.id === originalData.procedure_id);
+    return originalProcedure ? `${originalProcedure.name} - R$ ${originalProcedure.price.toFixed(2)}` : 'Selecione o procedimento';
+  };
+
+  // Função para obter o nome do status original
+  const getStatusDisplayName = () => {
+    if (!originalData || !fieldModified || fieldModified.status_id) {
+      const status = statuses.find(s => s.id === formData.status_id);
+      return status ? status.label : 'Selecione o status';
+    }
+    
+    const originalStatus = statuses.find(s => s.id === originalData.status_id);
+    return originalStatus ? originalStatus.label : 'Selecione o status';
   };
 
   return (
@@ -75,11 +125,11 @@ export function AppointmentFormFields({
       <div>
         <Label htmlFor="patient">Paciente *</Label>
         <Select 
-          value={formData.patient_id} 
-          onValueChange={(value) => updateField('patient_id', value)}
+          value={fieldModified?.patient_id ? formData.patient_id : (originalData?.patient_id || formData.patient_id)}
+          onValueChange={(value) => handleFieldChange('patient_id', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o paciente" />
+            <SelectValue placeholder={getPatientDisplayName()} />
           </SelectTrigger>
           <SelectContent>
             {patients.map((patient) => (
@@ -94,11 +144,11 @@ export function AppointmentFormFields({
       <div>
         <Label htmlFor="professional">Profissional *</Label>
         <Select 
-          value={formData.professional_id} 
-          onValueChange={(value) => updateField('professional_id', value)}
+          value={fieldModified?.professional_id ? formData.professional_id : (originalData?.professional_id || formData.professional_id)}
+          onValueChange={(value) => handleFieldChange('professional_id', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o profissional" />
+            <SelectValue placeholder={getProfessionalDisplayName()} />
           </SelectTrigger>
           <SelectContent>
             {professionals.map((prof) => (
@@ -113,14 +163,11 @@ export function AppointmentFormFields({
       <div>
         <Label htmlFor="procedure">Procedimento</Label>
         <Select 
-          value={formData.procedure_id} 
-          onValueChange={(value) => {
-            console.log('Procedure selection changed:', value);
-            onProcedureChange(value);
-          }}
+          value={fieldModified?.procedure_id ? formData.procedure_id : (originalData?.procedure_id || formData.procedure_id)}
+          onValueChange={(value) => onProcedureChange(value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o procedimento" />
+            <SelectValue placeholder={getProcedureDisplayName()} />
           </SelectTrigger>
           <SelectContent>
             {procedures.map((procedure) => (
@@ -138,11 +185,8 @@ export function AppointmentFormFields({
           <Input
             id="start_time"
             type="datetime-local"
-            value={formData.start_time}
-            onChange={(e) => {
-              console.log('Start time changed:', e.target.value);
-              updateField('start_time', e.target.value);
-            }}
+            value={getDisplayValue('start_time', formData.start_time) as string}
+            onChange={(e) => handleFieldChange('start_time', e.target.value)}
             required
           />
         </div>
@@ -151,11 +195,8 @@ export function AppointmentFormFields({
           <Input
             id="duration"
             type="number"
-            value={formData.duration}
-            onChange={(e) => {
-              console.log('Duration changed:', e.target.value);
-              updateField('duration', e.target.value);
-            }}
+            value={getDisplayValue('duration', formData.duration) as string}
+            onChange={(e) => handleFieldChange('duration', e.target.value)}
             min="15"
             step="15"
           />
@@ -165,14 +206,11 @@ export function AppointmentFormFields({
       <div>
         <Label htmlFor="status">Status</Label>
         <Select 
-          value={formData.status_id.toString()} 
-          onValueChange={(value) => {
-            console.log('Status changed:', value);
-            updateField('status_id', parseInt(value));
-          }}
+          value={(fieldModified?.status_id ? formData.status_id : (originalData?.status_id || formData.status_id)).toString()}
+          onValueChange={(value) => handleFieldChange('status_id', parseInt(value))}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o status" />
+            <SelectValue placeholder={getStatusDisplayName()} />
           </SelectTrigger>
           <SelectContent>
             {statuses.map((status) => (
@@ -188,11 +226,9 @@ export function AppointmentFormFields({
         <Label htmlFor="notes">Observações</Label>
         <Textarea
           id="notes"
-          value={formData.notes}
-          onChange={(e) => {
-            console.log('Notes changed:', e.target.value);
-            updateField('notes', e.target.value);
-          }}
+          value={getDisplayValue('notes', formData.notes) as string}
+          onChange={(e) => handleFieldChange('notes', e.target.value)}
+          placeholder={originalData?.notes ? `Original: ${originalData.notes}` : 'Digite suas observações...'}
           rows={3}
         />
       </div>

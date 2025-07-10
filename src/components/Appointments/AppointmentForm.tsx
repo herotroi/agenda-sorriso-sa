@@ -30,7 +30,10 @@ export function AppointmentForm({
     setFormData,
     handleProcedureChange,
     handleFieldChange,
-    resetTempData
+    originalData,
+    fieldModified,
+    getFinalFormData,
+    resetFieldModifications
   } = useAppointmentFormData(isOpen, appointmentToEdit, selectedDate, selectedProfessionalId);
 
   const { loading, isValidating, handleSubmit } = useAppointmentFormSubmit(
@@ -38,11 +41,17 @@ export function AppointmentForm({
     appointmentToEdit,
     (success) => {
       if (success) {
-        resetTempData();
+        resetFieldModifications();
       }
       onClose();
     }
   );
+
+  const onSubmit = (e: React.FormEvent) => {
+    const finalData = getFinalFormData();
+    console.log('Submitting with final data:', finalData);
+    handleSubmit(e, finalData);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -54,7 +63,7 @@ export function AppointmentForm({
         </DialogHeader>
         
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
-          <form onSubmit={(e) => handleSubmit(e, formData)} className="space-y-4 pb-6">
+          <form onSubmit={onSubmit} className="space-y-4 pb-6">
             <AppointmentFormFields
               formData={formData}
               setFormData={setFormData}
@@ -64,6 +73,8 @@ export function AppointmentForm({
               statuses={statuses}
               onProcedureChange={handleProcedureChange}
               handleFieldChange={handleFieldChange}
+              originalData={originalData}
+              fieldModified={fieldModified}
             />
 
             <div className="flex justify-end space-x-2 pt-4">
@@ -72,7 +83,7 @@ export function AppointmentForm({
               </Button>
               <Button 
                 type="submit" 
-                disabled={loading || isValidating || !formData.patient_id || !formData.professional_id}
+                disabled={loading || isValidating}
               >
                 {loading || isValidating ? 'Validando...' : appointmentToEdit ? 'Atualizar' : 'Agendar'}
               </Button>
