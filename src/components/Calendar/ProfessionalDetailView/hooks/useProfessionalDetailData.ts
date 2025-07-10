@@ -12,11 +12,23 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const fetchAppointments = async (startDate?: Date, endDate?: Date) => {
     try {
       setLoading(true);
-      const start = startDate || new Date(selectedDate);
-      start.setHours(0, 0, 0, 0);
       
-      const end = endDate || new Date(selectedDate);
-      end.setHours(23, 59, 59, 999);
+      // If no custom date range is provided, fetch the entire month
+      let start: Date;
+      let end: Date;
+      
+      if (startDate && endDate) {
+        start = startDate;
+        end = endDate;
+      } else {
+        // Get the first day of the month
+        start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        start.setHours(0, 0, 0, 0);
+        
+        // Get the last day of the month
+        end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+        end.setHours(23, 59, 59, 999);
+      }
 
       const { data, error } = await supabase
         .from('appointments')

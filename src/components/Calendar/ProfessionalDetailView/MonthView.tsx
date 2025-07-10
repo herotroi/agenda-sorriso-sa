@@ -117,7 +117,7 @@ export function MonthView({
                     </Badge>
                   </div>
                   
-                  {/* Primeiros agendamentos */}
+                  {/* Primeiro agendamento (apenas se houver espaço) */}
                   <div className="space-y-1">
                     {dayAppointments.slice(0, 1).map((apt) => (
                       <div
