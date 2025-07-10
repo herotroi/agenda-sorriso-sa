@@ -1,5 +1,5 @@
 
-import { Clock } from 'lucide-react';
+import { Clock, User } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -11,6 +11,7 @@ interface Appointment {
   notes?: string;
   patients: { full_name: string };
   procedures: { name: string } | null;
+  professionals: { name: string };
 }
 
 interface AppointmentInfoProps {
@@ -20,6 +21,14 @@ interface AppointmentInfoProps {
 export function AppointmentInfo({ appointment }: AppointmentInfoProps) {
   return (
     <div className="space-y-3">
+      <div>
+        <span className="font-medium">Profissional:</span>
+        <div className="flex items-center gap-2 text-gray-600">
+          <User className="h-4 w-4" />
+          <span>{appointment.professionals?.name || 'Não especificado'}</span>
+        </div>
+      </div>
+
       <div>
         <span className="font-medium">Procedimento:</span>
         <p className="text-gray-600">{appointment.procedures?.name || 'Não especificado'}</p>

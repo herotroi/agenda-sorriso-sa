@@ -22,6 +22,7 @@ interface Appointment {
   notes?: string;
   patients: { full_name: string };
   procedures: { name: string } | null;
+  professionals: { name: string };
 }
 
 interface AppointmentDetailsProps {
