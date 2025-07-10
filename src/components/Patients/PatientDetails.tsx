@@ -1,27 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Phone, Mail, User, FileText, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Patient {
-  id: string;
-  full_name: string;
-  cpf?: string;
-  phone?: string;
-  email?: string;
-  street?: string;
-  number?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  sus_card?: string;
-  health_insurance?: string;
-  birth_date?: string;
-  notes?: string;
-}
+import { Patient } from '@/types/patient';
 
 interface PatientRecord {
   id: string;

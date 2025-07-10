@@ -1,8 +1,8 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User } from 'lucide-react';
-import { Patient } from '@/types/appointment-form';
 import { FormField } from './FormField';
+import { Patient } from '@/types/patient';
 
 interface PatientSelectorProps {
   patients: Patient[];
