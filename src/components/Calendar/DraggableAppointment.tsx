@@ -11,6 +11,7 @@ interface Appointment {
   status: string;
   patients?: { full_name: string };
   procedures?: { name: string } | null;
+  appointment_statuses?: { label: string; color: string };
 }
 
 interface DraggableAppointmentProps {
@@ -31,12 +32,12 @@ export function DraggableAppointment({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmado': return 'bg-green-500';
-      case 'Cancelado': return 'bg-red-500';
-      case 'Não Compareceu': return 'bg-gray-500';
-      case 'Em atendimento': return 'bg-blue-500';
-      case 'Finalizado': return 'bg-purple-500';
-      default: return 'bg-gray-400';
+      case 'Confirmado': return '#10b981';
+      case 'Cancelado': return '#ef4444';
+      case 'Não Compareceu': return '#6b7280';
+      case 'Em atendimento': return '#3b82f6';
+      case 'Finalizado': return '#8b5cf6';
+      default: return '#6b7280';
     }
   };
 
@@ -52,6 +53,9 @@ export function DraggableAppointment({
     setIsDragStarted(false);
   };
 
+  const statusColor = appointment.appointment_statuses?.color || getStatusColor(appointment.status);
+  const statusLabel = appointment.appointment_statuses?.label || appointment.status;
+
   return (
     <div
       draggable
@@ -65,7 +69,7 @@ export function DraggableAppointment({
         ...position,
         backgroundColor: professionalColor,
         minHeight: '40px',
-        border: `2px solid ${getStatusColor(appointment.status)}`
+        borderLeft: `4px solid ${statusColor}`
       }}
     >
       <div className="font-medium truncate">
@@ -81,7 +85,7 @@ export function DraggableAppointment({
         })}
       </div>
       <div className="text-xs font-semibold">
-        {appointment.status}
+        {statusLabel}
       </div>
     </div>
   );

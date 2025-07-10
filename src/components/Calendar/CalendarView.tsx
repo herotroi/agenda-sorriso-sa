@@ -27,6 +27,7 @@ interface Appointment {
   status_id: number;
   patients: { full_name: string };
   procedures: { name: string } | null;
+  appointment_statuses: { label: string; color: string };
 }
 
 export function CalendarView() {
@@ -69,7 +70,8 @@ export function CalendarView() {
         .select(`
           *,
           patients(full_name),
-          procedures(name)
+          procedures(name),
+          appointment_statuses(label, color)
         `)
         .gte('start_time', startOfDay.toISOString())
         .lte('start_time', endOfDay.toISOString())
@@ -259,7 +261,10 @@ export function CalendarView() {
                       return (
                         <DraggableAppointment
                           key={appointment.id}
-                          appointment={appointment}
+                          appointment={{
+                            ...appointment,
+                            status: appointment.appointment_statuses?.label || appointment.status
+                          }}
                           professionalColor={prof.color}
                           position={position}
                           onClick={() => setSelectedAppointment(appointment)}

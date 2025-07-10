@@ -3,9 +3,10 @@ import { Badge } from '@/components/ui/badge';
 
 interface AppointmentStatusBadgeProps {
   status: string;
+  statusColor?: string;
 }
 
-export function AppointmentStatusBadge({ status }: AppointmentStatusBadgeProps) {
+export function AppointmentStatusBadge({ status, statusColor }: AppointmentStatusBadgeProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Confirmado': return 'bg-green-500';
@@ -17,8 +18,13 @@ export function AppointmentStatusBadge({ status }: AppointmentStatusBadgeProps) 
     }
   };
 
+  const backgroundColor = statusColor || getStatusColor(status);
+
   return (
-    <Badge className={`${getStatusColor(status)} text-white`}>
+    <Badge 
+      className="text-white"
+      style={{ backgroundColor }}
+    >
       {status}
     </Badge>
   );

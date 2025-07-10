@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface Appointment {
   notes?: string;
   patients: { full_name: string };
   procedures: { name: string } | null;
+  appointment_statuses: { label: string; color: string };
 }
 
 interface ProfessionalDetailViewProps {
@@ -62,7 +64,8 @@ export function ProfessionalDetailView({
         .select(`
           *,
           patients(full_name),
-          procedures(name)
+          procedures(name),
+          appointment_statuses(label, color)
         `)
         .eq('professional_id', professional.id)
         .gte('start_time', startOfDay.toISOString())
@@ -110,15 +113,8 @@ export function ProfessionalDetailView({
     };
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Confirmado': return 'border-green-500';
-      case 'Cancelado': return 'border-red-500';
-      case 'Não Compareceu': return 'border-gray-500';
-      case 'Em atendimento': return 'border-blue-500';
-      case 'Finalizado': return 'border-purple-500';
-      default: return 'border-gray-400';
-    }
+  const getStatusColor = (statusColor: string) => {
+    return `border-l-4` + ` border-[${statusColor}]`;
   };
 
   const handleFormClose = () => {
@@ -220,10 +216,11 @@ export function ProfessionalDetailView({
                         <div
                           key={appointment.id}
                           onClick={() => setSelectedAppointment(appointment)}
-                          className={`absolute left-1 right-1 rounded p-2 text-xs text-white cursor-pointer hover:opacity-80 transition-opacity border-l-4 ${getStatusColor(appointment.status)}`}
+                          className={`absolute left-1 right-1 rounded p-2 text-xs text-white cursor-pointer hover:opacity-80 transition-opacity border-l-4`}
                           style={{
                             ...position,
                             backgroundColor: professional.color,
+                            borderLeftColor: appointment.appointment_statuses?.color || '#6b7280',
                             minHeight: '40px'
                           }}
                         >
@@ -243,7 +240,7 @@ export function ProfessionalDetailView({
                             })}
                           </div>
                           <div className="text-xs font-semibold">
-                            {appointment.status}
+                            {appointment.appointment_statuses?.label || appointment.status}
                           </div>
                         </div>
                       );
