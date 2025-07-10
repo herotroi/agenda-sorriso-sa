@@ -10,56 +10,83 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
-  const upcomingAppointments = [
-    { id: 1, patient: 'João Silva', time: '09:00', professional: 'Dr. Silva', type: 'Limpeza' },
-    { id: 2, patient: 'Maria Santos', time: '10:30', professional: 'Dra. Costa', type: 'Canal' },
-    { id: 3, patient: 'Pedro Lima', time: '14:00', professional: 'Dr. Silva', type: 'Consulta' },
-    { id: 4, patient: 'Ana Oliveira', time: '15:30', professional: 'Dra. Costa', type: 'Extração' },
-  ];
+  const { 
+    stats, 
+    upcomingAppointments, 
+    monthlyRevenueData, 
+    loading, 
+    refetch 
+  } = useDashboardData();
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Carregando dados da clínica...</p>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Visão geral da sua clínica</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Visão geral da sua clínica</p>
+        </div>
+        <Button onClick={refetch} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Agendamentos Hoje"
-          value={12}
+          value={stats.todayAppointments}
           icon={Calendar}
-          change={{ value: 15, type: 'increase' }}
         />
         <StatsCard
           title="Pacientes Ativos"
-          value={248}
+          value={stats.activePatients}
           icon={Users}
-          change={{ value: 8, type: 'increase' }}
         />
         <StatsCard
           title="Receita Mensal"
-          value="R$ 28.500"
+          value={formatCurrency(stats.monthlyRevenue)}
           icon={DollarSign}
-          change={{ value: 12, type: 'increase' }}
         />
         <StatsCard
           title="Taxa de Ocupação"
-          value="87%"
+          value={`${stats.occupancyRate}%`}
           icon={TrendingUp}
-          change={{ value: 3, type: 'increase' }}
         />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Revenue Chart */}
         <div className="md:col-span-2">
-          <RevenueChart />
+          <RevenueChart data={monthlyRevenueData} />
         </div>
 
         {/* Upcoming Appointments */}
@@ -72,19 +99,23 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">{appointment.patient}</p>
-                    <p className="text-xs text-gray-600">{appointment.professional}</p>
-                    <p className="text-xs text-gray-500">{appointment.type}</p>
+              {upcomingAppointments.length === 0 ? (
+                <p className="text-gray-500 text-sm">Nenhum agendamento próximo</p>
+              ) : (
+                upcomingAppointments.map((appointment) => (
+                  <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{appointment.patient}</p>
+                      <p className="text-xs text-gray-600">{appointment.professional}</p>
+                      <p className="text-xs text-gray-500">{appointment.type}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-sm">{appointment.time}</p>
+                      <div className="w-2 h-2 bg-green-500 rounded-full ml-auto mt-1"></div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">{appointment.time}</p>
-                    <div className="w-2 h-2 bg-green-500 rounded-full ml-auto mt-1"></div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -97,7 +128,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Confirmados</p>
-                <p className="text-2xl font-bold text-green-600">28</p>
+                <p className="text-2xl font-bold text-green-600">{stats.confirmedCount}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
@@ -109,7 +140,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Cancelados</p>
-                <p className="text-2xl font-bold text-red-600">3</p>
+                <p className="text-2xl font-bold text-red-600">{stats.cancelledCount}</p>
               </div>
               <XCircle className="h-8 w-8 text-red-600" />
             </div>
@@ -121,7 +152,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Faltaram</p>
-                <p className="text-2xl font-bold text-orange-600">2</p>
+                <p className="text-2xl font-bold text-orange-600">{stats.noShowCount}</p>
               </div>
               <AlertCircle className="h-8 w-8 text-orange-600" />
             </div>
@@ -133,7 +164,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Concluídos</p>
-                <p className="text-2xl font-bold text-blue-600">156</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.completedCount}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-blue-600" />
             </div>

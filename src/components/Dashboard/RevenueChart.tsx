@@ -2,22 +2,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Jan', value: 4800 },
-  { name: 'Fev', value: 5200 },
-  { name: 'Mar', value: 4900 },
-  { name: 'Abr', value: 6100 },
-  { name: 'Mai', value: 5800 },
-  { name: 'Jun', value: 6400 },
-  { name: 'Jul', value: 7200 },
-  { name: 'Ago', value: 6800 },
-  { name: 'Set', value: 7500 },
-  { name: 'Out', value: 8100 },
-  { name: 'Nov', value: 7800 },
-  { name: 'Dez', value: 8500 },
-];
+interface RevenueChartProps {
+  data?: Array<{ name: string; value: number }>;
+}
 
-export function RevenueChart() {
+export function RevenueChart({ data = [] }: RevenueChartProps) {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
   return (
     <Card className="col-span-4">
       <CardHeader>
@@ -29,10 +25,10 @@ export function RevenueChart() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis 
-              tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
+              tickFormatter={(value) => formatCurrency(value)}
             />
             <Tooltip 
-              formatter={(value) => [`R$ ${value.toLocaleString()}`, 'Receita']}
+              formatter={(value) => [formatCurrency(Number(value)), 'Receita']}
             />
             <Line 
               type="monotone" 
