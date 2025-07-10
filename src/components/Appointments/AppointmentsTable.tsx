@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -279,6 +278,13 @@ export function AppointmentsTable() {
     }
   };
 
+  const handleSelectChange = (field: string, newValue: string) => {
+    console.log(`🔄 Select changed for field ${field} to:`, newValue);
+    if (editingCell) {
+      setEditingCell({ ...editingCell, value: newValue });
+    }
+  };
+
   const renderEditableCell = (appointment: Appointment, field: string, displayValue: string, actualValue: string) => {
     const isEditing = editingCell?.appointmentId === appointment.id && editingCell?.field === field;
 
@@ -288,10 +294,10 @@ export function AppointmentsTable() {
           <div className="flex items-center space-x-2">
             <Select
               value={editingCell.value}
-              onValueChange={(value) => setEditingCell({ ...editingCell, value })}
+              onValueChange={(value) => handleSelectChange(field, value)}
             >
               <SelectTrigger className="h-8">
-                <SelectValue />
+                <SelectValue placeholder="Selecione um profissional" />
               </SelectTrigger>
               <SelectContent>
                 {professionals.map((prof) => (
@@ -314,10 +320,10 @@ export function AppointmentsTable() {
           <div className="flex items-center space-x-2">
             <Select
               value={editingCell.value}
-              onValueChange={(value) => setEditingCell({ ...editingCell, value })}
+              onValueChange={(value) => handleSelectChange(field, value)}
             >
               <SelectTrigger className="h-8">
-                <SelectValue />
+                <SelectValue placeholder="Selecione um procedimento" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Nenhum</SelectItem>
@@ -341,10 +347,10 @@ export function AppointmentsTable() {
           <div className="flex items-center space-x-2">
             <Select
               value={editingCell.value}
-              onValueChange={(value) => setEditingCell({ ...editingCell, value })}
+              onValueChange={(value) => handleSelectChange(field, value)}
             >
               <SelectTrigger className="h-8">
-                <SelectValue />
+                <SelectValue placeholder="Selecione um status" />
               </SelectTrigger>
               <SelectContent>
                 {statuses.map((status) => (
