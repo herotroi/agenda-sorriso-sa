@@ -12,6 +12,9 @@ interface PatientSelectorProps {
 }
 
 export function PatientSelector({ patients, value, onChange, currentPatientName }: PatientSelectorProps) {
+  // Filter out inactive patients
+  const activePatients = patients.filter(patient => patient.active !== false);
+
   return (
     <FormField 
       label="Paciente" 
@@ -26,7 +29,7 @@ export function PatientSelector({ patients, value, onChange, currentPatientName 
           </div>
         </SelectTrigger>
         <SelectContent>
-          {patients.map((patient) => (
+          {activePatients.map((patient) => (
             <SelectItem key={patient.id} value={patient.id}>
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
