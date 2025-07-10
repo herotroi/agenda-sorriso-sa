@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
@@ -104,11 +105,21 @@ export function AppointmentForm({
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
+      // Format datetime-local properly
+      const formatDateTimeLocal = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+      
       setFormData({
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
-        start_time: startTime.toISOString().slice(0, 16),
+        start_time: formatDateTimeLocal(startTime),
         duration: duration.toString(),
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
@@ -247,123 +258,126 @@ export function AppointmentForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle>
             {appointmentToEdit ? 'Editar Agendamento' : 'Novo Agendamento'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="patient">Paciente *</Label>
-            <Select value={formData.patient_id} onValueChange={(value) => setFormData({ ...formData, patient_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o paciente" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="professional">Profissional *</Label>
-            <Select value={formData.professional_id} onValueChange={(value) => setFormData({ ...formData, professional_id: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o profissional" />
-              </SelectTrigger>
-              <SelectContent>
-                {professionals.map((prof) => (
-                  <SelectItem key={prof.id} value={prof.id}>
-                    {prof.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="procedure">Procedimento</Label>
-            <Select value={formData.procedure_id} onValueChange={handleProcedureChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o procedimento" />
-              </SelectTrigger>
-              <SelectContent>
-                {procedures.map((procedure) => (
-                  <SelectItem key={procedure.id} value={procedure.id}>
-                    {procedure.name} - R$ {procedure.price.toFixed(2)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-6">
             <div>
-              <Label htmlFor="start_time">Data e Hora *</Label>
-              <Input
-                id="start_time"
-                type="datetime-local"
-                value={formData.start_time}
-                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                required
+              <Label htmlFor="patient">Paciente *</Label>
+              <Select value={formData.patient_id} onValueChange={(value) => setFormData({ ...formData, patient_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="professional">Profissional *</Label>
+              <Select value={formData.professional_id} onValueChange={(value) => setFormData({ ...formData, professional_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {professionals.map((prof) => (
+                    <SelectItem key={prof.id} value={prof.id}>
+                      {prof.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="procedure">Procedimento</Label>
+              <Select value={formData.procedure_id} onValueChange={handleProcedureChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o procedimento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {procedures.map((procedure) => (
+                    <SelectItem key={procedure.id} value={procedure.id}>
+                      {procedure.name} - R$ {procedure.price.toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start_time">Data e Hora *</Label>
+                <Input
+                  id="start_time"
+                  type="datetime-local"
+                  value={formData.start_time}
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="duration">Duração (min)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  min="15"
+                  step="15"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status_id.toString()} onValueChange={(value) => setFormData({ ...formData, status_id: parseInt(value) })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id.toString()}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
               />
             </div>
-            <div>
-              <Label htmlFor="duration">Duração (min)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={formData.duration}
-                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                min="15"
-                step="15"
-              />
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={loading || isValidating || !formData.patient_id || !formData.professional_id}
+              >
+                {loading || isValidating ? 'Validando...' : appointmentToEdit ? 'Atualizar' : 'Agendar'}
+              </Button>
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status_id.toString()} onValueChange={(value) => setFormData({ ...formData, status_id: parseInt(value) })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                {statuses.map((status) => (
-                  <SelectItem key={status.id} value={status.id.toString()}>
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || isValidating || !formData.patient_id || !formData.professional_id}
-            >
-              {loading || isValidating ? 'Validando...' : appointmentToEdit ? 'Atualizar' : 'Agendar'}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
