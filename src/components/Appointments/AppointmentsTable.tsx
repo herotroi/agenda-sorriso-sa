@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,8 +47,10 @@ export function AppointmentsTable() {
     console.log('=== FORM CLOSING ===');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
-    // Refresh the data after creating/editing
-    handleManualRefresh();
+    // Remove automatic refresh when editing - only refresh manually when creating
+    if (!appointmentToEdit) {
+      handleManualRefresh();
+    }
   };
 
   if (loading) {
