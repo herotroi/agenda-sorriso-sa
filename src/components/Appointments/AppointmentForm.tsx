@@ -2,10 +2,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { AppointmentFormFields } from './form/AppointmentFormFields';
 import { useAppointmentFormData } from '@/hooks/useAppointmentFormData';
 import { useAppointmentAutoSave } from '@/hooks/useAppointmentAutoSave';
 import { useEffect } from 'react';
+import { Save, X, Loader2 } from 'lucide-react';
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -70,22 +72,31 @@ export function AppointmentForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
-        <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="flex items-center justify-between">
-            <span>
+      <DialogContent className="sm:max-w-[800px] max-h-[95vh] p-0 gap-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-semibold">
               {appointmentToEdit ? 'Editar Agendamento' : 'Novo Agendamento'}
-            </span>
+            </DialogTitle>
             {isSaving && (
-              <span className="text-sm text-muted-foreground animate-pulse">
-                Salvando...
-              </span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Salvando...</span>
+              </div>
             )}
-          </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
-          <form onSubmit={onSubmit} className="space-y-4 pb-6">
+        <ScrollArea className="flex-1 px-6">
+          <form onSubmit={onSubmit} className="py-6">
             <AppointmentFormFields
               formData={formData}
               setFormData={setFormData}
@@ -98,26 +109,49 @@ export function AppointmentForm({
               originalData={originalData}
               fieldModified={fieldModified}
             />
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSaving}
-              >
-                {isSaving ? 'Salvando...' : appointmentToEdit ? 'Salvar' : 'Criar'}
-              </Button>
-            </div>
-            
-            {appointmentToEdit && (
-              <div className="text-sm text-muted-foreground text-center">
-                💡 As alterações são salvas automaticamente
-              </div>
-            )}
           </form>
         </ScrollArea>
+
+        <div className="px-6 py-4 border-t bg-muted/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {appointmentToEdit && (
+                <p className="text-sm text-muted-foreground">
+                  💡 As alterações são salvas automaticamente
+                </p>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                disabled={isSaving}
+              >
+                Cancelar
+              </Button>
+              
+              <Button 
+                onClick={onSubmit}
+                disabled={isSaving}
+                className="min-w-[100px]"
+              >
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Salvando...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    <span>{appointmentToEdit ? 'Salvar' : 'Criar'}</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
