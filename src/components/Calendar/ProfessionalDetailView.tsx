@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  status_id: number;
   notes?: string;
   patients: { full_name: string };
   procedures: { name: string } | null;
