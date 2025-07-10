@@ -1,12 +1,11 @@
 
 import { Patient, Professional, Procedure, AppointmentStatus, FormData } from '@/types/appointment-form';
-import { PatientSelector } from './PatientSelector';
-import { ProfessionalSelector } from './ProfessionalSelector';
 import { ProcedureSelector } from './ProcedureSelector';
-import { DateTimeInput } from './DateTimeInput';
-import { DurationInput } from './DurationInput';
 import { StatusSelector } from './StatusSelector';
 import { NotesInput } from './NotesInput';
+import { PatientProfessionalSection } from './PatientProfessionalSection';
+import { DateTimeDurationSection } from './DateTimeDurationSection';
+import { useCurrentValueHelpers } from './CurrentValueHelpers';
 
 interface AppointmentFormFieldsProps {
   formData: FormData;
@@ -32,47 +31,29 @@ export function AppointmentFormFields({
   originalData
 }: AppointmentFormFieldsProps) {
   
-  const getCurrentPatientName = () => {
-    if (!originalData) return '';
-    const patient = patients.find(p => p.id === originalData.patient_id);
-    return patient ? patient.full_name : '';
-  };
-
-  const getCurrentProfessionalName = () => {
-    if (!originalData) return '';
-    const professional = professionals.find(p => p.id === originalData.professional_id);
-    return professional ? professional.name : '';
-  };
-
-  const getCurrentProcedureName = () => {
-    if (!originalData) return '';
-    const procedure = procedures.find(p => p.id === originalData.procedure_id);
-    return procedure ? `${procedure.name} - R$ ${procedure.price.toFixed(2)}` : '';
-  };
-
-  const getCurrentStatusName = () => {
-    if (!originalData) return '';
-    const status = statuses.find(s => s.id === originalData.status_id);
-    return status ? status.label : '';
-  };
+  const {
+    getCurrentPatientName,
+    getCurrentProfessionalName,
+    getCurrentProcedureName,
+    getCurrentStatusName
+  } = useCurrentValueHelpers({
+    originalData,
+    patients,
+    professionals,
+    procedures,
+    statuses
+  });
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <PatientSelector
-          patients={patients}
-          value={formData.patient_id}
-          onChange={(value) => handleFieldChange('patient_id', value)}
-          currentPatientName={getCurrentPatientName()}
-        />
-        
-        <ProfessionalSelector
-          professionals={professionals}
-          value={formData.professional_id}
-          onChange={(value) => handleFieldChange('professional_id', value)}
-          currentProfessionalName={getCurrentProfessionalName()}
-        />
-      </div>
+      <PatientProfessionalSection
+        formData={formData}
+        patients={patients}
+        professionals={professionals}
+        handleFieldChange={handleFieldChange}
+        currentPatientName={getCurrentPatientName()}
+        currentProfessionalName={getCurrentProfessionalName()}
+      />
 
       <ProcedureSelector
         procedures={procedures}
@@ -81,19 +62,11 @@ export function AppointmentFormFields({
         currentProcedureName={getCurrentProcedureName()}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DateTimeInput
-          value={formData.start_time}
-          onChange={(value) => handleFieldChange('start_time', value)}
-          currentValue={originalData?.start_time}
-        />
-        
-        <DurationInput
-          value={formData.duration}
-          onChange={(value) => handleFieldChange('duration', value)}
-          currentValue={originalData?.duration}
-        />
-      </div>
+      <DateTimeDurationSection
+        formData={formData}
+        handleFieldChange={handleFieldChange}
+        originalData={originalData}
+      />
 
       <StatusSelector
         statuses={statuses}
