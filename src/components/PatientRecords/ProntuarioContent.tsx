@@ -11,6 +11,7 @@ interface ProntuarioContentProps {
   documents: ProntuarioDocument[];
   onDocumentUpload: (file: File, description: string) => Promise<void>;
   onDocumentDelete: (documentId: string) => Promise<void>;
+  onClearSelection: () => void;
 }
 
 export function ProntuarioContent({
@@ -21,6 +22,7 @@ export function ProntuarioContent({
   documents,
   onDocumentUpload,
   onDocumentDelete,
+  onClearSelection,
 }: ProntuarioContentProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -30,6 +32,7 @@ export function ProntuarioContent({
         selectedAppointment={selectedAppointment}
         onAppointmentSelect={onAppointmentSelect}
         loading={loading}
+        onClearSelection={onClearSelection}
       />
 
       {/* Right Column - Documents */}
@@ -38,6 +41,7 @@ export function ProntuarioContent({
         documents={documents}
         onDocumentUpload={onDocumentUpload}
         onDocumentDelete={onDocumentDelete}
+        appointments={appointments}
       />
     </div>
   );

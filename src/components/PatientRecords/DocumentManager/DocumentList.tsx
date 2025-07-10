@@ -1,15 +1,16 @@
 
 import { FileText } from 'lucide-react';
 import { DocumentListItem } from './DocumentListItem';
-import type { ProntuarioDocument } from '@/types/prontuario';
+import type { ProntuarioDocument, Appointment } from '@/types/prontuario';
 
 interface DocumentListProps {
   documents: ProntuarioDocument[];
   appointmentId: string | null;
   onDocumentDelete: (documentId: string) => Promise<void>;
+  appointments: Appointment[];
 }
 
-export function DocumentList({ documents, appointmentId, onDocumentDelete }: DocumentListProps) {
+export function DocumentList({ documents, appointmentId, onDocumentDelete, appointments }: DocumentListProps) {
   // Filter documents by appointment if selected
   const filteredDocuments = appointmentId 
     ? documents.filter(doc => doc.appointment_id === appointmentId)
@@ -36,6 +37,7 @@ export function DocumentList({ documents, appointmentId, onDocumentDelete }: Doc
           key={doc.id}
           document={doc}
           onDelete={onDocumentDelete}
+          appointments={appointments}
         />
       ))}
     </div>

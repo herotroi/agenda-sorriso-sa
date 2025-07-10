@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, User, Clock, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, User, Clock, FileText, X } from 'lucide-react';
 import type { Appointment } from '@/types/prontuario';
 
 interface AppointmentsListProps {
@@ -8,13 +9,15 @@ interface AppointmentsListProps {
   selectedAppointment: string | null;
   onAppointmentSelect: (appointmentId: string) => void;
   loading: boolean;
+  onClearSelection: () => void;
 }
 
 export function AppointmentsList({ 
   appointments, 
   selectedAppointment, 
   onAppointmentSelect, 
-  loading 
+  loading,
+  onClearSelection
 }: AppointmentsListProps) {
   if (loading) {
     return (
@@ -35,12 +38,28 @@ export function AppointmentsList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Calendar className="h-5 w-5 mr-2" />
-          Procedimentos ({appointments.length})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center">
+            <Calendar className="h-5 w-5 mr-2" />
+            Procedimentos ({appointments.length})
+          </CardTitle>
+          {selectedAppointment && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearSelection}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Limpar Seleção
+            </Button>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Clique em um procedimento para ver seus documentos
+          {selectedAppointment 
+            ? 'Procedimento selecionado - documentos filtrados'
+            : 'Clique em um procedimento para ver seus documentos'
+          }
         </p>
       </CardHeader>
       <CardContent>

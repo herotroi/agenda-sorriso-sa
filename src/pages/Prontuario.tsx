@@ -33,6 +33,10 @@ export default function Prontuario() {
     setIsFormOpen(true);
   };
 
+  const handleClearSelection = () => {
+    setSelectedAppointment(null);
+  };
+
   return (
     <div className="space-y-6">
       <ProntuarioHeader
@@ -56,6 +60,7 @@ export default function Prontuario() {
           documents={documents}
           onDocumentUpload={handleDocumentUpload}
           onDocumentDelete={handleDocumentDelete}
+          onClearSelection={handleClearSelection}
         />
       )}
 
