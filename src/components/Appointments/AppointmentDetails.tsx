@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Edit, Trash2, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +31,7 @@ interface AppointmentDetailsProps {
 
 export function AppointmentDetails({ appointment, isOpen, onClose }: AppointmentDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(appointment.status);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { toast } = useToast();
 
@@ -51,19 +54,27 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
     }
   };
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async () => {
+    if (selectedStatus === appointment.status) {
+      toast({
+        title: 'Informação',
+        description: 'O status selecionado é o mesmo atual',
+      });
+      return;
+    }
+
     try {
       setIsUpdatingStatus(true);
       const { error } = await supabase
         .from('appointments')
-        .update({ status: newStatus })
+        .update({ status: selectedStatus })
         .eq('id', appointment.id);
 
       if (error) throw error;
 
       toast({
         title: 'Sucesso',
-        description: 'Status do agendamento atualizado',
+        description: 'Status do agendamento atualizado com sucesso',
       });
 
       onClose();
@@ -71,7 +82,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
       console.error('Error updating status:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar status',
+        description: 'Erro ao atualizar status do agendamento',
         variant: 'destructive',
       });
     } finally {
@@ -92,7 +103,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
 
       toast({
         title: 'Sucesso',
-        description: 'Agendamento excluído',
+        description: 'Agendamento excluído com sucesso',
       });
 
       onClose();
@@ -172,21 +183,28 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
 
           <div className="space-y-3">
             <div>
-              <span className="font-medium text-sm">Atualizar Status:</span>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {statusOptions.map((status) => (
-                  <Button
-                    key={status}
-                    variant={appointment.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusUpdate(status)}
-                    disabled={isUpdatingStatus || appointment.status === status}
-                  >
-                    {status}
-                  </Button>
-                ))}
-              </div>
+              <Label htmlFor="status" className="text-sm font-medium">Status</Label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={isUpdatingStatus || selectedStatus === appointment.status}
+              className="w-full"
+            >
+              {isUpdatingStatus ? 'Salvando...' : 'Salvar Status'}
+            </Button>
           </div>
 
           <Separator />
