@@ -38,51 +38,18 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       return;
     }
 
-    console.log('Tentando atualizar status:', {
-      appointmentId: appointment.id,
-      statusAtual: appointment.status,
-      novoStatus: selectedStatus,
-      statusValidos: statusOptions
-    });
-
     try {
       setIsUpdatingStatus(true);
       
-      // Primeiro, vamos verificar se o appointment existe
-      const { data: existingAppointment, error: fetchError } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('id', appointment.id)
-        .single();
-
-      if (fetchError) {
-        console.error('Erro ao buscar agendamento:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('Agendamento encontrado:', existingAppointment);
-
-      // Agora vamos tentar a atualização
       const { data, error } = await supabase
         .from('appointments')
-        .update({ 
-          status: selectedStatus
-        })
+        .update({ status: selectedStatus })
         .eq('id', appointment.id)
         .select('*');
 
       if (error) {
-        console.error('Erro detalhado na atualização:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
         throw error;
       }
-
-      console.log('Status atualizado com sucesso:', data);
 
       toast({
         title: 'Sucesso',
@@ -96,12 +63,12 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       window.location.reload();
 
     } catch (error: any) {
-      console.error('Erro completo ao atualizar status:', error);
+      console.error('Erro ao atualizar status:', error);
       
-      let errorMessage = 'Erro desconhecido ao atualizar status';
+      let errorMessage = 'Erro ao atualizar status do agendamento';
       
       if (error.code === '23514') {
-        errorMessage = 'Status inválido. Verifique se o valor está correto.';
+        errorMessage = 'Status inválido. Por favor, tente novamente.';
       } else if (error.message) {
         errorMessage = error.message;
       }
