@@ -22,7 +22,7 @@ interface Appointment {
   professionals: { name: string } | null;
 }
 
-interface Document {
+interface ProntuarioDocument {
   id: string;
   name: string;
   mime_type: string;
@@ -33,6 +33,9 @@ interface Document {
   patient_id?: string;
   appointment_id?: string;
   record_id?: string;
+  type?: string;
+  size?: number;
+  url?: string;
 }
 
 export function useProntuarioData() {
@@ -40,7 +43,7 @@ export function useProntuarioData() {
   const [selectedPatient, setSelectedPatient] = useState<string>('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<ProntuarioDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -110,13 +113,13 @@ export function useProntuarioData() {
 
       if (error) throw error;
       
-      // Transform data to match Document interface
+      // Transform data to match ProntuarioDocument interface
       const transformedDocuments = (data || []).map(doc => ({
         id: doc.id,
         name: doc.name,
         type: doc.mime_type,
         size: doc.file_size,
-        url: `${supabase.supabaseUrl}/storage/v1/object/public/documents/${doc.file_path}`,
+        url: `https://qxsaiuojxdnsanyivcxd.supabase.co/storage/v1/object/public/documents/${doc.file_path}`,
         uploaded_at: doc.uploaded_at,
         description: doc.description,
         patient_id: doc.patient_id,

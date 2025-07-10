@@ -12,14 +12,20 @@ interface Appointment {
   professionals: { name: string } | null;
 }
 
-interface Document {
+interface ProntuarioDocument {
   id: string;
   name: string;
-  type: string;
-  size: number;
-  url: string;
+  type?: string;
+  mime_type: string;
+  file_size: number;
+  size?: number;
+  url?: string;
+  file_path: string;
   uploaded_at: string;
   description?: string;
+  patient_id?: string;
+  appointment_id?: string;
+  record_id?: string;
 }
 
 interface ProntuarioContentProps {
@@ -27,7 +33,7 @@ interface ProntuarioContentProps {
   selectedAppointment: string | null;
   onAppointmentSelect: (appointmentId: string) => void;
   loading: boolean;
-  documents: Document[];
+  documents: ProntuarioDocument[];
   onDocumentUpload: (file: File, description: string) => Promise<void>;
   onDocumentDelete: (documentId: string) => Promise<void>;
 }

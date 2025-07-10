@@ -24,7 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface Document {
+interface ProntuarioDocument {
   id: string;
   name: string;
   type?: string;
@@ -42,7 +42,7 @@ interface Document {
 
 interface DocumentManagerProps {
   appointmentId: string | null;
-  documents: Document[];
+  documents: ProntuarioDocument[];
   onDocumentUpload: (file: File, description: string) => Promise<void>;
   onDocumentDelete: (documentId: string) => Promise<void>;
 }
@@ -119,7 +119,7 @@ export function DocumentManager({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getDocumentUrl = (doc: Document) => {
+  const getDocumentUrl = (doc: ProntuarioDocument) => {
     if (doc.url) return doc.url;
     return `https://qxsaiuojxdnsanyivcxd.supabase.co/storage/v1/object/public/documents/${doc.file_path}`;
   };
