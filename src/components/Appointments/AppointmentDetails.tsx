@@ -1,9 +1,7 @@
 
-import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AppointmentForm } from './AppointmentForm';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import { AppointmentInfo } from './AppointmentInfo';
 import { AppointmentStatusUpdater } from './AppointmentStatusUpdater';
@@ -30,8 +28,6 @@ interface AppointmentDetailsProps {
 }
 
 export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: AppointmentDetailsProps) {
-  const [isEditing, setIsEditing] = useState(false);
-
   const handleClose = () => {
     if (onUpdate) {
       onUpdate();
@@ -44,27 +40,6 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
       onUpdate();
     }
   };
-
-  const handleEdit = () => {
-    console.log('Edit button clicked, appointment data:', appointment);
-    setIsEditing(true);
-  };
-
-  const handleEditClose = () => {
-    console.log('Closing edit form');
-    setIsEditing(false);
-    handleClose();
-  };
-
-  if (isEditing) {
-    return (
-      <AppointmentForm
-        isOpen={isOpen}
-        onClose={handleEditClose}
-        appointmentToEdit={appointment}
-      />
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -96,7 +71,6 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
             <AppointmentActions 
               appointmentId={appointment.id}
-              onEdit={handleEdit}
               onClose={handleClose}
               onUpdate={onUpdate}
             />

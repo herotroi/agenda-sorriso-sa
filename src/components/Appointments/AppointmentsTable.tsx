@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, RefreshCw, Edit, Plus } from 'lucide-react';
+import { Calendar, RefreshCw, Plus } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -23,30 +23,17 @@ export function AppointmentsTable() {
     handleManualRefresh
   } = useAppointmentsData();
 
-  const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-
-  const handleEdit = (appointment: any) => {
-    console.log('Opening edit form for appointment:', appointment);
-    setEditingAppointment(appointment);
-    setIsCreating(false);
-    setIsFormOpen(true);
-  };
 
   const handleCreate = () => {
     console.log('Opening create form');
-    setEditingAppointment(null);
-    setIsCreating(true);
     setIsFormOpen(true);
   };
 
   const handleFormClose = () => {
     console.log('Closing form');
     setIsFormOpen(false);
-    setEditingAppointment(null);
-    setIsCreating(false);
-    // Refresh the data after editing/creating
+    // Refresh the data after creating
     handleManualRefresh();
   };
 
@@ -115,12 +102,11 @@ export function AppointmentsTable() {
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Observações</TableHead>
-                    <TableHead className="w-20">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {appointments.map((appointment) => (
-                    <TableRow key={appointment.id} className="hover:bg-muted/50 cursor-pointer">
+                    <TableRow key={appointment.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">
                         {appointment.patients?.full_name || 'N/A'}
                       </TableCell>
@@ -153,16 +139,6 @@ export function AppointmentsTable() {
                           ) : 'Sem observações'}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(appointment)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -172,11 +148,10 @@ export function AppointmentsTable() {
         </CardContent>
       </Card>
 
-      {/* Formulário de Edição/Criação */}
+      {/* Formulário de Criação */}
       <AppointmentForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
-        appointmentToEdit={editingAppointment}
         selectedDate={new Date()}
       />
     </>

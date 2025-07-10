@@ -1,17 +1,16 @@
 
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppointmentActionsProps {
   appointmentId: string;
-  onEdit: () => void;
   onClose: () => void;
   onUpdate?: () => void;
 }
 
-export function AppointmentActions({ appointmentId, onEdit, onClose, onUpdate }: AppointmentActionsProps) {
+export function AppointmentActions({ appointmentId, onClose, onUpdate }: AppointmentActionsProps) {
   const { toast } = useToast();
 
   const handleDelete = async () => {
@@ -45,22 +44,14 @@ export function AppointmentActions({ appointmentId, onEdit, onClose, onUpdate }:
   };
 
   return (
-    <div className="flex justify-between gap-2">
-      <Button
-        variant="outline"
-        onClick={onEdit}
-        className="flex-1"
-      >
-        <Edit className="h-4 w-4 mr-2" />
-        Editar
-      </Button>
+    <div className="flex justify-center">
       <Button
         variant="destructive"
         onClick={handleDelete}
-        className="flex-1"
+        className="w-full"
       >
         <Trash2 className="h-4 w-4 mr-2" />
-        Excluir
+        Excluir Agendamento
       </Button>
     </div>
   );
