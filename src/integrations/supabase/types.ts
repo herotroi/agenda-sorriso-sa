@@ -308,6 +308,70 @@ export type Database = {
         }
         Relationships: []
       }
+      prontuario_documents: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          description: string | null
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          name: string
+          patient_id: string | null
+          record_id: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          name: string
+          patient_id?: string | null
+          record_id?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          description?: string | null
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          name?: string
+          patient_id?: string | null
+          record_id?: string | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prontuario_documents_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuario_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuario_documents_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "patient_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           id: string

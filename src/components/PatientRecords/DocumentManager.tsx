@@ -27,11 +27,17 @@ import {
 interface Document {
   id: string;
   name: string;
-  type: string;
-  size: number;
-  url: string;
+  type?: string;
+  mime_type: string;
+  file_size: number;
+  size?: number;
+  url?: string;
+  file_path: string;
   uploaded_at: string;
   description?: string;
+  patient_id?: string;
+  appointment_id?: string;
+  record_id?: string;
 }
 
 interface DocumentManagerProps {
@@ -53,15 +59,15 @@ export function DocumentManager({
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Filtrar documentos por appointment se selecionado
+  // Filter documents by appointment if selected
   const filteredDocuments = appointmentId 
-    ? documents.filter(doc => doc.id.includes(appointmentId)) // Simulação de filtro
+    ? documents.filter(doc => doc.appointment_id === appointmentId)
     : documents;
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validar tamanho do arquivo (máximo 10MB)
+      // Validate file size (maximum 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: 'Erro',
@@ -83,17 +89,8 @@ export function DocumentManager({
       setSelectedFile(null);
       setUploadDescription('');
       setIsUploadDialogOpen(false);
-      toast({
-        title: 'Sucesso',
-        description: 'Documento enviado com sucesso',
-      });
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao enviar documento',
-        variant: 'destructive',
-      });
+      // Error handling is done in the parent component
     } finally {
       setIsUploading(false);
     }
@@ -103,23 +100,14 @@ export function DocumentManager({
     if (window.confirm('Tem certeza que deseja excluir este documento?')) {
       try {
         await onDocumentDelete(documentId);
-        toast({
-          title: 'Sucesso',
-          description: 'Documento excluído com sucesso',
-        });
       } catch (error) {
-        console.error('Error deleting document:', error);
-        toast({
-          title: 'Erro',
-          description: 'Erro ao excluir documento',
-          variant: 'destructive',
-        });
+        // Error handling is done in the parent component
       }
     }
   };
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4 text-blue-500" />;
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return <ImageIcon className="h-4 w-4 text-blue-500" />;
     return <File className="h-4 w-4 text-gray-500" />;
   };
 
@@ -129,6 +117,11 @@ export function DocumentManager({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getDocumentUrl = (doc: Document) => {
+    if (doc.url) return doc.url;
+    return `https://qxsaiuojxdnsanyivcxd.supabase.co/storage/v1/object/public/documents/${doc.file_path}`;
   };
 
   return (
@@ -223,11 +216,11 @@ export function DocumentManager({
                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  {getFileIcon(doc.type)}
+                  {getFileIcon(doc.mime_type)}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{doc.name}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatFileSize(doc.size)}</span>
+                      <span>{formatFileSize(doc.file_size || doc.size || 0)}</span>
                       <span>•</span>
                       <span>{new Date(doc.uploaded_at).toLocaleDateString('pt-BR')}</span>
                     </div>
@@ -241,7 +234,7 @@ export function DocumentManager({
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    onClick={() => window.open(doc.url, '_blank')}
+                    onClick={() => window.open(getDocumentUrl(doc), '_blank')}
                     title="Visualizar documento"
                   >
                     <Eye className="h-4 w-4" />
