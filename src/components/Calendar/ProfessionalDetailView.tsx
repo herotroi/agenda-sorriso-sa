@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Search, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Search, Calendar, Stethoscope } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
@@ -347,7 +348,7 @@ export function ProfessionalDetailView({
                         key={day.getDate()}
                         onClick={() => handleDayClick(day)}
                         className={`
-                          p-2 min-h-[80px] border rounded cursor-pointer hover:bg-gray-50 transition-colors
+                          p-2 min-h-[100px] border rounded cursor-pointer hover:bg-gray-50 transition-colors relative
                           ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'}
                           ${isSelected ? 'bg-blue-100 border-blue-300' : ''}
                         `}
@@ -355,22 +356,38 @@ export function ProfessionalDetailView({
                         <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
                           {day.getDate()}
                         </div>
+                        
                         {dayAppointments.length > 0 && (
-                          <div className="mt-1 space-y-1">
-                            {dayAppointments.slice(0, 2).map((apt) => (
-                              <div
-                                key={apt.id}
-                                className="text-xs p-1 rounded text-white truncate"
-                                style={{ backgroundColor: professional.color }}
+                          <div className="mt-1">
+                            {/* Ícone de estetoscópio e contador */}
+                            <div className="flex items-center justify-center mb-2">
+                              <Badge 
+                                variant="secondary" 
+                                className="flex items-center gap-1 text-xs px-2 py-1"
+                                style={{ backgroundColor: professional.color + '20', color: professional.color }}
                               >
-                                {apt.patients?.full_name}
-                              </div>
-                            ))}
-                            {dayAppointments.length > 2 && (
-                              <div className="text-xs text-gray-500">
-                                +{dayAppointments.length - 2} mais
-                              </div>
-                            )}
+                                <Stethoscope className="h-3 w-3" />
+                                <span className="font-semibold">{dayAppointments.length}</span>
+                              </Badge>
+                            </div>
+                            
+                            {/* Primeiros agendamentos */}
+                            <div className="space-y-1">
+                              {dayAppointments.slice(0, 1).map((apt) => (
+                                <div
+                                  key={apt.id}
+                                  className="text-xs p-1 rounded text-white truncate"
+                                  style={{ backgroundColor: professional.color }}
+                                >
+                                  {apt.patients?.full_name}
+                                </div>
+                              ))}
+                              {dayAppointments.length > 1 && (
+                                <div className="text-xs text-gray-500 text-center">
+                                  +{dayAppointments.length - 1} mais
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
