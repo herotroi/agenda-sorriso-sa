@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -214,9 +213,8 @@ export function useAppointmentFormData(
 
     const finalData: FormData = { ...originalData };
     
-    // Aplicar apenas os campos que foram modificados
-    Object.keys(fieldModified).forEach((key) => {
-      const field = key as keyof FormData;
+    // Aplicar apenas os campos que foram modificados usando type assertion segura
+    (Object.keys(fieldModified) as Array<keyof FormData>).forEach((field) => {
       if (fieldModified[field]) {
         finalData[field] = formData[field];
       }
