@@ -32,7 +32,9 @@ export function AppointmentsTable() {
     setIsFormOpen(true);
   };
 
-  const handleEdit = (appointment: any) => {
+  const handleEdit = (appointment: any, event: React.MouseEvent) => {
+    // Prevent event bubbling to avoid conflicts
+    event.stopPropagation();
     console.log('Opening edit form for appointment:', appointment.id);
     setAppointmentToEdit(appointment);
     setIsFormOpen(true);
@@ -153,7 +155,7 @@ export function AppointmentsTable() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(appointment)}
+                          onClick={(event) => handleEdit(appointment, event)}
                           className="h-8 w-8 p-0"
                         >
                           <Pencil className="h-4 w-4" />
