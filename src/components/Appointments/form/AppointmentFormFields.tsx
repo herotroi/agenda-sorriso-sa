@@ -31,16 +31,6 @@ export function AppointmentFormFields({
   fieldModified
 }: AppointmentFormFieldsProps) {
   
-  const getDisplayValue = (field: keyof FormData, currentValue: string | number) => {
-    if (!originalData || !fieldModified) return currentValue;
-    
-    if (fieldModified[field]) {
-      return currentValue;
-    }
-    
-    return originalData[field];
-  };
-
   const getCurrentPatientName = () => {
     if (!originalData) return '';
     const patient = patients.find(p => p.id === originalData.patient_id);
@@ -76,7 +66,7 @@ export function AppointmentFormFields({
           )}
         </Label>
         <Select 
-          value={fieldModified?.patient_id ? formData.patient_id : ''}
+          value={formData.patient_id}
           onValueChange={(value) => handleFieldChange('patient_id', value)}
         >
           <SelectTrigger>
@@ -101,7 +91,7 @@ export function AppointmentFormFields({
           )}
         </Label>
         <Select 
-          value={fieldModified?.professional_id ? formData.professional_id : ''}
+          value={formData.professional_id}
           onValueChange={(value) => handleFieldChange('professional_id', value)}
         >
           <SelectTrigger>
@@ -126,7 +116,7 @@ export function AppointmentFormFields({
           )}
         </Label>
         <Select 
-          value={fieldModified?.procedure_id ? formData.procedure_id : ''}
+          value={formData.procedure_id}
           onValueChange={(value) => onProcedureChange(value)}
         >
           <SelectTrigger>
@@ -154,7 +144,7 @@ export function AppointmentFormFields({
           <Input
             id="start_time"
             type="datetime-local"
-            value={getDisplayValue('start_time', formData.start_time) as string}
+            value={formData.start_time}
             onChange={(e) => handleFieldChange('start_time', e.target.value)}
             required
           />
@@ -170,7 +160,7 @@ export function AppointmentFormFields({
           <Input
             id="duration"
             type="number"
-            value={getDisplayValue('duration', formData.duration) as string}
+            value={formData.duration}
             onChange={(e) => handleFieldChange('duration', e.target.value)}
             min="15"
             step="15"
@@ -187,7 +177,7 @@ export function AppointmentFormFields({
           )}
         </Label>
         <Select 
-          value={fieldModified?.status_id ? formData.status_id.toString() : ''}
+          value={formData.status_id.toString()}
           onValueChange={(value) => handleFieldChange('status_id', parseInt(value))}
         >
           <SelectTrigger>
@@ -213,7 +203,7 @@ export function AppointmentFormFields({
         </Label>
         <Textarea
           id="notes"
-          value={getDisplayValue('notes', formData.notes) as string}
+          value={formData.notes}
           onChange={(e) => handleFieldChange('notes', e.target.value)}
           placeholder="Digite suas observações..."
           rows={3}
