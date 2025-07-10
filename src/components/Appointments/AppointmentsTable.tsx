@@ -33,9 +33,11 @@ export function AppointmentsTable() {
   };
 
   const handleEdit = (appointment: any, event: React.MouseEvent) => {
-    // Prevent event bubbling to avoid conflicts
+    console.log('Edit button clicked for appointment:', appointment.id);
+    // Prevent event bubbling to avoid conflicts with any row click handlers
+    event.preventDefault();
     event.stopPropagation();
-    console.log('Opening edit form for appointment:', appointment.id);
+    
     setAppointmentToEdit(appointment);
     setIsFormOpen(true);
   };
@@ -118,7 +120,7 @@ export function AppointmentsTable() {
                 </TableHeader>
                 <TableBody>
                   {appointments.map((appointment) => (
-                    <TableRow key={appointment.id} className="hover:bg-muted/50">
+                    <TableRow key={appointment.id}>
                       <TableCell className="font-medium">
                         {appointment.patients?.full_name || 'N/A'}
                       </TableCell>
