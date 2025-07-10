@@ -15,11 +15,7 @@ interface Patient {
   cpf?: string;
   phone?: string;
   email?: string;
-  street?: string;
-  number?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
+  address?: string;
   sus_card?: string;
   health_insurance?: string;
   birth_date?: string;
@@ -54,15 +50,10 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
     cpf: '',
     phone: '',
     email: '',
-    street: '',
-    number: '',
-    neighborhood: '',
-    city: '',
-    state: '',
+    address: '',
     sus_card: '',
     health_insurance: '',
     birth_date: '',
-    medical_history: '',
     notes: '',
   });
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
@@ -121,15 +112,10 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         cpf: patient.cpf || '',
         phone: patient.phone || '',
         email: patient.email || '',
-        street: patient.street || '',
-        number: patient.number || '',
-        neighborhood: patient.neighborhood || '',
-        city: patient.city || '',
-        state: patient.state || '',
+        address: patient.address || '',
         sus_card: patient.sus_card || '',
         health_insurance: patient.health_insurance || '',
         birth_date: patient.birth_date || '',
-        medical_history: patient.medical_history || '',
         notes: patient.notes || '',
       });
       fetchPatientRecords(patient.id);
@@ -139,15 +125,10 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         cpf: '',
         phone: '',
         email: '',
-        street: '',
-        number: '',
-        neighborhood: '',
-        city: '',
-        state: '',
+        address: '',
         sus_card: '',
         health_insurance: '',
         birth_date: '',
-        medical_history: '',
         notes: '',
       });
       setPatientRecords([]);
@@ -160,19 +141,14 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
 
     try {
       const data = {
-        ...formData,
-        birth_date: formData.birth_date || null,
+        full_name: formData.full_name,
         cpf: formData.cpf || null,
         phone: formData.phone || null,
         email: formData.email || null,
-        street: formData.street || null,
-        number: formData.number || null,
-        neighborhood: formData.neighborhood || null,
-        city: formData.city || null,
-        state: formData.state || null,
+        address: formData.address || null,
         sus_card: formData.sus_card || null,
         health_insurance: formData.health_insurance || null,
-        medical_history: formData.medical_history || null,
+        birth_date: formData.birth_date || null,
         notes: formData.notes || null,
       };
 
@@ -283,63 +259,14 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Endereço</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="street">Rua/Avenida</Label>
-                <Input
-                  id="street"
-                  value={formData.street}
-                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  placeholder="Nome da rua"
-                />
-              </div>
-              <div>
-                <Label htmlFor="number">Número</Label>
-                <Input
-                  id="number"
-                  value={formData.number}
-                  onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                  placeholder="123"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="neighborhood">Bairro</Label>
-                <Input
-                  id="neighborhood"
-                  value={formData.neighborhood}
-                  onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
-                  placeholder="Nome do bairro"
-                />
-              </div>
-              <div>
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Nome da cidade"
-                />
-              </div>
-              <div>
-                <Label htmlFor="state">UF</Label>
-                <Select value={formData.state} onValueChange={(value) => setFormData({ ...formData, state: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brazilianStates.map((state) => (
-                      <SelectItem key={state} value={state}>
-                        {state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <div>
+            <Label htmlFor="address">Endereço Completo</Label>
+            <Input
+              id="address"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Rua, número, bairro, cidade, UF"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -383,17 +310,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
               </div>
             </div>
           )}
-
-          <div>
-            <Label htmlFor="medical_history">Histórico Médico</Label>
-            <Textarea
-              id="medical_history"
-              value={formData.medical_history}
-              onChange={(e) => setFormData({ ...formData, medical_history: e.target.value })}
-              rows={3}
-              placeholder="Alergias, medicamentos em uso, condições médicas..."
-            />
-          </div>
 
           <div>
             <Label htmlFor="notes">Observações</Label>
