@@ -39,3 +39,13 @@ export interface AppointmentStatus {
   color?: string;
   active?: boolean;
 }
+
+export interface FormData {
+  patient_id: string;
+  professional_id: string;
+  procedure_id: string;
+  start_time: string;
+  duration: string;
+  notes: string;
+  status_id: number;
+}
