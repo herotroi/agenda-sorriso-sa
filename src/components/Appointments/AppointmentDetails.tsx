@@ -72,13 +72,6 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
     try {
       setIsUpdatingStatus(true);
       
-      // Garantir que o status seja um dos valores permitidos
-      const validStatuses = ['Confirmado', 'Cancelado', 'Não Compareceu', 'Em atendimento', 'Finalizado'];
-      
-      if (!validStatuses.includes(selectedStatus)) {
-        throw new Error(`Status inválido: ${selectedStatus}`);
-      }
-
       const { data, error } = await supabase
         .from('appointments')
         .update({ 
