@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Search, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
@@ -32,18 +34,19 @@ export function ProfessionalDetailView({
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [searchDate, setSearchDate] = useState('');
   const { toast } = useToast();
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (startDate?: Date, endDate?: Date) => {
     try {
       setLoading(true);
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
+      const start = startDate || new Date(selectedDate);
+      start.setHours(0, 0, 0, 0);
       
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      const end = endDate || new Date(selectedDate);
+      end.setHours(23, 59, 59, 999);
 
       const { data, error } = await supabase
         .from('appointments')
@@ -55,8 +58,8 @@ export function ProfessionalDetailView({
           appointment_statuses(label, color)
         `)
         .eq('professional_id', professional.id)
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString())
+        .gte('start_time', start.toISOString())
+        .lte('start_time', end.toISOString())
         .order('start_time');
 
       if (error) throw error;
@@ -83,8 +86,30 @@ export function ProfessionalDetailView({
     onDateChange(newDate);
   };
 
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+    onDateChange(newDate);
+  };
+
   const goToToday = () => {
     onDateChange(new Date());
+  };
+
+  const handleSearchDate = () => {
+    if (searchDate) {
+      const date = new Date(searchDate);
+      if (!isNaN(date.getTime())) {
+        onDateChange(date);
+        setSearchDate('');
+      } else {
+        toast({
+          title: 'Data inválida',
+          description: 'Por favor, insira uma data válida',
+          variant: 'destructive',
+        });
+      }
+    }
   };
 
   const getAppointmentPosition = (startTime: string, endTime: string) => {
@@ -100,10 +125,6 @@ export function ProfessionalDetailView({
     };
   };
 
-  const getStatusColor = (statusColor: string) => {
-    return `border-l-4` + ` border-[${statusColor}]`;
-  };
-
   const handleFormClose = () => {
     setIsFormOpen(false);
     fetchAppointments();
@@ -117,6 +138,38 @@ export function ProfessionalDetailView({
   const handleAppointmentUpdate = () => {
     fetchAppointments();
   };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    const days = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    return days;
+  };
+
+  const getAppointmentsForDay = (date: Date) => {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+    
+    return appointments.filter(apt => {
+      const aptDate = new Date(apt.start_time);
+      return aptDate >= dayStart && aptDate <= dayEnd;
+    });
+  };
+
+  const handleDayClick = (date: Date) => {
+    onDateChange(date);
+  };
+
+  const monthDays = getDaysInMonth(selectedDate);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Carregando...</div>;
@@ -140,6 +193,19 @@ export function ProfessionalDetailView({
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
               <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Input
+              type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
+              placeholder="Buscar data..."
+              className="w-40"
+            />
+            <Button variant="outline" size="sm" onClick={handleSearchDate}>
+              <Search className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -168,10 +234,9 @@ export function ProfessionalDetailView({
 
         <CardContent>
           <Tabs defaultValue="day" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="day">Dia</TabsTrigger>
               <TabsTrigger value="month">Mês</TabsTrigger>
-              <TabsTrigger value="year">Ano</TabsTrigger>
             </TabsList>
 
             <TabsContent value="day" className="mt-6">
@@ -242,14 +307,76 @@ export function ProfessionalDetailView({
             </TabsContent>
 
             <TabsContent value="month" className="mt-6">
-              <div className="text-center text-gray-500 py-8">
-                Visualização mensal em desenvolvimento
-              </div>
-            </TabsContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <h3 className="text-lg font-semibold">
+                    {selectedDate.toLocaleDateString('pt-BR', { 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </h3>
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
 
-            <TabsContent value="year" className="mt-6">
-              <div className="text-center text-gray-500 py-8">
-                Visualização anual em desenvolvimento
+                <div className="grid grid-cols-7 gap-2">
+                  {/* Cabeçalhos dos dias da semana */}
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                    <div key={day} className="p-2 text-center font-semibold text-sm text-gray-600">
+                      {day}
+                    </div>
+                  ))}
+
+                  {/* Espaços vazios para o primeiro dia do mês */}
+                  {Array.from({ length: monthDays[0]?.getDay() || 0 }).map((_, index) => (
+                    <div key={index} className="p-2"></div>
+                  ))}
+
+                  {/* Dias do mês */}
+                  {monthDays.map((day) => {
+                    const dayAppointments = getAppointmentsForDay(day);
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    const isSelected = day.toDateString() === selectedDate.toDateString();
+
+                    return (
+                      <div
+                        key={day.getDate()}
+                        onClick={() => handleDayClick(day)}
+                        className={`
+                          p-2 min-h-[80px] border rounded cursor-pointer hover:bg-gray-50 transition-colors
+                          ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'}
+                          ${isSelected ? 'bg-blue-100 border-blue-300' : ''}
+                        `}
+                      >
+                        <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                          {day.getDate()}
+                        </div>
+                        {dayAppointments.length > 0 && (
+                          <div className="mt-1 space-y-1">
+                            {dayAppointments.slice(0, 2).map((apt) => (
+                              <div
+                                key={apt.id}
+                                className="text-xs p-1 rounded text-white truncate"
+                                style={{ backgroundColor: professional.color }}
+                              >
+                                {apt.patients?.full_name}
+                              </div>
+                            ))}
+                            {dayAppointments.length > 2 && (
+                              <div className="text-xs text-gray-500">
+                                +{dayAppointments.length - 2} mais
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </TabsContent>
           </Tabs>
