@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Phone, Mail, User, FileText } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, User, FileText, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Patient {
@@ -61,6 +61,7 @@ interface PatientDetailsProps {
 export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps) {
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
   const [appointmentRecords, setAppointmentRecords] = useState<AppointmentRecord[]>([]);
+  const [totalSpent, setTotalSpent] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
   const fetchPatientHistory = async (patientId: string) => {
@@ -91,6 +92,7 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
           id,
           start_time,
           notes,
+          price,
           procedures(name),
           professionals(name, specialty)
         `)
@@ -104,10 +106,17 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
 
       setPatientRecords(recordsData || []);
       setAppointmentRecords(appointmentsData || []);
+
+      // Calcular total gasto
+      const total = (appointmentsData || []).reduce((sum, appointment) => {
+        return sum + (appointment.price || 0);
+      }, 0);
+      setTotalSpent(total);
     } catch (error) {
       console.error('Error fetching patient history:', error);
       setPatientRecords([]);
       setAppointmentRecords([]);
+      setTotalSpent(0);
     } finally {
       setLoading(false);
     }
@@ -210,6 +219,24 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
             </CardContent>
           </Card>
 
+          {/* Total Gasto */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Total Gasto na Clínica
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                R$ {totalSpent.toFixed(2).replace('.', ',')}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Baseado em {appointmentRecords.length} procedimento(s) realizado(s)
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Histórico de Procedimentos */}
           <Card>
             <CardHeader>
@@ -301,11 +328,18 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
                             })}
                           </span>
                         </div>
-                        {appointment.procedures?.name && (
-                          <Badge variant="outline" className="bg-blue-100">
-                            {appointment.procedures.name}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {appointment.procedures?.name && (
+                            <Badge variant="outline" className="bg-blue-100">
+                              {appointment.procedures.name}
+                            </Badge>
+                          )}
+                          {appointment.price && (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              R$ {appointment.price.toFixed(2).replace('.', ',')}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       {appointment.professionals && (
@@ -322,7 +356,7 @@ export function PatientDetails({ patient, isOpen, onClose }: PatientDetailsProps
                       )}
 
                       {appointment.notes && (
-                        <div>
+                        <div className="mb-2">
                           <span className="text-sm font-medium text-gray-700">Observações:</span>
                           <p className="text-sm text-gray-600 mt-1">{appointment.notes}</p>
                         </div>
