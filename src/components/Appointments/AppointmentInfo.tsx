@@ -1,24 +1,14 @@
 
 import { Clock, User } from 'lucide-react';
-
-interface Appointment {
-  id: string;
-  patient_id: string;
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  notes?: string;
-  patients: { full_name: string };
-  procedures: { name: string } | null;
-  professionals: { name: string };
-}
+import { Appointment } from './types';
 
 interface AppointmentInfoProps {
   appointment: Appointment;
 }
 
 export function AppointmentInfo({ appointment }: AppointmentInfoProps) {
+  console.log('AppointmentInfo - appointment data:', appointment);
+  
   return (
     <div className="space-y-3">
       <div>

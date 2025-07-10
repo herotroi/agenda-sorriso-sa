@@ -10,20 +10,7 @@ import { AppointmentInfo } from './AppointmentInfo';
 import { AppointmentStatusUpdater } from './AppointmentStatusUpdater';
 import { AppointmentActions } from './AppointmentActions';
 import { AppointmentForm } from './AppointmentForm';
-
-interface Appointment {
-  id: string;
-  patient_id: string;
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  status_id: number;
-  notes?: string;
-  patients: { full_name: string };
-  procedures: { name: string } | null;
-  professionals: { name: string };
-}
+import { Appointment } from './types';
 
 interface AppointmentDetailsProps {
   appointment: Appointment;

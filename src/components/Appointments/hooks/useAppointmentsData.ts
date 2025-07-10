@@ -29,7 +29,8 @@ export function useAppointmentsData() {
       if (appointmentsRes.error) throw appointmentsRes.error;
 
       console.log('✅ Data fetched successfully:', {
-        appointments: appointmentsRes.data?.length
+        appointments: appointmentsRes.data?.length,
+        firstAppointment: appointmentsRes.data?.[0]
       });
 
       setAppointments(appointmentsRes.data || []);
