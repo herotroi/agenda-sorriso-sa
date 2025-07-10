@@ -121,9 +121,6 @@ export function useAppointmentFormData(
 
   useEffect(() => {
     if (isOpen && appointmentToEdit) {
-      console.log('=== INITIALIZING EDIT FORM ===');
-      console.log('Appointment to edit:', appointmentToEdit);
-      
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
@@ -138,14 +135,11 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Setting edit form data:', editFormData);
-      
-      // Set both original data and form data to the same values
+      console.log('Setting original appointment data for editing:', editFormData);
       setOriginalData(editFormData);
-      setFormData(editFormData);
+      setFormData(editFormData); // Manter os mesmos dados no formData inicialmente
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
-      console.log('=== INITIALIZING NEW FORM ===');
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
       const newFormData = {
         patient_id: '',
@@ -162,7 +156,7 @@ export function useAppointmentFormData(
       setOriginalData(null);
       resetFieldModifications();
     }
-  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId, setFormData, setOriginalData, resetFieldModifications]);
+  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   return {
     patients,

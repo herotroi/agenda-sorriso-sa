@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,6 @@ export function AppointmentsTable() {
 
   const handleEdit = (appointment: any, event: React.MouseEvent) => {
     console.log('Edit button clicked for appointment:', appointment.id);
-    console.log('Full appointment data:', appointment);
-    
     // Prevent event bubbling to avoid conflicts with any row click handlers
     event.preventDefault();
     event.stopPropagation();
@@ -44,13 +43,11 @@ export function AppointmentsTable() {
   };
 
   const handleFormClose = () => {
-    console.log('=== FORM CLOSING ===');
+    console.log('Closing form');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
-    // Remove automatic refresh when editing - only refresh manually when creating
-    if (!appointmentToEdit) {
-      handleManualRefresh();
-    }
+    // Refresh the data after creating/editing
+    handleManualRefresh();
   };
 
   if (loading) {
