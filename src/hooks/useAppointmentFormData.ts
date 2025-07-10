@@ -119,12 +119,8 @@ export function useAppointmentFormData(
     }
   }, [isOpen]);
 
-  // Efeito separado para inicializar os dados do formulário quando appointmentToEdit muda
   useEffect(() => {
-    if (isOpen && appointmentToEdit && appointmentToEdit.id) {
-      console.log('=== INITIALIZING EDIT FORM ===');
-      console.log('Appointment to edit:', appointmentToEdit);
-      
+    if (isOpen && appointmentToEdit) {
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
@@ -139,15 +135,11 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Setting edit form data:', editFormData);
-      
-      // Definir tanto originalData quanto formData com os mesmos valores
+      console.log('Setting original appointment data for editing:', editFormData);
       setOriginalData(editFormData);
-      setFormData(editFormData);
+      setFormData(editFormData); // Manter os mesmos dados no formData inicialmente
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
-      console.log('=== INITIALIZING NEW FORM ===');
-      
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
       const newFormData = {
         patient_id: '',
@@ -159,12 +151,12 @@ export function useAppointmentFormData(
         status_id: 1,
       };
       
-      console.log('Setting new form data:', newFormData);
+      console.log('Setting default form data for new appointment:', newFormData);
       setFormData(newFormData);
       setOriginalData(null);
       resetFieldModifications();
     }
-  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId, setFormData, setOriginalData, resetFieldModifications]);
+  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   return {
     patients,

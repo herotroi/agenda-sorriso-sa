@@ -24,33 +24,29 @@ export function AppointmentsTable() {
   } = useAppointmentsData();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [appointmentToEdit, setAppointmentToEdit] = useState<any>(null);
+  const [appointmentToEdit, setAppointmentToEdit] = useState(null);
 
   const handleCreate = () => {
-    console.log('=== OPENING CREATE FORM ===');
+    console.log('Opening create form');
     setAppointmentToEdit(null);
     setIsFormOpen(true);
   };
 
   const handleEdit = (appointment: any, event: React.MouseEvent) => {
-    console.log('=== OPENING EDIT FORM ===');
-    console.log('Full appointment object:', appointment);
-    
-    // Prevent event bubbling
+    console.log('Edit button clicked for appointment:', appointment.id);
+    // Prevent event bubbling to avoid conflicts with any row click handlers
     event.preventDefault();
     event.stopPropagation();
     
-    // Garantir que temos o objeto completo do appointment
     setAppointmentToEdit(appointment);
     setIsFormOpen(true);
   };
 
-  const handleFormClose = (success?: boolean) => {
-    console.log('=== FORM CLOSING ===', success ? 'with success' : '');
+  const handleFormClose = () => {
+    console.log('Closing form');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
-    
-    // Recarregar dados sempre que o formulário fechar
+    // Refresh the data after creating/editing
     handleManualRefresh();
   };
 
