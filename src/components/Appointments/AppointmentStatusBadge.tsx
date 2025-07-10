@@ -1,31 +1,75 @@
 
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppointmentStatusBadgeProps {
-  status: string;
+  statusId?: number;
+  status?: string;
   statusColor?: string;
 }
 
-export function AppointmentStatusBadge({ status, statusColor }: AppointmentStatusBadgeProps) {
+interface StatusOption {
+  id: number;
+  key: string;
+  label: string;
+  color: string;
+}
+
+export function AppointmentStatusBadge({ statusId, status, statusColor }: AppointmentStatusBadgeProps) {
+  const [statusData, setStatusData] = useState<StatusOption | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatusData = async () => {
+      if (statusId) {
+        try {
+          const { data, error } = await supabase
+            .from('appointment_statuses')
+            .select('*')
+            .eq('id', statusId)
+            .single();
+
+          if (error) throw error;
+          setStatusData(data);
+        } catch (error) {
+          console.error('Erro ao carregar status:', error);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchStatusData();
+  }, [statusId]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmado': return 'bg-green-500';
-      case 'Cancelado': return 'bg-red-500';
-      case 'Não Compareceu': return 'bg-gray-500';
-      case 'Em atendimento': return 'bg-blue-500';
-      case 'Finalizado': return 'bg-purple-500';
-      default: return 'bg-gray-400';
+      case 'Confirmado': return '#10b981';
+      case 'Cancelado': return '#ef4444';
+      case 'Não Compareceu': return '#6b7280';
+      case 'Em atendimento': return '#3b82f6';
+      case 'Finalizado': return '#8b5cf6';
+      default: return '#6b7280';
     }
   };
 
-  const backgroundColor = statusColor || getStatusColor(status);
+  if (loading) {
+    return (
+      <Badge className="text-white bg-gray-400">
+        Carregando...
+      </Badge>
+    );
+  }
+
+  const displayLabel = statusData?.label || status || 'Status não definido';
+  const backgroundColor = statusColor || statusData?.color || getStatusColor(status || '');
 
   return (
     <Badge 
       className="text-white"
       style={{ backgroundColor }}
     >
-      {status}
+      {displayLabel}
     </Badge>
   );
 }
