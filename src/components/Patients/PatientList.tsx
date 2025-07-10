@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Phone, Mail, Search, MapPin } from 'lucide-react';
+import { Plus, Edit, Phone, Mail, Search, MapPin, Eye } from 'lucide-react';
 import { PatientForm } from './PatientForm';
+import { PatientDetails } from './PatientDetails';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,7 +29,9 @@ export function PatientList() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -74,10 +76,20 @@ export function PatientList() {
     setIsFormOpen(true);
   };
 
+  const handleViewDetails = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsDetailsOpen(true);
+  };
+
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingPatient(null);
     fetchPatients();
+  };
+
+  const handleDetailsClose = () => {
+    setIsDetailsOpen(false);
+    setSelectedPatient(null);
   };
 
   const formatAddress = (patient: Patient) => {
@@ -161,14 +173,24 @@ export function PatientList() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(patient)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewDetails(patient)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver Detalhes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(patient)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -189,6 +211,12 @@ export function PatientList() {
         isOpen={isFormOpen}
         onClose={handleFormClose}
         patient={editingPatient}
+      />
+
+      <PatientDetails
+        patient={selectedPatient}
+        isOpen={isDetailsOpen}
+        onClose={handleDetailsClose}
       />
     </div>
   );
