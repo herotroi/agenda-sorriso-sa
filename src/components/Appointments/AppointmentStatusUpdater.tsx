@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 interface Appointment {
   id: string;
   status: string;
+  status_id: number;
 }
 
 interface AppointmentStatusUpdaterProps {
@@ -16,21 +17,48 @@ interface AppointmentStatusUpdaterProps {
   onClose: () => void;
 }
 
+interface StatusOption {
+  id: number;
+  key: string;
+  label: string;
+  color: string;
+}
+
 export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentStatusUpdaterProps) {
-  const [selectedStatus, setSelectedStatus] = useState(appointment.status);
+  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
+  const [selectedStatusId, setSelectedStatusId] = useState<number>(appointment.status_id);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const statusOptions = [
-    'Confirmado',
-    'Cancelado',
-    'Não Compareceu',
-    'Em atendimento',
-    'Finalizado'
-  ];
+  const fetchStatusOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('appointment_statuses')
+        .select('*')
+        .eq('active', true)
+        .order('id');
+
+      if (error) throw error;
+      setStatusOptions(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar status:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar opções de status',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatusOptions();
+  }, []);
 
   const handleStatusUpdate = async () => {
-    if (selectedStatus === appointment.status) {
+    if (selectedStatusId === appointment.status_id) {
       toast({
         title: 'Informação',
         description: 'O status selecionado é o mesmo atual',
@@ -38,11 +66,12 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       return;
     }
 
-    console.log('Dados da atualização:', {
+    const selectedStatus = statusOptions.find(s => s.id === selectedStatusId);
+    console.log('Atualizando status:', {
       appointmentId: appointment.id,
-      statusAtual: appointment.status,
-      novoStatus: selectedStatus,
-      statusDisponivel: statusOptions.includes(selectedStatus)
+      statusAtualId: appointment.status_id,
+      novoStatusId: selectedStatusId,
+      novoStatusLabel: selectedStatus?.label
     });
 
     try {
@@ -50,17 +79,12 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status: selectedStatus })
+        .update({ status_id: selectedStatusId })
         .eq('id', appointment.id)
         .select('*');
 
       if (error) {
-        console.error('Erro do Supabase:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        console.error('Erro do Supabase:', error);
         throw error;
       }
 
@@ -71,30 +95,15 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
         description: 'Status do agendamento atualizado com sucesso',
       });
 
-      // Fechar o modal após sucesso
       onClose();
-      
-      // Forçar recarregamento da página para mostrar as mudanças
       window.location.reload();
 
     } catch (error: any) {
       console.error('Erro ao atualizar status:', error);
       
-      let errorMessage = 'Erro ao atualizar status do agendamento';
-      let errorTitle = 'Erro';
-      
-      if (error.code === '23514') {
-        errorMessage = `Status "${selectedStatus}" não é válido. Valores aceitos: ${statusOptions.join(', ')}`;
-        errorTitle = 'Status Inválido';
-      } else if (error.code === '42601') {
-        errorMessage = 'Erro de sintaxe na consulta. Contacte o suporte.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
       toast({
-        title: errorTitle,
-        description: errorMessage,
+        title: 'Erro',
+        description: 'Erro ao atualizar status do agendamento',
         variant: 'destructive',
       });
     } finally {
@@ -102,18 +111,25 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
     }
   };
 
+  if (loading) {
+    return <div className="text-center">Carregando opções de status...</div>;
+  }
+
+  const currentStatus = statusOptions.find(s => s.id === appointment.status_id);
+  const selectedStatus = statusOptions.find(s => s.id === selectedStatusId);
+
   return (
     <div className="space-y-3">
       <div>
         <Label htmlFor="status" className="text-sm font-medium">Alterar Status</Label>
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+        <Select value={selectedStatusId.toString()} onValueChange={(value) => setSelectedStatusId(parseInt(value))}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione o status" />
           </SelectTrigger>
           <SelectContent>
             {statusOptions.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status}
+              <SelectItem key={status.id} value={status.id.toString()}>
+                {status.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -121,12 +137,12 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       </div>
       
       <div className="text-xs text-gray-500">
-        Status atual: {appointment.status}
+        Status atual: {currentStatus?.label || 'Não definido'}
       </div>
       
       <Button
         onClick={handleStatusUpdate}
-        disabled={isUpdatingStatus || selectedStatus === appointment.status}
+        disabled={isUpdatingStatus || selectedStatusId === appointment.status_id}
         className="w-full"
         variant="default"
       >

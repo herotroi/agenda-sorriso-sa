@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_statuses: {
+        Row: {
+          active: boolean | null
+          color: string | null
+          created_at: string | null
+          id: number
+          key: string
+          label: string
+        }
+        Insert: {
+          active?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          id?: number
+          key: string
+          label: string
+        }
+        Update: {
+          active?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          id?: number
+          key?: string
+          label?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -26,6 +53,7 @@ export type Database = {
           professional_id: string | null
           start_time: string
           status: string | null
+          status_id: number
           updated_at: string
         }
         Insert: {
@@ -39,6 +67,7 @@ export type Database = {
           professional_id?: string | null
           start_time: string
           status?: string | null
+          status_id?: number
           updated_at?: string
         }
         Update: {
@@ -52,6 +81,7 @@ export type Database = {
           professional_id?: string | null
           start_time?: string
           status?: string | null
+          status_id?: number
           updated_at?: string
         }
         Relationships: [
@@ -74,6 +104,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_status"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_statuses"
             referencedColumns: ["id"]
           },
         ]

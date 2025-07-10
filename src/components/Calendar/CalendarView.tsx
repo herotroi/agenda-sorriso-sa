@@ -24,6 +24,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
+  status_id: number;
   patients: { full_name: string };
   procedures: { name: string } | null;
 }
