@@ -97,14 +97,14 @@ export function MonthView({
           const dayAppointments = getAppointmentsForDay(day);
           const isToday = day.toDateString() === new Date().toDateString();
           const isSelected = day.toDateString() === selectedDate.toDateString();
-          const lighterBgColor = getLighterColor(professional.color, 0.6);
+          const lighterBgColor = getLighterColor(professional.color, 0.15);
 
           return (
             <div
               key={day.getDate()}
               onClick={() => onDayClick(day)}
               className={`
-                p-2 min-h-[100px] border rounded cursor-pointer hover:bg-gray-50 transition-colors relative
+                p-2 min-h-[120px] border rounded cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden
                 ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'}
                 ${isSelected ? 'bg-blue-100 border-blue-300' : ''}
               `}
@@ -114,7 +114,7 @@ export function MonthView({
               </div>
               
               {dayAppointments.length > 0 && (
-                <div className="mt-1">
+                <div className="mt-1 space-y-1">
                   {/* Ícone de estetoscópio e contador */}
                   <div className="flex items-center justify-center mb-2">
                     <Badge 
@@ -128,37 +128,38 @@ export function MonthView({
                   </div>
                   
                   {/* Primeiro agendamento com status mais visível */}
-                  <div className="space-y-1">
-                    {dayAppointments.slice(0, 1).map((apt) => {
-                      const statusColor = apt.appointment_statuses?.color || '#6b7280';
-                      return (
-                        <div
-                          key={apt.id}
-                          className="text-xs p-2 rounded text-gray-800 truncate border-l-4 shadow-sm"
-                          style={{ 
-                            backgroundColor: lighterBgColor,
-                            borderLeftColor: statusColor,
-                            borderLeftWidth: '4px'
-                          }}
-                        >
+                  {dayAppointments.slice(0, 1).map((apt) => {
+                    const statusColor = apt.appointment_statuses?.color || '#6b7280';
+                    return (
+                      <div
+                        key={apt.id}
+                        className="text-xs p-2 rounded text-gray-800 border-l-4 shadow-sm overflow-hidden"
+                        style={{ 
+                          backgroundColor: lighterBgColor,
+                          borderLeftColor: statusColor,
+                        }}
+                      >
+                        <div className="space-y-1">
                           <div className="font-semibold truncate">
                             {apt.patients?.full_name}
                           </div>
-                          <div 
-                            className="text-xs font-bold mt-1 px-1 py-0.5 rounded text-white inline-block"
-                            style={{ backgroundColor: statusColor }}
-                          >
-                            {apt.appointment_statuses?.label || apt.status}
+                          <div className="flex justify-start">
+                            <div 
+                              className="text-xs font-bold px-1 py-0.5 rounded text-white truncate max-w-full"
+                              style={{ backgroundColor: statusColor }}
+                            >
+                              {apt.appointment_statuses?.label || apt.status}
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                    {dayAppointments.length > 1 && (
-                      <div className="text-xs text-gray-500 text-center font-medium">
-                        +{dayAppointments.length - 1} mais
                       </div>
-                    )}
-                  </div>
+                    );
+                  })}
+                  {dayAppointments.length > 1 && (
+                    <div className="text-xs text-gray-500 text-center font-medium">
+                      +{dayAppointments.length - 1} mais
+                    </div>
+                  )}
                 </div>
               )}
             </div>
