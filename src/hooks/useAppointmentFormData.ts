@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppointmentFormState } from './useAppointmentFormState';
@@ -28,7 +27,8 @@ export function useAppointmentFormData(
   const fetchData = async () => {
     try {
       const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
-        supabase.from('patients').select('id, full_name').order('full_name'),
+        // Only fetch active patients
+        supabase.from('patients').select('id, full_name, cpf, phone').eq('active', true).order('full_name'),
         supabase.from('professionals').select('id, name').eq('active', true).order('name'),
         supabase.from('procedures').select('*').eq('active', true).order('name'),
         supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
