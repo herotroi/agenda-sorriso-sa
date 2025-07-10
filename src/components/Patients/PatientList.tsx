@@ -22,7 +22,6 @@ interface Patient {
   sus_card?: string;
   health_insurance?: string;
   birth_date?: string;
-  medical_history?: string;
   notes?: string;
 }
 

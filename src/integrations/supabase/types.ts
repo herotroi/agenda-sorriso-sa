@@ -175,52 +175,58 @@ export type Database = {
       }
       patients: {
         Row: {
-          address: string | null
           birth_date: string | null
+          city: string | null
           cpf: string | null
           created_at: string
           email: string | null
           full_name: string
           health_insurance: string | null
           id: string
-          medical_history: string | null
+          neighborhood: string | null
           notes: string | null
+          number: string | null
           phone: string | null
+          state: string | null
+          street: string | null
           sus_card: string | null
           updated_at: string
-          whatsapp: string | null
         }
         Insert: {
-          address?: string | null
           birth_date?: string | null
+          city?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           full_name: string
           health_insurance?: string | null
           id?: string
-          medical_history?: string | null
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           phone?: string | null
+          state?: string | null
+          street?: string | null
           sus_card?: string | null
           updated_at?: string
-          whatsapp?: string | null
         }
         Update: {
-          address?: string | null
           birth_date?: string | null
+          city?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
           health_insurance?: string | null
           id?: string
-          medical_history?: string | null
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           phone?: string | null
+          state?: string | null
+          street?: string | null
           sus_card?: string | null
           updated_at?: string
-          whatsapp?: string | null
         }
         Relationships: []
       }

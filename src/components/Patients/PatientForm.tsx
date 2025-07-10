@@ -23,7 +23,6 @@ interface Patient {
   sus_card?: string;
   health_insurance?: string;
   birth_date?: string;
-  medical_history?: string;
   notes?: string;
 }
 
@@ -62,7 +61,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
     sus_card: '',
     health_insurance: '',
     birth_date: '',
-    medical_history: '',
     notes: '',
   });
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
@@ -129,7 +127,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         sus_card: patient.sus_card || '',
         health_insurance: patient.health_insurance || '',
         birth_date: patient.birth_date || '',
-        medical_history: patient.medical_history || '',
         notes: patient.notes || '',
       });
       fetchPatientRecords(patient.id);
@@ -147,7 +144,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         sus_card: '',
         health_insurance: '',
         birth_date: '',
-        medical_history: '',
         notes: '',
       });
       setPatientRecords([]);
@@ -172,7 +168,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         state: formData.state || null,
         sus_card: formData.sus_card || null,
         health_insurance: formData.health_insurance || null,
-        medical_history: formData.medical_history || null,
         notes: formData.notes || null,
       };
 
@@ -383,17 +378,6 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
               </div>
             </div>
           )}
-
-          <div>
-            <Label htmlFor="medical_history">Histórico Médico</Label>
-            <Textarea
-              id="medical_history"
-              value={formData.medical_history}
-              onChange={(e) => setFormData({ ...formData, medical_history: e.target.value })}
-              rows={3}
-              placeholder="Alergias, medicamentos em uso, condições médicas..."
-            />
-          </div>
 
           <div>
             <Label htmlFor="notes">Observações</Label>
