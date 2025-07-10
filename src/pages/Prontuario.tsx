@@ -4,7 +4,7 @@ import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
 import { ProntuarioHeader } from '@/components/PatientRecords/ProntuarioHeader';
 import { ProntuarioContent } from '@/components/PatientRecords/ProntuarioContent';
-import { useProntuarioData } from '@/hooks/useProntuarioData';
+import { useProntuario } from '@/hooks/useProntuario';
 
 export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function Prontuario() {
     handleDocumentUpload,
     handleDocumentDelete,
     fetchAppointments,
-  } = useProntuarioData();
+  } = useProntuario();
 
   const handleFormClose = () => {
     setIsFormOpen(false);

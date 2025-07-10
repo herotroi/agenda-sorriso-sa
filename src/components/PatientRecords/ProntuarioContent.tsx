@@ -1,32 +1,7 @@
 
 import { AppointmentsList } from './AppointmentsList';
 import { DocumentManager } from './DocumentManager';
-
-interface Appointment {
-  id: string;
-  start_time: string;
-  end_time: string;
-  notes?: string;
-  price?: number;
-  procedures: { name: string } | null;
-  professionals: { name: string } | null;
-}
-
-interface ProntuarioDocument {
-  id: string;
-  name: string;
-  type?: string;
-  mime_type: string;
-  file_size: number;
-  size?: number;
-  url?: string;
-  file_path: string;
-  uploaded_at: string;
-  description?: string;
-  patient_id?: string;
-  appointment_id?: string;
-  record_id?: string;
-}
+import type { Appointment, ProntuarioDocument } from '@/types/prontuario';
 
 interface ProntuarioContentProps {
   appointments: Appointment[];

@@ -1,16 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, User, Clock, FileText } from 'lucide-react';
-
-interface Appointment {
-  id: string;
-  start_time: string;
-  end_time: string;
-  notes?: string;
-  price?: number;
-  procedures: { name: string } | null;
-  professionals: { name: string } | null;
-}
+import type { Appointment } from '@/types/prontuario';
 
 interface AppointmentsListProps {
   appointments: Appointment[];
