@@ -41,6 +41,15 @@ export function DraggableAppointment({
     }
   };
 
+  const getLighterColor = (color: string, opacity: number = 0.7) => {
+    // Convert hex to RGB and add opacity
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id);
@@ -55,6 +64,7 @@ export function DraggableAppointment({
 
   const statusColor = appointment.appointment_statuses?.color || getStatusColor(appointment.status);
   const statusLabel = appointment.appointment_statuses?.label || appointment.status;
+  const lighterBgColor = getLighterColor(professionalColor, 0.7);
 
   return (
     <div
@@ -62,29 +72,34 @@ export function DraggableAppointment({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
-      className={`absolute left-1 right-1 rounded p-2 text-xs text-white cursor-move hover:opacity-80 transition-opacity ${
+      className={`absolute left-1 right-1 rounded-lg p-2 text-xs cursor-move hover:opacity-90 transition-all shadow-sm border-l-4 ${
         isDragStarted ? 'opacity-50' : ''
       }`}
       style={{
         ...position,
-        backgroundColor: professionalColor,
+        backgroundColor: lighterBgColor,
+        borderLeftColor: statusColor,
+        borderLeftWidth: '5px',
         minHeight: '40px',
-        borderLeft: `4px solid ${statusColor}`
+        color: '#1f2937'
       }}
     >
-      <div className="font-medium truncate">
+      <div className="font-semibold truncate text-gray-800">
         {appointment.patients?.full_name}
       </div>
-      <div className="truncate opacity-90">
+      <div className="truncate text-gray-700 mt-1">
         {appointment.procedures?.name}
       </div>
-      <div className="text-xs opacity-75">
+      <div className="text-xs text-gray-600 mt-1">
         {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
           hour: '2-digit', 
           minute: '2-digit' 
         })}
       </div>
-      <div className="text-xs font-semibold">
+      <div 
+        className="text-xs font-bold mt-1 px-2 py-1 rounded-full text-white inline-block"
+        style={{ backgroundColor: statusColor }}
+      >
         {statusLabel}
       </div>
     </div>

@@ -51,6 +51,15 @@ export function MonthView({
     });
   };
 
+  const getLighterColor = (color: string, opacity: number = 0.15) => {
+    // Convert hex to RGB and add opacity
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
   const monthDays = getDaysInMonth(selectedDate);
 
   return (
@@ -88,6 +97,7 @@ export function MonthView({
           const dayAppointments = getAppointmentsForDay(day);
           const isToday = day.toDateString() === new Date().toDateString();
           const isSelected = day.toDateString() === selectedDate.toDateString();
+          const lighterBgColor = getLighterColor(professional.color, 0.6);
 
           return (
             <div
@@ -109,27 +119,42 @@ export function MonthView({
                   <div className="flex items-center justify-center mb-2">
                     <Badge 
                       variant="secondary" 
-                      className="flex items-center gap-1 text-xs px-2 py-1"
-                      style={{ backgroundColor: professional.color + '20', color: professional.color }}
+                      className="flex items-center gap-1 text-xs px-2 py-1 text-white font-semibold"
+                      style={{ backgroundColor: professional.color }}
                     >
                       <Stethoscope className="h-3 w-3" />
-                      <span className="font-semibold">{dayAppointments.length}</span>
+                      <span>{dayAppointments.length}</span>
                     </Badge>
                   </div>
                   
-                  {/* Primeiro agendamento (apenas se houver espaço) */}
+                  {/* Primeiro agendamento com status mais visível */}
                   <div className="space-y-1">
-                    {dayAppointments.slice(0, 1).map((apt) => (
-                      <div
-                        key={apt.id}
-                        className="text-xs p-1 rounded text-white truncate"
-                        style={{ backgroundColor: professional.color }}
-                      >
-                        {apt.patients?.full_name}
-                      </div>
-                    ))}
+                    {dayAppointments.slice(0, 1).map((apt) => {
+                      const statusColor = apt.appointment_statuses?.color || '#6b7280';
+                      return (
+                        <div
+                          key={apt.id}
+                          className="text-xs p-2 rounded text-gray-800 truncate border-l-4 shadow-sm"
+                          style={{ 
+                            backgroundColor: lighterBgColor,
+                            borderLeftColor: statusColor,
+                            borderLeftWidth: '4px'
+                          }}
+                        >
+                          <div className="font-semibold truncate">
+                            {apt.patients?.full_name}
+                          </div>
+                          <div 
+                            className="text-xs font-bold mt-1 px-1 py-0.5 rounded text-white inline-block"
+                            style={{ backgroundColor: statusColor }}
+                          >
+                            {apt.appointment_statuses?.label || apt.status}
+                          </div>
+                        </div>
+                      );
+                    })}
                     {dayAppointments.length > 1 && (
-                      <div className="text-xs text-gray-500 text-center">
+                      <div className="text-xs text-gray-500 text-center font-medium">
                         +{dayAppointments.length - 1} mais
                       </div>
                     )}
