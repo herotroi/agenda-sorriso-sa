@@ -38,6 +38,13 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       return;
     }
 
+    console.log('Dados da atualização:', {
+      appointmentId: appointment.id,
+      statusAtual: appointment.status,
+      novoStatus: selectedStatus,
+      statusDisponivel: statusOptions.includes(selectedStatus)
+    });
+
     try {
       setIsUpdatingStatus(true);
       
@@ -48,8 +55,16 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
         .select('*');
 
       if (error) {
+        console.error('Erro do Supabase:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
+
+      console.log('Atualização bem-sucedida:', data);
 
       toast({
         title: 'Sucesso',
@@ -66,15 +81,19 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
       console.error('Erro ao atualizar status:', error);
       
       let errorMessage = 'Erro ao atualizar status do agendamento';
+      let errorTitle = 'Erro';
       
       if (error.code === '23514') {
-        errorMessage = 'Status inválido. Por favor, tente novamente.';
+        errorMessage = `Status "${selectedStatus}" não é válido. Valores aceitos: ${statusOptions.join(', ')}`;
+        errorTitle = 'Status Inválido';
+      } else if (error.code === '42601') {
+        errorMessage = 'Erro de sintaxe na consulta. Contacte o suporte.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       
       toast({
-        title: 'Erro',
+        title: errorTitle,
         description: errorMessage,
         variant: 'destructive',
       });
@@ -99,6 +118,10 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
             ))}
           </SelectContent>
         </Select>
+      </div>
+      
+      <div className="text-xs text-gray-500">
+        Status atual: {appointment.status}
       </div>
       
       <Button
