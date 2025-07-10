@@ -6,8 +6,12 @@ export interface Appointment {
   procedure_id: string | null;
   start_time: string;
   end_time: string;
+  status: string;
   status_id: number;
   notes: string | null;
+  price?: number;
+  created_at?: string;
+  updated_at?: string;
   patients: { full_name: string };
   professionals: { name: string };
   procedures: { name: string } | null;

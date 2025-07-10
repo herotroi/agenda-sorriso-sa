@@ -10,24 +10,12 @@ import { DraggableAppointment } from './DraggableAppointment';
 import { DroppableTimeSlot } from './DroppableTimeSlot';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Appointment } from '@/components/Appointments/types';
 
 interface Professional {
   id: string;
   name: string;
   color: string;
-}
-
-interface Appointment {
-  id: string;
-  patient_id: string;
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  status_id: number;
-  patients: { full_name: string };
-  procedures: { name: string } | null;
-  appointment_statuses: { label: string; color: string };
 }
 
 export function CalendarView() {
@@ -70,6 +58,7 @@ export function CalendarView() {
         .select(`
           *,
           patients(full_name),
+          professionals(name),
           procedures(name),
           appointment_statuses(label, color)
         `)
@@ -265,10 +254,7 @@ export function CalendarView() {
                       return (
                         <DraggableAppointment
                           key={appointment.id}
-                          appointment={{
-                            ...appointment,
-                            status: appointment.appointment_statuses?.label || appointment.status
-                          }}
+                          appointment={appointment}
                           professionalColor={prof.color}
                           position={position}
                           onClick={() => setSelectedAppointment(appointment)}
