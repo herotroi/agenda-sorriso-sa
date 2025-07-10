@@ -90,10 +90,10 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
         description: 'Status do agendamento atualizado com sucesso',
       });
 
-      // Fechar o modal e recarregar a página para mostrar as mudanças
+      // Fechar o modal e atualizar os dados
       onClose();
       
-      // Forçar recarregamento da página para atualizar a visualização
+      // Forçar recarregamento da página para mostrar as mudanças
       setTimeout(() => {
         window.location.reload();
       }, 500);
