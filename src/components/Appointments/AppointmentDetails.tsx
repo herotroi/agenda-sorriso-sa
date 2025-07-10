@@ -63,21 +63,41 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
       return;
     }
 
+    console.log('Atualizando status do agendamento:', {
+      appointmentId: appointment.id,
+      currentStatus: appointment.status,
+      newStatus: selectedStatus
+    });
+
     try {
       setIsUpdatingStatus(true);
-      const { error } = await supabase
+      
+      const { data, error } = await supabase
         .from('appointments')
         .update({ status: selectedStatus })
-        .eq('id', appointment.id);
+        .eq('id', appointment.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na atualização:', error);
+        throw error;
+      }
+
+      console.log('Status atualizado com sucesso:', data);
 
       toast({
         title: 'Sucesso',
         description: 'Status do agendamento atualizado com sucesso',
       });
 
+      // Fechar o modal e recarregar a página para mostrar as mudanças
       onClose();
+      
+      // Forçar recarregamento da página para atualizar a visualização
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
