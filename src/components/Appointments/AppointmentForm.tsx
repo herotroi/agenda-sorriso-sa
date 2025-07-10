@@ -1,8 +1,7 @@
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAppointmentFormData } from '@/hooks/useAppointmentFormData';
-import { useAppointmentAutoSave } from '@/hooks/useAppointmentAutoSave';
-import { useEffect } from 'react';
+import { useAppointmentFormSubmit } from '@/hooks/useAppointmentFormSubmit';
 import { AppointmentFormHeader } from './form/AppointmentFormHeader';
 import { AppointmentFormFields } from './form/AppointmentFormFields';
 import { AppointmentFormActions } from './form/AppointmentFormActions';
@@ -37,35 +36,16 @@ export function AppointmentForm({
     resetFieldModifications
   } = useAppointmentFormData(isOpen, appointmentToEdit, selectedDate, selectedProfessionalId);
 
-  const { autoSave, manualSave, isSaving } = useAppointmentAutoSave(
+  const { loading, isValidating, handleSubmit } = useAppointmentFormSubmit(
     procedures,
     appointmentToEdit,
-    () => {
-      resetFieldModifications();
+    (success) => {
+      if (success) {
+        resetFieldModifications();
+        onClose();
+      }
     }
   );
-
-  // Auto-save quando há mudanças no formulário (apenas para edição)
-  useEffect(() => {
-    if (appointmentToEdit && Object.values(fieldModified).some(Boolean)) {
-      const timeoutId = setTimeout(() => {
-        const finalData = getFinalFormData();
-        autoSave(finalData);
-      }, 2000);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [formData, fieldModified, appointmentToEdit, autoSave, getFinalFormData]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalData = getFinalFormData();
-    
-    const success = await manualSave(finalData);
-    if (success) {
-      onClose();
-    }
-  };
 
   const handleProcedureSelectChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
@@ -81,15 +61,20 @@ export function AppointmentForm({
     handleFieldChange('duration', duration);
   };
 
+  const onSubmit = (e: React.FormEvent) => {
+    const finalData = getFinalFormData();
+    handleSubmit(e, finalData);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
         <AppointmentFormHeader 
           appointmentToEdit={appointmentToEdit}
-          isSaving={isSaving}
+          isSaving={loading || isValidating}
         />
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={onSubmit} className="space-y-6">
           <AppointmentFormFields
             formData={formData}
             setFormData={setFormData}
@@ -105,7 +90,7 @@ export function AppointmentForm({
 
           <AppointmentFormActions
             appointmentToEdit={appointmentToEdit}
-            isSaving={isSaving}
+            isSaving={loading || isValidating}
             formData={formData}
             onClose={onClose}
           />
