@@ -6,6 +6,7 @@ import { PatientAddressInfo } from './form/PatientAddressInfo';
 import { PatientHealthInfo } from './form/PatientHealthInfo';
 import { PatientMedicalHistory } from './form/PatientMedicalHistory';
 import { PatientNotesSection } from './form/PatientNotesSection';
+import { PatientStatusToggle } from './form/PatientStatusToggle';
 import { PatientFormActions } from './form/PatientFormActions';
 import { usePatientForm } from './hooks/usePatientForm';
 import { applyCpfMask, applyPhoneMask } from './utils/inputMasks';
@@ -25,6 +26,7 @@ interface Patient {
   health_insurance?: string;
   birth_date?: string;
   notes?: string;
+  active?: boolean;
 }
 
 interface PatientFormProps {
@@ -78,6 +80,11 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
           <PatientHealthInfo
             formData={formData}
             setFormData={setFormData}
+          />
+
+          <PatientStatusToggle
+            active={formData.active}
+            onToggle={(active) => setFormData({ ...formData, active })}
           />
 
           {patient && (

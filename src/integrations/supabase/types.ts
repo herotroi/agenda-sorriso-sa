@@ -175,6 +175,7 @@ export type Database = {
       }
       patients: {
         Row: {
+          active: boolean | null
           birth_date: string | null
           city: string | null
           cpf: string | null
@@ -193,6 +194,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active?: boolean | null
           birth_date?: string | null
           city?: string | null
           cpf?: string | null
@@ -211,6 +213,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active?: boolean | null
           birth_date?: string | null
           city?: string | null
           cpf?: string | null

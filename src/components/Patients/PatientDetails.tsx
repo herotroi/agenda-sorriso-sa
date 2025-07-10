@@ -43,6 +43,7 @@ interface AppointmentRecord {
   id: string;
   start_time: string;
   notes?: string;
+  price?: number;
   procedures: {
     name: string;
   } | null;

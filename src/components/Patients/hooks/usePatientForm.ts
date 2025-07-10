@@ -18,6 +18,7 @@ interface Patient {
   health_insurance?: string;
   birth_date?: string;
   notes?: string;
+  active?: boolean;
 }
 
 interface PatientRecord {
@@ -44,6 +45,7 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
     health_insurance: '',
     birth_date: '',
     notes: '',
+    active: true,
   });
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,6 +89,7 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         health_insurance: patient.health_insurance || '',
         birth_date: patient.birth_date || '',
         notes: patient.notes || '',
+        active: patient.active !== undefined ? patient.active : true,
       });
       fetchPatientRecords(patient.id);
     } else if (isOpen) {
@@ -104,6 +107,7 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         health_insurance: '',
         birth_date: '',
         notes: '',
+        active: true,
       });
       setPatientRecords([]);
     }

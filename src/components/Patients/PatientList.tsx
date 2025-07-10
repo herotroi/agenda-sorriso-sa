@@ -1,7 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Plus, Edit, Phone, Mail, Search, MapPin, Eye } from 'lucide-react';
 import { PatientForm } from './PatientForm';
 import { PatientDetails } from './PatientDetails';
@@ -23,6 +26,7 @@ interface Patient {
   health_insurance?: string;
   birth_date?: string;
   notes?: string;
+  active?: boolean;
 }
 
 export function PatientList() {
@@ -33,6 +37,7 @@ export function PatientList() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -45,7 +50,6 @@ export function PatientList() {
 
       if (error) throw error;
       setPatients(data || []);
-      setFilteredPatients(data || []);
     } catch (error) {
       console.error('Error fetching patients:', error);
       toast({
@@ -63,13 +67,18 @@ export function PatientList() {
   }, []);
 
   useEffect(() => {
-    const filtered = patients.filter(patient =>
-      patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.cpf?.includes(searchTerm) ||
-      patient.phone?.includes(searchTerm)
-    );
+    let filtered = patients.filter(patient => {
+      const matchesSearch = patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.cpf?.includes(searchTerm) ||
+        patient.phone?.includes(searchTerm);
+      
+      const matchesStatus = showInactive ? true : patient.active !== false;
+      
+      return matchesSearch && matchesStatus;
+    });
+    
     setFilteredPatients(filtered);
-  }, [searchTerm, patients]);
+  }, [searchTerm, patients, showInactive]);
 
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient);
@@ -119,24 +128,43 @@ export function PatientList() {
         </Button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          type="text"
-          placeholder="Buscar por nome, CPF ou telefone..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex gap-4 items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Buscar por nome, CPF ou telefone..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="show-inactive"
+            checked={showInactive}
+            onCheckedChange={setShowInactive}
+          />
+          <Label htmlFor="show-inactive" className="text-sm">
+            Mostrar inativos
+          </Label>
+        </div>
       </div>
 
       <div className="grid gap-4">
         {filteredPatients.map((patient) => (
-          <Card key={patient.id}>
+          <Card key={patient.id} className={patient.active === false ? 'opacity-60' : ''}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{patient.full_name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">{patient.full_name}</h3>
+                    {patient.active === false && (
+                      <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
+                        Inativo
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-2 space-y-1">
                     {patient.cpf && (
                       <p className="text-sm text-gray-600">CPF: {patient.cpf}</p>
