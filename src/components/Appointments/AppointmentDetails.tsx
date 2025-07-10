@@ -25,10 +25,24 @@ interface AppointmentDetailsProps {
   appointment: Appointment;
   isOpen: boolean;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export function AppointmentDetails({ appointment, isOpen, onClose }: AppointmentDetailsProps) {
+export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: AppointmentDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleClose = () => {
+    if (onUpdate) {
+      onUpdate();
+    }
+    onClose();
+  };
+
+  const handleStatusUpdate = () => {
+    if (onUpdate) {
+      onUpdate();
+    }
+  };
 
   if (isEditing) {
     return (
@@ -36,7 +50,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
         isOpen={isOpen}
         onClose={() => {
           setIsEditing(false);
-          onClose();
+          handleClose();
         }}
         appointmentToEdit={appointment}
       />
@@ -44,7 +58,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Detalhes do Agendamento</DialogTitle>
@@ -53,7 +67,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold text-lg">{appointment.patients?.full_name}</h3>
-            <AppointmentStatusBadge status={appointment.status} />
+            <AppointmentStatusBadge statusId={appointment.status_id} />
           </div>
 
           <Separator />
@@ -62,14 +76,19 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
 
           <Separator />
 
-          <AppointmentStatusUpdater appointment={appointment} onClose={onClose} />
+          <AppointmentStatusUpdater 
+            appointment={appointment} 
+            onClose={handleClose}
+            onUpdate={handleStatusUpdate}
+          />
 
           <Separator />
 
           <AppointmentActions 
             appointmentId={appointment.id}
             onEdit={() => setIsEditing(true)}
-            onClose={onClose}
+            onClose={handleClose}
+            onUpdate={onUpdate}
           />
         </div>
       </DialogContent>

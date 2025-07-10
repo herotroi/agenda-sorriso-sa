@@ -8,9 +8,10 @@ interface AppointmentActionsProps {
   appointmentId: string;
   onEdit: () => void;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export function AppointmentActions({ appointmentId, onEdit, onClose }: AppointmentActionsProps) {
+export function AppointmentActions({ appointmentId, onEdit, onClose, onUpdate }: AppointmentActionsProps) {
   const { toast } = useToast();
 
   const handleDelete = async () => {
@@ -29,8 +30,10 @@ export function AppointmentActions({ appointmentId, onEdit, onClose }: Appointme
         description: 'Agendamento excluído com sucesso',
       });
 
+      if (onUpdate) {
+        onUpdate();
+      }
       onClose();
-      window.location.reload();
     } catch (error) {
       console.error('Error deleting appointment:', error);
       toast({

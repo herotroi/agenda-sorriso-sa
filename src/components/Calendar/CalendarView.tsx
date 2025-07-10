@@ -136,6 +136,10 @@ export function CalendarView() {
     fetchAppointments();
   };
 
+  const handleAppointmentUpdate = () => {
+    fetchAppointments();
+  };
+
   const handleProfessionalClick = (professionalId: string) => {
     setSelectedProfessional(professionalId);
   };
@@ -290,6 +294,7 @@ export function CalendarView() {
           appointment={selectedAppointment}
           isOpen={!!selectedAppointment}
           onClose={handleDetailsClose}
+          onUpdate={handleAppointmentUpdate}
         />
       )}
     </div>

@@ -15,6 +15,7 @@ interface Appointment {
 interface AppointmentStatusUpdaterProps {
   appointment: Appointment;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
 interface StatusOption {
@@ -24,7 +25,7 @@ interface StatusOption {
   color: string;
 }
 
-export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentStatusUpdaterProps) {
+export function AppointmentStatusUpdater({ appointment, onClose, onUpdate }: AppointmentStatusUpdaterProps) {
   const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
   const [selectedStatusId, setSelectedStatusId] = useState<number>(appointment.status_id);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -95,8 +96,10 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
         description: 'Status do agendamento atualizado com sucesso',
       });
 
+      if (onUpdate) {
+        onUpdate();
+      }
       onClose();
-      window.location.reload();
 
     } catch (error: any) {
       console.error('Erro ao atualizar status:', error);
@@ -116,7 +119,6 @@ export function AppointmentStatusUpdater({ appointment, onClose }: AppointmentSt
   }
 
   const currentStatus = statusOptions.find(s => s.id === appointment.status_id);
-  const selectedStatus = statusOptions.find(s => s.id === selectedStatusId);
 
   return (
     <div className="space-y-3">
