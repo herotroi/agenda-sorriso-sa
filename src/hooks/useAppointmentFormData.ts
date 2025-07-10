@@ -182,8 +182,8 @@ export function useAppointmentFormData(
     }));
   };
 
-  // Função para atualizar campos individuais
-  const handleFieldChange = (field: keyof FormData, value: string | number) => {
+  // Função para atualizar campos individuais com tipos corretos
+  const handleFieldChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     console.log(`Field ${field} changed to:`, value);
     
     setFormData(prev => ({
