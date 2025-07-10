@@ -56,11 +56,22 @@ export function AppointmentFormFields({
   statuses,
   onProcedureChange
 }: AppointmentFormFieldsProps) {
+  
+  const handleFieldChange = (field: keyof FormData, value: string | number) => {
+    console.log(`Changing field ${field} to:`, value);
+    const updatedFormData = { ...formData, [field]: value };
+    console.log('Updated form data:', updatedFormData);
+    setFormData(updatedFormData);
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <Label htmlFor="patient">Paciente *</Label>
-        <Select value={formData.patient_id} onValueChange={(value) => setFormData({ ...formData, patient_id: value })}>
+        <Select 
+          value={formData.patient_id} 
+          onValueChange={(value) => handleFieldChange('patient_id', value)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o paciente" />
           </SelectTrigger>
@@ -76,7 +87,10 @@ export function AppointmentFormFields({
 
       <div>
         <Label htmlFor="professional">Profissional *</Label>
-        <Select value={formData.professional_id} onValueChange={(value) => setFormData({ ...formData, professional_id: value })}>
+        <Select 
+          value={formData.professional_id} 
+          onValueChange={(value) => handleFieldChange('professional_id', value)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o profissional" />
           </SelectTrigger>
@@ -92,7 +106,13 @@ export function AppointmentFormFields({
 
       <div>
         <Label htmlFor="procedure">Procedimento</Label>
-        <Select value={formData.procedure_id} onValueChange={onProcedureChange}>
+        <Select 
+          value={formData.procedure_id} 
+          onValueChange={(value) => {
+            console.log('Procedure selection changed:', value);
+            onProcedureChange(value);
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o procedimento" />
           </SelectTrigger>
@@ -113,7 +133,10 @@ export function AppointmentFormFields({
             id="start_time"
             type="datetime-local"
             value={formData.start_time}
-            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+            onChange={(e) => {
+              console.log('Start time changed:', e.target.value);
+              handleFieldChange('start_time', e.target.value);
+            }}
             required
           />
         </div>
@@ -123,7 +146,10 @@ export function AppointmentFormFields({
             id="duration"
             type="number"
             value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+            onChange={(e) => {
+              console.log('Duration changed:', e.target.value);
+              handleFieldChange('duration', e.target.value);
+            }}
             min="15"
             step="15"
           />
@@ -132,7 +158,13 @@ export function AppointmentFormFields({
 
       <div>
         <Label htmlFor="status">Status</Label>
-        <Select value={formData.status_id.toString()} onValueChange={(value) => setFormData({ ...formData, status_id: parseInt(value) })}>
+        <Select 
+          value={formData.status_id.toString()} 
+          onValueChange={(value) => {
+            console.log('Status changed:', value);
+            handleFieldChange('status_id', parseInt(value));
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o status" />
           </SelectTrigger>
@@ -151,7 +183,10 @@ export function AppointmentFormFields({
         <Textarea
           id="notes"
           value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          onChange={(e) => {
+            console.log('Notes changed:', e.target.value);
+            handleFieldChange('notes', e.target.value);
+          }}
           rows={3}
         />
       </div>

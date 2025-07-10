@@ -96,13 +96,14 @@ export function useAppointmentFormData(
   useEffect(() => {
     if (isOpen && appointmentToEdit) {
       // Edit mode - populate form with appointment data
-      console.log('Loading appointment data:', appointmentToEdit);
+      console.log('Loading appointment data for editing:', appointmentToEdit);
       
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
-      setFormData({
+      // Criar um novo objeto de formData com os dados do agendamento
+      const editFormData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
@@ -110,11 +111,14 @@ export function useAppointmentFormData(
         duration: duration.toString(),
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
-      });
+      };
+      
+      console.log('Setting form data:', editFormData);
+      setFormData(editFormData);
     } else if (isOpen && !appointmentToEdit) {
       // Create mode - reset form with default values
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
-      setFormData({
+      const newFormData = {
         patient_id: '',
         professional_id: selectedProfessionalId || '',
         procedure_id: '',
@@ -122,17 +126,23 @@ export function useAppointmentFormData(
         duration: '60',
         notes: '',
         status_id: 1,
-      });
+      };
+      
+      console.log('Setting default form data:', newFormData);
+      setFormData(newFormData);
     }
   }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   const handleProcedureChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
-    setFormData({
+    const updatedFormData = {
       ...formData,
       procedure_id: procedureId,
       duration: procedure ? procedure.default_duration.toString() : '60'
-    });
+    };
+    
+    console.log('Procedure changed, updating form data:', updatedFormData);
+    setFormData(updatedFormData);
   };
 
   return {
