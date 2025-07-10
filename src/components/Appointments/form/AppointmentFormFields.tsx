@@ -45,6 +45,7 @@ interface AppointmentFormFieldsProps {
   procedures: Procedure[];
   statuses: AppointmentStatus[];
   onProcedureChange: (procedureId: string) => void;
+  handleFieldChange?: (field: keyof FormData, value: string | number) => void;
 }
 
 export function AppointmentFormFields({
@@ -54,14 +55,19 @@ export function AppointmentFormFields({
   professionals,
   procedures,
   statuses,
-  onProcedureChange
+  onProcedureChange,
+  handleFieldChange
 }: AppointmentFormFieldsProps) {
   
-  const handleFieldChange = (field: keyof FormData, value: string | number) => {
-    console.log(`Changing field ${field} to:`, value);
-    const updatedFormData = { ...formData, [field]: value };
-    console.log('Updated form data:', updatedFormData);
-    setFormData(updatedFormData);
+  const updateField = (field: keyof FormData, value: string | number) => {
+    if (handleFieldChange) {
+      handleFieldChange(field, value);
+    } else {
+      console.log(`Changing field ${field} to:`, value);
+      const updatedFormData = { ...formData, [field]: value };
+      console.log('Updated form data:', updatedFormData);
+      setFormData(updatedFormData);
+    }
   };
 
   return (
@@ -70,7 +76,7 @@ export function AppointmentFormFields({
         <Label htmlFor="patient">Paciente *</Label>
         <Select 
           value={formData.patient_id} 
-          onValueChange={(value) => handleFieldChange('patient_id', value)}
+          onValueChange={(value) => updateField('patient_id', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o paciente" />
@@ -89,7 +95,7 @@ export function AppointmentFormFields({
         <Label htmlFor="professional">Profissional *</Label>
         <Select 
           value={formData.professional_id} 
-          onValueChange={(value) => handleFieldChange('professional_id', value)}
+          onValueChange={(value) => updateField('professional_id', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o profissional" />
@@ -135,7 +141,7 @@ export function AppointmentFormFields({
             value={formData.start_time}
             onChange={(e) => {
               console.log('Start time changed:', e.target.value);
-              handleFieldChange('start_time', e.target.value);
+              updateField('start_time', e.target.value);
             }}
             required
           />
@@ -148,7 +154,7 @@ export function AppointmentFormFields({
             value={formData.duration}
             onChange={(e) => {
               console.log('Duration changed:', e.target.value);
-              handleFieldChange('duration', e.target.value);
+              updateField('duration', e.target.value);
             }}
             min="15"
             step="15"
@@ -162,7 +168,7 @@ export function AppointmentFormFields({
           value={formData.status_id.toString()} 
           onValueChange={(value) => {
             console.log('Status changed:', value);
-            handleFieldChange('status_id', parseInt(value));
+            updateField('status_id', parseInt(value));
           }}
         >
           <SelectTrigger>
@@ -185,7 +191,7 @@ export function AppointmentFormFields({
           value={formData.notes}
           onChange={(e) => {
             console.log('Notes changed:', e.target.value);
-            handleFieldChange('notes', e.target.value);
+            updateField('notes', e.target.value);
           }}
           rows={3}
         />

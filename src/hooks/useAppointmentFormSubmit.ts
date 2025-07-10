@@ -15,7 +15,7 @@ interface Procedure {
 export function useAppointmentFormSubmit(
   procedures: Procedure[],
   appointmentToEdit: any,
-  onClose: () => void
+  onClose: (success?: boolean) => void
 ) {
   const [loading, setLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -117,7 +117,7 @@ export function useAppointmentFormSubmit(
         description: appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
       });
 
-      onClose();
+      onClose(true); // Pass success flag
     } catch (error) {
       console.error('Error saving appointment:', error);
       toast({
@@ -125,6 +125,7 @@ export function useAppointmentFormSubmit(
         description: 'Erro ao salvar agendamento',
         variant: 'destructive',
       });
+      onClose(false); // Pass failure flag
     } finally {
       setLoading(false);
     }

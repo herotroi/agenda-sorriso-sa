@@ -28,13 +28,20 @@ export function AppointmentForm({
     statuses,
     formData,
     setFormData,
-    handleProcedureChange
+    handleProcedureChange,
+    handleFieldChange,
+    resetTempData
   } = useAppointmentFormData(isOpen, appointmentToEdit, selectedDate, selectedProfessionalId);
 
   const { loading, isValidating, handleSubmit } = useAppointmentFormSubmit(
     procedures,
     appointmentToEdit,
-    onClose
+    (success) => {
+      if (success) {
+        resetTempData();
+      }
+      onClose();
+    }
   );
 
   return (
@@ -56,6 +63,7 @@ export function AppointmentForm({
               procedures={procedures}
               statuses={statuses}
               onProcedureChange={handleProcedureChange}
+              handleFieldChange={handleFieldChange}
             />
 
             <div className="flex justify-end space-x-2 pt-4">

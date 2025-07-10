@@ -45,6 +45,8 @@ export function useAppointmentFormData(
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
+  
+  // Estado principal dos dados do formulário
   const [formData, setFormData] = useState<FormData>({
     patient_id: '',
     professional_id: selectedProfessionalId || '',
@@ -54,6 +56,9 @@ export function useAppointmentFormData(
     notes: '',
     status_id: 1,
   });
+
+  // Estados temporários para edição fluida
+  const [tempFormData, setTempFormData] = useState<FormData | null>(null);
 
   const fetchData = async () => {
     try {
@@ -87,22 +92,13 @@ export function useAppointmentFormData(
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen && appointmentToEdit) {
-      // Edit mode - populate form with appointment data
-      console.log('Loading appointment data for editing:', appointmentToEdit);
-      
+  // Função para inicializar dados temporários
+  const initializeTempData = () => {
+    if (appointmentToEdit) {
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
-      // Set form data with all appointment information
       const editFormData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
@@ -113,8 +109,42 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Setting form data for editing:', editFormData);
+      console.log('Initializing temp data for editing:', editFormData);
+      setTempFormData(editFormData);
       setFormData(editFormData);
+    }
+  };
+
+  // Função para resetar dados temporários
+  const resetTempData = () => {
+    console.log('Resetting temp data');
+    setTempFormData(null);
+  };
+
+  // Função para atualizar dados temporários
+  const updateTempData = (field: keyof FormData, value: string | number) => {
+    if (tempFormData) {
+      const updatedTempData = { ...tempFormData, [field]: value };
+      console.log(`Updating temp data field ${field}:`, value);
+      setTempFormData(updatedTempData);
+      setFormData(updatedTempData);
+    } else {
+      const updatedFormData = { ...formData, [field]: value };
+      console.log(`Updating form data field ${field}:`, value);
+      setFormData(updatedFormData);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && appointmentToEdit) {
+      // Edit mode - initialize temp data
+      initializeTempData();
     } else if (isOpen && !appointmentToEdit) {
       // Create mode - reset form with default values
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
@@ -130,19 +160,21 @@ export function useAppointmentFormData(
       
       console.log('Setting default form data:', newFormData);
       setFormData(newFormData);
+      setTempFormData(null);
     }
   }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   const handleProcedureChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
-    const updatedFormData = {
-      ...formData,
-      procedure_id: procedureId,
-      duration: procedure ? procedure.default_duration.toString() : formData.duration
-    };
+    const duration = procedure ? procedure.default_duration.toString() : (tempFormData?.duration || formData.duration);
     
-    console.log('Procedure changed, updating form data:', updatedFormData);
-    setFormData(updatedFormData);
+    updateTempData('procedure_id', procedureId);
+    updateTempData('duration', duration);
+  };
+
+  // Função personalizada para atualizar campos
+  const handleFieldChange = (field: keyof FormData, value: string | number) => {
+    updateTempData(field, value);
   };
 
   return {
@@ -152,6 +184,10 @@ export function useAppointmentFormData(
     statuses,
     formData,
     setFormData,
-    handleProcedureChange
+    handleProcedureChange,
+    handleFieldChange,
+    tempFormData,
+    resetTempData,
+    initializeTempData
   };
 }
