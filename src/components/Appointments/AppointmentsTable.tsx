@@ -46,7 +46,10 @@ export function AppointmentsTable() {
     console.log('Closing form');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
-    // Refresh the data after creating/editing
+  };
+
+  const handleRefreshAppointments = () => {
+    console.log('Refreshing appointments manually');
     handleManualRefresh();
   };
 
@@ -84,11 +87,11 @@ export function AppointmentsTable() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={handleManualRefresh}
+                onClick={handleRefreshAppointments}
                 disabled={refreshing}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                Atualizar
+                Atualizar Agendamentos
               </Button>
             </div>
           </CardTitle>
