@@ -102,7 +102,7 @@ export function useAppointmentFormData(
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
-      // Criar um novo objeto de formData com os dados do agendamento
+      // Set form data with all appointment information
       const editFormData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
@@ -113,7 +113,7 @@ export function useAppointmentFormData(
         status_id: appointmentToEdit.status_id || 1,
       };
       
-      console.log('Setting form data:', editFormData);
+      console.log('Setting form data for editing:', editFormData);
       setFormData(editFormData);
     } else if (isOpen && !appointmentToEdit) {
       // Create mode - reset form with default values
@@ -138,7 +138,7 @@ export function useAppointmentFormData(
     const updatedFormData = {
       ...formData,
       procedure_id: procedureId,
-      duration: procedure ? procedure.default_duration.toString() : '60'
+      duration: procedure ? procedure.default_duration.toString() : formData.duration
     };
     
     console.log('Procedure changed, updating form data:', updatedFormData);

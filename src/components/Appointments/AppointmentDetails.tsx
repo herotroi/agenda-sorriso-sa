@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AppointmentForm } from './AppointmentForm';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import { AppointmentInfo } from './AppointmentInfo';
@@ -44,14 +45,22 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
     }
   };
 
+  const handleEdit = () => {
+    console.log('Edit button clicked, appointment data:', appointment);
+    setIsEditing(true);
+  };
+
+  const handleEditClose = () => {
+    console.log('Closing edit form');
+    setIsEditing(false);
+    handleClose();
+  };
+
   if (isEditing) {
     return (
       <AppointmentForm
         isOpen={isOpen}
-        onClose={() => {
-          setIsEditing(false);
-          handleClose();
-        }}
+        onClose={handleEditClose}
         appointmentToEdit={appointment}
       />
     );
@@ -59,38 +68,40 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Detalhes do Agendamento</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-lg">{appointment.patients?.full_name}</h3>
-            <AppointmentStatusBadge statusId={appointment.status_id} />
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
+          <div className="space-y-4 pb-6">
+            <div>
+              <h3 className="font-semibold text-lg">{appointment.patients?.full_name}</h3>
+              <AppointmentStatusBadge statusId={appointment.status_id} />
+            </div>
+
+            <Separator />
+
+            <AppointmentInfo appointment={appointment} />
+
+            <Separator />
+
+            <AppointmentStatusUpdater 
+              appointment={appointment} 
+              onClose={handleClose}
+              onUpdate={handleStatusUpdate}
+            />
+
+            <Separator />
+
+            <AppointmentActions 
+              appointmentId={appointment.id}
+              onEdit={handleEdit}
+              onClose={handleClose}
+              onUpdate={onUpdate}
+            />
           </div>
-
-          <Separator />
-
-          <AppointmentInfo appointment={appointment} />
-
-          <Separator />
-
-          <AppointmentStatusUpdater 
-            appointment={appointment} 
-            onClose={handleClose}
-            onUpdate={handleStatusUpdate}
-          />
-
-          <Separator />
-
-          <AppointmentActions 
-            appointmentId={appointment.id}
-            onEdit={() => setIsEditing(true)}
-            onClose={handleClose}
-            onUpdate={onUpdate}
-          />
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
