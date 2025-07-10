@@ -137,7 +137,7 @@ export function useAppointmentFormData(
       
       console.log('Setting original appointment data for editing:', editFormData);
       setOriginalData(editFormData);
-      setFormData(editFormData);
+      setFormData(editFormData); // Manter os mesmos dados no formData inicialmente
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
