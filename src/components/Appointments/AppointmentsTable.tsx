@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, RefreshCw, Edit } from 'lucide-react';
+import { Calendar, RefreshCw, Edit, Plus } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -25,18 +25,28 @@ export function AppointmentsTable() {
 
   const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleEdit = (appointment: any) => {
     console.log('Opening edit form for appointment:', appointment);
     setEditingAppointment(appointment);
+    setIsCreating(false);
+    setIsFormOpen(true);
+  };
+
+  const handleCreate = () => {
+    console.log('Opening create form');
+    setEditingAppointment(null);
+    setIsCreating(true);
     setIsFormOpen(true);
   };
 
   const handleFormClose = () => {
-    console.log('Closing edit form');
+    console.log('Closing form');
     setIsFormOpen(false);
     setEditingAppointment(null);
-    // Refresh the data after editing
+    setIsCreating(false);
+    // Refresh the data after editing/creating
     handleManualRefresh();
   };
 
@@ -62,21 +72,37 @@ export function AppointmentsTable() {
               <Calendar className="h-5 w-5" />
               Tabela de Agendamentos
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleManualRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={handleCreate}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Agendamento
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleManualRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {appointments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Nenhum agendamento encontrado
+            <div className="text-center py-8">
+              <div className="text-gray-500 mb-4">
+                Nenhum agendamento encontrado
+              </div>
+              <Button onClick={handleCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeiro Agendamento
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -94,7 +120,7 @@ export function AppointmentsTable() {
                 </TableHeader>
                 <TableBody>
                   {appointments.map((appointment) => (
-                    <TableRow key={appointment.id}>
+                    <TableRow key={appointment.id} className="hover:bg-muted/50 cursor-pointer">
                       <TableCell className="font-medium">
                         {appointment.patients?.full_name || 'N/A'}
                       </TableCell>
@@ -146,11 +172,12 @@ export function AppointmentsTable() {
         </CardContent>
       </Card>
 
-      {/* Formulário de Edição */}
+      {/* Formulário de Edição/Criação */}
       <AppointmentForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
         appointmentToEdit={editingAppointment}
+        selectedDate={new Date()}
       />
     </>
   );

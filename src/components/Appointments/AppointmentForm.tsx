@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AppointmentFormFields } from './form/AppointmentFormFields';
 import { useAppointmentFormData } from '@/hooks/useAppointmentFormData';
-import { useAppointmentFormSubmit } from '@/hooks/useAppointmentFormSubmit';
+import { useAppointmentAutoSave } from '@/hooks/useAppointmentAutoSave';
+import { useEffect } from 'react';
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -36,29 +37,50 @@ export function AppointmentForm({
     resetFieldModifications
   } = useAppointmentFormData(isOpen, appointmentToEdit, selectedDate, selectedProfessionalId);
 
-  const { loading, isValidating, handleSubmit } = useAppointmentFormSubmit(
+  const { autoSave, manualSave, isSaving } = useAppointmentAutoSave(
     procedures,
     appointmentToEdit,
-    (success) => {
-      if (success) {
-        resetFieldModifications();
-      }
-      onClose();
+    () => {
+      resetFieldModifications();
     }
   );
 
-  const onSubmit = (e: React.FormEvent) => {
+  // Auto-save quando há mudanças no formulário (apenas para edição)
+  useEffect(() => {
+    if (appointmentToEdit && Object.values(fieldModified).some(Boolean)) {
+      const timeoutId = setTimeout(() => {
+        const finalData = getFinalFormData();
+        autoSave(finalData);
+      }, 2000); // Auto-save após 2 segundos de inatividade
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, fieldModified, appointmentToEdit, autoSave, getFinalFormData]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const finalData = getFinalFormData();
     console.log('Submitting with final data:', finalData);
-    handleSubmit(e, finalData);
+    
+    const success = await manualSave(finalData);
+    if (success) {
+      onClose();
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle>
-            {appointmentToEdit ? 'Editar Agendamento' : 'Novo Agendamento'}
+          <DialogTitle className="flex items-center justify-between">
+            <span>
+              {appointmentToEdit ? 'Editar Agendamento' : 'Novo Agendamento'}
+            </span>
+            {isSaving && (
+              <span className="text-sm text-muted-foreground animate-pulse">
+                Salvando...
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
         
@@ -83,11 +105,17 @@ export function AppointmentForm({
               </Button>
               <Button 
                 type="submit" 
-                disabled={loading || isValidating}
+                disabled={isSaving}
               >
-                {loading || isValidating ? 'Validando...' : appointmentToEdit ? 'Atualizar' : 'Agendar'}
+                {isSaving ? 'Salvando...' : appointmentToEdit ? 'Salvar' : 'Criar'}
               </Button>
             </div>
+            
+            {appointmentToEdit && (
+              <div className="text-sm text-muted-foreground text-center">
+                💡 As alterações são salvas automaticamente
+              </div>
+            )}
           </form>
         </ScrollArea>
       </DialogContent>
