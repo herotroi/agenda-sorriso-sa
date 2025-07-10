@@ -72,9 +72,19 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
     try {
       setIsUpdatingStatus(true);
       
+      // Garantir que o status seja um dos valores permitidos
+      const validStatuses = ['Confirmado', 'Cancelado', 'Não Compareceu', 'Em atendimento', 'Finalizado'];
+      
+      if (!validStatuses.includes(selectedStatus)) {
+        throw new Error(`Status inválido: ${selectedStatus}`);
+      }
+
       const { data, error } = await supabase
         .from('appointments')
-        .update({ status: selectedStatus })
+        .update({ 
+          status: selectedStatus,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', appointment.id)
         .select();
 
@@ -90,19 +100,17 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
         description: 'Status do agendamento atualizado com sucesso',
       });
 
-      // Fechar o modal e atualizar os dados
+      // Fechar o modal após sucesso
       onClose();
       
       // Forçar recarregamento da página para mostrar as mudanças
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      window.location.reload();
 
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('Erro ao atualizar status:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar status do agendamento',
+        description: `Erro ao atualizar status: ${error.message || 'Erro desconhecido'}`,
         variant: 'destructive',
       });
     } finally {
@@ -127,6 +135,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose }: Appointment
       });
 
       onClose();
+      window.location.reload();
     } catch (error) {
       console.error('Error deleting appointment:', error);
       toast({
