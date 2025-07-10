@@ -27,6 +27,12 @@ interface Procedure {
   default_duration: number;
 }
 
+interface AppointmentStatus {
+  id: number;
+  label: string;
+  key: string;
+}
+
 interface AppointmentFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -34,14 +40,6 @@ interface AppointmentFormProps {
   appointmentToEdit?: any;
   selectedProfessionalId?: string;
 }
-
-const statusOptions = [
-  { value: 'Confirmado', label: 'Confirmado' },
-  { value: 'Cancelado', label: 'Cancelado' },
-  { value: 'Não Compareceu', label: 'Não Compareceu' },
-  { value: 'Em atendimento', label: 'Em atendimento' },
-  { value: 'Finalizado', label: 'Finalizado' }
-];
 
 export function AppointmentForm({ 
   isOpen, 
@@ -53,6 +51,7 @@ export function AppointmentForm({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
   const [formData, setFormData] = useState({
     patient_id: '',
     professional_id: selectedProfessionalId || '',
@@ -60,7 +59,7 @@ export function AppointmentForm({
     start_time: '',
     duration: '60',
     notes: '',
-    status: 'Confirmado',
+    status_id: 1,
   });
   const [loading, setLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -69,19 +68,22 @@ export function AppointmentForm({
 
   const fetchData = async () => {
     try {
-      const [patientsRes, professionalsRes, proceduresRes] = await Promise.all([
+      const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
         supabase.from('patients').select('id, full_name').order('full_name'),
         supabase.from('professionals').select('id, name').eq('active', true).order('name'),
-        supabase.from('procedures').select('*').eq('active', true).order('name')
+        supabase.from('procedures').select('*').eq('active', true).order('name'),
+        supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
       ]);
 
       if (patientsRes.error) throw patientsRes.error;
       if (professionalsRes.error) throw professionalsRes.error;
       if (proceduresRes.error) throw proceduresRes.error;
+      if (statusesRes.error) throw statusesRes.error;
 
       setPatients(patientsRes.data || []);
       setProfessionals(professionalsRes.data || []);
       setProcedures(proceduresRes.data || []);
+      setStatuses(statusesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -90,36 +92,41 @@ export function AppointmentForm({
   useEffect(() => {
     if (isOpen) {
       fetchData();
-      if (appointmentToEdit) {
-        // Edit mode
-        const startTime = new Date(appointmentToEdit.start_time);
-        const endTime = new Date(appointmentToEdit.end_time);
-        const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-        
-        setFormData({
-          patient_id: appointmentToEdit.patient_id || '',
-          professional_id: appointmentToEdit.professional_id || '',
-          procedure_id: appointmentToEdit.procedure_id || '',
-          start_time: startTime.toISOString().slice(0, 16),
-          duration: duration.toString(),
-          notes: appointmentToEdit.notes || '',
-          status: appointmentToEdit.status || 'Confirmado',
-        });
-      } else {
-        // Create mode
-        const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
-        setFormData({
-          patient_id: '',
-          professional_id: selectedProfessionalId || '',
-          procedure_id: '',
-          start_time: defaultTime,
-          duration: '60',
-          notes: '',
-          status: 'Confirmado',
-        });
-      }
     }
-  }, [isOpen, selectedDate, appointmentToEdit, selectedProfessionalId]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && appointmentToEdit) {
+      // Edit mode - populate form with appointment data
+      console.log('Loading appointment data:', appointmentToEdit);
+      
+      const startTime = new Date(appointmentToEdit.start_time);
+      const endTime = new Date(appointmentToEdit.end_time);
+      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+      
+      setFormData({
+        patient_id: appointmentToEdit.patient_id || '',
+        professional_id: appointmentToEdit.professional_id || '',
+        procedure_id: appointmentToEdit.procedure_id || '',
+        start_time: startTime.toISOString().slice(0, 16),
+        duration: duration.toString(),
+        notes: appointmentToEdit.notes || '',
+        status_id: appointmentToEdit.status_id || 1,
+      });
+    } else if (isOpen && !appointmentToEdit) {
+      // Create mode - reset form with default values
+      const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
+      setFormData({
+        patient_id: '',
+        professional_id: selectedProfessionalId || '',
+        procedure_id: '',
+        start_time: defaultTime,
+        duration: '60',
+        notes: '',
+        status_id: 1,
+      });
+    }
+  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
 
   const handleProcedureChange = (procedureId: string) => {
     const procedure = procedures.find(p => p.id === procedureId);
@@ -199,7 +206,7 @@ export function AppointmentForm({
         end_time: endTime.toISOString(),
         price: procedure?.price || null,
         notes: formData.notes || null,
-        status: formData.status
+        status_id: formData.status_id
       };
 
       let error;
@@ -321,14 +328,14 @@ export function AppointmentForm({
 
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+            <Select value={formData.status_id.toString()} onValueChange={(value) => setFormData({ ...formData, status_id: parseInt(value) })}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {statuses.map((status) => (
+                  <SelectItem key={status.id} value={status.id.toString()}>
+                    {status.label}
                   </SelectItem>
                 ))}
               </SelectContent>
