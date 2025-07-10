@@ -1,38 +1,10 @@
 
-import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
-
-interface Patient {
-  id: string;
-  full_name: string;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-}
-
-interface Procedure {
-  id: string;
-  name: string;
-  price: number;
-  default_duration: number;
-}
-
-interface AppointmentStatus {
-  id: number;
-  label: string;
-  key: string;
-}
+import { AppointmentFormFields } from './form/AppointmentFormFields';
+import { useAppointmentFormData } from '@/hooks/useAppointmentFormData';
+import { useAppointmentFormSubmit } from '@/hooks/useAppointmentFormSubmit';
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -49,212 +21,21 @@ export function AppointmentForm({
   appointmentToEdit,
   selectedProfessionalId 
 }: AppointmentFormProps) {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [procedures, setProcedures] = useState<Procedure[]>([]);
-  const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
-  const [formData, setFormData] = useState({
-    patient_id: '',
-    professional_id: selectedProfessionalId || '',
-    procedure_id: '',
-    start_time: '',
-    duration: '60',
-    notes: '',
-    status_id: 1,
-  });
-  const [loading, setLoading] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const { toast } = useToast();
-  const { checkTimeConflict, validateTimeSlot } = useAppointmentValidation();
+  const {
+    patients,
+    professionals,
+    procedures,
+    statuses,
+    formData,
+    setFormData,
+    handleProcedureChange
+  } = useAppointmentFormData(isOpen, appointmentToEdit, selectedDate, selectedProfessionalId);
 
-  const fetchData = async () => {
-    try {
-      const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
-        supabase.from('patients').select('id, full_name').order('full_name'),
-        supabase.from('professionals').select('id, name').eq('active', true).order('name'),
-        supabase.from('procedures').select('*').eq('active', true).order('name'),
-        supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
-      ]);
-
-      if (patientsRes.error) throw patientsRes.error;
-      if (professionalsRes.error) throw professionalsRes.error;
-      if (proceduresRes.error) throw proceduresRes.error;
-      if (statusesRes.error) throw statusesRes.error;
-
-      setPatients(patientsRes.data || []);
-      setProfessionals(professionalsRes.data || []);
-      setProcedures(proceduresRes.data || []);
-      setStatuses(statusesRes.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen && appointmentToEdit) {
-      // Edit mode - populate form with appointment data
-      console.log('Loading appointment data:', appointmentToEdit);
-      
-      const startTime = new Date(appointmentToEdit.start_time);
-      const endTime = new Date(appointmentToEdit.end_time);
-      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-      
-      // Format datetime-local properly
-      const formatDateTimeLocal = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-      };
-      
-      setFormData({
-        patient_id: appointmentToEdit.patient_id || '',
-        professional_id: appointmentToEdit.professional_id || '',
-        procedure_id: appointmentToEdit.procedure_id || '',
-        start_time: formatDateTimeLocal(startTime),
-        duration: duration.toString(),
-        notes: appointmentToEdit.notes || '',
-        status_id: appointmentToEdit.status_id || 1,
-      });
-    } else if (isOpen && !appointmentToEdit) {
-      // Create mode - reset form with default values
-      const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
-      setFormData({
-        patient_id: '',
-        professional_id: selectedProfessionalId || '',
-        procedure_id: '',
-        start_time: defaultTime,
-        duration: '60',
-        notes: '',
-        status_id: 1,
-      });
-    }
-  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
-
-  const handleProcedureChange = (procedureId: string) => {
-    const procedure = procedures.find(p => p.id === procedureId);
-    setFormData({
-      ...formData,
-      procedure_id: procedureId,
-      duration: procedure ? procedure.default_duration.toString() : '60'
-    });
-  };
-
-  const validateForm = async (): Promise<boolean> => {
-    if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    const startTime = new Date(formData.start_time);
-    const endTime = new Date(startTime);
-    endTime.setMinutes(endTime.getMinutes() + parseInt(formData.duration));
-
-    // Validate time slot
-    const { isValid, message } = validateTimeSlot(startTime.toISOString(), endTime.toISOString());
-    if (!isValid) {
-      toast({
-        title: 'Horário inválido',
-        description: message,
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    // Check for conflicts
-    setIsValidating(true);
-    const { hasConflict, message: conflictMessage } = await checkTimeConflict(
-      formData.professional_id,
-      startTime.toISOString(),
-      endTime.toISOString(),
-      appointmentToEdit?.id
-    );
-    setIsValidating(false);
-
-    if (hasConflict) {
-      toast({
-        title: 'Conflito de horário',
-        description: conflictMessage,
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const isFormValid = await validateForm();
-    if (!isFormValid) return;
-
-    setLoading(true);
-    try {
-      const startTime = new Date(formData.start_time);
-      const endTime = new Date(startTime);
-      endTime.setMinutes(endTime.getMinutes() + parseInt(formData.duration));
-
-      const procedure = procedures.find(p => p.id === formData.procedure_id);
-
-      const appointmentData = {
-        patient_id: formData.patient_id,
-        professional_id: formData.professional_id,
-        procedure_id: formData.procedure_id || null,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        price: procedure?.price || null,
-        notes: formData.notes || null,
-        status_id: formData.status_id
-      };
-
-      let error;
-      if (appointmentToEdit) {
-        // Update existing appointment
-        const { error: updateError } = await supabase
-          .from('appointments')
-          .update(appointmentData)
-          .eq('id', appointmentToEdit.id);
-        error = updateError;
-      } else {
-        // Create new appointment
-        const { error: insertError } = await supabase
-          .from('appointments')
-          .insert(appointmentData);
-        error = insertError;
-      }
-
-      if (error) throw error;
-
-      toast({
-        title: 'Sucesso',
-        description: appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
-      });
-
-      onClose();
-    } catch (error) {
-      console.error('Error saving appointment:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao salvar agendamento',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { loading, isValidating, handleSubmit } = useAppointmentFormSubmit(
+    procedures,
+    appointmentToEdit,
+    onClose
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -266,104 +47,16 @@ export function AppointmentForm({
         </DialogHeader>
         
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
-          <form onSubmit={handleSubmit} className="space-y-4 pb-6">
-            <div>
-              <Label htmlFor="patient">Paciente *</Label>
-              <Select value={formData.patient_id} onValueChange={(value) => setFormData({ ...formData, patient_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="professional">Profissional *</Label>
-              <Select value={formData.professional_id} onValueChange={(value) => setFormData({ ...formData, professional_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  {professionals.map((prof) => (
-                    <SelectItem key={prof.id} value={prof.id}>
-                      {prof.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="procedure">Procedimento</Label>
-              <Select value={formData.procedure_id} onValueChange={handleProcedureChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o procedimento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {procedures.map((procedure) => (
-                    <SelectItem key={procedure.id} value={procedure.id}>
-                      {procedure.name} - R$ {procedure.price.toFixed(2)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start_time">Data e Hora *</Label>
-                <Input
-                  id="start_time"
-                  type="datetime-local"
-                  value={formData.start_time}
-                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="duration">Duração (min)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  min="15"
-                  step="15"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status_id.toString()} onValueChange={(value) => setFormData({ ...formData, status_id: parseInt(value) })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((status) => (
-                    <SelectItem key={status.id} value={status.id.toString()}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-              />
-            </div>
+          <form onSubmit={(e) => handleSubmit(e, formData)} className="space-y-4 pb-6">
+            <AppointmentFormFields
+              formData={formData}
+              setFormData={setFormData}
+              patients={patients}
+              professionals={professionals}
+              procedures={procedures}
+              statuses={statuses}
+              onProcedureChange={handleProcedureChange}
+            />
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
