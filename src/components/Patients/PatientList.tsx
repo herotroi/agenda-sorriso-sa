@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Phone, Mail, Search } from 'lucide-react';
+import { Plus, Edit, Phone, Mail, Search, MapPin } from 'lucide-react';
 import { PatientForm } from './PatientForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,9 +13,12 @@ interface Patient {
   full_name: string;
   cpf?: string;
   phone?: string;
-  whatsapp?: string;
   email?: string;
-  address?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
   sus_card?: string;
   health_insurance?: string;
   birth_date?: string;
@@ -62,8 +65,7 @@ export function PatientList() {
     const filtered = patients.filter(patient =>
       patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.cpf?.includes(searchTerm) ||
-      patient.phone?.includes(searchTerm) ||
-      patient.whatsapp?.includes(searchTerm)
+      patient.phone?.includes(searchTerm)
     );
     setFilteredPatients(filtered);
   }, [searchTerm, patients]);
@@ -77,6 +79,16 @@ export function PatientList() {
     setIsFormOpen(false);
     setEditingPatient(null);
     fetchPatients();
+  };
+
+  const formatAddress = (patient: Patient) => {
+    const parts = [];
+    if (patient.street) parts.push(patient.street);
+    if (patient.number) parts.push(patient.number);
+    if (patient.neighborhood) parts.push(patient.neighborhood);
+    if (patient.city) parts.push(patient.city);
+    if (patient.state) parts.push(patient.state);
+    return parts.join(', ');
   };
 
   if (loading) {
@@ -137,6 +149,12 @@ export function PatientList() {
                         </div>
                       )}
                     </div>
+                    {formatAddress(patient) && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {formatAddress(patient)}
+                      </div>
+                    )}
                     {patient.health_insurance && (
                       <p className="text-sm text-gray-600">
                         Plano: {patient.health_insurance}
