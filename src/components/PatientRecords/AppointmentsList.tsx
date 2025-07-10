@@ -31,7 +31,7 @@ export function AppointmentsList({
         <CardHeader>
           <CardTitle className="flex items-center">
             <Calendar className="h-5 w-5 mr-2" />
-            Agendamentos
+            Procedimentos
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -46,30 +46,35 @@ export function AppointmentsList({
       <CardHeader>
         <CardTitle className="flex items-center">
           <Calendar className="h-5 w-5 mr-2" />
-          Agendamentos ({appointments.length})
+          Procedimentos ({appointments.length})
         </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          Clique em um procedimento para ver seus documentos
+        </p>
       </CardHeader>
       <CardContent>
         {appointments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-            <p>Nenhum agendamento encontrado</p>
+            <p>Nenhum procedimento encontrado</p>
           </div>
         ) : (
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+          <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {appointments.map((appointment) => (
               <div
                 key={appointment.id}
-                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                className={`p-4 border rounded-lg cursor-pointer transition-all ${
                   selectedAppointment === appointment.id
-                    ? 'bg-primary/10 border-primary'
-                    : 'hover:bg-muted/50'
+                    ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/20'
+                    : 'hover:bg-muted/50 hover:border-muted-foreground/30'
                 }`}
                 onClick={() => onAppointmentSelect(appointment.id)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center text-sm">
-                    <Calendar className="h-4 w-4 mr-2 text-primary" />
+                    <Calendar className={`h-4 w-4 mr-2 ${
+                      selectedAppointment === appointment.id ? 'text-primary' : 'text-muted-foreground'
+                    }`} />
                     <span className="font-medium">
                       {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
                     </span>
@@ -85,7 +90,11 @@ export function AppointmentsList({
 
                 {appointment.procedures?.name && (
                   <div className="mb-2">
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      selectedAppointment === appointment.id
+                        ? 'bg-primary/20 text-primary border border-primary/30'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
                       {appointment.procedures.name}
                     </span>
                   </div>
@@ -99,7 +108,7 @@ export function AppointmentsList({
                 )}
 
                 {appointment.price && (
-                  <div className="text-sm font-medium text-green-600">
+                  <div className="text-sm font-medium text-green-600 mb-2">
                     R$ {appointment.price.toFixed(2).replace('.', ',')}
                   </div>
                 )}
