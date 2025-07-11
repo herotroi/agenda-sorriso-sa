@@ -122,7 +122,7 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
           </div>
         )}
         
-        <Select value={selectedPatient} onValueChange={onPatientSelect}>
+        <Select value={selectedPatient || 'no_selection'} onValueChange={(value) => onPatientSelect(value === 'no_selection' ? '' : value)}>
           <SelectTrigger className="w-full">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
@@ -136,23 +136,26 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
                   {searchTerm ? `Nenhum paciente encontrado para "${searchTerm}"` : 'Nenhum paciente ativo disponível'}
                 </div>
               ) : (
-                filteredAndSortedPatients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium">
-                        {getHighlightedText(patient.full_name, searchTerm)}
-                      </span>
-                      <div className="flex gap-4 text-xs text-muted-foreground">
-                        {patient.cpf && (
-                          <span>CPF: {getHighlightedText(patient.cpf, searchTerm)}</span>
-                        )}
-                        {patient.phone && (
-                          <span>Tel: {getHighlightedText(patient.phone, searchTerm)}</span>
-                        )}
+                <>
+                  <SelectItem value="no_selection">Selecione um paciente</SelectItem>
+                  {filteredAndSortedPatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      <div className="flex flex-col w-full">
+                        <span className="font-medium">
+                          {getHighlightedText(patient.full_name, searchTerm)}
+                        </span>
+                        <div className="flex gap-4 text-xs text-muted-foreground">
+                          {patient.cpf && (
+                            <span>CPF: {getHighlightedText(patient.cpf, searchTerm)}</span>
+                          )}
+                          {patient.phone && (
+                            <span>Tel: {getHighlightedText(patient.phone, searchTerm)}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </SelectItem>
-                ))
+                    </SelectItem>
+                  ))}
+                </>
               )}
             </div>
           </SelectContent>

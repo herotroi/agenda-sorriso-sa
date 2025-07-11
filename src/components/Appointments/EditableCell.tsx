@@ -80,7 +80,7 @@ export function EditableCell({
               <SelectValue placeholder="Selecione um procedimento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
               {procedures.map((proc) => (
                 <SelectItem key={proc.id} value={proc.id}>
                   {proc.name}

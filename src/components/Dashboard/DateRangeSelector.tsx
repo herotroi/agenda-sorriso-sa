@@ -124,12 +124,12 @@ export function DateRangeSelector({ onDateRangeChange, selectedYear }: DateRange
           {month !== 'all' && days.length > 0 && (
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Select value={day?.toString() || ''} onValueChange={(value) => setDay(value ? parseInt(value) : null)}>
+              <Select value={day?.toString() || 'all_days'} onValueChange={(value) => setDay(value === 'all_days' ? null : parseInt(value))}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Selecionar dia" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os dias</SelectItem>
+                  <SelectItem value="all_days">Todos os dias</SelectItem>
                   {days.map((d) => (
                     <SelectItem key={d} value={d.toString()}>
                       Dia {d.toString().padStart(2, '0')}
