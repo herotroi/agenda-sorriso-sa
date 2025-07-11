@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { useAppointmentsData } from './hooks/useAppointmentsData';
 import { AppointmentForm } from './AppointmentForm';
+import { AppointmentsFilters } from './AppointmentsFilters';
 
 export function AppointmentsTable() {
   const {
@@ -20,7 +21,9 @@ export function AppointmentsTable() {
     setAppointments,
     loading,
     refreshing,
-    handleManualRefresh
+    handleManualRefresh,
+    handleFiltersChange,
+    activeFilters
   } = useAppointmentsData();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -34,7 +37,6 @@ export function AppointmentsTable() {
 
   const handleEdit = (appointment: any, event: React.MouseEvent) => {
     console.log('Edit button clicked for appointment:', appointment.id);
-    // Prevent event bubbling to avoid conflicts with any row click handlers
     event.preventDefault();
     event.stopPropagation();
     
@@ -46,9 +48,10 @@ export function AppointmentsTable() {
     console.log('Closing form');
     setIsFormOpen(false);
     setAppointmentToEdit(null);
-    // Refresh the data after creating/editing
     handleManualRefresh();
   };
+
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
   if (loading) {
     return (
@@ -65,12 +68,22 @@ export function AppointmentsTable() {
 
   return (
     <>
+      {/* Filtros */}
+      <AppointmentsFilters onFiltersChange={handleFiltersChange} />
+
       <Card data-testid="appointments-table">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Tabela de Agendamentos
+              <div className="flex flex-col">
+                <span>Tabela de Agendamentos</span>
+                {hasActiveFilters && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {appointments.length} resultado{appointments.length !== 1 ? 's' : ''} encontrado{appointments.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex gap-2">
               <Button 
@@ -97,12 +110,17 @@ export function AppointmentsTable() {
           {appointments.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-gray-500 mb-4">
-                Nenhum agendamento encontrado
+                {hasActiveFilters 
+                  ? 'Nenhum agendamento encontrado com os filtros selecionados'
+                  : 'Nenhum agendamento encontrado'
+                }
               </div>
-              <Button onClick={handleCreate}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Agendamento
-              </Button>
+              {!hasActiveFilters && (
+                <Button onClick={handleCreate}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Agendamento
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

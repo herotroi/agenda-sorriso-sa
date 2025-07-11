@@ -4,10 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Appointment } from '../types';
 
+interface AppointmentFilters {
+  statusId?: number;
+  procedureId?: string;
+}
+
 export function useAppointmentsData() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState<AppointmentFilters>({});
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -24,7 +31,7 @@ export function useAppointmentsData() {
           appointment_statuses(label, color)
         `)
         .order('start_time', { ascending: false })
-        .limit(50);
+        .limit(200);
 
       if (appointmentsRes.error) throw appointmentsRes.error;
 
@@ -33,7 +40,9 @@ export function useAppointmentsData() {
         firstAppointment: appointmentsRes.data?.[0]
       });
 
-      setAppointments(appointmentsRes.data || []);
+      const fetchedAppointments = appointmentsRes.data || [];
+      setAllAppointments(fetchedAppointments);
+      applyFilters(fetchedAppointments, filters);
     } catch (error) {
       console.error('❌ Error fetching data:', error);
       toast({
@@ -45,6 +54,38 @@ export function useAppointmentsData() {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const applyFilters = (appointmentsList: Appointment[], currentFilters: AppointmentFilters) => {
+    let filtered = [...appointmentsList];
+
+    // Filter by status
+    if (currentFilters.statusId) {
+      filtered = filtered.filter(appointment => 
+        appointment.status_id === currentFilters.statusId
+      );
+    }
+
+    // Filter by procedure
+    if (currentFilters.procedureId) {
+      filtered = filtered.filter(appointment => 
+        appointment.procedure_id === currentFilters.procedureId
+      );
+    }
+
+    console.log('🔍 Filters applied:', {
+      total: appointmentsList.length,
+      filtered: filtered.length,
+      filters: currentFilters
+    });
+
+    setAppointments(filtered);
+  };
+
+  const handleFiltersChange = (newFilters: AppointmentFilters) => {
+    console.log('🔄 Filters changed:', newFilters);
+    setFilters(newFilters);
+    applyFilters(allAppointments, newFilters);
   };
 
   useEffect(() => {
@@ -60,6 +101,8 @@ export function useAppointmentsData() {
     setAppointments,
     loading,
     refreshing,
-    handleManualRefresh
+    handleManualRefresh,
+    handleFiltersChange,
+    activeFilters: filters,
   };
 }
