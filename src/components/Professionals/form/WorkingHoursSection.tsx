@@ -2,6 +2,7 @@
 import { ShiftTimeSection } from './ShiftTimeSection';
 import { BreakTimesSection } from './BreakTimesSection';
 import { VacationSection } from './VacationSection';
+import { WeekdaysSection } from './WeekdaysSection';
 
 interface WorkingHoursSectionProps {
   formData: {
@@ -13,6 +14,10 @@ interface WorkingHoursSectionProps {
     vacation_active: boolean;
     vacation_start: string;
     vacation_end: string;
+    working_days: boolean[];
+    weekend_shift_active: boolean;
+    weekend_shift_start: string;
+    weekend_shift_end: string;
   };
   setFormData: (data: any) => void;
 }
@@ -20,6 +25,20 @@ interface WorkingHoursSectionProps {
 export function WorkingHoursSection({ formData, setFormData }: WorkingHoursSectionProps) {
   return (
     <div className="space-y-6">
+      {/* Dias de Trabalho */}
+      <div>
+        <WeekdaysSection
+          workingDays={formData.working_days}
+          weekendShiftActive={formData.weekend_shift_active}
+          weekendShiftStart={formData.weekend_shift_start}
+          weekendShiftEnd={formData.weekend_shift_end}
+          onWorkingDaysChange={(days) => setFormData({ ...formData, working_days: days })}
+          onWeekendShiftActiveChange={(active) => setFormData({ ...formData, weekend_shift_active: active })}
+          onWeekendShiftStartChange={(time) => setFormData({ ...formData, weekend_shift_start: time })}
+          onWeekendShiftEndChange={(time) => setFormData({ ...formData, weekend_shift_end: time })}
+        />
+      </div>
+
       {/* Expediente */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Expediente</h3>

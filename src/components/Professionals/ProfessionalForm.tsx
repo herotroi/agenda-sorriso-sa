@@ -26,6 +26,10 @@ interface Professional {
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
+  working_days?: boolean[];
+  weekend_shift_active?: boolean;
+  weekend_shift_start?: string;
+  weekend_shift_end?: string;
   active: boolean;
 }
 
@@ -51,6 +55,10 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
     vacation_active: false,
     vacation_start: '',
     vacation_end: '',
+    working_days: [true, true, true, true, true, false, false] as boolean[], // Segunda a sexta por padrão
+    weekend_shift_active: false,
+    weekend_shift_start: '08:00',
+    weekend_shift_end: '12:00',
     active: true,
   });
   const [loading, setLoading] = useState(false);
@@ -73,6 +81,10 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         vacation_active: professional.vacation_active || false,
         vacation_start: professional.vacation_start || '',
         vacation_end: professional.vacation_end || '',
+        working_days: professional.working_days || [true, true, true, true, true, false, false],
+        weekend_shift_active: professional.weekend_shift_active || false,
+        weekend_shift_start: professional.weekend_shift_start || '08:00',
+        weekend_shift_end: professional.weekend_shift_end || '12:00',
         active: professional.active,
       });
     } else if (isOpen) {
@@ -91,6 +103,10 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         vacation_active: false,
         vacation_start: '',
         vacation_end: '',
+        working_days: [true, true, true, true, true, false, false],
+        weekend_shift_active: false,
+        weekend_shift_start: '08:00',
+        weekend_shift_end: '12:00',
         active: true,
       });
     }
@@ -120,6 +136,10 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         vacation_active: formData.vacation_active,
         vacation_start: formData.vacation_active ? formData.vacation_start || null : null,
         vacation_end: formData.vacation_active ? formData.vacation_end || null : null,
+        working_days: formData.working_days,
+        weekend_shift_active: formData.weekend_shift_active,
+        weekend_shift_start: formData.weekend_shift_active ? formData.weekend_shift_start : null,
+        weekend_shift_end: formData.weekend_shift_active ? formData.weekend_shift_end : null,
         active: formData.active,
       };
 
@@ -192,6 +212,10 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
               vacation_active: formData.vacation_active,
               vacation_start: formData.vacation_start,
               vacation_end: formData.vacation_end,
+              working_days: formData.working_days,
+              weekend_shift_active: formData.weekend_shift_active,
+              weekend_shift_start: formData.weekend_shift_start,
+              weekend_shift_end: formData.weekend_shift_end,
             }}
             setFormData={setFormData}
           />
