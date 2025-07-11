@@ -21,15 +21,15 @@ export function ProcedureSelector({
 }: ProcedureSelectorProps) {
   // Filtrar procedimentos baseado no profissional selecionado
   const filteredProcedures = procedures.filter(procedure => {
-    // Se não há profissional selecionado, mostrar todos os procedimentos
-    if (!selectedProfessionalId) return true;
+    // Se não há profissional selecionado, não mostrar nenhum procedimento
+    if (!selectedProfessionalId) return false;
     
     // Se o procedimento tem profissionais associados, verificar se o profissional selecionado está na lista
     if (procedure.professionals && procedure.professionals.length > 0) {
       return procedure.professionals.some(prof => prof.id === selectedProfessionalId);
     }
     
-    // Se o procedimento não tem profissionais associados, mostrar apenas se não há profissional selecionado
+    // Se o procedimento não tem profissionais associados, não mostrar
     return false;
   });
 
@@ -42,11 +42,16 @@ export function ProcedureSelector({
         <SelectTrigger className="w-full">
           <div className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4 text-muted-foreground" />
-            <SelectValue placeholder="Selecione o procedimento" />
+            <SelectValue placeholder={selectedProfessionalId ? "Selecione o procedimento" : "Selecione primeiro um profissional"} />
           </div>
         </SelectTrigger>
         <SelectContent>
-          {filteredProcedures.length === 0 && selectedProfessionalId && (
+          {!selectedProfessionalId && (
+            <div className="px-2 py-1 text-sm text-gray-500">
+              Selecione primeiro um profissional
+            </div>
+          )}
+          {selectedProfessionalId && filteredProcedures.length === 0 && (
             <div className="px-2 py-1 text-sm text-gray-500">
               Nenhum procedimento disponível para este profissional
             </div>

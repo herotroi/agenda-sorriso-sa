@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useProfessionalWorkingHours } from './useProfessionalWorkingHours';
 
 interface TimeSlot {
   start_time: string;
@@ -9,6 +10,7 @@ interface TimeSlot {
 
 export const useAppointmentValidation = () => {
   const { toast } = useToast();
+  const { validateWorkingHours } = useProfessionalWorkingHours();
 
   const checkTimeConflict = async (
     professionalId: string,
@@ -19,6 +21,16 @@ export const useAppointmentValidation = () => {
     console.log('🔍 Checking time conflict:', { professionalId, startTime, endTime, excludeAppointmentId });
     
     try {
+      // Primeiro, validar se o profissional está trabalhando
+      const workingHoursValidation = validateWorkingHours(professionalId, startTime);
+      
+      if (!workingHoursValidation.isAvailable) {
+        return {
+          hasConflict: true,
+          message: workingHoursValidation.message || 'Profissional não está disponível neste horário'
+        };
+      }
+
       const { data, error } = await supabase
         .from('appointments')
         .select('id, start_time, end_time, patients(full_name)')
