@@ -5,7 +5,7 @@ import { DurationInput } from './DurationInput';
 
 interface DateTimeDurationSectionProps {
   formData: AppointmentFormData;
-  handleFieldChange: (field: keyof AppointmentFormData, value: string | number) => void;
+  handleFieldChange: (field: string, value: any) => void;
   originalData?: AppointmentFormData | null;
 }
 

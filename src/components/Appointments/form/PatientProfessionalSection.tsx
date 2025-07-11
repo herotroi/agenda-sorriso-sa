@@ -8,7 +8,7 @@ interface PatientProfessionalSectionProps {
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];
-  handleFieldChange: (field: keyof AppointmentFormData, value: string | number) => void;
+  handleFieldChange: (field: string, value: any) => void;
   currentPatientName?: string;
   currentProfessionalName?: string;
 }
