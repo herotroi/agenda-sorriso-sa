@@ -1,3 +1,4 @@
+
 import { StatsCard } from '@/components/Dashboard/StatsCard';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,8 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  TrendingDown
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
@@ -69,7 +71,7 @@ export default function Dashboard() {
       />
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <StatsCard
           title="Agendamentos Hoje"
           value={stats.todayAppointments}
@@ -84,6 +86,12 @@ export default function Dashboard() {
           title="Receita do Período"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={DollarSign}
+        />
+        <StatsCard
+          title="Valores Cancelados"
+          value={formatCurrency(stats.cancelledRevenue)}
+          icon={TrendingDown}
+          className="border-red-200"
         />
         <StatsCard
           title="Taxa de Ocupação"

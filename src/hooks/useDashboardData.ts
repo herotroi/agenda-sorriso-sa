@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +7,7 @@ interface DashboardStats {
   todayAppointments: number;
   activePatients: number;
   monthlyRevenue: number;
+  cancelledRevenue: number;
   occupancyRate: number;
   confirmedCount: number;
   cancelledCount: number;
@@ -32,6 +34,7 @@ export function useDashboardData() {
     todayAppointments: 0,
     activePatients: 0,
     monthlyRevenue: 0,
+    cancelledRevenue: 0,
     occupancyRate: 0,
     confirmedCount: 0,
     cancelledCount: 0,
@@ -82,17 +85,30 @@ export function useDashboardData() {
 
       if (patientsError) throw patientsError;
 
-      // Buscar receita do período selecionado
+      // Buscar receita do período selecionado (EXCLUINDO cancelados)
       const { data: periodAppointments, error: periodError } = await supabase
         .from('appointments')
-        .select('price')
+        .select('price, appointment_statuses(key)')
         .gte('start_time', range.start.toISOString())
         .lte('start_time', range.end.toISOString())
         .not('price', 'is', null);
 
       if (periodError) throw periodError;
 
-      const periodRevenue = periodAppointments?.reduce((sum, apt) => sum + (apt.price || 0), 0) || 0;
+      // Separar receita confirmada de cancelada
+      let periodRevenue = 0;
+      let cancelledRevenue = 0;
+
+      periodAppointments?.forEach(apt => {
+        const statusKey = apt.appointment_statuses?.key;
+        const price = apt.price || 0;
+        
+        if (statusKey === 'cancelled') {
+          cancelledRevenue += price;
+        } else {
+          periodRevenue += price;
+        }
+      });
 
       // Buscar próximos agendamentos
       const { data: upcomingData, error: upcomingError } = await supabase
@@ -134,7 +150,7 @@ export function useDashboardData() {
         }
       });
 
-      // Buscar dados de receita baseado na seleção
+      // Buscar dados de receita baseado na seleção (EXCLUINDO cancelados)
       const revenueData = [];
       const startYear = range.start.getFullYear();
 
@@ -146,13 +162,15 @@ export function useDashboardData() {
           
           const { data: hourData, error: hourError } = await supabase
             .from('appointments')
-            .select('price')
+            .select('price, appointment_statuses(key)')
             .gte('start_time', startHour)
             .lte('start_time', endHour)
             .not('price', 'is', null);
 
           if (!hourError && hourData) {
-            const hourRevenue = hourData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            const hourRevenue = hourData
+              .filter(apt => apt.appointment_statuses?.key !== 'cancelled')
+              .reduce((sum, apt) => sum + (apt.price || 0), 0);
             revenueData.push({
               name: `${hour.toString().padStart(2, '0')}h`,
               value: hourRevenue
@@ -169,13 +187,15 @@ export function useDashboardData() {
           
           const { data: dayData, error: dayError } = await supabase
             .from('appointments')
-            .select('price')
+            .select('price, appointment_statuses(key)')
             .gte('start_time', startDayDate)
             .lte('start_time', endDayDate)
             .not('price', 'is', null);
 
           if (!dayError && dayData) {
-            const dayRevenue = dayData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            const dayRevenue = dayData
+              .filter(apt => apt.appointment_statuses?.key !== 'cancelled')
+              .reduce((sum, apt) => sum + (apt.price || 0), 0);
             revenueData.push({
               name: day.toString().padStart(2, '0'),
               value: dayRevenue
@@ -190,13 +210,15 @@ export function useDashboardData() {
           
           const { data: monthData, error: monthError } = await supabase
             .from('appointments')
-            .select('price')
+            .select('price, appointment_statuses(key)')
             .gte('start_time', startMonthDate)
             .lte('start_time', endMonthDate)
             .not('price', 'is', null);
 
           if (!monthError && monthData) {
-            const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            const monthRevenue = monthData
+              .filter(apt => apt.appointment_statuses?.key !== 'cancelled')
+              .reduce((sum, apt) => sum + (apt.price || 0), 0);
             const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
             revenueData.push({
               name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
@@ -214,6 +236,7 @@ export function useDashboardData() {
         todayAppointments: todayAppointmentsData?.length || 0,
         activePatients: patientsCount || 0,
         monthlyRevenue: periodRevenue,
+        cancelledRevenue: cancelledRevenue,
         occupancyRate: Math.min(occupancyRate, 100),
         confirmedCount: statusCounts.confirmed,
         cancelledCount: statusCounts.cancelled,
