@@ -1,4 +1,3 @@
-
 import { PatientProfessionalSection } from './PatientProfessionalSection';
 import { ProcedureSelector } from './ProcedureSelector';
 import { DateTimeDurationSection } from './DateTimeDurationSection';
