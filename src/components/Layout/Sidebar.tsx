@@ -10,7 +10,9 @@ import {
   FileText,
   Menu,
   X,
-  Bell
+  Bell,
+  Stethoscope,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -29,11 +31,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     { path: '/agenda', icon: Calendar, label: 'Agenda' },
     { path: '/pacientes', icon: Users, label: 'Pacientes' },
     { path: '/profissionais', icon: UserCheck, label: 'Profissionais' },
-    { path: '/procedimentos', icon: Settings, label: 'Procedimentos' },
+    { path: '/procedimentos', icon: Stethoscope, label: 'Procedimentos' },
     { path: '/prontuario', icon: FileText, label: 'Prontuário' },
     { path: '/notificacoes', icon: Bell, label: 'Notificações', badge: unreadCount },
     { path: '/configuracoes', icon: Settings, label: 'Configurações' },
-    { path: '/assinatura', icon: BarChart3, label: 'Assinatura' },
+    { path: '/assinatura', icon: CreditCard, label: 'Assinatura' },
   ];
 
   return (
