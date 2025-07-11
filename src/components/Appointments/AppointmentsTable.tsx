@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppointmentsData } from './hooks/useAppointmentsData';
 import { AppointmentForm } from './AppointmentForm';
@@ -7,7 +7,11 @@ import { AppointmentsFilters } from './AppointmentsFilters';
 import { AppointmentsTableHeader } from './AppointmentsTableHeader';
 import { AppointmentsTableContent } from './AppointmentsTableContent';
 
-export function AppointmentsTable() {
+interface AppointmentsTableProps {
+  onFiltersChange?: (filters: { statusId?: number; procedureId?: string }) => void;
+}
+
+export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
   const {
     appointments,
     setAppointments,
@@ -20,6 +24,13 @@ export function AppointmentsTable() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState(null);
+
+  // Propagar mudanças de filtros para o componente pai
+  useEffect(() => {
+    if (onFiltersChange) {
+      onFiltersChange(activeFilters);
+    }
+  }, [activeFilters, onFiltersChange]);
 
   const handleCreate = () => {
     console.log('Opening create form');

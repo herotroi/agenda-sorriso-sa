@@ -1,11 +1,16 @@
 
 import { getCurrentDate, getFormattedDate, openPrintWindow } from './printUtils';
-import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments } from './printDataFetchers';
+import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments, fetchFilteredAppointments } from './printDataFetchers';
 import { generateCalendarPrintTemplate, generateTablePrintTemplate } from './printTemplates';
 import { Professional } from './printTemplates/types';
 
 export function usePrintReport() {
-  const handlePrint = async (activeTab: string, selectedDate?: Date, professionalId?: string) => {
+  const handlePrint = async (
+    activeTab: string, 
+    selectedDate?: Date, 
+    professionalId?: string,
+    filters?: { statusId?: number; procedureId?: string }
+  ) => {
     const currentDate = getCurrentDate();
     const displayDate = selectedDate ? getFormattedDate(selectedDate) : currentDate;
     let contentToPrint = '';
@@ -46,14 +51,21 @@ export function usePrintReport() {
           contentToPrint = generateCalendarPrintTemplate(professionals, appointments || [], selectedDate);
         }
       } else {
-        console.log('Preparing table print for date:', selectedDate || 'all', 'professional:', professionalId || 'all');
+        console.log('Preparing table print with filters:', filters, 'professional:', professionalId || 'all');
         
-        const [appointments, allProfessionals] = await Promise.all([
-          selectedDate ? 
-            fetchDateAppointments(selectedDate, professionalId) : 
-            fetchAllAppointments(professionalId),
-          fetchProfessionalsData()
-        ]);
+        let appointments;
+        
+        // Se há filtros ativos, usar função de busca filtrada
+        if (filters && (filters.statusId || filters.procedureId)) {
+          appointments = await fetchFilteredAppointments(filters, professionalId);
+        } else {
+          // Usar função padrão se não há filtros
+          appointments = selectedDate ? 
+            await fetchDateAppointments(selectedDate, professionalId) : 
+            await fetchAllAppointments(professionalId);
+        }
+
+        const allProfessionals = await fetchProfessionalsData();
 
         // Convert professionals with proper type handling for table template
         const convertedProfessionals = allProfessionals.map(prof => ({
@@ -74,7 +86,8 @@ export function usePrintReport() {
         
         if (!appointments || appointments.length === 0) {
           const professionalText = professionalId ? ' para este profissional' : '';
-          contentToPrint = `<p>Nenhum agendamento encontrado${professionalText} para impressão da tabela.</p>`;
+          const filtersText = filters && (filters.statusId || filters.procedureId) ? ' com os filtros aplicados' : '';
+          contentToPrint = `<p>Nenhum agendamento encontrado${professionalText}${filtersText} para impressão da tabela.</p>`;
         } else {
           contentToPrint = generateTablePrintTemplate(appointments, professionals);
         }

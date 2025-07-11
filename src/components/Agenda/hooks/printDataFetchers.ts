@@ -141,3 +141,64 @@ export const fetchAllAppointments = async (professionalId?: string) => {
   
   return processedAppointments;
 };
+
+export const fetchFilteredAppointments = async (
+  filters: { statusId?: number; procedureId?: string },
+  professionalId?: string
+) => {
+  console.log('Fetching filtered appointments:', filters, 'professional:', professionalId);
+  
+  let query = supabase
+    .from('appointments')
+    .select(`
+      id,
+      patient_id,
+      professional_id,
+      procedure_id,
+      start_time,
+      end_time,
+      status,
+      status_id,
+      notes,
+      price,
+      created_at,
+      updated_at,
+      patients!inner(full_name),
+      professionals!inner(name),
+      procedures(name),
+      appointment_statuses!inner(label, color)
+    `);
+
+  // Apply filters
+  if (filters.statusId) {
+    query = query.eq('status_id', filters.statusId);
+  }
+
+  if (filters.procedureId) {
+    query = query.eq('procedure_id', filters.procedureId);
+  }
+
+  // Add professional filter if specified
+  if (professionalId) {
+    query = query.eq('professional_id', professionalId);
+  }
+
+  const { data: appointments, error } = await query.order('start_time', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching filtered appointments:', error);
+    throw error;
+  }
+
+  const processedAppointments = appointments?.map(apt => ({
+    ...apt,
+    patients: apt.patients || { full_name: 'Paciente não informado' },
+    professionals: apt.professionals || { name: 'Profissional não informado' },
+    procedures: apt.procedures || { name: 'Sem procedimento' },
+    appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
+  })) || [];
+
+  console.log('Filtered appointments fetched:', processedAppointments.length);
+  
+  return processedAppointments;
+};

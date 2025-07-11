@@ -9,9 +9,16 @@ interface AgendaTabsProps {
   onTabChange: (value: string) => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  onFiltersChange: (filters: { statusId?: number; procedureId?: string }) => void;
 }
 
-export function AgendaTabs({ activeTab, onTabChange, selectedDate, onDateChange }: AgendaTabsProps) {
+export function AgendaTabs({ 
+  activeTab, 
+  onTabChange, 
+  selectedDate, 
+  onDateChange,
+  onFiltersChange 
+}: AgendaTabsProps) {
   return (
     <Tabs defaultValue="calendar" value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -30,7 +37,7 @@ export function AgendaTabs({ activeTab, onTabChange, selectedDate, onDateChange 
       </TabsContent>
       
       <TabsContent value="table" className="mt-6">
-        <AppointmentsTable />
+        <AppointmentsTable onFiltersChange={onFiltersChange} />
       </TabsContent>
     </Tabs>
   );
