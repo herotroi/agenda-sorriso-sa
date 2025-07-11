@@ -16,6 +16,11 @@ export interface Professional {
   id: string;
   name: string;
   active: boolean;
+  break_times?: Array<{ start: string; end: string }>;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  working_days?: boolean[];
 }
 
 export type AppointmentDisplayType = 'start' | 'continuation' | 'end';
