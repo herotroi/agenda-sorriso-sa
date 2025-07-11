@@ -266,6 +266,42 @@ export type Database = {
         }
         Relationships: []
       }
+      procedure_professionals: {
+        Row: {
+          created_at: string
+          id: string
+          procedure_id: string
+          professional_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          procedure_id: string
+          professional_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          procedure_id?: string
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_professionals_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procedure_professionals_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procedures: {
         Row: {
           active: boolean | null

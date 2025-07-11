@@ -2,26 +2,15 @@
 export interface Patient {
   id: string;
   full_name: string;
-  cpf?: string;
   phone?: string;
   email?: string;
-  street?: string;
-  number?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  sus_card?: string;
-  health_insurance?: string;
-  birth_date?: string;
-  notes?: string;
-  active?: boolean;
 }
 
 export interface Professional {
   id: string;
   name: string;
   specialty?: string;
-  active?: boolean;
+  color?: string;
 }
 
 export interface Procedure {
@@ -29,23 +18,25 @@ export interface Procedure {
   name: string;
   price: number;
   default_duration: number;
-  active?: boolean;
+  description?: string;
+  professionals?: Professional[];
 }
 
 export interface AppointmentStatus {
   id: number;
-  key: string;
   label: string;
+  key: string;
   color?: string;
-  active?: boolean;
 }
 
-export interface FormData {
+export interface AppointmentFormData {
   patient_id: string;
   professional_id: string;
   procedure_id: string;
   start_time: string;
-  duration: string;
-  notes: string;
+  end_time: string;
   status_id: number;
+  notes: string;
+  price: number;
+  duration: string;
 }

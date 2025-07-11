@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +16,13 @@ interface Procedure {
   price: number;
   default_duration: number;
   description?: string;
+  active: boolean;
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  specialty?: string;
   active: boolean;
 }
 
@@ -32,28 +40,95 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
     description: '',
     active: true,
   });
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const fetchProfessionals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('id, name, specialty, active')
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      setProfessionals(data || []);
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+    }
+  };
+
+  const fetchProcedureProfessionals = async (procedureId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('procedure_professionals')
+        .select('professional_id')
+        .eq('procedure_id', procedureId);
+
+      if (error) throw error;
+      setSelectedProfessionals(data?.map(item => item.professional_id) || []);
+    } catch (error) {
+      console.error('Error fetching procedure professionals:', error);
+    }
+  };
+
   useEffect(() => {
-    if (procedure) {
-      setFormData({
-        name: procedure.name,
-        price: procedure.price.toString(),
-        default_duration: procedure.default_duration.toString(),
-        description: procedure.description || '',
-        active: procedure.active,
-      });
-    } else {
-      setFormData({
-        name: '',
-        price: '',
-        default_duration: '60',
-        description: '',
-        active: true,
-      });
+    if (isOpen) {
+      fetchProfessionals();
+      
+      if (procedure) {
+        setFormData({
+          name: procedure.name,
+          price: procedure.price.toString(),
+          default_duration: procedure.default_duration.toString(),
+          description: procedure.description || '',
+          active: procedure.active,
+        });
+        fetchProcedureProfessionals(procedure.id);
+      } else {
+        setFormData({
+          name: '',
+          price: '',
+          default_duration: '60',
+          description: '',
+          active: true,
+        });
+        setSelectedProfessionals([]);
+      }
     }
   }, [procedure, isOpen]);
+
+  const handleProfessionalToggle = (professionalId: string) => {
+    setSelectedProfessionals(prev => 
+      prev.includes(professionalId)
+        ? prev.filter(id => id !== professionalId)
+        : [...prev, professionalId]
+    );
+  };
+
+  const saveProcedureProfessionals = async (procedureId: string) => {
+    // Primeiro, remove todas as associações existentes
+    await supabase
+      .from('procedure_professionals')
+      .delete()
+      .eq('procedure_id', procedureId);
+
+    // Então, adiciona as novas associações
+    if (selectedProfessionals.length > 0) {
+      const associations = selectedProfessionals.map(professionalId => ({
+        procedure_id: procedureId,
+        professional_id: professionalId,
+      }));
+
+      const { error } = await supabase
+        .from('procedure_professionals')
+        .insert(associations);
+
+      if (error) throw error;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +143,8 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
         active: formData.active,
       };
 
+      let procedureId: string;
+
       if (procedure) {
         const { error } = await supabase
           .from('procedures')
@@ -75,23 +152,30 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
           .eq('id', procedure.id);
 
         if (error) throw error;
+        procedureId = procedure.id;
 
         toast({
           title: 'Sucesso',
           description: 'Procedimento atualizado com sucesso',
         });
       } else {
-        const { error } = await supabase
+        const { data: newProcedure, error } = await supabase
           .from('procedures')
-          .insert(data);
+          .insert(data)
+          .select()
+          .single();
 
         if (error) throw error;
+        procedureId = newProcedure.id;
 
         toast({
           title: 'Sucesso',
           description: 'Procedimento criado com sucesso',
         });
       }
+
+      // Salvar associações com profissionais
+      await saveProcedureProfessionals(procedureId);
 
       onClose();
     } catch (error) {
@@ -108,7 +192,7 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {procedure ? 'Editar Procedimento' : 'Novo Procedimento'}
@@ -156,6 +240,30 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
+          </div>
+
+          <div>
+            <Label className="text-base font-medium">Profissionais Responsáveis</Label>
+            <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded p-3">
+              {professionals.map((professional) => (
+                <div key={professional.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={professional.id}
+                    checked={selectedProfessionals.includes(professional.id)}
+                    onCheckedChange={() => handleProfessionalToggle(professional.id)}
+                  />
+                  <Label htmlFor={professional.id} className="text-sm font-normal">
+                    {professional.name}
+                    {professional.specialty && (
+                      <span className="text-gray-500 ml-1">({professional.specialty})</span>
+                    )}
+                  </Label>
+                </div>
+              ))}
+              {professionals.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhum profissional ativo encontrado</p>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">

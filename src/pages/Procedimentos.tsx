@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { ProcedureForm } from '@/components/Procedures/ProcedureForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,8 +17,16 @@ interface Procedure {
   active: boolean;
 }
 
+interface ProcedureWithProfessionals extends Procedure {
+  professionals: {
+    id: string;
+    name: string;
+    specialty?: string;
+  }[];
+}
+
 export default function Procedimentos() {
-  const [procedures, setProcedures] = useState<Procedure[]>([]);
+  const [procedures, setProcedures] = useState<ProcedureWithProfessionals[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,13 +34,37 @@ export default function Procedimentos() {
 
   const fetchProcedures = async () => {
     try {
-      const { data, error } = await supabase
+      // Buscar procedimentos
+      const { data: proceduresData, error: proceduresError } = await supabase
         .from('procedures')
         .select('*')
         .order('name');
 
-      if (error) throw error;
-      setProcedures(data || []);
+      if (proceduresError) throw proceduresError;
+
+      // Buscar profissionais associados a cada procedimento
+      const proceduresWithProfessionals = await Promise.all(
+        (proceduresData || []).map(async (procedure) => {
+          const { data: professionalsData, error: professionalsError } = await supabase
+            .from('procedure_professionals')
+            .select(`
+              professional:professionals(id, name, specialty)
+            `)
+            .eq('procedure_id', procedure.id);
+
+          if (professionalsError) {
+            console.error('Error fetching professionals for procedure:', professionalsError);
+            return { ...procedure, professionals: [] };
+          }
+
+          return {
+            ...procedure,
+            professionals: professionalsData?.map(item => item.professional).filter(Boolean) || []
+          };
+        })
+      );
+
+      setProcedures(proceduresWithProfessionals);
     } catch (error) {
       console.error('Error fetching procedures:', error);
       toast({
@@ -108,7 +141,7 @@ export default function Procedimentos() {
           <Card key={procedure.id}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-semibold">{procedure.name}</h3>
                   <p className="text-gray-600 text-sm">{procedure.description}</p>
                   <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
@@ -118,7 +151,37 @@ export default function Procedimentos() {
                       {procedure.active ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
+                  
+                  {procedure.professionals.length > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Profissionais Responsáveis:
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {procedure.professionals.map((professional) => (
+                          <Badge key={professional.id} variant="secondary">
+                            {professional.name}
+                            {professional.specialty && (
+                              <span className="ml-1 text-xs opacity-75">
+                                ({professional.specialty})
+                              </span>
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {procedure.professionals.length === 0 && (
+                    <div className="mt-3 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded">
+                      Nenhum profissional responsável definido
+                    </div>
+                  )}
                 </div>
+                
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"

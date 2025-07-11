@@ -9,9 +9,30 @@ interface ProcedureSelectorProps {
   value: string;
   onChange: (value: string) => void;
   currentProcedureName?: string;
+  selectedProfessionalId?: string;
 }
 
-export function ProcedureSelector({ procedures, value, onChange, currentProcedureName }: ProcedureSelectorProps) {
+export function ProcedureSelector({ 
+  procedures, 
+  value, 
+  onChange, 
+  currentProcedureName,
+  selectedProfessionalId 
+}: ProcedureSelectorProps) {
+  // Filtrar procedimentos baseado no profissional selecionado
+  const filteredProcedures = procedures.filter(procedure => {
+    // Se não há profissional selecionado, mostrar todos os procedimentos
+    if (!selectedProfessionalId) return true;
+    
+    // Se o procedimento tem profissionais associados, verificar se o profissional selecionado está na lista
+    if (procedure.professionals && procedure.professionals.length > 0) {
+      return procedure.professionals.some(prof => prof.id === selectedProfessionalId);
+    }
+    
+    // Se o procedimento não tem profissionais associados, mostrar apenas se não há profissional selecionado
+    return false;
+  });
+
   return (
     <FormField 
       label="Procedimento" 
@@ -25,7 +46,12 @@ export function ProcedureSelector({ procedures, value, onChange, currentProcedur
           </div>
         </SelectTrigger>
         <SelectContent>
-          {procedures.map((procedure) => (
+          {filteredProcedures.length === 0 && selectedProfessionalId && (
+            <div className="px-2 py-1 text-sm text-gray-500">
+              Nenhum procedimento disponível para este profissional
+            </div>
+          )}
+          {filteredProcedures.map((procedure) => (
             <SelectItem key={procedure.id} value={procedure.id}>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
