@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -95,7 +94,7 @@ export function ProfessionalDetailView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-[200px]">
       <ProfessionalDetailViewHeader
         onBack={onBack}
         onNavigateDate={navigateDate}
