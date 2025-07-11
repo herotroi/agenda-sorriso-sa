@@ -1,15 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ShiftTimeSection } from './form/ShiftTimeSection';
-import { BreakTimesSection } from './form/BreakTimesSection';
-import { VacationSection } from './form/VacationSection';
+import { BasicInfoSection } from './form/BasicInfoSection';
+import { WorkingHoursSection } from './form/WorkingHoursSection';
+import { FormActions } from './form/FormActions';
 
 interface Professional {
   id: string;
@@ -172,116 +170,31 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informações Básicas */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Informações Básicas</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Nome *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="specialty">Especialidade</Label>
-                <Input
-                  id="specialty"
-                  value={formData.specialty}
-                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                  placeholder="Ex: Ortodontia, Endodontia..."
-                />
-              </div>
-            </div>
+          <BasicInfoSection
+            formData={{
+              name: formData.name,
+              specialty: formData.specialty,
+              crm_cro: formData.crm_cro,
+              email: formData.email,
+              phone: formData.phone,
+              color: formData.color,
+            }}
+            setFormData={setFormData}
+          />
 
-            <div>
-              <Label htmlFor="crm_cro">CRM/CRO</Label>
-              <Input
-                id="crm_cro"
-                value={formData.crm_cro}
-                onChange={(e) => setFormData({ ...formData, crm_cro: e.target.value })}
-                placeholder="Ex: CRO-12345"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(11) 9999-9999"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="color">Cor do Calendário</Label>
-              <Input
-                id="color"
-                type="color"
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Expediente */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Expediente</h3>
-            <div className="grid grid-cols-2 gap-6">
-              <ShiftTimeSection
-                title="Primeiro Expediente"
-                startTime={formData.first_shift_start}
-                endTime={formData.first_shift_end}
-                onStartTimeChange={(time) => setFormData({ ...formData, first_shift_start: time })}
-                onEndTimeChange={(time) => setFormData({ ...formData, first_shift_end: time })}
-                startId="first_shift_start"
-                endId="first_shift_end"
-              />
-              <ShiftTimeSection
-                title="Segundo Expediente"
-                startTime={formData.second_shift_start}
-                endTime={formData.second_shift_end}
-                onStartTimeChange={(time) => setFormData({ ...formData, second_shift_start: time })}
-                onEndTimeChange={(time) => setFormData({ ...formData, second_shift_end: time })}
-                startId="second_shift_start"
-                endId="second_shift_end"
-              />
-            </div>
-          </div>
-
-          {/* Pausas */}
-          <div>
-            <BreakTimesSection
-              breakTimes={formData.break_times}
-              onBreakTimesChange={(breakTimes) => setFormData({ ...formData, break_times: breakTimes })}
-            />
-          </div>
-
-          {/* Férias */}
-          <div>
-            <VacationSection
-              vacationActive={formData.vacation_active}
-              vacationStart={formData.vacation_start}
-              vacationEnd={formData.vacation_end}
-              onVacationActiveChange={(active) => setFormData({ ...formData, vacation_active: active })}
-              onVacationStartChange={(date) => setFormData({ ...formData, vacation_start: date })}
-              onVacationEndChange={(date) => setFormData({ ...formData, vacation_end: date })}
-            />
-          </div>
+          <WorkingHoursSection
+            formData={{
+              first_shift_start: formData.first_shift_start,
+              first_shift_end: formData.first_shift_end,
+              second_shift_start: formData.second_shift_start,
+              second_shift_end: formData.second_shift_end,
+              break_times: formData.break_times,
+              vacation_active: formData.vacation_active,
+              vacation_start: formData.vacation_start,
+              vacation_end: formData.vacation_end,
+            }}
+            setFormData={setFormData}
+          />
 
           {/* Status */}
           <div className="flex items-center space-x-2">
@@ -293,14 +206,11 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
             <Label htmlFor="active">Ativo</Label>
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading || !formData.name}>
-              {loading ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={onClose}
+            loading={loading}
+            isNameValid={!!formData.name}
+          />
         </form>
       </DialogContent>
     </Dialog>
