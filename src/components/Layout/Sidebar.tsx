@@ -40,7 +40,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border flex flex-col",
+      "fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-sidebar-border flex flex-col z-50",
       isCollapsed ? "w-16" : "w-64"
     )}>
       <div className="p-4 border-b border-slate-700">
