@@ -1,13 +1,19 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Stethoscope } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Stethoscope, Coffee, Plane } from 'lucide-react';
 import { Appointment } from '@/components/Appointments/types';
+import { generateTimeBlocks } from '../hooks/utils/timeBlockUtils';
 
 interface Professional {
   id: string;
   name: string;
   color: string;
+  break_times?: Array<{ start: string; end: string }>;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  working_days?: boolean[];
 }
 
 interface MonthViewProps {
@@ -45,15 +51,17 @@ export function MonthView({
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
     
-    // Filtrar apenas agendamentos para o dia específico
     return appointments.filter(apt => {
       const aptDate = new Date(apt.start_time);
       return aptDate >= dayStart && aptDate <= dayEnd;
     });
   };
 
+  const getTimeBlocksForDay = (date: Date) => {
+    return generateTimeBlocks([professional], date);
+  };
+
   const getLighterColor = (color: string, opacity: number = 0.15) => {
-    // Convert hex to RGB and add opacity
     const hex = color.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -96,9 +104,13 @@ export function MonthView({
         {/* Dias do mês */}
         {monthDays.map((day) => {
           const dayAppointments = getAppointmentsForDay(day);
+          const dayTimeBlocks = getTimeBlocksForDay(day);
           const isToday = day.toDateString() === new Date().toDateString();
           const isSelected = day.toDateString() === selectedDate.toDateString();
           const lighterBgColor = getLighterColor(professional.color, 0.15);
+
+          const hasVacation = dayTimeBlocks.some(block => block.type === 'vacation');
+          const hasBreaks = dayTimeBlocks.some(block => block.type === 'break');
 
           return (
             <div
@@ -114,55 +126,85 @@ export function MonthView({
                 {day.getDate()}
               </div>
               
-              {dayAppointments.length > 0 && (
-                <div className="mt-1 space-y-1">
-                  {/* Ícone de estetoscópio e contador */}
-                  <div className="flex items-center justify-center mb-2">
+              <div className="mt-1 space-y-1">
+                {/* Indicadores de férias e pausas */}
+                <div className="flex items-center justify-center gap-1 mb-2">
+                  {hasVacation && (
                     <Badge 
                       variant="secondary" 
-                      className="flex items-center gap-1 text-xs px-2 py-1 text-white font-semibold"
-                      style={{ backgroundColor: professional.color }}
+                      className="flex items-center gap-1 text-xs px-1 py-0.5 text-white font-semibold"
+                      style={{ backgroundColor: '#dc2626' }}
                     >
-                      <Stethoscope className="h-3 w-3" />
-                      <span>{dayAppointments.length}</span>
+                      <Plane className="h-3 w-3" />
                     </Badge>
-                  </div>
-                  
-                  {/* Primeiro agendamento com status mais visível */}
-                  {dayAppointments.slice(0, 1).map((apt) => {
-                    const statusColor = apt.appointment_statuses?.color || '#6b7280';
-                    return (
-                      <div
-                        key={apt.id}
-                        className="text-xs p-2 rounded text-gray-800 border-l-4 shadow-sm overflow-hidden"
-                        style={{ 
-                          backgroundColor: lighterBgColor,
-                          borderLeftColor: statusColor,
-                        }}
-                      >
-                        <div className="space-y-1">
-                          <div className="font-semibold truncate">
-                            {apt.patients?.full_name}
-                          </div>
-                          <div className="flex justify-start">
-                            <div 
-                              className="text-xs font-bold px-1 py-0.5 rounded text-white truncate max-w-full"
-                              style={{ backgroundColor: statusColor }}
-                            >
-                              {apt.appointment_statuses?.label || apt.status}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {dayAppointments.length > 1 && (
-                    <div className="text-xs text-gray-500 text-center font-medium">
-                      +{dayAppointments.length - 1} mais
-                    </div>
+                  )}
+                  {hasBreaks && (
+                    <Badge 
+                      variant="secondary" 
+                      className="flex items-center gap-1 text-xs px-1 py-0.5 text-white font-semibold"
+                      style={{ backgroundColor: '#ef4444' }}
+                    >
+                      <Coffee className="h-3 w-3" />
+                    </Badge>
                   )}
                 </div>
-              )}
+
+                {/* Agendamentos */}
+                {dayAppointments.length > 0 && (
+                  <>
+                    {/* Ícone de estetoscópio e contador */}
+                    <div className="flex items-center justify-center mb-2">
+                      <Badge 
+                        variant="secondary" 
+                        className="flex items-center gap-1 text-xs px-2 py-1 text-white font-semibold"
+                        style={{ backgroundColor: professional.color }}
+                      >
+                        <Stethoscope className="h-3 w-3" />
+                        <span>{dayAppointments.length}</span>
+                      </Badge>
+                    </div>
+                    
+                    {/* Mostrar detalhes apenas se for o dia selecionado */}
+                    {isSelected && (
+                      <>
+                        {/* Primeiro agendamento com status mais visível */}
+                        {dayAppointments.slice(0, 1).map((apt) => {
+                          const statusColor = apt.appointment_statuses?.color || '#6b7280';
+                          return (
+                            <div
+                              key={apt.id}
+                              className="text-xs p-2 rounded text-gray-800 border-l-4 shadow-sm overflow-hidden"
+                              style={{ 
+                                backgroundColor: lighterBgColor,
+                                borderLeftColor: statusColor,
+                              }}
+                            >
+                              <div className="space-y-1">
+                                <div className="font-semibold truncate">
+                                  {apt.patients?.full_name}
+                                </div>
+                                <div className="flex justify-start">
+                                  <div 
+                                    className="text-xs font-bold px-1 py-0.5 rounded text-white truncate max-w-full"
+                                    style={{ backgroundColor: statusColor }}
+                                  >
+                                    {apt.appointment_statuses?.label || apt.status}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {dayAppointments.length > 1 && (
+                          <div className="text-xs text-gray-500 text-center font-medium">
+                            +{dayAppointments.length - 1} mais
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           );
         })}

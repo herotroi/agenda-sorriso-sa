@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,11 +12,27 @@ import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
 import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
+import { supabase } from '@/integrations/supabase/client';
+import { generateTimeBlocks } from './hooks/utils/timeBlockUtils';
 
 interface Professional {
   id: string;
   name: string;
   color: string;
+  break_times?: Array<{ start: string; end: string }>;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  working_days?: boolean[];
+}
+
+interface TimeBlock {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
 }
 
 interface ProfessionalDetailViewProps {
@@ -28,7 +43,7 @@ interface ProfessionalDetailViewProps {
 }
 
 export function ProfessionalDetailView({ 
-  professional, 
+  professional: initialProfessional, 
   onBack, 
   selectedDate, 
   onDateChange 
@@ -37,13 +52,55 @@ export function ProfessionalDetailView({
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [searchDate, setSearchDate] = useState('');
   const [activeTab, setActiveTab] = useState('day');
+  const [professional, setProfessional] = useState<Professional>(initialProfessional);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const { toast } = useToast();
   const { handlePrint } = usePrintReport();
 
-  const { appointments, loading, fetchAppointments } = useProfessionalDetailData(
+  const { appointments, monthAppointments, loading, fetchAppointments } = useProfessionalDetailData(
     professional.id, 
     selectedDate
   );
+
+  // Buscar dados completos do profissional
+  useEffect(() => {
+    const fetchProfessionalData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('id', professional.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const processedProfessional = {
+            ...data,
+            break_times: Array.isArray(data.break_times) 
+              ? (data.break_times as Array<{ start: string; end: string }>) 
+              : [],
+            working_days: Array.isArray(data.working_days) 
+              ? (data.working_days as boolean[]) 
+              : [true, true, true, true, true, false, false]
+          };
+          setProfessional(processedProfessional);
+        }
+      } catch (error) {
+        console.error('Error fetching professional data:', error);
+      }
+    };
+
+    fetchProfessionalData();
+  }, [professional.id]);
+
+  // Gerar time blocks quando os dados do profissional mudam
+  useEffect(() => {
+    if (professional && (professional.break_times || professional.vacation_active)) {
+      const blocks = generateTimeBlocks([professional], selectedDate);
+      setTimeBlocks(blocks);
+    }
+  }, [professional, selectedDate]);
 
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate);
@@ -155,6 +212,7 @@ export function ProfessionalDetailView({
               <DayView
                 professional={professional}
                 appointments={appointments}
+                timeBlocks={timeBlocks}
                 onAppointmentClick={setSelectedAppointment}
               />
             </TabsContent>
@@ -162,7 +220,7 @@ export function ProfessionalDetailView({
             <TabsContent value="month" className="mt-6">
               <MonthView
                 professional={professional}
-                appointments={appointments}
+                appointments={monthAppointments}
                 selectedDate={selectedDate}
                 onNavigateMonth={navigateMonth}
                 onDayClick={handleDayClick}

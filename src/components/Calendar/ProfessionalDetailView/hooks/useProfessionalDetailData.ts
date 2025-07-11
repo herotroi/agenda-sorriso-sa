@@ -6,6 +6,7 @@ import { Appointment } from '@/components/Appointments/types';
 
 export function useProfessionalDetailData(professionalId: string, selectedDate: Date) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [monthAppointments, setMonthAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -16,7 +17,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     try {
       setLoading(true);
       
-      // Buscar apenas para o dia específico
+      // Buscar apenas para o dia específico (para visualização do dia)
       const startOfDay = new Date(targetDate);
       startOfDay.setHours(0, 0, 0, 0);
       
@@ -61,14 +62,47 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     }
   };
 
+  const fetchMonthAppointments = async (date: Date) => {
+    try {
+      // Buscar todos os agendamentos do mês
+      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients(full_name),
+          professionals(name),
+          procedures(name),
+          appointment_statuses(label, color)
+        `)
+        .eq('professional_id', professionalId)
+        .gte('start_time', startOfMonth.toISOString())
+        .lte('start_time', endOfMonth.toISOString())
+        .order('start_time');
+
+      if (error) throw error;
+      
+      setMonthAppointments(data || []);
+    } catch (error) {
+      console.error('❌ Error fetching month appointments:', error);
+    }
+  };
+
   useEffect(() => {
     if (professionalId) {
       fetchAppointments();
+      fetchMonthAppointments(selectedDate);
     }
   }, [selectedDate, professionalId]);
 
   return {
     appointments,
+    monthAppointments,
     loading,
     fetchAppointments
   };

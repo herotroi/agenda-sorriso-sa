@@ -7,16 +7,26 @@ interface Professional {
   color: string;
 }
 
+interface TimeBlock {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
+}
+
 interface DayViewProps {
   professional: Professional;
   appointments: Appointment[];
+  timeBlocks: TimeBlock[];
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
-export function DayView({ professional, appointments, onAppointmentClick }: DayViewProps) {
+export function DayView({ professional, appointments, timeBlocks, onAppointmentClick }: DayViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  const getAppointmentPosition = (startTime: string, endTime: string) => {
+  const getItemPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
     
@@ -25,7 +35,7 @@ export function DayView({ professional, appointments, onAppointmentClick }: DayV
     
     return {
       top: `${startHour * 60}px`,
-      height: `${duration * 60}px`
+      height: `${Math.max(duration * 60, 30)}px`
     };
   };
 
@@ -38,11 +48,33 @@ export function DayView({ professional, appointments, onAppointmentClick }: DayV
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
+  const getTimeBlockColor = (type: string) => {
+    switch (type) {
+      case 'break':
+        return '#fecaca'; // vermelho claro para intervalos
+      case 'vacation':
+        return '#fca5a5'; // vermelho um pouco mais escuro para férias
+      default:
+        return '#fecaca';
+    }
+  };
+
+  const getTimeBlockBorderColor = (type: string) => {
+    switch (type) {
+      case 'break':
+        return '#ef4444'; // vermelho para intervalos
+      case 'vacation':
+        return '#dc2626'; // vermelho mais escuro para férias
+      default:
+        return '#ef4444';
+    }
+  };
+
   return (
     <div className="relative border rounded-lg">
       {/* Timeline */}
       <div className="grid grid-cols-[100px_1fr]">
-        {/* Hours column - aumentado de 80px para 100px */}
+        {/* Hours column */}
         <div className="border-r">
           {hours.map((hour) => (
             <div
@@ -54,7 +86,7 @@ export function DayView({ professional, appointments, onAppointmentClick }: DayV
           ))}
         </div>
 
-        {/* Appointments column */}
+        {/* Content column */}
         <div className="relative">
           {hours.map((hour) => (
             <div
@@ -63,9 +95,48 @@ export function DayView({ professional, appointments, onAppointmentClick }: DayV
             />
           ))}
           
+          {/* Time Blocks (pausas e férias) */}
+          {timeBlocks.map((timeBlock) => {
+            const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
+            const startTime = new Date(timeBlock.start_time);
+            const endTime = new Date(timeBlock.end_time);
+            
+            const timeRange = timeBlock.type === 'vacation' 
+              ? 'Dia inteiro'
+              : `${startTime.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })} - ${endTime.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}`;
+            
+            return (
+              <div
+                key={timeBlock.id}
+                className="absolute left-2 right-2 rounded-lg p-3 text-xs border-l-4 overflow-hidden z-10"
+                style={{
+                  ...position,
+                  backgroundColor: getTimeBlockColor(timeBlock.type),
+                  borderLeftColor: getTimeBlockBorderColor(timeBlock.type),
+                  color: '#7f1d1d'
+                }}
+              >
+                <div className="space-y-1">
+                  <div className="font-semibold truncate">
+                    {timeBlock.title}
+                  </div>
+                  <div className="text-xs">
+                    {timeRange}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          
           {/* Appointments */}
           {appointments.map((appointment) => {
-            const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
+            const position = getItemPosition(appointment.start_time, appointment.end_time);
             const statusColor = appointment.appointment_statuses?.color || '#6b7280';
             const lighterBgColor = getLighterColor(professional.color, 0.15);
             
@@ -73,12 +144,11 @@ export function DayView({ professional, appointments, onAppointmentClick }: DayV
               <div
                 key={appointment.id}
                 onClick={() => onAppointmentClick(appointment)}
-                className={`absolute left-2 right-2 rounded-lg p-3 text-xs cursor-pointer hover:opacity-90 transition-all shadow-sm border-l-8 overflow-hidden`}
+                className={`absolute left-2 right-2 rounded-lg p-3 text-xs cursor-pointer hover:opacity-90 transition-all shadow-sm border-l-8 overflow-hidden z-20`}
                 style={{
                   ...position,
                   backgroundColor: lighterBgColor,
                   borderLeftColor: statusColor,
-                  minHeight: '40px',
                   color: '#1f2937'
                 }}
               >
