@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 interface Professional {
   id: string;
@@ -9,11 +10,11 @@ interface Professional {
   first_shift_end?: string;
   second_shift_start?: string;
   second_shift_end?: string;
-  break_times?: Array<{ start: string; end: string }>;
+  break_times?: Json;
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
-  working_days?: boolean[];
+  working_days?: Json;
   weekend_shift_active?: boolean;
   weekend_shift_start?: string;
   weekend_shift_end?: string;
@@ -88,8 +89,21 @@ export function useProfessionalWorkingHours() {
       }
     }
 
-    // Verificar dias de trabalho
-    const workingDays = professional.working_days || [true, true, true, true, true, false, false];
+    // Verificar dias de trabalho - parsing JSON safely
+    let workingDays = [true, true, true, true, true, false, false]; // default
+    if (professional.working_days) {
+      try {
+        const parsed = typeof professional.working_days === 'string' 
+          ? JSON.parse(professional.working_days) 
+          : professional.working_days;
+        if (Array.isArray(parsed)) {
+          workingDays = parsed;
+        }
+      } catch (e) {
+        console.warn('Failed to parse working_days:', e);
+      }
+    }
+
     const isWorkingDay = workingDays[dayOfWeek];
 
     if (!isWorkingDay) {
@@ -147,19 +161,31 @@ export function useProfessionalWorkingHours() {
       };
     }
 
-    // Verificar se está em horário de pausa
-    if (professional.break_times && Array.isArray(professional.break_times)) {
-      for (const breakTime of professional.break_times) {
-        if (appointmentTime >= breakTime.start && appointmentTime <= breakTime.end) {
-          return {
-            isWorkingDay: true,
-            isWithinShift: true,
-            isOnBreak: true,
-            isOnVacation: false,
-            isAvailable: false,
-            message: 'Horário coincide com pausa do profissional'
-          };
+    // Verificar se está em horário de pausa - parsing JSON safely
+    if (professional.break_times) {
+      try {
+        const breakTimes = typeof professional.break_times === 'string' 
+          ? JSON.parse(professional.break_times) 
+          : professional.break_times;
+        
+        if (Array.isArray(breakTimes)) {
+          for (const breakTime of breakTimes) {
+            if (breakTime && typeof breakTime === 'object' && breakTime.start && breakTime.end) {
+              if (appointmentTime >= breakTime.start && appointmentTime <= breakTime.end) {
+                return {
+                  isWorkingDay: true,
+                  isWithinShift: true,
+                  isOnBreak: true,
+                  isOnVacation: false,
+                  isAvailable: false,
+                  message: 'Horário coincide com pausa do profissional'
+                };
+              }
+            }
+          }
         }
+      } catch (e) {
+        console.warn('Failed to parse break_times:', e);
       }
     }
 
