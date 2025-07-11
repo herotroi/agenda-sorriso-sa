@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { MainLayout } from '@/components/Layout/MainLayout';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,5 +23,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <MainLayout>
+      {children}
+    </MainLayout>
+  );
 };
