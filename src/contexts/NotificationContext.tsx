@@ -131,11 +131,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         (payload) => {
           console.log('➕ New appointment created payload:', payload);
           if (payload.new) {
+            const newAppointment = payload.new as any;
             addNotification({
               title: 'Novo Agendamento',
               message: 'Um novo agendamento foi criado',
               type: 'appointment_created',
-              appointmentId: (payload.new as any).id
+              appointmentId: newAppointment.id
             });
           }
         }
@@ -150,11 +151,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         (payload) => {
           console.log('🗑️ Appointment deleted payload:', payload);
           if (payload.old) {
+            const deletedAppointment = payload.old as any;
             addNotification({
               title: 'Agendamento Excluído',
               message: 'Um agendamento foi excluído',
               type: 'appointment_deleted',
-              appointmentId: (payload.old as any).id
+              appointmentId: deletedAppointment.id
             });
           }
         }
@@ -179,7 +181,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     console.log('📊 Notifications updated:', {
       total: notifications.length,
       unread: unreadCount,
-      notifications: notifications.map(n => ({ title: n.title, read: n.read }))
+      notifications: notifications.map(n => ({ title: n.title, read: n.read, appointmentId: n.appointmentId }))
     });
   }, [notifications, unreadCount]);
 
