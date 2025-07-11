@@ -1,14 +1,13 @@
 
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
-interface MainLayoutProps {
+interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -23,15 +22,5 @@ export function MainLayout({ children }: MainLayoutProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="ml-64">
-        <Header />
-        <main className="p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
+  return <>{children}</>;
+};
