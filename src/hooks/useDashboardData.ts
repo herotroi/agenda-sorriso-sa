@@ -21,6 +21,12 @@ interface UpcomingAppointment {
   type: string;
 }
 
+interface PeriodFilter {
+  year: number;
+  month?: number | 'all';
+  day?: number | null;
+}
+
 export function useDashboardData() {
   const [stats, setStats] = useState<DashboardStats>({
     todayAppointments: 0,
@@ -38,20 +44,24 @@ export function useDashboardData() {
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>(() => {
     const currentYear = new Date().getFullYear();
     return {
-      start: new Date(currentYear, 0, 1), // 1º de janeiro do ano atual
-      end: new Date(currentYear, 11, 31, 23, 59, 59) // 31 de dezembro do ano atual
+      start: new Date(currentYear, 0, 1),
+      end: new Date(currentYear, 11, 31, 23, 59, 59)
     };
   });
-  const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>({ 
+    year: new Date().getFullYear(), 
+    month: 'all', 
+    day: null 
+  });
   const { toast } = useToast();
 
-  const fetchDashboardData = async (customDateRange?: { start: Date; end: Date }, month?: number | 'all') => {
+  const fetchDashboardData = async (customDateRange?: { start: Date; end: Date }, period?: PeriodFilter) => {
     console.log('🔄 Fetching dashboard data...');
     setLoading(true);
     
     try {
       const range = customDateRange || dateRange;
-      const currentMonth = month !== undefined ? month : selectedMonth;
+      const currentPeriod = period || selectedPeriod;
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
@@ -124,17 +134,38 @@ export function useDashboardData() {
         }
       });
 
-      // Buscar dados de receita baseado na seleção (mês específico = dados diários, ano todo = dados mensais)
+      // Buscar dados de receita baseado na seleção
       const revenueData = [];
       const startYear = range.start.getFullYear();
 
-      if (currentMonth !== 'all' && typeof currentMonth === 'number') {
-        // Mostrar dados diários para o mês selecionado
-        const daysInMonth = new Date(startYear, currentMonth, 0).getDate();
+      if (currentPeriod.day && currentPeriod.month !== 'all' && typeof currentPeriod.month === 'number') {
+        // Dia específico - mostrar dados por hora
+        for (let hour = 0; hour < 24; hour++) {
+          const startHour = new Date(startYear, currentPeriod.month - 1, currentPeriod.day, hour, 0, 0).toISOString();
+          const endHour = new Date(startYear, currentPeriod.month - 1, currentPeriod.day, hour, 59, 59, 999).toISOString();
+          
+          const { data: hourData, error: hourError } = await supabase
+            .from('appointments')
+            .select('price')
+            .gte('start_time', startHour)
+            .lte('start_time', endHour)
+            .not('price', 'is', null);
+
+          if (!hourError && hourData) {
+            const hourRevenue = hourData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            revenueData.push({
+              name: `${hour.toString().padStart(2, '0')}h`,
+              value: hourRevenue
+            });
+          }
+        }
+      } else if (currentPeriod.month !== 'all' && typeof currentPeriod.month === 'number') {
+        // Mês específico - mostrar dados diários
+        const daysInMonth = new Date(startYear, currentPeriod.month, 0).getDate();
         
         for (let day = 1; day <= daysInMonth; day++) {
-          const startDayDate = new Date(startYear, currentMonth - 1, day, 0, 0, 0).toISOString();
-          const endDayDate = new Date(startYear, currentMonth - 1, day, 23, 59, 59, 999).toISOString();
+          const startDayDate = new Date(startYear, currentPeriod.month - 1, day, 0, 0, 0).toISOString();
+          const endDayDate = new Date(startYear, currentPeriod.month - 1, day, 23, 59, 59, 999).toISOString();
           
           const { data: dayData, error: dayError } = await supabase
             .from('appointments')
@@ -152,31 +183,25 @@ export function useDashboardData() {
           }
         }
       } else {
-        // Mostrar dados mensais para o ano
-        const endYear = range.end.getFullYear();
-        const startMonth = range.start.getMonth();
-        const endMonth = range.end.getMonth();
+        // Ano completo - mostrar dados mensais
+        for (let month = 0; month < 12; month++) {
+          const startMonthDate = new Date(startYear, month, 1).toISOString();
+          const endMonthDate = new Date(startYear, month + 1, 0, 23, 59, 59, 999).toISOString();
+          
+          const { data: monthData, error: monthError } = await supabase
+            .from('appointments')
+            .select('price')
+            .gte('start_time', startMonthDate)
+            .lte('start_time', endMonthDate)
+            .not('price', 'is', null);
 
-        if (startYear === endYear) {
-          for (let month = startMonth; month <= endMonth; month++) {
-            const startMonthDate = new Date(startYear, month, 1).toISOString();
-            const endMonthDate = new Date(startYear, month + 1, 0, 23, 59, 59, 999).toISOString();
-            
-            const { data: monthData, error: monthError } = await supabase
-              .from('appointments')
-              .select('price')
-              .gte('start_time', startMonthDate)
-              .lte('start_time', endMonthDate)
-              .not('price', 'is', null);
-
-            if (!monthError && monthData) {
-              const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
-              const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
-              revenueData.push({
-                name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-                value: monthRevenue
-              });
-            }
+          if (!monthError && monthData) {
+            const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
+            revenueData.push({
+              name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+              value: monthRevenue
+            });
           }
         }
       }
@@ -224,11 +249,11 @@ export function useDashboardData() {
     }
   };
 
-  const handleDateRangeChange = (startDate: Date, endDate: Date, month?: number | 'all') => {
+  const handleDateRangeChange = (startDate: Date, endDate: Date, period?: PeriodFilter) => {
     const newRange = { start: startDate, end: endDate };
     setDateRange(newRange);
-    setSelectedMonth(month || 'all');
-    fetchDashboardData(newRange, month);
+    setSelectedPeriod(period || { year: startDate.getFullYear(), month: 'all', day: null });
+    fetchDashboardData(newRange, period);
   };
 
   useEffect(() => {
@@ -243,6 +268,6 @@ export function useDashboardData() {
     refetch: () => fetchDashboardData(),
     onDateRangeChange: handleDateRangeChange,
     currentDateRange: dateRange,
-    selectedMonth
+    selectedPeriod
   };
 }

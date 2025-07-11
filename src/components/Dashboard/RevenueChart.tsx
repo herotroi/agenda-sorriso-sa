@@ -4,10 +4,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface RevenueChartProps {
   data?: Array<{ name: string; value: number }>;
-  selectedMonth?: number | 'all';
+  selectedPeriod?: { year: number; month?: number | 'all'; day?: number | null };
 }
 
-export function RevenueChart({ data = [], selectedMonth }: RevenueChartProps) {
+export function RevenueChart({ data = [], selectedPeriod }: RevenueChartProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -21,24 +21,46 @@ export function RevenueChart({ data = [], selectedMonth }: RevenueChartProps) {
   const growth = previousPeriod > 0 ? ((currentPeriod - previousPeriod) / previousPeriod) * 100 : 0;
 
   // Determinar o título baseado na seleção
-  const chartTitle = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
-    ? `Receita Diária - ${new Date(2024, selectedMonth - 1).toLocaleDateString('pt-BR', { month: 'long' }).charAt(0).toUpperCase() + new Date(2024, selectedMonth - 1).toLocaleDateString('pt-BR', { month: 'long' }).slice(1)}`
-    : 'Receita Mensal';
+  const getChartTitle = () => {
+    if (!selectedPeriod) return 'Receita';
+    
+    if (selectedPeriod.day && selectedPeriod.month !== 'all' && typeof selectedPeriod.month === 'number') {
+      const monthName = new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleDateString('pt-BR', { month: 'long' });
+      return `Receita por Hora - ${selectedPeriod.day}/${selectedPeriod.month}/${selectedPeriod.year}`;
+    } else if (selectedPeriod.month !== 'all' && typeof selectedPeriod.month === 'number') {
+      const monthName = new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleDateString('pt-BR', { month: 'long' });
+      return `Receita Diária - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${selectedPeriod.year}`;
+    } else {
+      return `Receita Mensal - ${selectedPeriod.year}`;
+    }
+  };
 
-  const periodLabel = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
-    ? 'hoje' 
-    : 'este mês';
+  const getPeriodLabel = () => {
+    if (!selectedPeriod) return 'no período';
+    
+    if (selectedPeriod.day && selectedPeriod.month !== 'all') {
+      return 'no dia';
+    } else if (selectedPeriod.month !== 'all') {
+      return 'no mês';
+    } else {
+      return 'no ano';
+    }
+  };
 
   // Tooltip customizado
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const dayLabel = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
-        ? `Dia ${label}` 
-        : label;
+      let displayLabel = label;
+      
+      if (selectedPeriod?.day && selectedPeriod.month !== 'all') {
+        displayLabel = `${label}`;
+      } else if (selectedPeriod?.month !== 'all') {
+        displayLabel = `Dia ${label}`;
+      }
       
       return (
         <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-3">
-          <p className="text-sm font-medium text-foreground">{dayLabel}</p>
+          <p className="text-sm font-medium text-foreground">{displayLabel}</p>
           <p className="text-base font-bold text-primary">
             {formatCurrency(payload[0].value)}
           </p>
@@ -53,7 +75,7 @@ export function RevenueChart({ data = [], selectedMonth }: RevenueChartProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {chartTitle}
+            {getChartTitle()}
           </CardTitle>
           {growth !== 0 && (
             <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -70,7 +92,7 @@ export function RevenueChart({ data = [], selectedMonth }: RevenueChartProps) {
           <div className="text-2xl font-bold text-foreground">
             {formatCurrency(currentPeriod)}
             <span className="text-sm font-normal text-muted-foreground ml-2">
-              {periodLabel}
+              {getPeriodLabel()}
             </span>
           </div>
         )}

@@ -1,4 +1,3 @@
-
 import { StatsCard } from '@/components/Dashboard/StatsCard';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +25,7 @@ export default function Dashboard() {
     refetch,
     onDateRangeChange,
     currentDateRange,
-    selectedMonth
+    selectedPeriod
   } = useDashboardData();
 
   const formatCurrency = (value: number) => {
@@ -96,7 +95,7 @@ export default function Dashboard() {
       {/* Revenue Chart and Upcoming Appointments */}
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
-          <RevenueChart data={monthlyRevenueData} selectedMonth={selectedMonth} />
+          <RevenueChart data={monthlyRevenueData} selectedPeriod={selectedPeriod} />
         </div>
 
         {/* Upcoming Appointments */}
