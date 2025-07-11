@@ -2,12 +2,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Notification, NotificationContextType } from './types';
 import { useNotificationActions } from './useNotificationActions';
+import { useNotificationData } from './useNotificationData';
 import { useRealtimeSubscription } from './useRealtimeSubscription';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  // Load notifications from database
+  useNotificationData({ setNotifications });
 
   const { addNotification, markAsRead, markAllAsRead } = useNotificationActions({
     notifications,
