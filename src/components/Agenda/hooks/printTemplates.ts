@@ -58,14 +58,12 @@ const shouldShowAppointmentInHour = (appointment: Appointment, hour: number): bo
   // Verificar se o agendamento começa nesta hora
   if (startHour === hour) return true;
   
-  // Verificar se o agendamento está em andamento nesta hora
+  // Verificar se o agendamento está em andamento nesta hora (só para horas intermediárias)
   if (hour > startHour && hour < endHour) return true;
   
-  // Verificar se o agendamento termina nesta hora (mas só se tiver mais de 0 minutos)
-  if (hour === endHour && endMinutes > 0) return true;
-  
-  // Caso especial: agendamento que começa em uma hora e termina na mesma hora
-  if (startHour === endHour && hour === startHour) return true;
+  // Para agendamentos que terminam em uma hora específica, só mostrar se não começaram na mesma hora
+  // e se terminam com minutos > 0
+  if (hour === endHour && endMinutes > 0 && startHour !== endHour) return true;
   
   return false;
 };
@@ -78,16 +76,15 @@ const getAppointmentDisplayType = (appointment: Appointment, hour: number): 'sta
   const endHour = endTime.getHours();
   const endMinutes = endTime.getMinutes();
   
-  // Se começar nesta hora
+  // Se começar nesta hora, sempre é 'start' (mesmo que termine na mesma hora)
   if (startHour === hour) {
-    // Se também terminar na mesma hora, é apenas 'start'
-    if (endHour === hour) return 'start';
-    // Se continuar para outras horas, é 'start'
     return 'start';
   }
   
-  // Se terminar nesta hora (com minutos > 0)
-  if (endHour === hour && endMinutes > 0) return 'end';
+  // Se terminar nesta hora (com minutos > 0) e não começar na mesma hora
+  if (endHour === hour && endMinutes > 0 && startHour !== endHour) {
+    return 'end';
+  }
   
   // Caso contrário, é continuação
   return 'continuation';
