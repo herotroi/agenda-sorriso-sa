@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
@@ -10,6 +12,7 @@ import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/Professio
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
+import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
 
 interface Professional {
   id: string;
@@ -33,7 +36,9 @@ export function ProfessionalDetailView({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [searchDate, setSearchDate] = useState('');
+  const [activeTab, setActiveTab] = useState('day');
   const { toast } = useToast();
+  const { handlePrint } = usePrintReport();
 
   const { appointments, loading, fetchAppointments } = useProfessionalDetailData(
     professional.id, 
@@ -90,6 +95,12 @@ export function ProfessionalDetailView({
     onDateChange(date);
   };
 
+  const handlePrintProfessional = () => {
+    const printActiveTab = activeTab === 'day' ? 'calendar' : 'table';
+    const printDate = activeTab === 'day' ? selectedDate : undefined;
+    handlePrint(printActiveTab, printDate, professional.id);
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">Carregando...</div>;
   }
@@ -108,22 +119,33 @@ export function ProfessionalDetailView({
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div 
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: professional.color }}
-            />
-            {professional.name} - {selectedDate.toLocaleDateString('pt-BR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: professional.color }}
+              />
+              {professional.name} - {selectedDate.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </div>
+            <Button
+              onClick={handlePrintProfessional}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir Relatório
+            </Button>
           </CardTitle>
         </CardHeader>
 
         <CardContent>
-          <Tabs defaultValue="day" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="day">Dia</TabsTrigger>
               <TabsTrigger value="month">Mês</TabsTrigger>

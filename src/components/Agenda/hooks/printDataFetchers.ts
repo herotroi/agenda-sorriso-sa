@@ -20,8 +20,8 @@ export const fetchProfessionalsData = async () => {
   return professionals || [];
 };
 
-export const fetchDateAppointments = async (selectedDate?: Date) => {
-  console.log('Fetching appointments for specific date:', selectedDate);
+export const fetchDateAppointments = async (selectedDate?: Date, professionalId?: string) => {
+  console.log('Fetching appointments for specific date:', selectedDate, 'professional:', professionalId);
   
   let startOfDay: Date;
   let endOfDay: Date;
@@ -40,7 +40,7 @@ export const fetchDateAppointments = async (selectedDate?: Date) => {
     endOfDay = todayEnd;
   }
 
-  const { data: appointments, error } = await supabase
+  let query = supabase
     .from('appointments')
     .select(`
       id,
@@ -61,8 +61,14 @@ export const fetchDateAppointments = async (selectedDate?: Date) => {
       appointment_statuses!inner(label, color)
     `)
     .gte('start_time', startOfDay.toISOString())
-    .lte('start_time', endOfDay.toISOString())
-    .order('start_time', { ascending: true });
+    .lte('start_time', endOfDay.toISOString());
+
+  // Add professional filter if specified
+  if (professionalId) {
+    query = query.eq('professional_id', professionalId);
+  }
+
+  const { data: appointments, error } = await query.order('start_time', { ascending: true });
 
   if (error) {
     console.error('Error fetching date appointments:', error);
@@ -87,10 +93,10 @@ export const fetchTodayAppointments = async () => {
   return fetchDateAppointments();
 };
 
-export const fetchAllAppointments = async () => {
-  console.log('Fetching appointments for table print...');
+export const fetchAllAppointments = async (professionalId?: string) => {
+  console.log('Fetching appointments for table print...', 'professional:', professionalId);
   
-  const { data: appointments, error } = await supabase
+  let query = supabase
     .from('appointments')
     .select(`
       id,
@@ -109,8 +115,14 @@ export const fetchAllAppointments = async () => {
       professionals!inner(name),
       procedures(name),
       appointment_statuses!inner(label, color)
-    `)
-    .order('start_time', { ascending: true });
+    `);
+
+  // Add professional filter if specified
+  if (professionalId) {
+    query = query.eq('professional_id', professionalId);
+  }
+
+  const { data: appointments, error } = await query.order('start_time', { ascending: true });
 
   if (error) {
     console.error('Error fetching all appointments:', error);

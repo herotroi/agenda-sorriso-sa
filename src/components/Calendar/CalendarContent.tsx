@@ -1,7 +1,7 @@
 
 import { CalendarHeader } from './CalendarHeader';
-import { ProfessionalTabs } from './ProfessionalTabs';
 import { CalendarGrid } from './CalendarGrid';
+import { ProfessionalTabs } from './ProfessionalTabs';
 import { Appointment } from '@/components/Appointments/types';
 
 interface Professional {
@@ -14,8 +14,8 @@ interface CalendarContentProps {
   professionals: Professional[];
   appointments: Appointment[];
   selectedDate: Date;
-  onNavigateDate: (direction: 'prev' | 'next') => void;
-  onGoToToday: () => void;
+  onNavigateDate: (direction: 'prev' | 'next') => Date;
+  onGoToToday: () => Date;
   onNewAppointment: () => void;
   onProfessionalClick: (professionalId: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
@@ -39,12 +39,13 @@ export function CalendarContent({
         onGoToToday={onGoToToday}
         onNewAppointment={onNewAppointment}
       />
-
+      
       <ProfessionalTabs
         professionals={professionals}
         onProfessionalClick={onProfessionalClick}
+        selectedDate={selectedDate}
       />
-
+      
       <CalendarGrid
         professionals={professionals}
         appointments={appointments}

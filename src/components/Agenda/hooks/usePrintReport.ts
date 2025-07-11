@@ -4,38 +4,46 @@ import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments } f
 import { generateCalendarPrintTemplate, generateTablePrintTemplate } from './printTemplates';
 
 export function usePrintReport() {
-  const handlePrint = async (activeTab: string, selectedDate?: Date) => {
+  const handlePrint = async (activeTab: string, selectedDate?: Date, professionalId?: string) => {
     const currentDate = getCurrentDate();
     const displayDate = selectedDate ? getFormattedDate(selectedDate) : currentDate;
     let contentToPrint = '';
     
     try {
       if (activeTab === 'calendar') {
-        console.log('Preparing calendar print for date:', selectedDate || 'today');
+        console.log('Preparing calendar print for date:', selectedDate || 'today', 'professional:', professionalId || 'all');
         
-        const [professionals, appointments] = await Promise.all([
+        const [allProfessionals, appointments] = await Promise.all([
           fetchProfessionalsData(),
-          fetchDateAppointments(selectedDate)
+          fetchDateAppointments(selectedDate, professionalId)
         ]);
+
+        // Filter professionals if specific professional is selected
+        const professionals = professionalId 
+          ? allProfessionals.filter(prof => prof.id === professionalId)
+          : allProfessionals;
 
         console.log('Data fetched - Professionals:', professionals?.length, 'Appointments:', appointments?.length);
 
         if (!professionals || professionals.length === 0) {
-          contentToPrint = '<p>Nenhum profissional ativo encontrado para impressão do calendário.</p>';
+          contentToPrint = professionalId 
+            ? '<p>Profissional não encontrado para impressão do calendário.</p>'
+            : '<p>Nenhum profissional ativo encontrado para impressão do calendário.</p>';
         } else {
           contentToPrint = generateCalendarPrintTemplate(professionals, appointments || []);
         }
       } else {
-        console.log('Preparing table print for date:', selectedDate || 'all');
+        console.log('Preparing table print for date:', selectedDate || 'all', 'professional:', professionalId || 'all');
         
         const appointments = selectedDate ? 
-          await fetchDateAppointments(selectedDate) : 
-          await fetchAllAppointments();
+          await fetchDateAppointments(selectedDate, professionalId) : 
+          await fetchAllAppointments(professionalId);
         
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
         if (!appointments || appointments.length === 0) {
-          contentToPrint = '<p>Nenhum agendamento encontrado para impressão da tabela.</p>';
+          const professionalText = professionalId ? ' para este profissional' : '';
+          contentToPrint = `<p>Nenhum agendamento encontrado${professionalText} para impressão da tabela.</p>`;
         } else {
           contentToPrint = generateTablePrintTemplate(appointments);
         }
@@ -52,7 +60,7 @@ export function usePrintReport() {
     }
 
     console.log('Opening print window with content length:', contentToPrint.length);
-    openPrintWindow(contentToPrint, displayDate, activeTab, selectedDate);
+    openPrintWindow(contentToPrint, displayDate, activeTab, selectedDate, professionalId);
   };
 
   return { handlePrint };
