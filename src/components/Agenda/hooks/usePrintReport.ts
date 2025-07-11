@@ -2,6 +2,7 @@
 import { getCurrentDate, getFormattedDate, openPrintWindow } from './printUtils';
 import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments } from './printDataFetchers';
 import { generateCalendarPrintTemplate, generateTablePrintTemplate } from './printTemplates';
+import { Professional } from './printTemplates/types';
 
 export function usePrintReport() {
   const handlePrint = async (activeTab: string, selectedDate?: Date, professionalId?: string) => {
@@ -18,10 +19,21 @@ export function usePrintReport() {
           fetchDateAppointments(selectedDate, professionalId)
         ]);
 
-        // Filter professionals if specific professional is selected
+        // Convert and filter professionals with proper type handling
+        const convertedProfessionals: Professional[] = allProfessionals.map(prof => ({
+          id: prof.id,
+          name: prof.name,
+          active: prof.active || false,
+          break_times: Array.isArray(prof.break_times) ? prof.break_times as Array<{ start: string; end: string }> : [],
+          vacation_active: prof.vacation_active || false,
+          vacation_start: prof.vacation_start || undefined,
+          vacation_end: prof.vacation_end || undefined,
+          working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : undefined
+        }));
+
         const professionals = professionalId 
-          ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals;
+          ? convertedProfessionals.filter(prof => prof.id === professionalId)
+          : convertedProfessionals;
 
         console.log('Data fetched - Professionals:', professionals?.length, 'Appointments:', appointments?.length);
 
@@ -42,10 +54,20 @@ export function usePrintReport() {
           fetchProfessionalsData()
         ]);
 
+        // Convert professionals with proper type handling for table template
+        const convertedProfessionals = allProfessionals.map(prof => ({
+          ...prof,
+          break_times: Array.isArray(prof.break_times) ? prof.break_times as Array<{ start: string; end: string }> : [],
+          vacation_active: prof.vacation_active || false,
+          vacation_start: prof.vacation_start || undefined,
+          vacation_end: prof.vacation_end || undefined,
+          working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : undefined
+        }));
+
         // Filter professionals if specific professional is selected
         const professionals = professionalId 
-          ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals;
+          ? convertedProfessionals.filter(prof => prof.id === professionalId)
+          : convertedProfessionals;
         
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
