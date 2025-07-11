@@ -20,10 +20,25 @@ export const fetchProfessionalsData = async () => {
   return professionals || [];
 };
 
-export const fetchTodayAppointments = async () => {
-  console.log('Fetching appointments for calendar print...');
+export const fetchDateAppointments = async (selectedDate?: Date) => {
+  console.log('Fetching appointments for specific date:', selectedDate);
   
-  const { startOfDay, endOfDay } = getTodayDateRange();
+  let startOfDay: Date;
+  let endOfDay: Date;
+
+  if (selectedDate) {
+    // Use the selected date
+    startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+  } else {
+    // Use today's date as fallback
+    const { startOfDay: todayStart, endOfDay: todayEnd } = getTodayDateRange();
+    startOfDay = todayStart;
+    endOfDay = todayEnd;
+  }
 
   const { data: appointments, error } = await supabase
     .from('appointments')
@@ -50,7 +65,7 @@ export const fetchTodayAppointments = async () => {
     .order('start_time', { ascending: true });
 
   if (error) {
-    console.error('Error fetching today appointments:', error);
+    console.error('Error fetching date appointments:', error);
     throw error;
   }
 
@@ -62,10 +77,14 @@ export const fetchTodayAppointments = async () => {
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
-  console.log('Today appointments fetched:', processedAppointments.length);
+  console.log('Date appointments fetched:', processedAppointments.length);
   console.log('Sample appointment:', processedAppointments[0]);
   
   return processedAppointments;
+};
+
+export const fetchTodayAppointments = async () => {
+  return fetchDateAppointments();
 };
 
 export const fetchAllAppointments = async () => {

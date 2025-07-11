@@ -1,20 +1,21 @@
 
-import { getCurrentDate, openPrintWindow } from './printUtils';
-import { fetchProfessionalsData, fetchTodayAppointments, fetchAllAppointments } from './printDataFetchers';
+import { getCurrentDate, getFormattedDate, openPrintWindow } from './printUtils';
+import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments } from './printDataFetchers';
 import { generateCalendarPrintTemplate, generateTablePrintTemplate } from './printTemplates';
 
 export function usePrintReport() {
-  const handlePrint = async (activeTab: string) => {
+  const handlePrint = async (activeTab: string, selectedDate?: Date) => {
     const currentDate = getCurrentDate();
+    const displayDate = selectedDate ? getFormattedDate(selectedDate) : currentDate;
     let contentToPrint = '';
     
     try {
       if (activeTab === 'calendar') {
-        console.log('Preparing calendar print...');
+        console.log('Preparing calendar print for date:', selectedDate || 'today');
         
         const [professionals, appointments] = await Promise.all([
           fetchProfessionalsData(),
-          fetchTodayAppointments()
+          fetchDateAppointments(selectedDate)
         ]);
 
         console.log('Data fetched - Professionals:', professionals?.length, 'Appointments:', appointments?.length);
@@ -25,9 +26,12 @@ export function usePrintReport() {
           contentToPrint = generateCalendarPrintTemplate(professionals, appointments || []);
         }
       } else {
-        console.log('Preparing table print...');
+        console.log('Preparing table print for date:', selectedDate || 'all');
         
-        const appointments = await fetchAllAppointments();
+        const appointments = selectedDate ? 
+          await fetchDateAppointments(selectedDate) : 
+          await fetchAllAppointments();
+        
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
         if (!appointments || appointments.length === 0) {
@@ -48,7 +52,7 @@ export function usePrintReport() {
     }
 
     console.log('Opening print window with content length:', contentToPrint.length);
-    openPrintWindow(contentToPrint, currentDate, activeTab);
+    openPrintWindow(contentToPrint, displayDate, activeTab, selectedDate);
   };
 
   return { handlePrint };

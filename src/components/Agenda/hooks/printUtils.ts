@@ -1,5 +1,15 @@
+
 export const getCurrentDate = () => {
   return new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+export const getFormattedDate = (date: Date) => {
+  return date.toLocaleDateString('pt-BR', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -26,18 +36,20 @@ export const formatTime = (hour: number) => {
   return hour.toString().padStart(2, '0') + ':00';
 };
 
-export const openPrintWindow = (content: string, currentDate: string, activeTab: string) => {
+export const openPrintWindow = (content: string, currentDate: string, activeTab: string, selectedDate?: Date) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desabilitado.');
     return null;
   }
 
+  const displayDate = selectedDate ? getFormattedDate(selectedDate) : currentDate;
+
   const printStyles = `
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Relatório de Agendamentos - ${currentDate}</title>
+        <title>Relatório de Agendamentos - ${displayDate}</title>
         <meta charset="utf-8">
         <style>
           * {
@@ -395,7 +407,7 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
       <body>
         <div class="print-header">
           <h1>Relatório de Agendamentos</h1>
-          <p>Data: ${currentDate}</p>
+          <p>Data: ${displayDate}</p>
           <p>Visualização: ${activeTab === 'calendar' ? 'Calendário' : 'Tabela'}</p>
         </div>
         <div class="print-content">
