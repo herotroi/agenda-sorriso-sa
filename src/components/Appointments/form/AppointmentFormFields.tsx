@@ -104,7 +104,7 @@ export function AppointmentFormFields({
         onChange={(value) => {
           const statusId = parseInt(value);
           setFormData({ ...formData, status_id: statusId });
-          handleFieldChange('status_id', value); // Pass the string value, not the parsed number
+          handleFieldChange('status_id', statusId.toString()); // Convert the number back to string for handleFieldChange
         }}
         currentStatusName={getCurrentStatusName()}
       />
