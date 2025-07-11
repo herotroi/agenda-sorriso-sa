@@ -52,7 +52,7 @@ export const useAppointmentValidation = () => {
             
             return {
               hasConflict: true,
-              message: `O procedimento de ${duration} minutos não pode ser realizado neste horário pois conflita com o intervalo das ${breakStartTime} às ${breakEndTime}. Por favor, altere a duração do procedimento ou escolha outro horário.`
+              message: `O procedimento de ${duration} minutos não pode ser realizado neste horário pois conflita com o intervalo das ${breakStartTime} às ${breakEndTime}. Altere a duração do procedimento ou escolha outro horário.`
             };
           }
         }
