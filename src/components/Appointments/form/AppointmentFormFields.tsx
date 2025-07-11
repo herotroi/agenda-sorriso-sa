@@ -85,7 +85,7 @@ export function AppointmentFormFields({
         value={formData.status_id?.toString() || ''}
         onChange={(value) => {
           const statusId = parseInt(value);
-          setFormData(prev => ({ ...prev, status_id: statusId }));
+          setFormData({ ...formData, status_id: statusId });
           handleFieldChange('status_id', statusId.toString());
         }}
         currentStatusName={getCurrentStatusName()}
@@ -94,7 +94,7 @@ export function AppointmentFormFields({
       <NotesInput
         value={formData.notes}
         onChange={(value) => {
-          setFormData(prev => ({ ...prev, notes: value }));
+          setFormData({ ...formData, notes: value });
           handleFieldChange('notes', value);
         }}
       />
