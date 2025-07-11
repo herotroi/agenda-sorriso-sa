@@ -55,7 +55,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
     vacation_active: false,
     vacation_start: '',
     vacation_end: '',
-    working_days: [true, true, true, true, true, false, false] as boolean[], // Segunda a sexta por padrão
+    working_days: [true, true, true, true, true, false, false] as boolean[],
     weekend_shift_active: false,
     weekend_shift_start: '08:00',
     weekend_shift_end: '12:00',
@@ -66,6 +66,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
 
   useEffect(() => {
     if (professional) {
+      console.log('Loading professional data:', professional);
       setFormData({
         name: professional.name || '',
         specialty: professional.specialty || '',
@@ -114,15 +115,26 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Nome é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
+    console.log('Submitting form data:', formData);
 
     try {
       const data = {
-        name: formData.name,
-        specialty: formData.specialty || null,
-        crm_cro: formData.crm_cro || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
+        name: formData.name.trim(),
+        specialty: formData.specialty?.trim() || null,
+        crm_cro: formData.crm_cro?.trim() || null,
+        email: formData.email?.trim() || null,
+        phone: formData.phone?.trim() || null,
         color: formData.color,
         working_hours: {
           start: formData.first_shift_start,
@@ -143,13 +155,18 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         active: formData.active,
       };
 
+      console.log('Sending data to database:', data);
+
       if (professional) {
         const { error } = await supabase
           .from('professionals')
           .update(data)
           .eq('id', professional.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
 
         toast({
           title: 'Sucesso',
@@ -158,9 +175,12 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
       } else {
         const { error } = await supabase
           .from('professionals')
-          .insert(data);
+          .insert([data]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
 
         toast({
           title: 'Sucesso',
@@ -173,7 +193,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
       console.error('Error saving professional:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao salvar profissional',
+        description: `Erro ao salvar profissional: ${error.message || 'Erro desconhecido'}`,
         variant: 'destructive',
       });
     } finally {
@@ -199,7 +219,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
               phone: formData.phone,
               color: formData.color,
             }}
-            setFormData={setFormData}
+            setFormData={(data) => setFormData({ ...formData, ...data })}
           />
 
           <WorkingHoursSection
@@ -217,7 +237,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
               weekend_shift_start: formData.weekend_shift_start,
               weekend_shift_end: formData.weekend_shift_end,
             }}
-            setFormData={setFormData}
+            setFormData={(data) => setFormData({ ...formData, ...data })}
           />
 
           {/* Status */}
@@ -233,7 +253,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
           <FormActions
             onCancel={onClose}
             loading={loading}
-            isNameValid={!!formData.name}
+            isNameValid={!!formData.name?.trim()}
           />
         </form>
       </DialogContent>
