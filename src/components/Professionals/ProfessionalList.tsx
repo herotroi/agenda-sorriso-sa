@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Mail, Phone } from 'lucide-react';
+import { Plus, Edit, Mail, Phone, Coffee, Plane } from 'lucide-react';
 import { ProfessionalForm } from './ProfessionalForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,10 @@ interface Professional {
   phone?: string;
   color: string;
   working_hours: any;
+  break_times: any;
+  vacation_active: boolean;
+  vacation_start: string;
+  vacation_end: string;
   active: boolean;
 }
 
@@ -60,6 +64,27 @@ export function ProfessionalList() {
     setIsFormOpen(false);
     setEditingProfessional(null);
     fetchProfessionals();
+  };
+
+  const formatBreakTimes = (breakTimes: any) => {
+    if (!breakTimes || !Array.isArray(breakTimes) || breakTimes.length === 0) {
+      return 'Sem pausas';
+    }
+    
+    return breakTimes.map((breakTime: any) => 
+      `${breakTime.start} - ${breakTime.end}`
+    ).join(', ');
+  };
+
+  const formatVacationPeriod = (professional: Professional) => {
+    if (!professional.vacation_active || !professional.vacation_start || !professional.vacation_end) {
+      return 'Não está de férias';
+    }
+    
+    const startDate = new Date(professional.vacation_start).toLocaleDateString('pt-BR');
+    const endDate = new Date(professional.vacation_end).toLocaleDateString('pt-BR');
+    
+    return `${startDate} - ${endDate}`;
   };
 
   if (loading) {
@@ -123,6 +148,23 @@ export function ProfessionalList() {
                         <span className={`px-2 py-1 rounded ${professional.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {professional.active ? 'Ativo' : 'Inativo'}
                         </span>
+                      </div>
+                      
+                      {/* Pausas/Folgas */}
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Coffee className="h-4 w-4" />
+                        <span>Pausas: {formatBreakTimes(professional.break_times)}</span>
+                      </div>
+                      
+                      {/* Férias */}
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Plane className="h-4 w-4" />
+                        <span>Férias: {formatVacationPeriod(professional)}</span>
+                        {professional.vacation_active && (
+                          <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+                            De férias
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
