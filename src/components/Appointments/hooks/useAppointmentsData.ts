@@ -26,7 +26,13 @@ export function useAppointmentsData() {
         .select(`
           *,
           patients(full_name),
-          professionals(name),
+          professionals(
+            name,
+            break_times,
+            vacation_active,
+            vacation_start,
+            vacation_end
+          ),
           procedures(name),
           appointment_statuses(label, color)
         `)

@@ -20,10 +20,21 @@ export const generateTablePrintTemplate = (appointments: Appointment[]): string 
     const notes = appointment.notes || 'Sem observações';
     const displayNotes = notes.length > 30 ? notes.substring(0, 30) + '...' : notes;
     
+    // Verificar se é horário de folga ou férias
+    const isBreakTime = checkIfBreakTime(appointment, startDate);
+    const isVacationTime = checkIfVacationTime(appointment, startDate);
+    const shouldHighlight = isBreakTime || isVacationTime;
+    const highlightReason = isVacationTime ? 'Férias' : isBreakTime ? 'Folga' : '';
+    
+    const rowClass = shouldHighlight ? 'style="background-color: #fecaca;"' : '';
+    
     return `
-      <tr>
+      <tr ${rowClass}>
         <td>${patientName}</td>
-        <td>${professionalName}</td>
+        <td>
+          ${professionalName}
+          ${shouldHighlight ? `<br><small style="color: #dc2626; font-weight: bold;">${highlightReason}</small>` : ''}
+        </td>
         <td>${procedureName}</td>
         <td>${startTime}</td>
         <td>
@@ -42,6 +53,11 @@ export const generateTablePrintTemplate = (appointments: Appointment[]): string 
       <div class="mb-4">
         <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
         <p class="text-sm text-gray-600 mt-2">Total de agendamentos: ${appointments.length}</p>
+        <p class="text-sm text-red-600 mt-1">
+          <span style="background-color: #fecaca; padding: 2px 8px; border-radius: 4px;">
+            Agendamentos em horário de folga/férias destacados em vermelho claro
+          </span>
+        </p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
@@ -62,4 +78,18 @@ export const generateTablePrintTemplate = (appointments: Appointment[]): string 
       </div>
     </div>
   `;
+};
+
+// Função para verificar se o agendamento está em horário de folga
+const checkIfBreakTime = (appointment: Appointment, appointmentDate: Date): boolean => {
+  // Aqui você pode implementar a lógica para verificar horários de folga
+  // Por enquanto, vamos retornar false como exemplo
+  return false;
+};
+
+// Função para verificar se o agendamento está em período de férias
+const checkIfVacationTime = (appointment: Appointment, appointmentDate: Date): boolean => {
+  // Aqui você pode implementar a lógica para verificar período de férias
+  // Por enquanto, vamos retornar false como exemplo
+  return false;
 };
