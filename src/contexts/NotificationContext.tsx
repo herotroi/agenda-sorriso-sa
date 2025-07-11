@@ -10,6 +10,7 @@ interface Notification {
   timestamp: Date;
   read: boolean;
   type: 'appointment_updated' | 'appointment_created' | 'appointment_deleted';
+  appointmentId?: string;
 }
 
 interface NotificationContextType {
@@ -27,6 +28,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { toast } = useToast();
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    console.log('📢 Adding notification:', notification);
+    
     const newNotification: Notification = {
       ...notification,
       id: crypto.randomUUID(),
@@ -41,9 +44,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       title: notification.title,
       description: notification.message,
     });
+
+    console.log('📢 Notification added, total notifications:', notifications.length + 1);
   };
 
   const markAsRead = (id: string) => {
+    console.log('📖 Marking notification as read:', id);
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id 
@@ -54,6 +60,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   };
 
   const markAllAsRead = () => {
+    console.log('📖 Marking all notifications as read');
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
@@ -64,8 +71,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     console.log('🔔 Setting up appointment change notifications...');
     
+    // Create a unique channel name
+    const channelName = `appointment-changes-${Date.now()}`;
+    
     const channel = supabase
-      .channel('appointment-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -74,7 +84,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'appointments'
         },
         (payload) => {
-          console.log('📝 Appointment updated:', payload);
+          console.log('📝 Appointment updated payload:', payload);
           
           if (payload.new && payload.old) {
             const oldAppointment = payload.old as any;
@@ -100,10 +110,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             }
             
             if (changes.length > 0) {
+              console.log('📝 Changes detected:', changes);
               addNotification({
                 title: 'Agendamento Alterado',
                 message: `Agendamento foi modificado: ${changes.join(', ')}`,
-                type: 'appointment_updated'
+                type: 'appointment_updated',
+                appointmentId: newAppointment.id
               });
             }
           }
@@ -117,12 +129,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'appointments'
         },
         (payload) => {
-          console.log('➕ New appointment created:', payload);
-          addNotification({
-            title: 'Novo Agendamento',
-            message: 'Um novo agendamento foi criado',
-            type: 'appointment_created'
-          });
+          console.log('➕ New appointment created payload:', payload);
+          if (payload.new) {
+            addNotification({
+              title: 'Novo Agendamento',
+              message: 'Um novo agendamento foi criado',
+              type: 'appointment_created',
+              appointmentId: (payload.new as any).id
+            });
+          }
         }
       )
       .on(
@@ -133,21 +148,40 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           table: 'appointments'
         },
         (payload) => {
-          console.log('🗑️ Appointment deleted:', payload);
-          addNotification({
-            title: 'Agendamento Excluído',
-            message: 'Um agendamento foi excluído',
-            type: 'appointment_deleted'
-          });
+          console.log('🗑️ Appointment deleted payload:', payload);
+          if (payload.old) {
+            addNotification({
+              title: 'Agendamento Excluído',
+              message: 'Um agendamento foi excluído',
+              type: 'appointment_deleted',
+              appointmentId: (payload.old as any).id
+            });
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔗 Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to appointment changes');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to channel');
+        }
+      });
 
     return () => {
       console.log('🔕 Cleaning up appointment notifications...');
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Debug effect to log notification changes
+  useEffect(() => {
+    console.log('📊 Notifications updated:', {
+      total: notifications.length,
+      unread: unreadCount,
+      notifications: notifications.map(n => ({ title: n.title, read: n.read }))
+    });
+  }, [notifications, unreadCount]);
 
   return (
     <NotificationContext.Provider

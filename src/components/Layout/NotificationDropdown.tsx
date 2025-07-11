@@ -18,6 +18,11 @@ import { ptBR } from 'date-fns/locale';
 export function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
+  console.log('🔔 NotificationDropdown render:', { 
+    notificationsCount: notifications.length, 
+    unreadCount 
+  });
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'appointment_updated':
@@ -31,13 +36,23 @@ export function NotificationDropdown() {
     }
   };
 
+  const handleNotificationClick = (notificationId: string) => {
+    console.log('📖 Clicking notification:', notificationId);
+    markAsRead(notificationId);
+  };
+
+  const handleMarkAllAsRead = () => {
+    console.log('📖 Marking all as read');
+    markAllAsRead();
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -50,8 +65,9 @@ export function NotificationDropdown() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               className="h-auto p-1"
+              title="Marcar todas como lidas"
             >
               <CheckCheck className="h-4 w-4" />
             </Button>
@@ -69,9 +85,9 @@ export function NotificationDropdown() {
               <DropdownMenuItem
                 key={notification.id}
                 className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${
-                  !notification.read ? 'bg-blue-50' : ''
+                  !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
                 }`}
-                onClick={() => markAsRead(notification.id)}
+                onClick={() => handleNotificationClick(notification.id)}
               >
                 <div className="flex items-center gap-2 w-full">
                   <span className="text-lg">
@@ -79,11 +95,11 @@ export function NotificationDropdown() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm truncate">
+                      <p className={`text-sm truncate ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
                         {notification.title}
                       </p>
                       {!notification.read && (
-                        <Check className="h-3 w-3 text-blue-500 ml-2" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 flex-shrink-0" />
                       )}
                     </div>
                     <p className="text-xs text-gray-600 truncate">
