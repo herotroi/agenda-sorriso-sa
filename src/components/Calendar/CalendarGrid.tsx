@@ -25,8 +25,17 @@ export function CalendarGrid({
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const getAppointmentsForProfessional = (professionalId: string) => {
-    return appointments.filter(apt => apt.professional_id === professionalId);
+    const professionalAppointments = appointments.filter(apt => 
+      apt.professional_id === professionalId
+    );
+    
+    console.log(`📊 Professional ${professionalId} appointments:`, professionalAppointments.length);
+    
+    return professionalAppointments;
   };
+
+  console.log('🏥 CalendarGrid - Total appointments:', appointments.length);
+  console.log('👥 CalendarGrid - Professionals:', professionals.length);
 
   return (
     <Card>
@@ -50,6 +59,8 @@ export function CalendarGrid({
           {/* Professional columns */}
           {professionals.map((prof) => {
             const profAppointments = getAppointmentsForProfessional(prof.id);
+            
+            console.log(`👤 Professional ${prof.name} (${prof.id}) has ${profAppointments.length} appointments`);
             
             return (
               <ProfessionalColumn

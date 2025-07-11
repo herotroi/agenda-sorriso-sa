@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface TimeSlot {
   start_time: string;
@@ -7,12 +8,16 @@ interface TimeSlot {
 }
 
 export const useAppointmentValidation = () => {
+  const { toast } = useToast();
+
   const checkTimeConflict = async (
     professionalId: string,
     startTime: string,
     endTime: string,
     excludeAppointmentId?: string
   ): Promise<{ hasConflict: boolean; message?: string }> => {
+    console.log('🔍 Checking time conflict:', { professionalId, startTime, endTime, excludeAppointmentId });
+    
     try {
       const { data, error } = await supabase
         .from('appointments')
@@ -24,6 +29,8 @@ export const useAppointmentValidation = () => {
 
       if (error) throw error;
 
+      console.log('📋 Existing appointments for conflict check:', data);
+
       const conflicts = data?.filter(appointment => {
         if (excludeAppointmentId && appointment.id === excludeAppointmentId) {
           return false;
@@ -34,8 +41,17 @@ export const useAppointmentValidation = () => {
         const newStart = new Date(startTime);
         const newEnd = new Date(endTime);
 
-        // Check for overlap
-        return (newStart < existingEnd && newEnd > existingStart);
+        // Check for overlap: newStart < existingEnd && newEnd > existingStart
+        const hasOverlap = (newStart < existingEnd && newEnd > existingStart);
+        
+        if (hasOverlap) {
+          console.log('⚠️ Conflict detected:', {
+            existing: { start: existingStart, end: existingEnd },
+            new: { start: newStart, end: newEnd }
+          });
+        }
+        
+        return hasOverlap;
       });
 
       if (conflicts && conflicts.length > 0) {
@@ -43,15 +59,21 @@ export const useAppointmentValidation = () => {
           hour: '2-digit',
           minute: '2-digit'
         });
+        
+        const message = `Este horário já está ocupado para este profissional. Conflito às ${conflictTime}.`;
+        
+        console.log('❌ Time conflict found:', message);
+        
         return {
           hasConflict: true,
-          message: `Este horário já está ocupado para este profissional. Conflito às ${conflictTime}.`
+          message
         };
       }
 
+      console.log('✅ No time conflicts found');
       return { hasConflict: false };
     } catch (error) {
-      console.error('Error checking time conflict:', error);
+      console.error('❌ Error checking time conflict:', error);
       return { hasConflict: false };
     }
   };
@@ -61,33 +83,60 @@ export const useAppointmentValidation = () => {
     const end = new Date(endTime);
     const now = new Date();
 
+    console.log('🕐 Validating time slot:', { startTime, endTime });
+
     if (start >= end) {
+      const message = 'O horário de início deve ser anterior ao horário de fim.';
+      console.log('❌ Invalid time slot - start >= end:', message);
       return {
         isValid: false,
-        message: 'O horário de início deve ser anterior ao horário de fim.'
+        message
       };
     }
 
     if (start < now) {
+      const message = 'Não é possível agendar para horários no passado.';
+      console.log('❌ Invalid time slot - past time:', message);
       return {
         isValid: false,
-        message: 'Não é possível agendar para horários no passado.'
+        message
       };
     }
 
     const duration = (end.getTime() - start.getTime()) / (1000 * 60);
     if (duration < 15) {
+      const message = 'A duração mínima do agendamento é de 15 minutos.';
+      console.log('❌ Invalid time slot - too short:', message);
       return {
         isValid: false,
-        message: 'A duração mínima do agendamento é de 15 minutos.'
+        message
       };
     }
 
+    console.log('✅ Time slot is valid');
     return { isValid: true };
+  };
+
+  const showConflictToast = (message: string) => {
+    toast({
+      title: 'Conflito de Horário',
+      description: message,
+      variant: 'destructive',
+    });
+  };
+
+  const showValidationToast = (message: string) => {
+    toast({
+      title: 'Horário Inválido',
+      description: message,
+      variant: 'destructive',
+    });
   };
 
   return {
     checkTimeConflict,
-    validateTimeSlot
+    validateTimeSlot,
+    showConflictToast,
+    showValidationToast
   };
 };

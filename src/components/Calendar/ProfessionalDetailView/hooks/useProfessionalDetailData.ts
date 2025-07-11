@@ -10,6 +10,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const { toast } = useToast();
 
   const fetchAppointments = async (startDate?: Date, endDate?: Date) => {
+    console.log('🔄 Fetching professional appointments:', { professionalId, selectedDate });
+    
     try {
       setLoading(true);
       
@@ -30,6 +32,12 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         end.setHours(23, 59, 59, 999);
       }
 
+      console.log('📅 Professional detail date range:', { 
+        start: start.toISOString(), 
+        end: end.toISOString(),
+        professionalId 
+      });
+
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -45,9 +53,13 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         .order('start_time');
 
       if (error) throw error;
+      
+      console.log('✅ Professional appointments fetched:', data?.length || 0);
+      console.log('📋 Professional appointments data:', data);
+      
       setAppointments(data || []);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('❌ Error fetching professional appointments:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao carregar agendamentos',
@@ -59,7 +71,9 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   };
 
   useEffect(() => {
-    fetchAppointments();
+    if (professionalId) {
+      fetchAppointments();
+    }
   }, [selectedDate, professionalId]);
 
   return {
