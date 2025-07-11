@@ -302,41 +302,65 @@ export type Database = {
       professionals: {
         Row: {
           active: boolean | null
+          break_times: Json | null
           color: string | null
           created_at: string
           crm_cro: string | null
           email: string | null
+          first_shift_end: string | null
+          first_shift_start: string | null
           id: string
           name: string
           phone: string | null
+          second_shift_end: string | null
+          second_shift_start: string | null
           specialty: string | null
           updated_at: string
+          vacation_active: boolean | null
+          vacation_end: string | null
+          vacation_start: string | null
           working_hours: Json | null
         }
         Insert: {
           active?: boolean | null
+          break_times?: Json | null
           color?: string | null
           created_at?: string
           crm_cro?: string | null
           email?: string | null
+          first_shift_end?: string | null
+          first_shift_start?: string | null
           id?: string
           name: string
           phone?: string | null
+          second_shift_end?: string | null
+          second_shift_start?: string | null
           specialty?: string | null
           updated_at?: string
+          vacation_active?: boolean | null
+          vacation_end?: string | null
+          vacation_start?: string | null
           working_hours?: Json | null
         }
         Update: {
           active?: boolean | null
+          break_times?: Json | null
           color?: string | null
           created_at?: string
           crm_cro?: string | null
           email?: string | null
+          first_shift_end?: string | null
+          first_shift_start?: string | null
           id?: string
           name?: string
           phone?: string | null
+          second_shift_end?: string | null
+          second_shift_start?: string | null
           specialty?: string | null
           updated_at?: string
+          vacation_active?: boolean | null
+          vacation_end?: string | null
+          vacation_start?: string | null
           working_hours?: Json | null
         }
         Relationships: []
