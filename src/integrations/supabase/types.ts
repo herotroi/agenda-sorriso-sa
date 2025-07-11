@@ -319,6 +319,10 @@ export type Database = {
           vacation_active: boolean | null
           vacation_end: string | null
           vacation_start: string | null
+          weekend_shift_active: boolean | null
+          weekend_shift_end: string | null
+          weekend_shift_start: string | null
+          working_days: Json | null
           working_hours: Json | null
         }
         Insert: {
@@ -340,6 +344,10 @@ export type Database = {
           vacation_active?: boolean | null
           vacation_end?: string | null
           vacation_start?: string | null
+          weekend_shift_active?: boolean | null
+          weekend_shift_end?: string | null
+          weekend_shift_start?: string | null
+          working_days?: Json | null
           working_hours?: Json | null
         }
         Update: {
@@ -361,6 +369,10 @@ export type Database = {
           vacation_active?: boolean | null
           vacation_end?: string | null
           vacation_start?: string | null
+          weekend_shift_active?: boolean | null
+          weekend_shift_end?: string | null
+          weekend_shift_start?: string | null
+          working_days?: Json | null
           working_hours?: Json | null
         }
         Relationships: []
