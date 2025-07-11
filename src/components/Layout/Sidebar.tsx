@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -17,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { useNotifications } from '@/contexts/NotificationContext/NotificationContext';
 
 const menuItems = [
-  { icon: BarChart3, label: 'Dashboard', path: '/' },
+  { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   { icon: Calendar, label: 'Agenda', path: '/agenda' },
   { icon: Users, label: 'Pacientes', path: '/pacientes' },
   { icon: UserPlus, label: 'Profissionais', path: '/profissionais' },
