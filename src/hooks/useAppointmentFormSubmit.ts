@@ -60,6 +60,7 @@ export function useAppointmentFormSubmit(
         title: 'Conflito de horário',
         description: conflictMessage,
         variant: 'destructive',
+        duration: 6000, // Mostrar por mais tempo para ler a mensagem completa
       });
       return false;
     }

@@ -10,7 +10,57 @@ interface TimeSlot {
 
 export const useAppointmentValidation = () => {
   const { toast } = useToast();
-  const { validateWorkingHours } = useProfessionalWorkingHours();
+  const { validateWorkingHours, professionals } = useProfessionalWorkingHours();
+
+  const checkBreakTimeConflict = (
+    professionalId: string,
+    startTime: string,
+    endTime: string
+  ): { hasConflict: boolean; message?: string } => {
+    const professional = professionals.find(p => p.id === professionalId);
+    
+    if (!professional || !professional.break_times) {
+      return { hasConflict: false };
+    }
+
+    const appointmentStart = new Date(startTime);
+    const appointmentEnd = new Date(endTime);
+    const appointmentDate = appointmentStart.toISOString().split('T')[0];
+
+    // Verificar se o procedimento conflita com intervalos
+    let breakTimes = [];
+    try {
+      breakTimes = typeof professional.break_times === 'string' 
+        ? JSON.parse(professional.break_times) 
+        : professional.break_times;
+    } catch (e) {
+      console.warn('Failed to parse break_times:', e);
+      return { hasConflict: false };
+    }
+
+    if (Array.isArray(breakTimes)) {
+      for (const breakTime of breakTimes) {
+        if (breakTime && typeof breakTime === 'object' && breakTime.start && breakTime.end) {
+          const breakStart = new Date(`${appointmentDate}T${breakTime.start}:00`);
+          const breakEnd = new Date(`${appointmentDate}T${breakTime.end}:00`);
+
+          // Verificar se há sobreposição
+          if (appointmentStart < breakEnd && appointmentEnd > breakStart) {
+            const duration = Math.round((appointmentEnd.getTime() - appointmentStart.getTime()) / (1000 * 60));
+            const breakStartTime = breakTime.start;
+            const breakEndTime = breakTime.end;
+            
+            return {
+              hasConflict: true,
+              message: `O procedimento de ${duration} minutos não pode ser realizado neste horário pois conflita com o intervalo das ${breakStartTime} às ${breakEndTime}. Por favor, altere a duração do procedimento ou escolha outro horário.`
+            };
+          }
+        }
+      }
+    }
+
+    return { hasConflict: false };
+  };
 
   const checkTimeConflict = async (
     professionalId: string,
@@ -31,6 +81,28 @@ export const useAppointmentValidation = () => {
         };
       }
 
+      // Verificar conflitos com intervalos/folgas
+      const breakConflict = checkBreakTimeConflict(professionalId, startTime, endTime);
+      if (breakConflict.hasConflict) {
+        return breakConflict;
+      }
+
+      // Verificar se está em período de férias
+      const professional = professionals.find(p => p.id === professionalId);
+      if (professional?.vacation_active && professional.vacation_start && professional.vacation_end) {
+        const appointmentDate = new Date(startTime);
+        const vacationStart = new Date(professional.vacation_start);
+        const vacationEnd = new Date(professional.vacation_end);
+        
+        if (appointmentDate >= vacationStart && appointmentDate <= vacationEnd) {
+          return {
+            hasConflict: true,
+            message: 'Profissional está de férias neste período. Escolha outra data.'
+          };
+        }
+      }
+
+      // Verificar conflitos com outros agendamentos
       const { data, error } = await supabase
         .from('appointments')
         .select('id, start_time, end_time, patients(full_name)')
