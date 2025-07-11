@@ -10,62 +10,13 @@ interface AppointmentRowProps {
 }
 
 export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
-  // Check if the appointment is during break time
-  const checkIfBreakTime = (appointment: any): boolean => {
-    if (!appointment.professionals?.break_times) return false;
-    
-    const appointmentTime = new Date(appointment.start_time);
-    const appointmentHour = appointmentTime.getHours();
-    const appointmentMinute = appointmentTime.getMinutes();
-    const appointmentTimeInMinutes = appointmentHour * 60 + appointmentMinute;
-    
-    return appointment.professionals.break_times.some((breakTime: any) => {
-      const [startHour, startMinute] = breakTime.start.split(':').map(Number);
-      const [endHour, endMinute] = breakTime.end.split(':').map(Number);
-      const startTimeInMinutes = startHour * 60 + startMinute;
-      const endTimeInMinutes = endHour * 60 + endMinute;
-      
-      return appointmentTimeInMinutes >= startTimeInMinutes && appointmentTimeInMinutes < endTimeInMinutes;
-    });
-  };
-
-  // Check if the appointment is during vacation time
-  const checkIfVacationTime = (appointment: any): boolean => {
-    if (!appointment.professionals?.vacation_active || 
-        !appointment.professionals?.vacation_start || 
-        !appointment.professionals?.vacation_end) {
-      return false;
-    }
-    
-    const appointmentDate = new Date(appointment.start_time);
-    const vacationStart = new Date(appointment.professionals.vacation_start);
-    const vacationEnd = new Date(appointment.professionals.vacation_end);
-    
-    return appointmentDate >= vacationStart && appointmentDate <= vacationEnd;
-  };
-
-  const isBreakTime = checkIfBreakTime(appointment);
-  const isVacationTime = checkIfVacationTime(appointment);
-  const shouldHighlight = isBreakTime || isVacationTime;
-  const highlightReason = isVacationTime ? 'Férias' : isBreakTime ? 'Folga' : '';
-
   return (
-    <TableRow 
-      key={appointment.id}
-      className={shouldHighlight ? 'bg-red-50 border-red-200' : ''}
-    >
+    <TableRow key={appointment.id}>
       <TableCell className="font-medium">
         {appointment.patients?.full_name || 'N/A'}
       </TableCell>
       <TableCell>
-        <div>
-          {appointment.professionals?.name || 'N/A'}
-          {shouldHighlight && (
-            <div className="text-xs text-red-600 font-semibold mt-1">
-              {highlightReason}
-            </div>
-          )}
-        </div>
+        {appointment.professionals?.name || 'N/A'}
       </TableCell>
       <TableCell>
         {appointment.procedures?.name || 'Nenhum'}

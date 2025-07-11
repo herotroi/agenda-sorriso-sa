@@ -34,11 +34,6 @@ export function AppointmentsTableContent({
 
   return (
     <div className="overflow-x-auto">
-      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-sm text-red-700">
-          <span className="font-semibold">Legenda:</span> Agendamentos em horário de folga ou férias do profissional são destacados em vermelho claro
-        </p>
-      </div>
       <Table>
         <TableHeader>
           <TableRow>
