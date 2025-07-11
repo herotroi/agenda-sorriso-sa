@@ -2,11 +2,43 @@
 import { Appointment } from './types';
 import { convertToLocalTime, getStatusColor } from './appointmentUtils';
 
-export const generateTablePrintTemplate = (appointments: Appointment[]): string => {
+export const generateTablePrintTemplate = (appointments: Appointment[], professionals?: any[]): string => {
   console.log('Generating table template with:', appointments?.length || 0, 'appointments');
 
   if (!appointments || appointments.length === 0) {
     return '<p>Nenhum agendamento encontrado.</p>';
+  }
+
+  // Gerar informações de pausas e férias por profissional
+  let timeBlocksInfo = '';
+  if (professionals && professionals.length > 0) {
+    const timeBlocksData = professionals.map(prof => {
+      let profInfo = `<h4>${prof.name}</h4>`;
+      
+      // Férias
+      if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
+        const startDate = new Date(prof.vacation_start).toLocaleDateString('pt-BR');
+        const endDate = new Date(prof.vacation_end).toLocaleDateString('pt-BR');
+        profInfo += `<p>🏖️ <strong>Férias:</strong> ${startDate} até ${endDate}</p>`;
+      }
+      
+      // Pausas
+      if (prof.break_times && Array.isArray(prof.break_times) && prof.break_times.length > 0) {
+        const breaks = prof.break_times.map((bt: any) => `${bt.start} - ${bt.end}`).join(', ');
+        profInfo += `<p>☕ <strong>Pausas:</strong> ${breaks}</p>`;
+      }
+      
+      return profInfo;
+    }).join('');
+
+    if (timeBlocksData.trim()) {
+      timeBlocksInfo = `
+        <div class="time-blocks-section" style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
+          <h3 style="margin-bottom: 16px; color: #374151;">Pausas e Férias dos Profissionais</h3>
+          ${timeBlocksData}
+        </div>
+      `;
+    }
   }
 
   const tableRows = appointments.map(appointment => {
@@ -43,6 +75,9 @@ export const generateTablePrintTemplate = (appointments: Appointment[]): string 
         <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
         <p class="text-sm text-gray-600 mt-2">Total de agendamentos: ${appointments.length}</p>
       </div>
+      
+      ${timeBlocksInfo}
+      
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
           <thead>

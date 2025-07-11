@@ -35,9 +35,17 @@ export function usePrintReport() {
       } else {
         console.log('Preparing table print for date:', selectedDate || 'all', 'professional:', professionalId || 'all');
         
-        const appointments = selectedDate ? 
-          await fetchDateAppointments(selectedDate, professionalId) : 
-          await fetchAllAppointments(professionalId);
+        const [appointments, allProfessionals] = await Promise.all([
+          selectedDate ? 
+            fetchDateAppointments(selectedDate, professionalId) : 
+            fetchAllAppointments(professionalId),
+          fetchProfessionalsData()
+        ]);
+
+        // Filter professionals if specific professional is selected
+        const professionals = professionalId 
+          ? allProfessionals.filter(prof => prof.id === professionalId)
+          : allProfessionals;
         
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
@@ -45,7 +53,7 @@ export function usePrintReport() {
           const professionalText = professionalId ? ' para este profissional' : '';
           contentToPrint = `<p>Nenhum agendamento encontrado${professionalText} para impressão da tabela.</p>`;
         } else {
-          contentToPrint = generateTablePrintTemplate(appointments);
+          contentToPrint = generateTablePrintTemplate(appointments, professionals);
         }
       }
     } catch (error) {
