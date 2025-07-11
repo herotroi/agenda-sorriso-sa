@@ -7,9 +7,11 @@ import { AppointmentsTable } from '@/components/Appointments/AppointmentsTable';
 interface AgendaTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
 }
 
-export function AgendaTabs({ activeTab, onTabChange }: AgendaTabsProps) {
+export function AgendaTabs({ activeTab, onTabChange, selectedDate, onDateChange }: AgendaTabsProps) {
   return (
     <Tabs defaultValue="calendar" value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
