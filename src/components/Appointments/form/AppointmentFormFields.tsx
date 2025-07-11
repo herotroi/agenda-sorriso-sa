@@ -86,7 +86,7 @@ export function AppointmentFormFields({
         onChange={(value) => {
           const statusId = parseInt(value);
           setFormData({ ...formData, status_id: statusId });
-          handleFieldChange('status_id', statusId.toString());
+          handleFieldChange('status_id', value);
         }}
         currentStatusName={getCurrentStatusName()}
       />
