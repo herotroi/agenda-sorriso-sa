@@ -1,9 +1,8 @@
-export function usePrintReport() {
-  const handlePrint = (activeTab: string) => {
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
 
+import { supabase } from '@/integrations/supabase/client';
+
+export function usePrintReport() {
+  const handlePrint = async (activeTab: string) => {
     // Get the current date for the report
     const currentDate = new Date().toLocaleDateString('pt-BR', {
       weekday: 'long',
@@ -32,74 +31,98 @@ export function usePrintReport() {
         contentToPrint = '<p>Nenhum agendamento encontrado na visualização de calendário.</p>';
       }
     } else {
-      // For table view, get the table content more specifically
-      const activeTabPanel = document.querySelector('[role="tabpanel"][data-state="active"]');
+      // For table view, fetch fresh data from database
+      console.log('Fetching appointments for print...');
       
-      if (activeTabPanel) {
-        console.log('Active tab panel found:', activeTabPanel);
-        
-        // Look for the card containing the table
-        const tableCard = activeTabPanel.querySelector('[data-testid="appointments-table"], .rounded-lg.border');
-        
-        if (tableCard) {
-          console.log('Table card found:', tableCard);
-          
-          // Clone the card content to modify it for printing
-          const contentClone = tableCard.cloneNode(true) as HTMLElement;
-          
-          // Remove action buttons and interactive elements but keep the table structure
-          const buttons = contentClone.querySelectorAll('button');
-          buttons.forEach(button => {
-            // If it's in the header actions area, remove completely
-            if (button.closest('.flex.gap-2')) {
-              button.remove();
-            } else {
-              // If it's in table cells, replace with a dash
-              button.replaceWith(document.createTextNode('-'));
-            }
-          });
-          
-          // Remove the header buttons container if it exists
-          const headerActions = contentClone.querySelector('.flex.gap-2');
-          if (headerActions) {
-            headerActions.remove();
-          }
-          
-          contentToPrint = contentClone.innerHTML;
-          console.log('Content to print:', contentToPrint);
+      try {
+        const { data: appointments, error } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            start_time,
+            end_time,
+            notes,
+            price,
+            patients(full_name),
+            professionals(name),
+            procedures(name),
+            appointment_statuses(label, color)
+          `)
+          .order('start_time', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching appointments:', error);
+          contentToPrint = '<p>Erro ao carregar agendamentos para impressão.</p>';
+        } else if (!appointments || appointments.length === 0) {
+          contentToPrint = '<p>Nenhum agendamento encontrado.</p>';
         } else {
-          console.log('Table card not found, trying alternative selectors');
+          console.log('Appointments fetched for print:', appointments);
           
-          // Alternative: look for table directly
-          const table = activeTabPanel.querySelector('table');
-          if (table) {
-            console.log('Found table directly:', table);
-            const tableClone = table.cloneNode(true) as HTMLElement;
+          // Build table HTML with the fetched data
+          const tableRows = appointments.map(appointment => {
+            const startTime = new Date(appointment.start_time).toLocaleString('pt-BR');
+            const patientName = appointment.patients?.full_name || 'N/A';
+            const professionalName = appointment.professionals?.name || 'N/A';
+            const procedureName = appointment.procedures?.name || 'Nenhum';
+            const statusLabel = appointment.appointment_statuses?.label || 'N/A';
+            const statusColor = appointment.appointment_statuses?.color || '#6b7280';
+            const notes = appointment.notes || 'Sem observações';
+            const displayNotes = notes.length > 30 ? notes.substring(0, 30) + '...' : notes;
             
-            // Remove action buttons from table
-            const actionButtons = tableClone.querySelectorAll('button');
-            actionButtons.forEach(button => {
-              button.replaceWith(document.createTextNode('-'));
-            });
-            
-            // Wrap table in a card-like structure for better printing
-            contentToPrint = `
-              <div class="rounded-lg border p-6">
-                <div class="mb-4">
-                  <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
-                </div>
-                ${tableClone.outerHTML}
-              </div>
+            return `
+              <tr>
+                <td>${patientName}</td>
+                <td>${professionalName}</td>
+                <td>${procedureName}</td>
+                <td>${startTime}</td>
+                <td>
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
+                        style="background-color: ${statusColor}20; color: ${statusColor}">
+                    ${statusLabel}
+                  </span>
+                </td>
+                <td>${displayNotes}</td>
+              </tr>
             `;
-          } else {
-            console.log('No table found');
-            contentToPrint = '<p>Nenhum agendamento encontrado na tabela.</p>';
-          }
+          }).join('');
+          
+          contentToPrint = `
+            <div class="rounded-lg border p-6">
+              <div class="mb-4">
+                <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
+                <p class="text-sm text-gray-600 mt-2">Total de agendamentos: ${appointments.length}</p>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Paciente</th>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Profissional</th>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Procedimento</th>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Data/Hora</th>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Status</th>
+                      <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
         }
-      } else {
-        console.log('No active tab panel found');
-        contentToPrint = '<p>Nenhum conteúdo encontrado para impressão.</p>';
+      } catch (error) {
+        console.error('Error in print function:', error);
+        contentToPrint = '<p>Erro ao preparar dados para impressão.</p>';
       }
+    }
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desabilitado.');
+      return;
     }
 
     // Create the print document with improved styling
@@ -159,106 +182,6 @@ export function usePrintReport() {
               overflow: visible;
             }
             
-            /* Calendar Grid - Critical fixes for alignment */
-            .grid {
-              display: grid !important;
-              gap: 0 !important;
-              border: 1px solid #ccc;
-              font-size: 9px;
-              width: 100%;
-              position: relative;
-            }
-            
-            /* Ensure grid maintains its column structure */
-            .grid > div {
-              position: relative !important;
-              border-right: 1px solid #e5e7eb;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            
-            /* Hour column styling */
-            .grid > div:first-child {
-              background: #f9fafb;
-              font-weight: 600;
-            }
-            
-            /* Professional columns */
-            .grid > div:not(:first-child) {
-              min-height: 40px;
-              position: relative;
-            }
-            
-            /* Time slot cells */
-            .grid > div > div {
-              height: 40px !important;
-              border-bottom: 1px solid #f3f4f6;
-              position: relative;
-              display: flex;
-              align-items: flex-start;
-              padding: 2px;
-            }
-            
-            /* Header cells */
-            .h-12, .h-\\[60px\\] {
-              height: 35px !important;
-              min-height: 35px !important;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              background: #f9fafb;
-              font-weight: 600;
-              border-bottom: 2px solid #e5e7eb;
-              font-size: 10px;
-            }
-            
-            /* Time cells specific styling */
-            .border-r .h-12 {
-              background: #f3f4f6;
-            }
-            
-            /* Appointment positioning - CRITICAL FIX */
-            .absolute {
-              position: absolute !important;
-              left: 2px !important;
-              right: 2px !important;
-              z-index: 10;
-              border-radius: 3px;
-              padding: 2px 4px;
-              font-size: 8px;
-              line-height: 1.2;
-              background: #e3f2fd !important;
-              border: 1px solid #1976d2 !important;
-              color: #1565c0 !important;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            }
-            
-            /* Different appointment colors */
-            .bg-blue-50, [style*="background-color: rgb(239, 246, 255)"] {
-              background: #e3f2fd !important;
-              border-color: #1976d2 !important;
-              color: #1565c0 !important;
-            }
-            
-            .bg-green-50, [style*="background-color: rgb(240, 253, 244)"] {
-              background: #e8f5e8 !important;
-              border-color: #2e7d32 !important;
-              color: #1b5e20 !important;
-            }
-            
-            .bg-yellow-50, [style*="background-color: rgb(254, 252, 232)"] {
-              background: #fff3e0 !important;
-              border-color: #f57c00 !important;
-              color: #e65100 !important;
-            }
-            
-            .bg-red-50, [style*="background-color: rgb(254, 242, 242)"] {
-              background: #ffebee !important;
-              border-color: #d32f2f !important;
-              color: #c62828 !important;
-            }
-            
             /* Table styles - Enhanced for better visibility */
             .overflow-x-auto {
               overflow: visible !important;
@@ -275,7 +198,7 @@ export function usePrintReport() {
             
             th, td {
               border: 1px solid #e5e7eb;
-              padding: 6px 4px;
+              padding: 8px 6px;
               text-align: left;
               vertical-align: top;
               word-wrap: break-word;
@@ -284,7 +207,7 @@ export function usePrintReport() {
             th {
               background-color: #f9fafb;
               font-weight: 600;
-              font-size: 9px;
+              font-size: 10px;
               color: #374151;
             }
             
@@ -316,32 +239,12 @@ export function usePrintReport() {
               border: 1px solid #e5e7eb;
             }
             
-            .border-r {
-              border-right: 1px solid #e5e7eb;
-            }
-            
-            .border-b {
-              border-bottom: 1px solid #e5e7eb;
-            }
-            
             /* Padding utilities */
-            .p-6, .pt-0 {
-              padding: 8px;
-            }
-            
-            .pt-1 {
-              padding-top: 2px;
+            .p-6 {
+              padding: 12px;
             }
             
             /* Text utilities */
-            .text-xs {
-              font-size: 8px;
-            }
-            
-            .text-sm {
-              font-size: 9px;
-            }
-            
             .text-2xl {
               font-size: 16px;
               font-weight: 600;
@@ -368,31 +271,16 @@ export function usePrintReport() {
               color: #111827;
             }
             
-            .text-center {
-              text-align: center;
+            .text-sm {
+              font-size: 9px;
             }
             
-            /* Flex utilities */
-            .flex {
-              display: flex;
+            .mt-2 {
+              margin-top: 8px;
             }
             
-            .items-center {
-              align-items: center;
-            }
-            
-            .justify-center {
-              justify-content: center;
-            }
-            
-            .items-start {
-              align-items: flex-start;
-            }
-            
-            /* Hide interactive elements */
-            button, [role="button"], .cursor-pointer, 
-            [class*="hover:"], [class*="focus:"] {
-              display: none !important;
+            .mb-4 {
+              margin-bottom: 16px;
             }
             
             /* Print specific */
@@ -412,20 +300,6 @@ export function usePrintReport() {
               
               .print-header h1 {
                 font-size: 16px;
-              }
-              
-              .grid > div > div {
-                height: 35px !important;
-              }
-              
-              .h-12, .h-\\[60px\\] {
-                height: 30px !important;
-                min-height: 30px !important;
-              }
-              
-              .absolute {
-                font-size: 7px;
-                padding: 1px 3px;
               }
               
               table {
@@ -467,7 +341,7 @@ export function usePrintReport() {
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
-    }, 1500);
+    }, 1000);
   };
 
   return { handlePrint };
