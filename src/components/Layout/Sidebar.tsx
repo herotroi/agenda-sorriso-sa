@@ -27,7 +27,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { unreadCount } = useNotifications();
 
   const menuItems = [
-    { path: '/', icon: BarChart3, label: 'Dashboard' },
+    { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
     { path: '/agenda', icon: Calendar, label: 'Agenda' },
     { path: '/pacientes', icon: Users, label: 'Pacientes' },
     { path: '/profissionais', icon: UserCheck, label: 'Profissionais' },

@@ -7,7 +7,7 @@ const Index = () => {
 
   useEffect(() => {
     // Redireciona automaticamente para o dashboard
-    navigate('/');
+    navigate('/dashboard');
   }, [navigate]);
 
   return null;
