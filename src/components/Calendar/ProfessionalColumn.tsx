@@ -28,19 +28,28 @@ export function ProfessionalColumn({
     const start = new Date(startTime);
     const end = new Date(endTime);
     
-    const startHour = start.getHours() + start.getMinutes() / 60;
+    const startHour = start.getHours();
+    const startMinutes = start.getMinutes();
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
     
+    // Calcular posição precisa baseada no horário
+    const topPosition = startHour * 64 + (startMinutes / 60) * 64; // 64px = altura de cada slot de hora
+    const height = Math.max(duration * 64, 32); // altura mínima de 32px
+    
     return {
-      top: `${startHour * 60}px`,
-      height: `${duration * 60}px`
+      top: `${topPosition}px`,
+      height: `${height}px`
     };
   };
 
   return (
-    <div className="border-r relative">
-      <div className="h-12 border-b flex items-center justify-center font-medium text-sm p-2">
-        {professional.name}
+    <div className="border-r relative bg-white">
+      <div className="h-12 border-b flex items-center justify-center font-semibold text-sm p-2 bg-gray-100 sticky top-0 z-10">
+        <div className="text-center">
+          <div className="truncate max-w-full" title={professional.name}>
+            {professional.name}
+          </div>
+        </div>
       </div>
       
       <div className="relative">
@@ -61,20 +70,22 @@ export function ProfessionalColumn({
           );
         })}
         
-        {/* Appointments */}
-        {appointments.map((appointment) => {
-          const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
-          
-          return (
-            <DraggableAppointment
-              key={appointment.id}
-              appointment={appointment}
-              professionalColor={professional.color}
-              position={position}
-              onClick={() => onAppointmentClick(appointment)}
-            />
-          );
-        })}
+        {/* Agendamentos posicionados absolutamente */}
+        <div className="absolute inset-0">
+          {appointments.map((appointment) => {
+            const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
+            
+            return (
+              <DraggableAppointment
+                key={appointment.id}
+                appointment={appointment}
+                professionalColor={professional.color}
+                position={position}
+                onClick={() => onAppointmentClick(appointment)}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

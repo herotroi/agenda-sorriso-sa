@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Appointment {
   id: string;
@@ -42,7 +43,6 @@ export function DraggableAppointment({
   };
 
   const getLighterColor = (color: string, opacity: number = 0.15) => {
-    // Convert hex to RGB and add opacity
     const hex = color.replace('#', '');
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
@@ -66,45 +66,74 @@ export function DraggableAppointment({
   const statusLabel = appointment.appointment_statuses?.label || appointment.status;
   const lighterBgColor = getLighterColor(professionalColor, 0.15);
 
-  return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      className={`absolute left-2 right-2 rounded-lg p-3 text-xs cursor-move hover:opacity-90 transition-all shadow-sm border-l-8 overflow-hidden ${
-        isDragStarted ? 'opacity-50' : ''
-      }`}
-      style={{
-        ...position,
-        backgroundColor: lighterBgColor,
-        borderLeftColor: statusColor,
-        minHeight: '40px',
-        color: '#1f2937'
-      }}
-    >
-      <div className="space-y-1">
-        <div className="font-semibold truncate text-gray-800">
-          {appointment.patients?.full_name}
-        </div>
-        <div className="truncate text-gray-700">
-          {appointment.procedures?.name}
-        </div>
-        <div className="text-xs text-gray-600">
-          {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </div>
-        <div className="flex justify-start">
-          <div 
-            className="text-xs font-bold px-2 py-1 rounded-full text-white truncate max-w-full"
-            style={{ backgroundColor: statusColor }}
-          >
-            {statusLabel}
-          </div>
-        </div>
-      </div>
+  const startTime = new Date(appointment.start_time);
+  const endTime = new Date(appointment.end_time);
+  
+  const timeRange = `${startTime.toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })} - ${endTime.toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })}`;
+
+  const tooltipContent = (
+    <div className="space-y-1">
+      <div className="font-semibold">{appointment.patients?.full_name}</div>
+      <div className="text-sm">{appointment.procedures?.name || 'Sem procedimento'}</div>
+      <div className="text-sm">{timeRange}</div>
+      <div className="text-sm">Status: {statusLabel}</div>
     </div>
+  );
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onClick={onClick}
+            className={`absolute left-1 right-1 rounded-md p-2 text-xs cursor-move hover:opacity-90 transition-all shadow-sm border-l-4 overflow-hidden ${
+              isDragStarted ? 'opacity-50 z-50' : 'z-10'
+            }`}
+            style={{
+              ...position,
+              backgroundColor: lighterBgColor,
+              borderLeftColor: statusColor,
+              minHeight: '32px',
+              color: '#1f2937'
+            }}
+          >
+            <div className="space-y-1">
+              <div className="font-semibold truncate text-gray-800 text-xs">
+                {appointment.patients?.full_name}
+              </div>
+              <div className="truncate text-gray-700 text-xs">
+                {appointment.procedures?.name}
+              </div>
+              <div className="text-xs text-gray-600">
+                {startTime.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </div>
+              <div className="flex justify-start">
+                <div 
+                  className="text-xs font-bold px-1.5 py-0.5 rounded text-white truncate max-w-full"
+                  style={{ backgroundColor: statusColor }}
+                >
+                  {statusLabel}
+                </div>
+              </div>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-xs">
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

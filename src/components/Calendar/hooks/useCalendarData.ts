@@ -40,7 +40,11 @@ export function useCalendarData(selectedDate: Date) {
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      console.log('📅 Date range:', { start: startOfDay.toISOString(), end: endOfDay.toISOString() });
+      console.log('📅 Date range:', { 
+        start: startOfDay.toISOString(), 
+        end: endOfDay.toISOString(),
+        selectedDate: selectedDate.toDateString()
+      });
 
       const { data, error } = await supabase
         .from('appointments')
@@ -100,7 +104,6 @@ export function useCalendarData(selectedDate: Date) {
         const newStart = new Date(startTime);
         const newEnd = new Date(endTime);
 
-        // Check for overlap
         return (newStart < existingEnd && newEnd > existingStart);
       });
 
