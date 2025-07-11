@@ -57,10 +57,12 @@ export function AppointmentFormFields({
 
   const handleProcedureSelectChange = (procedureId: string) => {
     // Limpar o profissional selecionado quando o procedimento mudar
-    setFormData(prev => ({
-      ...prev,
+    const updatedFormData = {
+      ...formData,
+      procedure_id: procedureId,
       professional_id: ''
-    }));
+    };
+    setFormData(updatedFormData);
     handleFieldChange('professional_id', '');
     onProcedureChange(procedureId);
   };
