@@ -1,3 +1,4 @@
+
 import { PatientProfessionalSection } from './PatientProfessionalSection';
 import { ProcedureSelector } from './ProcedureSelector';
 import { DateTimeDurationSection } from './DateTimeDurationSection';
@@ -103,7 +104,7 @@ export function AppointmentFormFields({
         onChange={(value) => {
           const statusId = parseInt(value);
           setFormData({ ...formData, status_id: statusId });
-          handleFieldChange('status_id', statusId);
+          handleFieldChange('status_id', value);
         }}
         currentStatusName={getCurrentStatusName()}
       />
