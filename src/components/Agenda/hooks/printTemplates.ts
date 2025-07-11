@@ -1,4 +1,3 @@
-
 import { generateHours, formatTime, getCurrentDate } from './printUtils';
 
 interface Appointment {
@@ -41,6 +40,36 @@ const getStatusColor = (appointment: Appointment): string => {
   }
 };
 
+const getAppointmentDurationInHours = (startTime: string, endTime: string): number => {
+  const start = convertToLocalTime(startTime);
+  const end = convertToLocalTime(endTime);
+  return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+};
+
+const shouldShowAppointmentInHour = (appointment: Appointment, hour: number): boolean => {
+  const startTime = convertToLocalTime(appointment.start_time);
+  const endTime = convertToLocalTime(appointment.end_time);
+  
+  const startHour = startTime.getHours();
+  const endHour = endTime.getHours();
+  
+  // Mostrar se o agendamento começa nesta hora OU se esta hora está dentro da duração do agendamento
+  return (startHour === hour) || (hour > startHour && hour < endHour) || 
+         (hour === endHour && endTime.getMinutes() > 0);
+};
+
+const getAppointmentDisplayType = (appointment: Appointment, hour: number): 'start' | 'continuation' | 'end' => {
+  const startTime = convertToLocalTime(appointment.start_time);
+  const endTime = convertToLocalTime(appointment.end_time);
+  
+  const startHour = startTime.getHours();
+  const endHour = endTime.getHours();
+  
+  if (startHour === hour) return 'start';
+  if (endHour === hour && endTime.getMinutes() > 0) return 'end';
+  return 'continuation';
+};
+
 export const generateCalendarPrintTemplate = (
   professionals: Professional[],
   appointments: Appointment[]
@@ -77,9 +106,7 @@ export const generateCalendarPrintTemplate = (
           return false;
         }
         
-        const aptDate = convertToLocalTime(apt.start_time);
-        const aptHour = aptDate.getHours();
-        return aptHour === hour;
+        return shouldShowAppointmentInHour(apt, hour);
       });
 
       console.log(`Hour ${hour}, Professional ${prof.name}: ${hourAppointments.length} appointments`);
@@ -90,8 +117,17 @@ export const generateCalendarPrintTemplate = (
 
       // Create appointment content for this cell
       const appointmentContent = hourAppointments.map(apt => {
+        const displayType = getAppointmentDisplayType(apt, hour);
         const startDate = convertToLocalTime(apt.start_time);
+        const endDate = convertToLocalTime(apt.end_time);
+        const duration = getAppointmentDurationInHours(apt.start_time, apt.end_time);
+        
         const startTime = startDate.toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        const endTime = endDate.toLocaleTimeString('pt-BR', { 
           hour: '2-digit', 
           minute: '2-digit' 
         });
@@ -101,16 +137,36 @@ export const generateCalendarPrintTemplate = (
         const statusLabel = apt.appointment_statuses?.label || 'Confirmado';
         const statusColor = getStatusColor(apt);
 
-        return `
-          <div class="appointment-block">
-            <div class="patient-name">${patientName}</div>
-            <div class="procedure-name">${procedureName}</div>
-            <div class="appointment-time">${startTime}</div>
-            <div class="status-badge" style="background-color: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">
-              ${statusLabel}
+        // Different content based on display type
+        if (displayType === 'start') {
+          return `
+            <div class="appointment-block appointment-start" style="border-left-color: ${statusColor};">
+              <div class="patient-name">${patientName}</div>
+              <div class="procedure-name">${procedureName}</div>
+              <div class="appointment-time">${startTime} - ${endTime}</div>
+              <div class="status-badge" style="background-color: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">
+                ${statusLabel}
+              </div>
+              ${duration > 1 ? `<div class="duration-indicator">Duração: ${duration.toFixed(1)}h</div>` : ''}
             </div>
-          </div>
-        `;
+          `;
+        } else if (displayType === 'continuation') {
+          return `
+            <div class="appointment-block appointment-continuation" style="border-left-color: ${statusColor};">
+              <div class="patient-name continuation-text">${patientName} (continuação)</div>
+              <div class="procedure-name">${procedureName}</div>
+              <div class="continuation-indicator">↕ Em andamento</div>
+            </div>
+          `;
+        } else { // end
+          return `
+            <div class="appointment-block appointment-end" style="border-left-color: ${statusColor};">
+              <div class="patient-name">${patientName} (final)</div>
+              <div class="procedure-name">${procedureName}</div>
+              <div class="appointment-time">Termina às ${endTime}</div>
+            </div>
+          `;
+        }
       }).join('');
 
       return `<td class="time-cell with-appointment">${appointmentContent}</td>`;

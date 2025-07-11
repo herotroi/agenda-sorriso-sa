@@ -1,4 +1,3 @@
-
 export const getCurrentDate = () => {
   return new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -60,7 +59,7 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
           .print-header {
             text-align: center;
             margin-bottom: 20px;
-            border-bottom: 2px solid #333;
+            border-bottom: 3px solid #333;
             padding-bottom: 15px;
           }
           
@@ -82,7 +81,7 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
             overflow: visible;
           }
 
-          /* Calendar Grid Styles */
+          /* Calendar Grid Styles - Improved based on the image model */
           .calendar-print-container {
             width: 100%;
           }
@@ -108,41 +107,45 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
             width: 100%;
             border-collapse: collapse;
             font-size: 9px;
-            border: 1px solid #e5e7eb;
+            border: 2px solid #000;
           }
 
           .hour-header, .professional-header {
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            padding: 6px 4px;
+            background-color: #f3f4f6;
+            border: 2px solid #000;
+            padding: 8px 4px;
             text-align: center;
-            font-weight: 600;
-            font-size: 9px;
-            color: #374151;
+            font-weight: 700;
+            font-size: 10px;
+            color: #111827;
+            vertical-align: middle;
           }
 
           .hour-cell {
             background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            padding: 6px 4px;
+            border: 1px solid #000;
+            border-right: 2px solid #000;
+            padding: 8px 4px;
             text-align: center;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 9px;
-            color: #6b7280;
-            width: 50px;
+            color: #374151;
+            width: 60px;
             vertical-align: top;
+            min-height: 45px;
           }
 
           .time-cell {
-            border: 1px solid #e5e7eb;
-            padding: 4px;
+            border: 1px solid #666;
+            border-bottom: 1px solid #000;
+            padding: 3px;
             vertical-align: top;
-            min-height: 40px;
+            min-height: 45px;
             position: relative;
           }
 
           .time-cell.empty {
-            background-color: #fafafa;
+            background-color: #fefefe;
           }
 
           .time-cell.with-appointment {
@@ -150,19 +153,39 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
           }
 
           .appointment-block {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             padding: 4px;
             background-color: #f8fafc;
-            border-left: 3px solid #3b82f6;
-            border-radius: 2px;
+            border-left: 4px solid #3b82f6;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          }
+
+          .appointment-start {
+            background-color: #f0f9ff;
+          }
+
+          .appointment-continuation {
+            background-color: #f0fdf4;
+            border-left-style: dashed;
+            opacity: 0.8;
+          }
+
+          .appointment-end {
+            background-color: #fef7f0;
           }
 
           .patient-name {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 8px;
             color: #1f2937;
             margin-bottom: 2px;
             line-height: 1.2;
+          }
+
+          .continuation-text {
+            font-style: italic;
+            color: #059669;
           }
 
           .procedure-name {
@@ -176,17 +199,32 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
             font-size: 7px;
             color: #6b7280;
             margin-bottom: 3px;
-            font-weight: 500;
+            font-weight: 600;
           }
 
           .status-badge {
             display: inline-block;
-            padding: 1px 4px;
+            padding: 2px 4px;
             border-radius: 8px;
             font-size: 6px;
-            font-weight: 500;
+            font-weight: 600;
             text-align: center;
             line-height: 1.2;
+          }
+
+          .duration-indicator {
+            font-size: 6px;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-top: 2px;
+          }
+
+          .continuation-indicator {
+            font-size: 7px;
+            color: #059669;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 2px;
           }
 
           /* Existing table styles */
@@ -290,6 +328,7 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
             .print-header {
               margin-bottom: 12px;
               padding-bottom: 8px;
+              border-bottom: 2px solid #000;
             }
             
             .print-header h1 {
@@ -298,16 +337,23 @@ export const openPrintWindow = (content: string, currentDate: string, activeTab:
 
             .calendar-grid-table {
               font-size: 8px;
+              border: 2px solid #000;
             }
 
             .hour-header, .professional-header {
               font-size: 8px;
-              padding: 4px 3px;
+              padding: 6px 3px;
+              border: 2px solid #000;
             }
 
             .hour-cell {
               font-size: 8px;
-              padding: 4px 3px;
+              padding: 6px 3px;
+              border-right: 2px solid #000;
+            }
+
+            .time-cell {
+              border-bottom: 1px solid #000;
             }
 
             .patient-name {
