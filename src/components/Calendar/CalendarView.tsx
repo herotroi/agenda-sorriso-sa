@@ -54,13 +54,14 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
   };
 
   const handleNavigateDate = (direction: 'prev' | 'next') => {
-    const newDate = navigateDate(direction);
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
     setSelectedDate(newDate);
     return newDate;
   };
 
   const handleGoToToday = () => {
-    const today = goToToday();
+    const today = new Date();
     setSelectedDate(today);
     return today;
   };
