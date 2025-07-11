@@ -1,6 +1,7 @@
 
 import { DraggableAppointment } from './DraggableAppointment';
 import { DroppableTimeSlot } from './DroppableTimeSlot';
+import { TimeBlock } from './TimeBlock';
 import { Appointment } from '@/components/Appointments/types';
 
 interface Professional {
@@ -9,9 +10,19 @@ interface Professional {
   color: string;
 }
 
+interface TimeBlockType {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
+}
+
 interface ProfessionalColumnProps {
   professional: Professional;
   appointments: Appointment[];
+  timeBlocks: TimeBlockType[];
   selectedDate: Date;
   hours: number[];
   onAppointmentClick: (appointment: Appointment) => void;
@@ -20,11 +31,12 @@ interface ProfessionalColumnProps {
 export function ProfessionalColumn({ 
   professional, 
   appointments, 
+  timeBlocks,
   selectedDate, 
   hours, 
   onAppointmentClick 
 }: ProfessionalColumnProps) {
-  const getAppointmentPosition = (startTime: string, endTime: string) => {
+  const getItemPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
     
@@ -41,6 +53,11 @@ export function ProfessionalColumn({
       height: `${height}px`
     };
   };
+
+  // Filtrar blocos de tempo para este profissional
+  const professionalTimeBlocks = timeBlocks.filter(block => 
+    block.professional_id === professional.id
+  );
 
   return (
     <div className="border-r relative bg-white">
@@ -70,10 +87,25 @@ export function ProfessionalColumn({
           );
         })}
         
+        {/* Blocos de tempo (folgas e férias) posicionados absolutamente */}
+        <div className="absolute inset-0">
+          {professionalTimeBlocks.map((timeBlock) => {
+            const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
+            
+            return (
+              <TimeBlock
+                key={timeBlock.id}
+                timeBlock={timeBlock}
+                position={position}
+              />
+            );
+          })}
+        </div>
+        
         {/* Agendamentos posicionados absolutamente */}
         <div className="absolute inset-0">
           {appointments.map((appointment) => {
-            const position = getAppointmentPosition(appointment.start_time, appointment.end_time);
+            const position = getItemPosition(appointment.start_time, appointment.end_time);
             
             return (
               <DraggableAppointment

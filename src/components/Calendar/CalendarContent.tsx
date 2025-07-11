@@ -10,9 +10,19 @@ interface Professional {
   color: string;
 }
 
+interface TimeBlock {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
+}
+
 interface CalendarContentProps {
   professionals: Professional[];
   appointments: Appointment[];
+  timeBlocks: TimeBlock[];
   selectedDate: Date;
   onNavigateDate: (direction: 'prev' | 'next') => Date;
   onGoToToday: () => Date;
@@ -24,6 +34,7 @@ interface CalendarContentProps {
 export function CalendarContent({
   professionals,
   appointments,
+  timeBlocks,
   selectedDate,
   onNavigateDate,
   onGoToToday,
@@ -49,6 +60,7 @@ export function CalendarContent({
       <CalendarGrid
         professionals={professionals}
         appointments={appointments}
+        timeBlocks={timeBlocks}
         selectedDate={selectedDate}
         onAppointmentClick={onAppointmentClick}
       />

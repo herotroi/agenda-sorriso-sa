@@ -37,7 +37,7 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
     }
   };
 
-  const { professionals, appointments, loading, refreshAppointments } = useCalendarData(selectedDate);
+  const { professionals, appointments, timeBlocks, loading, refreshAppointments } = useCalendarData(selectedDate);
 
   const handleFormCloseWithRefresh = () => {
     handleFormClose();
@@ -87,6 +87,7 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
       <CalendarContent
         professionals={professionals}
         appointments={appointments}
+        timeBlocks={timeBlocks}
         selectedDate={selectedDate}
         onNavigateDate={handleNavigateDate}
         onGoToToday={handleGoToToday}

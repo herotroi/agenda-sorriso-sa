@@ -9,16 +9,27 @@ interface Professional {
   color: string;
 }
 
+interface TimeBlock {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
+}
+
 interface CalendarGridProps {
   professionals: Professional[];
   appointments: Appointment[];
+  timeBlocks: TimeBlock[];
   selectedDate: Date;
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
 export function CalendarGrid({ 
   professionals, 
-  appointments, 
+  appointments,
+  timeBlocks,
   selectedDate, 
   onAppointmentClick 
 }: CalendarGridProps) {
@@ -35,8 +46,13 @@ export function CalendarGrid({
     return professionalAppointments;
   };
 
+  const getTimeBlocksForProfessional = (professionalId: string) => {
+    return timeBlocks.filter(block => block.professional_id === professionalId);
+  };
+
   console.log('🏥 CalendarGrid - Total appointments:', appointments.length);
   console.log('👥 CalendarGrid - Professionals:', professionals.length);
+  console.log('⏰ CalendarGrid - Time blocks:', timeBlocks.length);
 
   return (
     <Card className="w-full overflow-hidden">
@@ -64,14 +80,16 @@ export function CalendarGrid({
             {/* Colunas dos profissionais */}
             {professionals.map((prof) => {
               const profAppointments = getAppointmentsForProfessional(prof.id);
+              const profTimeBlocks = getTimeBlocksForProfessional(prof.id);
               
-              console.log(`👤 Professional ${prof.name} (${prof.id}) has ${profAppointments.length} appointments`);
+              console.log(`👤 Professional ${prof.name} (${prof.id}) has ${profAppointments.length} appointments and ${profTimeBlocks.length} time blocks`);
               
               return (
                 <ProfessionalColumn
                   key={prof.id}
                   professional={prof}
                   appointments={profAppointments}
+                  timeBlocks={profTimeBlocks}
                   selectedDate={selectedDate}
                   hours={hours}
                   onAppointmentClick={onAppointmentClick}

@@ -8,11 +8,26 @@ interface Professional {
   id: string;
   name: string;
   color: string;
+  break_times?: Array<{ start: string; end: string }>;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  working_days?: boolean[];
+}
+
+interface TimeBlock {
+  id: string;
+  type: 'break' | 'vacation';
+  professional_id: string;
+  start_time: string;
+  end_time: string;
+  title: string;
 }
 
 export function useCalendarData(selectedDate: Date) {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,6 +44,46 @@ export function useCalendarData(selectedDate: Date) {
     } catch (error) {
       console.error('Error fetching professionals:', error);
     }
+  };
+
+  const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) => {
+    const blocks: TimeBlock[] = [];
+    const dateStr = selectedDate.toISOString().split('T')[0];
+
+    professionals.forEach(prof => {
+      // Gerar blocos de folga (break times)
+      if (prof.break_times && Array.isArray(prof.break_times)) {
+        prof.break_times.forEach((breakTime, index) => {
+          blocks.push({
+            id: `break-${prof.id}-${index}`,
+            type: 'break',
+            professional_id: prof.id,
+            start_time: `${dateStr}T${breakTime.start}:00`,
+            end_time: `${dateStr}T${breakTime.end}:00`,
+            title: 'Intervalo'
+          });
+        });
+      }
+
+      // Gerar blocos de férias
+      if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
+        const vacationStart = new Date(prof.vacation_start);
+        const vacationEnd = new Date(prof.vacation_end);
+        
+        if (selectedDate >= vacationStart && selectedDate <= vacationEnd) {
+          blocks.push({
+            id: `vacation-${prof.id}`,
+            type: 'vacation',
+            professional_id: prof.id,
+            start_time: `${dateStr}T00:00:00`,
+            end_time: `${dateStr}T23:59:59`,
+            title: 'Férias'
+          });
+        }
+      }
+    });
+
+    setTimeBlocks(blocks);
   };
 
   const fetchAppointments = async () => {
@@ -135,6 +190,12 @@ export function useCalendarData(selectedDate: Date) {
     fetchAppointments();
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (professionals.length > 0) {
+      generateTimeBlocks(professionals, selectedDate);
+    }
+  }, [professionals, selectedDate]);
+
   const refreshAppointments = () => {
     fetchAppointments();
   };
@@ -142,6 +203,7 @@ export function useCalendarData(selectedDate: Date) {
   return {
     professionals,
     appointments,
+    timeBlocks,
     loading,
     refreshAppointments,
     checkTimeConflicts
