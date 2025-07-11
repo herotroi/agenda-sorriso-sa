@@ -1,56 +1,44 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Mail, Phone, Trash2 } from 'lucide-react';
-import { PatientForm } from './PatientForm';
-import { PatientFilters } from './components/PatientFilters';
+import { useState } from 'react';
 import { PatientListHeader } from './components/PatientListHeader';
+import { PatientFilters } from './components/PatientFilters';
 import { PatientGrid } from './components/PatientGrid';
-import { usePatientFilters } from './hooks/usePatientFilters';
+import { PatientForm } from './PatientForm';
+import { PatientDetails } from './PatientDetails';
 import { usePatientData } from './hooks/usePatientData';
+import { usePatientFilters } from './hooks/usePatientFilters';
+import { usePatientForm } from './hooks/usePatientForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-
-interface Patient {
-  id: string;
-  full_name: string;
-  cpf?: string;
-  phone?: string;
-  email?: string;
-  birth_date?: string;
-  active: boolean;
-  city?: string;
-  state?: string;
-}
+import { Patient } from '@/types/patient';
 
 export function PatientList() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  
-  const { patients, loading, fetchPatients } = usePatientData();
-  const { filteredPatients, filters, updateFilters, clearFilters } = usePatientFilters(patients);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
 
-  const handleEdit = (patient: Patient) => {
-    setEditingPatient(patient);
-    setIsFormOpen(true);
+  const { patients, loading, refetchPatients } = usePatientData();
+  const { 
+    filteredPatients, 
+    searchTerm, 
+    setSearchTerm, 
+    showInactive, 
+    setShowInactive 
+  } = usePatientFilters(patients);
+
+  const {
+    isFormOpen,
+    setIsFormOpen,
+    editingPatient,
+    openForm,
+    closeForm
+  } = usePatientForm();
+
+  const handleEditPatient = (patient: Patient) => {
+    openForm(patient);
   };
 
-  const handleDelete = async (patientId: string, patientName: string) => {
+  const handleDeletePatient = async (patientId: string, patientName: string) => {
     try {
       const { error } = await supabase
         .from('patients')
@@ -64,7 +52,7 @@ export function PatientList() {
         description: `Paciente ${patientName} excluído com sucesso`,
       });
       
-      fetchPatients();
+      refetchPatients();
     } catch (error) {
       console.error('Error deleting patient:', error);
       toast({
@@ -75,141 +63,60 @@ export function PatientList() {
     }
   };
 
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setEditingPatient(null);
-    fetchPatients();
+  const handleViewPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando pacientes...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <PatientListHeader 
-        onAddPatient={() => setIsFormOpen(true)}
+      <PatientListHeader
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-      />
-      
-      <PatientFilters 
-        filters={filters}
-        onFiltersChange={updateFilters}
-        onClearFilters={clearFilters}
+        onAddPatient={() => openForm()}
       />
 
-      {viewMode === 'grid' ? (
-        <PatientGrid 
-          patients={filteredPatients}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      ) : (
-        <div className="grid gap-4">
-          {filteredPatients.map((patient) => (
-            <Card key={patient.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-semibold">{patient.full_name}</h3>
-                      <Badge variant={patient.active ? 'default' : 'secondary'}>
-                        {patient.active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="mt-2 space-y-1">
-                      {patient.cpf && (
-                        <p className="text-sm text-gray-600">CPF: {patient.cpf}</p>
-                      )}
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        {patient.phone && (
-                          <div className="flex items-center">
-                            <Phone className="h-4 w-4 mr-1" />
-                            {patient.phone}
-                          </div>
-                        )}
-                        {patient.email && (
-                          <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-1" />
-                            {patient.email}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {patient.birth_date && (
-                        <p className="text-sm text-gray-600">
-                          Data de nascimento: {new Date(patient.birth_date).toLocaleDateString('pt-BR')}
-                        </p>
-                      )}
-                      
-                      {(patient.city || patient.state) && (
-                        <p className="text-sm text-gray-600">
-                          Localização: {[patient.city, patient.state].filter(Boolean).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(patient)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir o paciente <strong>{patient.full_name}</strong>? 
-                            Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(patient.id, patient.full_name)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <PatientFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        showInactive={showInactive}
+        setShowInactive={setShowInactive}
+      />
 
-      {filteredPatients.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Nenhum paciente encontrado</p>
-          </CardContent>
-        </Card>
-      )}
+      <PatientGrid
+        patients={filteredPatients}
+        onEdit={handleEditPatient}
+        onView={handleViewPatient}
+        onDelete={handleDeletePatient}
+      />
 
       <PatientForm
         isOpen={isFormOpen}
-        onClose={handleFormClose}
+        onClose={closeForm}
         patient={editingPatient}
+        onSuccess={() => {
+          closeForm();
+          refetchPatients();
+        }}
       />
+
+      {selectedPatient && (
+        <PatientDetails
+          isOpen={!!selectedPatient}
+          onClose={() => setSelectedPatient(null)}
+          patient={selectedPatient}
+        />
+      )}
     </div>
   );
 }
