@@ -8,7 +8,10 @@ interface PatientProfessionalSectionProps {
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];
-  handleFieldChange: (field: string, value: any) => void;
+  handleFieldChange: {
+    patient: (value: string) => void;
+    professional: (value: string) => void;
+  };
   currentPatientName?: string;
   currentProfessionalName?: string;
 }
@@ -27,7 +30,7 @@ export function PatientProfessionalSection({
       <PatientSelector
         patients={patients}
         value={formData.patient_id}
-        onChange={(value) => handleFieldChange('patient_id', value)}
+        onChange={handleFieldChange.patient}
         currentPatientName={currentPatientName}
       />
       
@@ -35,7 +38,7 @@ export function PatientProfessionalSection({
         professionals={professionals}
         procedures={procedures}
         value={formData.professional_id}
-        onChange={(value) => handleFieldChange('professional_id', value)}
+        onChange={handleFieldChange.professional}
         currentProfessionalName={currentProfessionalName}
         selectedProcedureId={formData.procedure_id}
       />

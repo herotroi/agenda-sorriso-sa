@@ -1,3 +1,4 @@
+
 import { PatientProfessionalSection } from './PatientProfessionalSection';
 import { ProcedureSelector } from './ProcedureSelector';
 import { DateTimeDurationSection } from './DateTimeDurationSection';
@@ -30,6 +31,8 @@ export function AppointmentFormFields({
   originalData,
   fieldModified
 }: AppointmentFormFieldsProps) {
+  
+  // Helper functions to get current values for display
   const getCurrentPatientName = () => {
     if (!originalData?.patient_id) return undefined;
     const patient = patients.find(p => p.id === originalData.patient_id);
@@ -54,8 +57,8 @@ export function AppointmentFormFields({
     return status?.label;
   };
 
+  // Handle procedure change and clear professional selection
   const handleProcedureSelectChange = (procedureId: string) => {
-    // Limpar o profissional selecionado quando o procedimento mudar
     const updatedFormData = {
       ...formData,
       procedure_id: procedureId,
@@ -64,6 +67,42 @@ export function AppointmentFormFields({
     setFormData(updatedFormData);
     handleFieldChange('professional_id', '');
     onProcedureChange(procedureId);
+  };
+
+  // Handle patient selection
+  const handlePatientChange = (patientId: string) => {
+    setFormData({ ...formData, patient_id: patientId });
+    handleFieldChange('patient_id', patientId);
+  };
+
+  // Handle professional selection
+  const handleProfessionalChange = (professionalId: string) => {
+    setFormData({ ...formData, professional_id: professionalId });
+    handleFieldChange('professional_id', professionalId);
+  };
+
+  // Handle date/time changes
+  const handleStartTimeChange = (startTime: string) => {
+    setFormData({ ...formData, start_time: startTime });
+    handleFieldChange('start_time', startTime);
+  };
+
+  const handleDurationChange = (duration: string) => {
+    setFormData({ ...formData, duration });
+    handleFieldChange('duration', duration);
+  };
+
+  // Handle status change - convert to number for form data
+  const handleStatusChange = (statusValue: string) => {
+    const statusId = parseInt(statusValue);
+    setFormData({ ...formData, status_id: statusId });
+    handleFieldChange('status_id', statusValue); // Pass string to handleFieldChange
+  };
+
+  // Handle notes change
+  const handleNotesChange = (notes: string) => {
+    setFormData({ ...formData, notes });
+    handleFieldChange('notes', notes);
   };
 
   return (
@@ -85,7 +124,10 @@ export function AppointmentFormFields({
           professionals={professionals}
           procedures={procedures}
           formData={formData}
-          handleFieldChange={handleFieldChange}
+          handleFieldChange={{
+            patient: handlePatientChange,
+            professional: handleProfessionalChange
+          }}
           currentPatientName={getCurrentPatientName()}
           currentProfessionalName={getCurrentProfessionalName()}
         />
@@ -93,27 +135,23 @@ export function AppointmentFormFields({
 
       <DateTimeDurationSection
         formData={formData}
-        handleFieldChange={handleFieldChange}
+        handleFieldChange={{
+          startTime: handleStartTimeChange,
+          duration: handleDurationChange
+        }}
         originalData={originalData}
       />
 
       <StatusSelector
         statuses={statuses}
         value={formData.status_id?.toString() || ''}
-        onChange={(value) => {
-          const statusId = parseInt(value);
-          setFormData({ ...formData, status_id: statusId });
-          handleFieldChange('status_id', statusId);
-        }}
+        onChange={handleStatusChange}
         currentStatusName={getCurrentStatusName()}
       />
 
       <NotesInput
         value={formData.notes}
-        onChange={(value) => {
-          setFormData({ ...formData, notes: value });
-          handleFieldChange('notes', value);
-        }}
+        onChange={handleNotesChange}
       />
     </div>
   );

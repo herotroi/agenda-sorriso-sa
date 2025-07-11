@@ -7,7 +7,7 @@ import { FormField } from './FormField';
 interface StatusSelectorProps {
   statuses: AppointmentStatus[];
   value: string;
-  onChange: (value: number) => void;
+  onChange: (value: string) => void;
   currentStatusName?: string;
 }
 
@@ -17,7 +17,7 @@ export function StatusSelector({ statuses, value, onChange, currentStatusName }:
       label="Status" 
       currentValue={currentStatusName}
     >
-      <Select value={value} onValueChange={(val) => onChange(parseInt(val))}>
+      <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <div className="flex items-center gap-2">
             <Badge className="h-4 w-4 text-muted-foreground" />

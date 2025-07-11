@@ -5,7 +5,10 @@ import { DurationInput } from './DurationInput';
 
 interface DateTimeDurationSectionProps {
   formData: AppointmentFormData;
-  handleFieldChange: (field: string, value: any) => void;
+  handleFieldChange: {
+    startTime: (value: string) => void;
+    duration: (value: string) => void;
+  };
   originalData?: AppointmentFormData | null;
 }
 
@@ -18,13 +21,13 @@ export function DateTimeDurationSection({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <DateTimeInput
         value={formData.start_time}
-        onChange={(value) => handleFieldChange('start_time', value)}
+        onChange={handleFieldChange.startTime}
         currentValue={originalData?.start_time}
       />
       
       <DurationInput
         value={formData.duration}
-        onChange={(value) => handleFieldChange('duration', value)}
+        onChange={handleFieldChange.duration}
         currentValue={originalData?.duration}
       />
     </div>
