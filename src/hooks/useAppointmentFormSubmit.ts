@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
-import { FormData } from '@/types/appointment-form';
+import { AppointmentFormData } from '@/types/appointment-form';
 
 interface Procedure {
   id: string;
@@ -22,7 +22,7 @@ export function useAppointmentFormSubmit(
   const { toast } = useToast();
   const { checkTimeConflict, validateTimeSlot } = useAppointmentValidation();
 
-  const validateForm = async (formData: FormData): Promise<boolean> => {
+  const validateForm = async (formData: AppointmentFormData): Promise<boolean> => {
     if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
       toast({
         title: 'Campos obrigatórios',
@@ -67,7 +67,7 @@ export function useAppointmentFormSubmit(
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent, formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent, formData: AppointmentFormData) => {
     e.preventDefault();
     
     const isFormValid = await validateForm(formData);

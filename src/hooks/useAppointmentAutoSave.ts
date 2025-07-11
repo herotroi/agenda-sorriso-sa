@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { FormData } from '@/types/appointment-form';
+import { AppointmentFormData } from '@/types/appointment-form';
 
 interface Procedure {
   id: string;
@@ -17,10 +17,10 @@ export function useAppointmentAutoSave(
   onSuccess?: () => void
 ) {
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<FormData | null>(null);
+  const [lastSavedData, setLastSavedData] = useState<AppointmentFormData | null>(null);
   const { toast } = useToast();
 
-  const autoSave = useCallback(async (formData: FormData) => {
+  const autoSave = useCallback(async (formData: AppointmentFormData) => {
     if (!appointmentToEdit) return;
 
     // Verificar se os dados mudaram desde a última salvagem
@@ -78,7 +78,7 @@ export function useAppointmentAutoSave(
     }
   }, [procedures, appointmentToEdit, lastSavedData, toast, onSuccess]);
 
-  const manualSave = useCallback(async (formData: FormData) => {
+  const manualSave = useCallback(async (formData: AppointmentFormData) => {
     setIsSaving(true);
     try {
       const startTime = new Date(formData.start_time);

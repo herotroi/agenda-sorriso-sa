@@ -1,13 +1,13 @@
 
-import { Patient, Professional, FormData } from '@/types/appointment-form';
+import { Patient, Professional, AppointmentFormData } from '@/types/appointment-form';
 import { PatientSelector } from './PatientSelector';
 import { ProfessionalSelector } from './ProfessionalSelector';
 
 interface PatientProfessionalSectionProps {
-  formData: FormData;
+  formData: AppointmentFormData;
   patients: Patient[];
   professionals: Professional[];
-  handleFieldChange: (field: keyof FormData, value: string | number) => void;
+  handleFieldChange: (field: keyof AppointmentFormData, value: string | number) => void;
   currentPatientName?: string;
   currentProfessionalName?: string;
 }

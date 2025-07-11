@@ -40,3 +40,6 @@ export interface AppointmentFormData {
   price: number;
   duration: string;
 }
+
+// Exportar FormData como alias para AppointmentFormData
+export type FormData = AppointmentFormData;

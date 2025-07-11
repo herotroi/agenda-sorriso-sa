@@ -1,11 +1,11 @@
 
 import { Button } from '@/components/ui/button';
-import { FormData } from '@/types/appointment-form';
+import { AppointmentFormData } from '@/types/appointment-form';
 
 interface AppointmentFormActionsProps {
   appointmentToEdit?: any;
   isSaving: boolean;
-  formData: FormData;
+  formData: AppointmentFormData;
   onClose: () => void;
 }
 

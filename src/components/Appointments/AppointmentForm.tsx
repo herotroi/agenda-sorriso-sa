@@ -66,6 +66,11 @@ export function AppointmentForm({
     handleSubmit(e, finalData);
   };
 
+  // Criar função fieldModified que aceita string
+  const isFieldModified = (field: string) => {
+    return fieldModified[field as keyof typeof fieldModified] || false;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
@@ -85,7 +90,7 @@ export function AppointmentForm({
             onProcedureChange={handleProcedureSelectChange}
             handleFieldChange={handleFieldChange}
             originalData={originalData}
-            fieldModified={fieldModified}
+            fieldModified={isFieldModified}
           />
 
           <AppointmentFormActions

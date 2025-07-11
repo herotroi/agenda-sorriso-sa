@@ -4,18 +4,18 @@ import { ProcedureSelector } from './ProcedureSelector';
 import { DateTimeDurationSection } from './DateTimeDurationSection';
 import { StatusSelector } from './StatusSelector';
 import { NotesInput } from './NotesInput';
-import { Patient, Professional, Procedure, AppointmentStatus } from '@/types/appointment-form';
+import { Patient, Professional, Procedure, AppointmentStatus, AppointmentFormData } from '@/types/appointment-form';
 
 interface AppointmentFormFieldsProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: AppointmentFormData;
+  setFormData: (data: AppointmentFormData) => void;
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];
   statuses: AppointmentStatus[];
   onProcedureChange: (procedureId: string) => void;
   handleFieldChange: (field: string, value: any) => void;
-  originalData?: any;
+  originalData?: AppointmentFormData;
   fieldModified: (field: string) => boolean;
 }
 
@@ -61,11 +61,9 @@ export function AppointmentFormFields({
         patients={patients}
         professionals={professionals}
         formData={formData}
-        setFormData={setFormData}
         handleFieldChange={handleFieldChange}
         currentPatientName={getCurrentPatientName()}
         currentProfessionalName={getCurrentProfessionalName()}
-        fieldModified={fieldModified}
       />
 
       <ProcedureSelector
@@ -78,9 +76,8 @@ export function AppointmentFormFields({
 
       <DateTimeDurationSection
         formData={formData}
-        setFormData={setFormData}
         handleFieldChange={handleFieldChange}
-        fieldModified={fieldModified}
+        originalData={originalData}
       />
 
       <StatusSelector
@@ -89,7 +86,7 @@ export function AppointmentFormFields({
         onChange={(value) => {
           const statusId = parseInt(value);
           setFormData(prev => ({ ...prev, status_id: statusId }));
-          handleFieldChange('status_id', statusId);
+          handleFieldChange('status_id', statusId.toString());
         }}
         currentStatusName={getCurrentStatusName()}
       />
@@ -100,7 +97,6 @@ export function AppointmentFormFields({
           setFormData(prev => ({ ...prev, notes: value }));
           handleFieldChange('notes', value);
         }}
-        fieldModified={fieldModified('notes')}
       />
     </div>
   );

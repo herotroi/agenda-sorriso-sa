@@ -1,12 +1,12 @@
 
-import { FormData } from '@/types/appointment-form';
+import { AppointmentFormData } from '@/types/appointment-form';
 import { DateTimeInput } from './DateTimeInput';
 import { DurationInput } from './DurationInput';
 
 interface DateTimeDurationSectionProps {
-  formData: FormData;
-  handleFieldChange: (field: keyof FormData, value: string | number) => void;
-  originalData?: FormData | null;
+  formData: AppointmentFormData;
+  handleFieldChange: (field: keyof AppointmentFormData, value: string | number) => void;
+  originalData?: AppointmentFormData | null;
 }
 
 export function DateTimeDurationSection({

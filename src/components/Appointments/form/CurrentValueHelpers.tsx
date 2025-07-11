@@ -1,8 +1,8 @@
 
-import { Patient, Professional, Procedure, AppointmentStatus, FormData } from '@/types/appointment-form';
+import { Patient, Professional, Procedure, AppointmentStatus, AppointmentFormData } from '@/types/appointment-form';
 
 interface CurrentValueHelpersProps {
-  originalData?: FormData | null;
+  originalData?: AppointmentFormData | null;
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];

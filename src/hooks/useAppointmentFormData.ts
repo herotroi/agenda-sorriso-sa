@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppointmentFormState } from './useAppointmentFormState';
-import { Patient, Professional, Procedure, AppointmentStatus, FormData } from '@/types/appointment-form';
+import { Patient, Professional, Procedure, AppointmentStatus, AppointmentFormData } from '@/types/appointment-form';
 
 export function useAppointmentFormData(
   isOpen: boolean,
@@ -75,7 +76,7 @@ export function useAppointmentFormData(
     }));
   };
 
-  const handleFieldChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+  const handleFieldChange = <K extends keyof AppointmentFormData>(field: K, value: AppointmentFormData[K]) => {
     console.log(`Field ${String(field)} changed to:`, value);
     
     setFormData(prev => ({
@@ -89,21 +90,21 @@ export function useAppointmentFormData(
     }));
   };
 
-  const getFinalFieldValue = (field: keyof FormData) => {
+  const getFinalFieldValue = (field: keyof AppointmentFormData) => {
     if (fieldModified[field] || !originalData) {
       return formData[field];
     }
     return originalData[field];
   };
 
-  const getFinalFormData = (): FormData => {
+  const getFinalFormData = (): AppointmentFormData => {
     if (!originalData) {
       return formData;
     }
 
-    const finalData: FormData = { ...originalData };
+    const finalData: AppointmentFormData = { ...originalData };
     
-    (Object.keys(fieldModified) as Array<keyof FormData>).forEach((field) => {
+    (Object.keys(fieldModified) as Array<keyof AppointmentFormData>).forEach((field) => {
       if (fieldModified[field]) {
         (finalData as any)[field] = formData[field];
       }
@@ -125,14 +126,16 @@ export function useAppointmentFormData(
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
-      const editFormData = {
+      const editFormData: AppointmentFormData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
         start_time: formatDateTimeLocal(startTime),
+        end_time: formatDateTimeLocal(endTime),
         duration: duration.toString(),
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
+        price: appointmentToEdit.price || 0
       };
       
       console.log('Setting original appointment data for editing:', editFormData);
@@ -141,14 +144,16 @@ export function useAppointmentFormData(
       resetFieldModifications();
     } else if (isOpen && !appointmentToEdit) {
       const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
-      const newFormData = {
+      const newFormData: AppointmentFormData = {
         patient_id: '',
         professional_id: selectedProfessionalId || '',
         procedure_id: '',
         start_time: defaultTime,
+        end_time: defaultTime,
         duration: '60',
         notes: '',
         status_id: 1,
+        price: 0
       };
       
       console.log('Setting default form data for new appointment:', newFormData);
@@ -175,4 +180,4 @@ export function useAppointmentFormData(
   };
 }
 
-export type { FormData };
+export type { AppointmentFormData };
