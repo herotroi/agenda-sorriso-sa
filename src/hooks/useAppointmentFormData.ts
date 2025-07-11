@@ -31,7 +31,13 @@ export function useAppointmentFormData(
         // Only fetch active patients
         supabase.from('patients').select('id, full_name, cpf, phone').eq('active', true).order('full_name'),
         supabase.from('professionals').select('id, name').eq('active', true).order('name'),
-        supabase.from('procedures').select('*').eq('active', true).order('name'),
+        // Fetch procedures with their associated professionals
+        supabase.from('procedures').select(`
+          *,
+          procedure_professionals!inner(
+            professional:professionals(id, name, specialty, color)
+          )
+        `).eq('active', true).order('name'),
         supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
       ]);
 
@@ -42,7 +48,14 @@ export function useAppointmentFormData(
 
       setPatients(patientsRes.data || []);
       setProfessionals(professionalsRes.data || []);
-      setProcedures(proceduresRes.data || []);
+      
+      // Transform procedures data to include professionals array
+      const transformedProcedures = (proceduresRes.data || []).map(proc => ({
+        ...proc,
+        professionals: proc.procedure_professionals?.map(pp => pp.professional).filter(Boolean) || []
+      }));
+      
+      setProcedures(transformedProcedures);
       setStatuses(statusesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
