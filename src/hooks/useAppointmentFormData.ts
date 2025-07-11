@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppointmentFormState } from './useAppointmentFormState';
@@ -89,8 +88,8 @@ export function useAppointmentFormData(
     }));
   };
 
-  const handleFieldChange = <K extends keyof AppointmentFormData>(field: K, value: AppointmentFormData[K]) => {
-    console.log(`Field ${String(field)} changed to:`, value);
+  const handleFieldChange = (field: string, value: any) => {
+    console.log(`Field ${field} changed to:`, value);
     
     setFormData(prev => ({
       ...prev,
