@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,11 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const { user, loading } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   if (loading) {
     return (
@@ -25,8 +31,8 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="ml-64">
+      <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
+      <div className={isCollapsed ? "ml-16" : "ml-64"}>
         <Header />
         <main className="p-6">
           {children}
