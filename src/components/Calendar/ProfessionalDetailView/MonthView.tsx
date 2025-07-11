@@ -45,6 +45,7 @@ export function MonthView({
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
     
+    // Filtrar apenas agendamentos para o dia específico
     return appointments.filter(apt => {
       const aptDate = new Date(apt.start_time);
       return aptDate >= dayStart && aptDate <= dayEnd;

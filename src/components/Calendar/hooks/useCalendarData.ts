@@ -40,7 +40,15 @@ export function useCalendarData(selectedDate: Date) {
         .order('name');
 
       if (error) throw error;
-      setProfessionals(data || []);
+      
+      // Convert Json types to proper TypeScript types
+      const processedData = data?.map(prof => ({
+        ...prof,
+        break_times: Array.isArray(prof.break_times) ? prof.break_times : [],
+        working_days: Array.isArray(prof.working_days) ? prof.working_days : [true, true, true, true, true, false, false]
+      })) || [];
+      
+      setProfessionals(processedData);
     } catch (error) {
       console.error('Error fetching professionals:', error);
     }

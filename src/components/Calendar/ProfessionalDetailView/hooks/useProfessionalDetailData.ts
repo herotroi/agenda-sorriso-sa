@@ -9,32 +9,23 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchAppointments = async (startDate?: Date, endDate?: Date) => {
-    console.log('🔄 Fetching professional appointments:', { professionalId, selectedDate });
+  const fetchAppointments = async (specificDate?: Date) => {
+    const targetDate = specificDate || selectedDate;
+    console.log('🔄 Fetching professional appointments:', { professionalId, targetDate });
     
     try {
       setLoading(true);
       
-      // If no custom date range is provided, fetch the entire month
-      let start: Date;
-      let end: Date;
+      // Buscar apenas para o dia específico
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
       
-      if (startDate && endDate) {
-        start = startDate;
-        end = endDate;
-      } else {
-        // Get the first day of the month
-        start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-        start.setHours(0, 0, 0, 0);
-        
-        // Get the last day of the month
-        end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-        end.setHours(23, 59, 59, 999);
-      }
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       console.log('📅 Professional detail date range:', { 
-        start: start.toISOString(), 
-        end: end.toISOString(),
+        start: startOfDay.toISOString(), 
+        end: endOfDay.toISOString(),
         professionalId 
       });
 
@@ -48,8 +39,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
           appointment_statuses(label, color)
         `)
         .eq('professional_id', professionalId)
-        .gte('start_time', start.toISOString())
-        .lte('start_time', end.toISOString())
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString())
         .order('start_time');
 
       if (error) throw error;
