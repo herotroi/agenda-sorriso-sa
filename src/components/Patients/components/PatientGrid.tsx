@@ -5,11 +5,11 @@ import { Patient } from '@/types/patient';
 interface PatientGridProps {
   patients: Patient[];
   onEdit: (patient: Patient) => void;
-  onView: (patient: Patient) => void;
+  onViewDetails: (patient: Patient) => void;
   onDelete: (patientId: string, patientName: string) => Promise<void>;
 }
 
-export function PatientGrid({ patients, onEdit, onView, onDelete }: PatientGridProps) {
+export function PatientGrid({ patients, onEdit, onViewDetails, onDelete }: PatientGridProps) {
   if (patients.length === 0) {
     return (
       <div className="text-center py-12">
@@ -31,7 +31,7 @@ export function PatientGrid({ patients, onEdit, onView, onDelete }: PatientGridP
           key={patient.id}
           patient={patient}
           onEdit={onEdit}
-          onView={onView}
+          onViewDetails={onViewDetails}
           onDelete={onDelete}
         />
       ))}

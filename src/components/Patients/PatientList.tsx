@@ -7,7 +7,7 @@ import { PatientForm } from './PatientForm';
 import { PatientDetails } from './PatientDetails';
 import { usePatientData } from './hooks/usePatientData';
 import { usePatientFilters } from './hooks/usePatientFilters';
-import { usePatientForm } from './hooks/usePatientForm';
+import { usePatientFormState } from './hooks/usePatientFormState';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types/patient';
@@ -28,11 +28,10 @@ export function PatientList() {
 
   const {
     isFormOpen,
-    setIsFormOpen,
     editingPatient,
     openForm,
     closeForm
-  } = usePatientForm();
+  } = usePatientFormState();
 
   const handleEditPatient = (patient: Patient) => {
     openForm(patient);
@@ -67,6 +66,11 @@ export function PatientList() {
     setSelectedPatient(patient);
   };
 
+  const handleFormSuccess = () => {
+    closeForm();
+    refetchPatients();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -96,7 +100,7 @@ export function PatientList() {
       <PatientGrid
         patients={filteredPatients}
         onEdit={handleEditPatient}
-        onView={handleViewPatient}
+        onViewDetails={handleViewPatient}
         onDelete={handleDeletePatient}
       />
 
@@ -104,10 +108,6 @@ export function PatientList() {
         isOpen={isFormOpen}
         onClose={closeForm}
         patient={editingPatient}
-        onSuccess={() => {
-          closeForm();
-          refetchPatients();
-        }}
       />
 
       {selectedPatient && (
