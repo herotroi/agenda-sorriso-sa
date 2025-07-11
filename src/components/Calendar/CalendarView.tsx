@@ -5,10 +5,15 @@ import { CalendarModals } from './CalendarModals';
 import { useCalendarData } from './hooks/useCalendarData';
 import { useCalendarState } from './hooks/useCalendarState';
 
-export function CalendarView() {
+interface CalendarViewProps {
+  selectedDate?: Date;
+  onDateChange?: (date: Date) => void;
+}
+
+export function CalendarView({ selectedDate: externalSelectedDate, onDateChange: externalOnDateChange }: CalendarViewProps = {}) {
   const {
-    selectedDate,
-    setSelectedDate,
+    selectedDate: internalSelectedDate,
+    setSelectedDate: setInternalSelectedDate,
     isFormOpen,
     setIsFormOpen,
     selectedProfessional,
@@ -21,6 +26,16 @@ export function CalendarView() {
     handleAppointmentClick,
     handleBackToProfessionalList,
   } = useCalendarState();
+
+  // Use external date if provided, otherwise use internal state
+  const selectedDate = externalSelectedDate || internalSelectedDate;
+  
+  const setSelectedDate = (date: Date) => {
+    setInternalSelectedDate(date);
+    if (externalOnDateChange) {
+      externalOnDateChange(date);
+    }
+  };
 
   const { professionals, appointments, loading, refreshAppointments } = useCalendarData(selectedDate);
 
@@ -36,6 +51,18 @@ export function CalendarView() {
 
   const handleAppointmentUpdate = () => {
     refreshAppointments();
+  };
+
+  const handleNavigateDate = (direction: 'prev' | 'next') => {
+    const newDate = navigateDate(direction);
+    setSelectedDate(newDate);
+    return newDate;
+  };
+
+  const handleGoToToday = () => {
+    const today = goToToday();
+    setSelectedDate(today);
+    return today;
   };
 
   if (selectedProfessional) {
@@ -60,8 +87,8 @@ export function CalendarView() {
         professionals={professionals}
         appointments={appointments}
         selectedDate={selectedDate}
-        onNavigateDate={navigateDate}
-        onGoToToday={goToToday}
+        onNavigateDate={handleNavigateDate}
+        onGoToToday={handleGoToToday}
         onNewAppointment={() => setIsFormOpen(true)}
         onProfessionalClick={handleProfessionalClick}
         onAppointmentClick={handleAppointmentClick}

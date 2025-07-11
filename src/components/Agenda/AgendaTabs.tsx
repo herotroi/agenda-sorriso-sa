@@ -26,7 +26,7 @@ export function AgendaTabs({ activeTab, onTabChange, selectedDate, onDateChange 
       </TabsList>
       
       <TabsContent value="calendar" className="mt-6">
-        <CalendarView />
+        <CalendarView selectedDate={selectedDate} onDateChange={onDateChange} />
       </TabsContent>
       
       <TabsContent value="table" className="mt-6">
