@@ -14,6 +14,7 @@ import Profissionais from "./pages/Profissionais";
 import Procedimentos from "./pages/Procedimentos";
 import Prontuario from "./pages/Prontuario";
 import Configuracoes from "./pages/Configuracoes";
+import Notificacoes from "./pages/Notificacoes";
 import Assinatura from "./pages/Assinatura";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/procedimentos" element={<MainLayout><Procedimentos /></MainLayout>} />
             <Route path="/prontuario" element={<MainLayout><Prontuario /></MainLayout>} />
             <Route path="/configuracoes" element={<MainLayout><Configuracoes /></MainLayout>} />
+            <Route path="/notificacoes" element={<MainLayout><Notificacoes /></MainLayout>} />
             <Route path="/assinatura" element={<MainLayout><Assinatura /></MainLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

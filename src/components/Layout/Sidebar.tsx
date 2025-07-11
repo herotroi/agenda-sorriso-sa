@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   Users, 
@@ -30,7 +29,12 @@ const menuItems = [
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { unreadCount } = useNotifications();
+
+  const handleNotificationsClick = () => {
+    navigate('/notificacoes');
+  };
 
   return (
     <div className={cn(
@@ -83,11 +87,13 @@ export function Sidebar() {
           {/* Notifications Button */}
           <li>
             <button
-              className="flex items-center space-x-3 p-3 rounded-lg transition-colors text-slate-300 hover:bg-slate-800 hover:text-white w-full relative"
-              onClick={() => {
-                // TODO: Open notifications panel or navigate to notifications page
-                console.log('Open notifications');
-              }}
+              className={cn(
+                "flex items-center space-x-3 p-3 rounded-lg transition-colors w-full relative",
+                location.pathname === '/notificacoes'
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              )}
+              onClick={handleNotificationsClick}
             >
               <Bell className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>Notificações</span>}
