@@ -61,9 +61,9 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
           </div>
         )}
       </CardHeader>
-      <CardContent className="pl-2 pr-6">
+      <CardContent className="pl-8 pr-4">
         <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -87,8 +87,9 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
               tickFormatter={(value) => formatCurrency(value).replace('R$', 'R$').replace(',00', '')}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-              dx={-10}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              dx={-5}
+              width={80}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
