@@ -4,143 +4,90 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Calendar, 
   Users, 
-  UserPlus, 
-  ClipboardList, 
-  BarChart3, 
+  UserCheck, 
+  Stethoscope, 
+  FileText, 
   Settings, 
-  FileText,
-  Menu,
-  X,
-  Stethoscope,
+  CreditCard,
+  LayoutDashboard,
   Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { SidebarNotifications } from './SidebarNotifications';
-import { useNotifications } from '@/contexts/NotificationContext';
 
-const menuItems = [
-  { icon: BarChart3, label: 'Dashboard', path: '/' },
-  { icon: Calendar, label: 'Agenda', path: '/agenda' },
-  { icon: Users, label: 'Pacientes', path: '/pacientes' },
-  { icon: UserPlus, label: 'Profissionais', path: '/profissionais' },
-  { icon: ClipboardList, label: 'Procedimentos', path: '/procedimentos' },
-  { icon: FileText, label: 'Prontuário', path: '/prontuario' },
-  { icon: Settings, label: 'Configurações', path: '/configuracoes' },
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Agenda', href: '/agenda', icon: Calendar },
+  { name: 'Pacientes', href: '/pacientes', icon: Users },
+  { name: 'Profissionais', href: '/profissionais', icon: UserCheck },
+  { name: 'Procedimentos', href: '/procedimentos', icon: Stethoscope },
+  { name: 'Prontuário', href: '/prontuario', icon: FileText },
+  { name: 'Configurações', href: '/configuracoes', icon: Settings },
+  { name: 'Assinatura', href: '/assinatura', icon: CreditCard },
 ];
 
 export function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
-  const { unreadCount } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-  };
+  // Mock notification count for now - we'll connect to real data later
+  const unreadCount = 3;
 
   if (showNotifications) {
-    return (
-      <div className="bg-slate-900 text-white w-80 h-screen transition-all duration-300 flex flex-col">
-        {/* Header with back button */}
-        <div className="p-4 border-b border-slate-700">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={toggleNotifications}
-              className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        
-        <SidebarNotifications />
-      </div>
-    );
+    return <SidebarNotifications onBack={() => setShowNotifications(false)} />;
   }
 
   return (
-    <div className={cn(
-      "bg-slate-900 text-white h-screen transition-all duration-300 flex flex-col",
-      isCollapsed ? "w-16" : "w-64"
-    )}>
-      {/* Header */}
-      <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <Stethoscope className="h-8 w-8 text-blue-400" />
-              <span className="text-xl font-bold">ClinicPro</span>
-            </div>
-          )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-          </button>
+    <div className="flex h-full w-64 flex-col bg-gray-900">
+      <div className="flex h-16 items-center justify-between px-6">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-white">ClinicPro</h1>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowNotifications(true)}
+          className="relative text-white hover:bg-gray-800"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            
-            return (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  className={cn(
-                    "flex items-center space-x-3 p-3 rounded-lg transition-colors",
-                    isActive 
-                      ? "bg-blue-600 text-white" 
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  )}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {!isCollapsed && <span>{item.label}</span>}
-                </NavLink>
-              </li>
-            );
-          })}
-          
-          {/* Notifications Button */}
-          <li>
-            <button
-              onClick={toggleNotifications}
+      
+      <nav className="flex-1 space-y-1 px-2 py-4">
+        {navigation.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <NavLink
+              key={item.name}
+              to={item.href}
               className={cn(
-                "flex items-center space-x-3 p-3 rounded-lg transition-colors w-full",
-                "text-slate-300 hover:bg-slate-800 hover:text-white relative"
+                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+                isActive
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               )}
             >
-              <Bell className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && <span>Notificações</span>}
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
-          </li>
-        </ul>
+              <item.icon
+                className={cn(
+                  'mr-3 h-5 w-5 flex-shrink-0',
+                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                )}
+              />
+              {item.name}
+            </NavLink>
+          );
+        })}
       </nav>
-
-      {/* User Profile */}
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold">DR</span>
-          </div>
-          {!isCollapsed && (
-            <div>
-              <p className="text-sm font-medium">Dr. Silva</p>
-              <p className="text-xs text-slate-400">Administrador</p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
