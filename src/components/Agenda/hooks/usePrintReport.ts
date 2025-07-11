@@ -24,8 +24,8 @@ export function usePrintReport() {
           id: prof.id,
           name: prof.name,
           active: prof.active || false,
-          break_times: Array.isArray(prof.break_times) ? prof.break_times as Array<{ start: string; end: string }> : [],
-          vacation_active: prof.vacation_active || false,
+          break_times: (Array.isArray(prof.break_times) ? prof.break_times : []) as Array<{ start: string; end: string }>,
+          vacation_active: Boolean(prof.vacation_active),
           vacation_start: prof.vacation_start || undefined,
           vacation_end: prof.vacation_end || undefined,
           working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : undefined
@@ -42,7 +42,8 @@ export function usePrintReport() {
             ? '<p>Profissional não encontrado para impressão do calendário.</p>'
             : '<p>Nenhum profissional ativo encontrado para impressão do calendário.</p>';
         } else {
-          contentToPrint = generateCalendarPrintTemplate(professionals, appointments || []);
+          // Passar selectedDate para o template do calendário
+          contentToPrint = generateCalendarPrintTemplate(professionals, appointments || [], selectedDate);
         }
       } else {
         console.log('Preparing table print for date:', selectedDate || 'all', 'professional:', professionalId || 'all');

@@ -91,12 +91,14 @@ const shouldShowTimeBlockInHour = (block: any, hour: number): boolean => {
 
 export const generateCalendarPrintTemplate = (
   professionals: Professional[],
-  appointments: Appointment[]
+  appointments: Appointment[],
+  selectedDate?: Date // Adicionar parâmetro selectedDate
 ): string => {
   console.log('Generating calendar template with:', {
     professionalsCount: professionals?.length || 0,
     appointmentsCount: appointments?.length || 0,
-    professionalsData: professionals
+    professionalsData: professionals,
+    selectedDate: selectedDate?.toISOString()
   });
 
   if (!professionals || professionals.length === 0) {
@@ -109,10 +111,11 @@ export const generateCalendarPrintTemplate = (
 
   const hours = generateHours();
   const currentDate = getCurrentDate();
-  const selectedDate = new Date(); // Para o contexto de impressão, usar data atual
+  // Usar selectedDate se fornecida, senão usar data atual
+  const dateForBlocks = selectedDate || new Date();
   
-  // Gerar blocos de tempo (pausas e férias)
-  const timeBlocks = generateTimeBlocks(professionals, selectedDate);
+  // Gerar blocos de tempo (pausas e férias) usando a data correta
+  const timeBlocks = generateTimeBlocks(professionals, dateForBlocks);
   console.log('Time blocks generated:', timeBlocks.length);
   
   // Create header row with professional names
