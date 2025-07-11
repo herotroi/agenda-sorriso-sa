@@ -11,7 +11,12 @@ export const fetchProfessionalsData = async () => {
     .eq('active', true)
     .order('name');
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching professionals:', error);
+    throw error;
+  }
+  
+  console.log('Professionals fetched:', professionals?.length || 0);
   return professionals || [];
 };
 
@@ -35,17 +40,32 @@ export const fetchTodayAppointments = async () => {
       price,
       created_at,
       updated_at,
-      patients(full_name),
-      professionals(name),
+      patients!inner(full_name),
+      professionals!inner(name),
       procedures(name),
-      appointment_statuses(label, color)
+      appointment_statuses!inner(label, color)
     `)
     .gte('start_time', startOfDay.toISOString())
     .lte('start_time', endOfDay.toISOString())
     .order('start_time', { ascending: true });
 
-  if (error) throw error;
-  return appointments || [];
+  if (error) {
+    console.error('Error fetching today appointments:', error);
+    throw error;
+  }
+
+  const processedAppointments = appointments?.map(apt => ({
+    ...apt,
+    patients: apt.patients || { full_name: 'Paciente não informado' },
+    professionals: apt.professionals || { name: 'Profissional não informado' },
+    procedures: apt.procedures || { name: 'Sem procedimento' },
+    appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
+  })) || [];
+
+  console.log('Today appointments fetched:', processedAppointments.length);
+  console.log('Sample appointment:', processedAppointments[0]);
+  
+  return processedAppointments;
 };
 
 export const fetchAllAppointments = async () => {
@@ -66,13 +86,27 @@ export const fetchAllAppointments = async () => {
       price,
       created_at,
       updated_at,
-      patients(full_name),
-      professionals(name),
+      patients!inner(full_name),
+      professionals!inner(name),
       procedures(name),
-      appointment_statuses(label, color)
+      appointment_statuses!inner(label, color)
     `)
     .order('start_time', { ascending: true });
 
-  if (error) throw error;
-  return appointments || [];
+  if (error) {
+    console.error('Error fetching all appointments:', error);
+    throw error;
+  }
+
+  const processedAppointments = appointments?.map(apt => ({
+    ...apt,
+    patients: apt.patients || { full_name: 'Paciente não informado' },
+    professionals: apt.professionals || { name: 'Profissional não informado' },
+    procedures: apt.procedures || { name: 'Sem procedimento' },
+    appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
+  })) || [];
+
+  console.log('All appointments fetched:', processedAppointments.length);
+  
+  return processedAppointments;
 };

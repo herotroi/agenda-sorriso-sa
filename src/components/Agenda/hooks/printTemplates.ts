@@ -20,12 +20,42 @@ interface Professional {
   active: boolean;
 }
 
+const convertToLocalTime = (isoString: string): Date => {
+  return new Date(isoString);
+};
+
+const getStatusColor = (appointment: Appointment): string => {
+  if (appointment.appointment_statuses?.color) {
+    return appointment.appointment_statuses.color;
+  }
+  
+  // Fallback colors based on status
+  const status = appointment.appointment_statuses?.label || 'Confirmado';
+  switch (status) {
+    case 'Confirmado': return '#10b981';
+    case 'Cancelado': return '#ef4444';
+    case 'Não Compareceu': return '#6b7280';
+    case 'Em atendimento': return '#3b82f6';
+    case 'Finalizado': return '#8b5cf6';
+    default: return '#6b7280';
+  }
+};
+
 export const generateCalendarPrintTemplate = (
   professionals: Professional[],
   appointments: Appointment[]
 ): string => {
+  console.log('Generating calendar template with:', {
+    professionalsCount: professionals?.length || 0,
+    appointmentsCount: appointments?.length || 0
+  });
+
   if (!professionals || professionals.length === 0) {
     return '<p>Nenhum profissional ativo encontrado.</p>';
+  }
+
+  if (!appointments || appointments.length === 0) {
+    console.log('No appointments found for calendar');
   }
 
   const hours = generateHours();
@@ -43,9 +73,16 @@ export const generateCalendarPrintTemplate = (
     // Get appointments for this hour for each professional
     const professionalCells = professionals.map(prof => {
       const hourAppointments = appointments.filter(apt => {
-        const aptHour = new Date(apt.start_time).getHours();
-        return aptHour === hour && apt.professional_id === prof.id;
+        if (!apt.professional_id || apt.professional_id !== prof.id) {
+          return false;
+        }
+        
+        const aptDate = convertToLocalTime(apt.start_time);
+        const aptHour = aptDate.getHours();
+        return aptHour === hour;
       });
+
+      console.log(`Hour ${hour}, Professional ${prof.name}: ${hourAppointments.length} appointments`);
 
       if (hourAppointments.length === 0) {
         return '<td class="time-cell empty"></td>';
@@ -53,14 +90,16 @@ export const generateCalendarPrintTemplate = (
 
       // Create appointment content for this cell
       const appointmentContent = hourAppointments.map(apt => {
-        const startTime = new Date(apt.start_time).toLocaleTimeString('pt-BR', { 
+        const startDate = convertToLocalTime(apt.start_time);
+        const startTime = startDate.toLocaleTimeString('pt-BR', { 
           hour: '2-digit', 
           minute: '2-digit' 
         });
-        const patientName = apt.patients?.full_name || 'N/A';
+        
+        const patientName = apt.patients?.full_name || 'Paciente não informado';
         const procedureName = apt.procedures?.name || 'Sem procedimento';
-        const statusLabel = apt.appointment_statuses?.label || 'N/A';
-        const statusColor = apt.appointment_statuses?.color || '#6b7280';
+        const statusLabel = apt.appointment_statuses?.label || 'Confirmado';
+        const statusColor = getStatusColor(apt);
 
         return `
           <div class="appointment-block">
@@ -107,17 +146,20 @@ export const generateCalendarPrintTemplate = (
 };
 
 export const generateTablePrintTemplate = (appointments: Appointment[]): string => {
+  console.log('Generating table template with:', appointments?.length || 0, 'appointments');
+
   if (!appointments || appointments.length === 0) {
     return '<p>Nenhum agendamento encontrado.</p>';
   }
 
   const tableRows = appointments.map(appointment => {
-    const startTime = new Date(appointment.start_time).toLocaleString('pt-BR');
-    const patientName = appointment.patients?.full_name || 'N/A';
-    const professionalName = appointment.professionals?.name || 'N/A';
-    const procedureName = appointment.procedures?.name || 'Nenhum';
-    const statusLabel = appointment.appointment_statuses?.label || 'N/A';
-    const statusColor = appointment.appointment_statuses?.color || '#6b7280';
+    const startDate = convertToLocalTime(appointment.start_time);
+    const startTime = startDate.toLocaleString('pt-BR');
+    const patientName = appointment.patients?.full_name || 'Paciente não informado';
+    const professionalName = appointment.professionals?.name || 'Profissional não informado';
+    const procedureName = appointment.procedures?.name || 'Sem procedimento';
+    const statusLabel = appointment.appointment_statuses?.label || 'Confirmado';
+    const statusColor = getStatusColor(appointment);
     const notes = appointment.notes || 'Sem observações';
     const displayNotes = notes.length > 30 ? notes.substring(0, 30) + '...' : notes;
     
