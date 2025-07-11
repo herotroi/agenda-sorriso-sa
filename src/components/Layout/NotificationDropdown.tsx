@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext/NotificationContext';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
