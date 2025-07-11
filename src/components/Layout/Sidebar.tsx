@@ -13,7 +13,7 @@ import {
   Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNotification } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -22,7 +22,7 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
-  const { unreadCount } = useNotification();
+  const { unreadCount } = useNotifications();
 
   const menuItems = [
     { path: '/', icon: BarChart3, label: 'Dashboard' },
