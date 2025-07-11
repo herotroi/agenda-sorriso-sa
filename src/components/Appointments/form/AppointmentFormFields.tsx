@@ -55,24 +55,40 @@ export function AppointmentFormFields({
     return status?.label;
   };
 
+  const handleProcedureSelectChange = (procedureId: string) => {
+    // Limpar o profissional selecionado quando o procedimento mudar
+    setFormData(prev => ({
+      ...prev,
+      professional_id: ''
+    }));
+    handleFieldChange('professional_id', '');
+    onProcedureChange(procedureId);
+  };
+
   return (
     <div className="space-y-6">
-      <PatientProfessionalSection
-        patients={patients}
-        professionals={professionals}
-        formData={formData}
-        handleFieldChange={handleFieldChange}
-        currentPatientName={getCurrentPatientName()}
-        currentProfessionalName={getCurrentProfessionalName()}
-      />
-
-      <ProcedureSelector
-        procedures={procedures}
-        value={formData.procedure_id}
-        onChange={onProcedureChange}
-        currentProcedureName={getCurrentProcedureName()}
-        selectedProfessionalId={formData.professional_id}
-      />
+      <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <ProcedureSelector
+              procedures={procedures}
+              value={formData.procedure_id}
+              onChange={handleProcedureSelectChange}
+              currentProcedureName={getCurrentProcedureName()}
+            />
+          </div>
+        </div>
+        
+        <PatientProfessionalSection
+          patients={patients}
+          professionals={professionals}
+          procedures={procedures}
+          formData={formData}
+          handleFieldChange={handleFieldChange}
+          currentPatientName={getCurrentPatientName()}
+          currentProfessionalName={getCurrentProfessionalName()}
+        />
+      </div>
 
       <DateTimeDurationSection
         formData={formData}

@@ -1,5 +1,5 @@
 
-import { Patient, Professional, AppointmentFormData } from '@/types/appointment-form';
+import { Patient, Professional, Procedure, AppointmentFormData } from '@/types/appointment-form';
 import { PatientSelector } from './PatientSelector';
 import { ProfessionalSelector } from './ProfessionalSelector';
 
@@ -7,6 +7,7 @@ interface PatientProfessionalSectionProps {
   formData: AppointmentFormData;
   patients: Patient[];
   professionals: Professional[];
+  procedures: Procedure[];
   handleFieldChange: (field: keyof AppointmentFormData, value: string | number) => void;
   currentPatientName?: string;
   currentProfessionalName?: string;
@@ -16,6 +17,7 @@ export function PatientProfessionalSection({
   formData,
   patients,
   professionals,
+  procedures,
   handleFieldChange,
   currentPatientName,
   currentProfessionalName
@@ -31,9 +33,11 @@ export function PatientProfessionalSection({
       
       <ProfessionalSelector
         professionals={professionals}
+        procedures={procedures}
         value={formData.professional_id}
         onChange={(value) => handleFieldChange('professional_id', value)}
         currentProfessionalName={currentProfessionalName}
+        selectedProcedureId={formData.procedure_id}
       />
     </div>
   );
