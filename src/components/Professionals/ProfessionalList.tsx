@@ -1,11 +1,21 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Mail, Phone, Coffee, Plane } from 'lucide-react';
+import { Plus, Edit, Mail, Phone, Coffee, Plane, Trash2 } from 'lucide-react';
 import { ProfessionalForm } from './ProfessionalForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Professional {
   id: string;
@@ -58,6 +68,31 @@ export function ProfessionalList() {
   const handleEdit = (professional: Professional) => {
     setEditingProfessional(professional);
     setIsFormOpen(true);
+  };
+
+  const handleDelete = async (professionalId: string, professionalName: string) => {
+    try {
+      const { error } = await supabase
+        .from('professionals')
+        .delete()
+        .eq('id', professionalId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: `Profissional ${professionalName} excluído com sucesso`,
+      });
+      
+      fetchProfessionals();
+    } catch (error) {
+      console.error('Error deleting professional:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir profissional',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleFormClose = () => {
@@ -169,14 +204,43 @@ export function ProfessionalList() {
                     </div>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(professional)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(professional)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o profissional <strong>{professional.name}</strong>? 
+                          Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(professional.id, professional.name)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardContent>
           </Card>
