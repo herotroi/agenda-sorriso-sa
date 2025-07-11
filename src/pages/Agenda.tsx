@@ -94,7 +94,7 @@ export default function Agenda() {
               background: white;
               margin: 0;
               padding: 15mm;
-              font-size: 12px;
+              font-size: 11px;
             }
             
             .print-header {
@@ -107,65 +107,159 @@ export default function Agenda() {
             .print-header h1 {
               margin: 0 0 8px 0;
               color: #333;
-              font-size: 20px;
+              font-size: 18px;
               font-weight: bold;
             }
             
             .print-header p {
               margin: 3px 0;
               color: #666;
-              font-size: 12px;
+              font-size: 11px;
             }
             
             .print-content {
               margin-top: 15px;
+              overflow: visible;
             }
             
             /* Card styles */
             .rounded-lg {
               border: 1px solid #e5e7eb;
-              border-radius: 8px;
+              border-radius: 6px;
               background: white;
+              overflow: visible;
+            }
+            
+            /* Calendar Grid - Critical fixes for alignment */
+            .grid {
+              display: grid !important;
+              gap: 0 !important;
+              border: 1px solid #ccc;
+              font-size: 9px;
+              width: 100%;
+              position: relative;
+            }
+            
+            /* Ensure grid maintains its column structure */
+            .grid > div {
+              position: relative !important;
+              border-right: 1px solid #e5e7eb;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            
+            /* Hour column styling */
+            .grid > div:first-child {
+              background: #f9fafb;
+              font-weight: 600;
+            }
+            
+            /* Professional columns */
+            .grid > div:not(:first-child) {
+              min-height: 40px;
+              position: relative;
+            }
+            
+            /* Time slot cells */
+            .grid > div > div {
+              height: 40px !important;
+              border-bottom: 1px solid #f3f4f6;
+              position: relative;
+              display: flex;
+              align-items: flex-start;
+              padding: 2px;
+            }
+            
+            /* Header cells */
+            .h-12, .h-\\[60px\\] {
+              height: 35px !important;
+              min-height: 35px !important;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #f9fafb;
+              font-weight: 600;
+              border-bottom: 2px solid #e5e7eb;
+              font-size: 10px;
+            }
+            
+            /* Time cells specific styling */
+            .border-r .h-12 {
+              background: #f3f4f6;
+            }
+            
+            /* Appointment positioning - CRITICAL FIX */
+            .absolute {
+              position: absolute !important;
+              left: 2px !important;
+              right: 2px !important;
+              z-index: 10;
+              border-radius: 3px;
+              padding: 2px 4px;
+              font-size: 8px;
+              line-height: 1.2;
+              background: #e3f2fd !important;
+              border: 1px solid #1976d2 !important;
+              color: #1565c0 !important;
               overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            
+            /* Different appointment colors */
+            .bg-blue-50, [style*="background-color: rgb(239, 246, 255)"] {
+              background: #e3f2fd !important;
+              border-color: #1976d2 !important;
+              color: #1565c0 !important;
+            }
+            
+            .bg-green-50, [style*="background-color: rgb(240, 253, 244)"] {
+              background: #e8f5e8 !important;
+              border-color: #2e7d32 !important;
+              color: #1b5e20 !important;
+            }
+            
+            .bg-yellow-50, [style*="background-color: rgb(254, 252, 232)"] {
+              background: #fff3e0 !important;
+              border-color: #f57c00 !important;
+              color: #e65100 !important;
+            }
+            
+            .bg-red-50, [style*="background-color: rgb(254, 242, 242)"] {
+              background: #ffebee !important;
+              border-color: #d32f2f !important;
+              color: #c62828 !important;
             }
             
             /* Table styles */
             .overflow-x-auto {
-              overflow: visible;
+              overflow: visible !important;
             }
             
             table {
               width: 100%;
               border-collapse: collapse;
               margin: 0;
-              font-size: 10px;
+              font-size: 9px;
               background: white;
             }
             
             th, td {
               border: 1px solid #e5e7eb;
-              padding: 6px 4px;
+              padding: 4px 3px;
               text-align: left;
               vertical-align: top;
               word-wrap: break-word;
-              max-width: 120px;
+              max-width: 100px;
             }
             
             th {
               background-color: #f9fafb;
               font-weight: 600;
-              font-size: 9px;
+              font-size: 8px;
               color: #374151;
             }
             
-            /* Calendar grid styles */
-            .grid {
-              display: grid;
-              gap: 1px;
-              border: 1px solid #e5e7eb;
-              font-size: 10px;
-            }
-            
+            /* Space utilities */
             .space-y-6 > * + * {
               margin-top: 15px;
             }
@@ -174,7 +268,7 @@ export default function Agenda() {
               margin-top: 10px;
             }
             
-            /* Professional columns */
+            /* Border utilities */
             .border {
               border: 1px solid #e5e7eb;
             }
@@ -187,56 +281,28 @@ export default function Agenda() {
               border-bottom: 1px solid #e5e7eb;
             }
             
-            /* Card headers */
-            .flex.flex-col.space-y-1\\.5 {
-              padding: 12px;
-              border-bottom: 1px solid #e5e7eb;
-              background: #f9fafb;
+            /* Padding utilities */
+            .p-6, .pt-0 {
+              padding: 8px;
             }
             
-            .text-2xl {
-              font-size: 16px;
-              font-weight: 600;
-              color: #111827;
-            }
-            
-            .p-6 {
-              padding: 12px;
-            }
-            
-            .pt-0 {
-              padding-top: 0;
-            }
-            
-            /* Status badges */
-            .inline-flex {
-              display: inline-block;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 9px;
-              background: #f3f4f6 !important;
-              color: #374151 !important;
-              border: 1px solid #d1d5db;
-            }
-            
-            /* Appointment items */
-            .bg-blue-50, .bg-green-50, .bg-yellow-50, .bg-red-50, 
-            [class*="bg-"], [style*="background"] {
-              background: #f9fafb !important;
-              border: 1px solid #e5e7eb !important;
-              padding: 4px 6px;
-              margin: 2px 0;
-              border-radius: 3px;
-              font-size: 9px;
+            .pt-1 {
+              padding-top: 2px;
             }
             
             /* Text utilities */
             .text-xs {
-              font-size: 9px;
+              font-size: 8px;
             }
             
             .text-sm {
-              font-size: 10px;
+              font-size: 9px;
+            }
+            
+            .text-2xl {
+              font-size: 14px;
+              font-weight: 600;
+              color: #111827;
             }
             
             .font-medium {
@@ -259,60 +325,95 @@ export default function Agenda() {
               color: #111827;
             }
             
+            .text-center {
+              text-align: center;
+            }
+            
+            /* Flex utilities */
+            .flex {
+              display: flex;
+            }
+            
+            .items-center {
+              align-items: center;
+            }
+            
+            .justify-center {
+              justify-content: center;
+            }
+            
+            .items-start {
+              align-items: flex-start;
+            }
+            
+            /* Status badges */
+            .inline-flex {
+              display: inline-block;
+              padding: 1px 4px;
+              border-radius: 3px;
+              font-size: 7px;
+              background: #f3f4f6 !important;
+              color: #374151 !important;
+              border: 1px solid #d1d5db;
+            }
+            
             /* Hide interactive elements */
-            button, [role="button"], .cursor-pointer {
+            button, [role="button"], .cursor-pointer, 
+            [class*="hover:"], [class*="focus:"] {
               display: none !important;
             }
             
             /* Print specific */
             @media print {
               body { 
-                margin: 0 !important;
-                padding: 10mm !important;
+                margin: 0;
+                padding: 8mm;
+                font-size: 10px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
               }
               
               .print-header {
-                margin-bottom: 15px;
-                padding-bottom: 10px;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
               }
               
               .print-header h1 {
-                font-size: 18px;
+                font-size: 16px;
+              }
+              
+              .grid > div > div {
+                height: 35px !important;
+              }
+              
+              .h-12, .h-\\[60px\\] {
+                height: 30px !important;
+                min-height: 30px !important;
+              }
+              
+              .absolute {
+                font-size: 7px;
+                padding: 1px 3px;
               }
               
               table {
-                font-size: 9px;
+                font-size: 8px;
               }
               
               th, td {
-                padding: 4px 3px;
+                padding: 3px 2px;
               }
               
               .no-print { 
                 display: none !important; 
               }
-              
-              .page-break { 
-                page-break-before: always; 
-              }
             }
             
             /* Page setup */
             @page {
-              margin: 15mm;
+              margin: 10mm;
               size: A4;
             }
-            
-            /* Responsive text scaling */
-            .h-12 { height: auto; min-height: 30px; }
-            .h-\\[60px\\] { height: 45px; }
-            .pt-1 { padding-top: 2px; }
-            .text-center { text-align: center; }
-            .flex.items-center { display: flex; align-items: center; }
-            .justify-center { justify-content: center; }
-            .items-start { align-items: flex-start; }
           </style>
         </head>
         <body>
