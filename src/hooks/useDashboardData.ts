@@ -36,13 +36,21 @@ export function useDashboardData() {
   const [upcomingAppointments, setUpcomingAppointments] = useState<UpcomingAppointment[]>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ name: string; value: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>(() => {
+    const currentYear = new Date().getFullYear();
+    return {
+      start: new Date(currentYear, 0, 1), // 1º de janeiro do ano atual
+      end: new Date(currentYear, 11, 31, 23, 59, 59) // 31 de dezembro do ano atual
+    };
+  });
   const { toast } = useToast();
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (customDateRange?: { start: Date; end: Date }) => {
     console.log('🔄 Fetching dashboard data...');
     setLoading(true);
     
     try {
+      const range = customDateRange || dateRange;
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
@@ -63,20 +71,17 @@ export function useDashboardData() {
 
       if (patientsError) throw patientsError;
 
-      // Buscar receita do mês atual
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-      
-      const { data: monthlyAppointments, error: monthlyError } = await supabase
+      // Buscar receita do período selecionado
+      const { data: periodAppointments, error: periodError } = await supabase
         .from('appointments')
         .select('price')
-        .gte('start_time', startOfMonth)
-        .lte('start_time', endOfMonth)
+        .gte('start_time', range.start.toISOString())
+        .lte('start_time', range.end.toISOString())
         .not('price', 'is', null);
 
-      if (monthlyError) throw monthlyError;
+      if (periodError) throw periodError;
 
-      const monthlyRevenue = monthlyAppointments?.reduce((sum, apt) => sum + (apt.price || 0), 0) || 0;
+      const periodRevenue = periodAppointments?.reduce((sum, apt) => sum + (apt.price || 0), 0) || 0;
 
       // Buscar próximos agendamentos
       const { data: upcomingData, error: upcomingError } = await supabase
@@ -94,12 +99,12 @@ export function useDashboardData() {
 
       if (upcomingError) throw upcomingError;
 
-      // Buscar estatísticas por status
+      // Buscar estatísticas por status do período
       const { data: statusStats, error: statusError } = await supabase
         .from('appointments')
         .select('status_id, appointment_statuses(key)')
-        .gte('start_time', startOfMonth)
-        .lte('start_time', endOfMonth);
+        .gte('start_time', range.start.toISOString())
+        .lte('start_time', range.end.toISOString());
 
       if (statusError) throw statusError;
 
@@ -118,28 +123,61 @@ export function useDashboardData() {
         }
       });
 
-      // Buscar dados de receita dos últimos 12 meses
+      // Buscar dados de receita por mês do período selecionado
       const monthlyRevenueQuery = [];
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const startMonth = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
-        const endMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-        
-        const { data: monthData, error: monthError } = await supabase
-          .from('appointments')
-          .select('price')
-          .gte('start_time', startMonth)
-          .lte('start_time', endMonth)
-          .not('price', 'is', null);
+      const startYear = range.start.getFullYear();
+      const endYear = range.end.getFullYear();
+      const startMonth = range.start.getMonth();
+      const endMonth = range.end.getMonth();
 
-        if (!monthError && monthData) {
-          const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
-          const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
-          monthlyRevenueQuery.push({
-            name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-            value: monthRevenue
-          });
+      // Se for o mesmo ano
+      if (startYear === endYear) {
+        for (let month = startMonth; month <= endMonth; month++) {
+          const startMonthDate = new Date(startYear, month, 1).toISOString();
+          const endMonthDate = new Date(startYear, month + 1, 0, 23, 59, 59, 999).toISOString();
+          
+          const { data: monthData, error: monthError } = await supabase
+            .from('appointments')
+            .select('price')
+            .gte('start_time', startMonthDate)
+            .lte('start_time', endMonthDate)
+            .not('price', 'is', null);
+
+          if (!monthError && monthData) {
+            const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
+            monthlyRevenueQuery.push({
+              name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+              value: monthRevenue
+            });
+          }
+        }
+      } else {
+        // Caso span múltiplos anos (para futuras extensões)
+        for (let year = startYear; year <= endYear; year++) {
+          const yearStart = year === startYear ? startMonth : 0;
+          const yearEnd = year === endYear ? endMonth : 11;
+          
+          for (let month = yearStart; month <= yearEnd; month++) {
+            const startMonthDate = new Date(year, month, 1).toISOString();
+            const endMonthDate = new Date(year, month + 1, 0, 23, 59, 59, 999).toISOString();
+            
+            const { data: monthData, error: monthError } = await supabase
+              .from('appointments')
+              .select('price')
+              .gte('start_time', startMonthDate)
+              .lte('start_time', endMonthDate)
+              .not('price', 'is', null);
+
+            if (!monthError && monthData) {
+              const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+              const monthName = new Date(year, month).toLocaleDateString('pt-BR', { month: 'short' });
+              monthlyRevenueQuery.push({
+                name: `${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`,
+                value: monthRevenue
+              });
+            }
+          }
         }
       }
 
@@ -150,7 +188,7 @@ export function useDashboardData() {
       setStats({
         todayAppointments: todayAppointmentsData?.length || 0,
         activePatients: patientsCount || 0,
-        monthlyRevenue,
+        monthlyRevenue: periodRevenue,
         occupancyRate: Math.min(occupancyRate, 100),
         confirmedCount: statusCounts.confirmed,
         cancelledCount: statusCounts.cancelled,
@@ -186,6 +224,12 @@ export function useDashboardData() {
     }
   };
 
+  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+    const newRange = { start: startDate, end: endDate };
+    setDateRange(newRange);
+    fetchDashboardData(newRange);
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -195,6 +239,8 @@ export function useDashboardData() {
     upcomingAppointments,
     monthlyRevenueData,
     loading,
-    refetch: fetchDashboardData
+    refetch: () => fetchDashboardData(),
+    onDateRangeChange: handleDateRangeChange,
+    currentDateRange: dateRange
   };
 }

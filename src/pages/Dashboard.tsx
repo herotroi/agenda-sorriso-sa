@@ -1,4 +1,3 @@
-
 import { StatsCard } from '@/components/Dashboard/StatsCard';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
+import { DateRangeSelector } from '@/components/Dashboard/DateRangeSelector';
 
 export default function Dashboard() {
   const { 
@@ -22,7 +22,9 @@ export default function Dashboard() {
     upcomingAppointments, 
     monthlyRevenueData, 
     loading, 
-    refetch 
+    refetch,
+    onDateRangeChange,
+    currentDateRange
   } = useDashboardData();
 
   const formatCurrency = (value: number) => {
@@ -59,6 +61,12 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* Date Range Selector */}
+      <DateRangeSelector 
+        onDateRangeChange={onDateRangeChange}
+        selectedYear={currentDateRange.start.getFullYear()}
+      />
+
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
@@ -72,7 +80,7 @@ export default function Dashboard() {
           icon={Users}
         />
         <StatsCard
-          title="Receita Mensal"
+          title="Receita do Período"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={DollarSign}
         />
@@ -83,8 +91,8 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Revenue Chart and Upcoming Appointments */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Revenue Chart */}
         <div className="md:col-span-2">
           <RevenueChart data={monthlyRevenueData} />
         </div>
