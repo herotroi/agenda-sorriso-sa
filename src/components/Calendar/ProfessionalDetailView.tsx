@@ -10,6 +10,7 @@ import { Appointment } from '@/components/Appointments/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
+import { DayProceduresDialog } from './ProfessionalDetailView/DayProceduresDialog';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
 import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,6 +55,9 @@ export function ProfessionalDetailView({
   const [activeTab, setActiveTab] = useState('day');
   const [professional, setProfessional] = useState<Professional>(initialProfessional);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
+  const [proceduresDialogOpen, setProceduresDialogOpen] = useState(false);
+  const [selectedDayAppointments, setSelectedDayAppointments] = useState<Appointment[]>([]);
+  const [selectedDayDate, setSelectedDayDate] = useState<Date>(new Date());
   const { toast } = useToast();
   const { handlePrint } = usePrintReport();
 
@@ -148,8 +152,14 @@ export function ProfessionalDetailView({
     fetchAppointments();
   };
 
-  const handleDayClick = (date: Date) => {
-    onDateChange(date);
+  const handleDayClick = (date: Date, dayAppointments?: Appointment[]) => {
+    if (dayAppointments && dayAppointments.length > 0) {
+      setSelectedDayDate(date);
+      setSelectedDayAppointments(dayAppointments);
+      setProceduresDialogOpen(true);
+    } else {
+      onDateChange(date);
+    }
   };
 
   const handlePrintProfessional = () => {
@@ -245,6 +255,15 @@ export function ProfessionalDetailView({
           onUpdate={handleAppointmentUpdate}
         />
       )}
+
+      <DayProceduresDialog
+        isOpen={proceduresDialogOpen}
+        onClose={() => setProceduresDialogOpen(false)}
+        date={selectedDayDate}
+        appointments={selectedDayAppointments}
+        professionalName={professional.name}
+        professionalColor={professional.color}
+      />
     </div>
   );
 }

@@ -21,7 +21,7 @@ interface MonthViewProps {
   appointments: Appointment[];
   selectedDate: Date;
   onNavigateMonth: (direction: 'prev' | 'next') => void;
-  onDayClick: (date: Date) => void;
+  onDayClick: (date: Date, dayAppointments?: Appointment[]) => void;
 }
 
 export function MonthView({ 
@@ -115,7 +115,7 @@ export function MonthView({
           return (
             <div
               key={day.getDate()}
-              onClick={() => onDayClick(day)}
+              onClick={() => onDayClick(day, dayAppointments)}
               className={`
                 p-2 min-h-[120px] border rounded cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden
                 ${isToday ? 'bg-blue-50 border-blue-200' : 'border-gray-200'}
