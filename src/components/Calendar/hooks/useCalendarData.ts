@@ -41,11 +41,15 @@ export function useCalendarData(selectedDate: Date) {
 
       if (error) throw error;
       
-      // Convert Json types to proper TypeScript types
+      // Convert Json types to proper TypeScript types with proper type checking
       const processedData = data?.map(prof => ({
         ...prof,
-        break_times: Array.isArray(prof.break_times) ? prof.break_times : [],
-        working_days: Array.isArray(prof.working_days) ? prof.working_days : [true, true, true, true, true, false, false]
+        break_times: Array.isArray(prof.break_times) 
+          ? (prof.break_times as Array<{ start: string; end: string }>) 
+          : [],
+        working_days: Array.isArray(prof.working_days) 
+          ? (prof.working_days as boolean[]) 
+          : [true, true, true, true, true, false, false]
       })) || [];
       
       setProfessionals(processedData);
