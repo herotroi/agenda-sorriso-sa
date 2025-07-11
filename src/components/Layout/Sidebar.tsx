@@ -11,7 +11,6 @@ import {
   FileText,
   Menu,
   X,
-  Stethoscope,
   Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,9 +45,12 @@ export function Sidebar() {
       <div className="p-4 border-b border-slate-700">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <Stethoscope className="h-8 w-8 text-blue-400" />
-              <span className="text-xl font-bold">ClinicPro</span>
+            <div className="flex items-center justify-center w-full">
+              <img 
+                src="/lovable-uploads/b34aff0f-970c-47af-97bc-4aa0f15e9826.png" 
+                alt="Herotroi Clinic" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
           )}
           <button
