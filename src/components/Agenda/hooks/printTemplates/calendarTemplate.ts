@@ -28,7 +28,20 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
       const vacationStart = new Date(prof.vacation_start);
       const vacationEnd = new Date(prof.vacation_end);
       
-      if (selectedDate >= vacationStart && selectedDate <= vacationEnd) {
+      // Ajustar as datas para comparação correta
+      const currentDate = new Date(selectedDate);
+      currentDate.setHours(0, 0, 0, 0);
+      vacationStart.setHours(0, 0, 0, 0);
+      vacationEnd.setHours(23, 59, 59, 999);
+      
+      console.log(`Checking vacation for ${prof.name}:`, {
+        currentDate: currentDate.toISOString(),
+        vacationStart: vacationStart.toISOString(),
+        vacationEnd: vacationEnd.toISOString(),
+        isInVacation: currentDate >= vacationStart && currentDate <= vacationEnd
+      });
+      
+      if (currentDate >= vacationStart && currentDate <= vacationEnd) {
         blocks.push({
           id: `vacation-${prof.id}-${dateStr}`,
           type: 'vacation',
@@ -37,11 +50,12 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
           end_time: `${dateStr}T23:59:59`,
           title: 'Férias'
         });
+        console.log(`Added vacation block for ${prof.name}`);
       }
     }
 
     // Verificar pausas
-    if (prof.break_times && Array.isArray(prof.break_times)) {
+    if (prof.break_times && Array.isArray(prof.break_times) && prof.break_times.length > 0) {
       prof.break_times.forEach((breakTime: { start: string; end: string }, index: number) => {
         blocks.push({
           id: `break-${prof.id}-${index}-${dateStr}`,
@@ -55,6 +69,7 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
     }
   });
 
+  console.log('Generated time blocks:', blocks);
   return blocks;
 };
 
@@ -65,6 +80,12 @@ const shouldShowTimeBlockInHour = (block: any, hour: number): boolean => {
   const startHour = startTime.getHours();
   const endHour = endTime.getHours();
   
+  // Para férias, deve aparecer em todas as horas
+  if (block.type === 'vacation') {
+    return true;
+  }
+  
+  // Para pausas, verificar se está dentro do horário
   return hour >= startHour && hour < endHour;
 };
 
@@ -74,7 +95,8 @@ export const generateCalendarPrintTemplate = (
 ): string => {
   console.log('Generating calendar template with:', {
     professionalsCount: professionals?.length || 0,
-    appointmentsCount: appointments?.length || 0
+    appointmentsCount: appointments?.length || 0,
+    professionalsData: professionals
   });
 
   if (!professionals || professionals.length === 0) {
@@ -91,6 +113,7 @@ export const generateCalendarPrintTemplate = (
   
   // Gerar blocos de tempo (pausas e férias)
   const timeBlocks = generateTimeBlocks(professionals, selectedDate);
+  console.log('Time blocks generated:', timeBlocks.length);
   
   // Create header row with professional names
   const headerCells = professionals.map(prof => 
@@ -131,7 +154,7 @@ export const generateCalendarPrintTemplate = (
           return `
             <div class="time-block ${block.type}" style="background-color: ${bgColor}; color: ${textColor}; border-left: 4px solid ${borderColor}; padding: 4px 8px; margin-bottom: 2px; border-radius: 4px; font-size: 12px;">
               <div class="block-title" style="font-weight: 600;">${block.title}</div>
-              ${block.type === 'vacation' ? '<div class="block-icon">🏖️</div>' : '<div class="block-icon">☕</div>'}
+              ${block.type === 'vacation' ? '<div class="block-icon" style="display: inline;">🏖️</div>' : '<div class="block-icon" style="display: inline;">☕</div>'}
             </div>
           `;
         }).join('');
