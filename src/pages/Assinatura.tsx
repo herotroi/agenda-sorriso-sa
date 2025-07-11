@@ -5,35 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Settings, CreditCard } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const plans = [
   {
     id: 'monthly',
     title: 'Plano Mensal',
-    price: 35,
+    price: 45,
     period: 'mês',
     features: [
-      'Agenda completa para múltiplos profissionais',
-      'Cadastro ilimitado de pacientes',
-      'Prontuário eletrônico básico',
-      'Relatórios e dashboards',
-      'Suporte por email',
-      'Backup automático dos dados',
+      'Agenda inteligente',
+      'Agendamento para múltiplos profissionais',
+      'Cadastro ilimitado',
+      'Prontuário eletrônico',
+      'Dashboard interativo',
     ],
   },
   {
     id: 'annual',
     title: 'Plano Anual',
-    price: 30,
+    price: 39,
     period: 'mês',
     features: [
-      'Agenda completa para múltiplos profissionais',
-      'Cadastro ilimitado de pacientes',
-      'Prontuário eletrônico básico',
-      'Relatórios e dashboards',
-      'Suporte prioritário',
-      'Backup automático dos dados',
-      'Lembretes por WhatsApp (em breve)',
+      'Agenda inteligente',
+      'Agendamento para múltiplos profissionais',
+      'Cadastro ilimitado',
+      'Prontuário eletrônico',
+      'Dashboard interativo',
       '2 meses grátis no pagamento anual',
     ],
     isPopular: true,
@@ -42,15 +41,55 @@ const plans = [
 
 export default function Assinatura() {
   const [currentPlan] = useState('monthly'); // Mock do plano atual
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleSubscribe = (planId: string) => {
+  const handleSubscribe = async (planId: string) => {
     console.log('Iniciando assinatura para:', planId);
-    // Aqui será implementada a integração com Stripe
+    setLoading(planId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { planId },
+      });
+
+      if (error) {
+        console.error('Erro ao criar checkout:', error);
+        toast.error('Erro ao processar pagamento. Tente novamente.');
+        return;
+      }
+
+      if (data?.url) {
+        // Abre o checkout do Stripe em uma nova aba
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      toast.error('Erro inesperado. Tente novamente.');
+    } finally {
+      setLoading(null);
+    }
   };
 
-  const handleManageSubscription = () => {
+  const handleManageSubscription = async () => {
     console.log('Gerenciar assinatura');
-    // Aqui será implementado o portal do cliente Stripe
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+
+      if (error) {
+        console.error('Erro ao acessar portal:', error);
+        toast.error('Erro ao acessar portal de gerenciamento.');
+        return;
+      }
+
+      if (data?.url) {
+        // Abre o portal do cliente em uma nova aba
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      toast.error('Erro inesperado. Tente novamente.');
+    }
   };
 
   return (
@@ -78,7 +117,7 @@ export default function Assinatura() {
               <p className="text-sm text-gray-600">
                 Próxima cobrança: 15 de Fevereiro de 2024
               </p>
-              <p className="text-lg font-semibold">R$ 35,00/mês</p>
+              <p className="text-lg font-semibold">R$ 45,00/mês</p>
             </div>
             <Button variant="outline" onClick={handleManageSubscription}>
               <Settings className="h-4 w-4 mr-2" />
@@ -102,6 +141,7 @@ export default function Assinatura() {
               isPopular={plan.isPopular}
               isCurrentPlan={currentPlan === plan.id}
               onSubscribe={() => handleSubscribe(plan.id)}
+              loading={loading === plan.id}
             />
           ))}
         </div>

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 
 interface PricingCardProps {
   title: string;
@@ -11,6 +11,7 @@ interface PricingCardProps {
   features: string[];
   isPopular?: boolean;
   isCurrentPlan?: boolean;
+  loading?: boolean;
   onSubscribe: () => void;
 }
 
@@ -21,6 +22,7 @@ export function PricingCard({
   features, 
   isPopular, 
   isCurrentPlan,
+  loading = false,
   onSubscribe 
 }: PricingCardProps) {
   return (
@@ -53,9 +55,18 @@ export function PricingCard({
           className="w-full mt-6" 
           variant={isCurrentPlan ? "outline" : "default"}
           onClick={onSubscribe}
-          disabled={isCurrentPlan}
+          disabled={isCurrentPlan || loading}
         >
-          {isCurrentPlan ? 'Plano Atual' : 'Assinar Agora'}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Processando...
+            </>
+          ) : isCurrentPlan ? (
+            'Plano Atual'
+          ) : (
+            'Assinar Agora'
+          )}
         </Button>
       </CardContent>
     </Card>
