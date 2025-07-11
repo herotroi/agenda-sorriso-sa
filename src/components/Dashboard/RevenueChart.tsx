@@ -4,9 +4,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface RevenueChartProps {
   data?: Array<{ name: string; value: number }>;
+  selectedMonth?: number | 'all';
 }
 
-export function RevenueChart({ data = [] }: RevenueChartProps) {
+export function RevenueChart({ data = [], selectedMonth }: RevenueChartProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -15,16 +16,29 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
   };
 
   // Calcular crescimento percentual
-  const currentMonth = data[data.length - 1]?.value || 0;
-  const previousMonth = data[data.length - 2]?.value || 0;
-  const growth = previousMonth > 0 ? ((currentMonth - previousMonth) / previousMonth) * 100 : 0;
+  const currentPeriod = data[data.length - 1]?.value || 0;
+  const previousPeriod = data[data.length - 2]?.value || 0;
+  const growth = previousPeriod > 0 ? ((currentPeriod - previousPeriod) / previousPeriod) * 100 : 0;
+
+  // Determinar o título baseado na seleção
+  const chartTitle = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
+    ? `Receita Diária - ${new Date(2024, selectedMonth - 1).toLocaleDateString('pt-BR', { month: 'long' }).charAt(0).toUpperCase() + new Date(2024, selectedMonth - 1).toLocaleDateString('pt-BR', { month: 'long' }).slice(1)}`
+    : 'Receita Mensal';
+
+  const periodLabel = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
+    ? 'hoje' 
+    : 'este mês';
 
   // Tooltip customizado
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const dayLabel = selectedMonth !== 'all' && typeof selectedMonth === 'number' 
+        ? `Dia ${label}` 
+        : label;
+      
       return (
         <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-3">
-          <p className="text-sm font-medium text-foreground">{`${label}`}</p>
+          <p className="text-sm font-medium text-foreground">{dayLabel}</p>
           <p className="text-base font-bold text-primary">
             {formatCurrency(payload[0].value)}
           </p>
@@ -39,7 +53,7 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Receita Mensal
+            {chartTitle}
           </CardTitle>
           {growth !== 0 && (
             <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -52,18 +66,18 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
             </div>
           )}
         </div>
-        {currentMonth > 0 && (
+        {currentPeriod > 0 && (
           <div className="text-2xl font-bold text-foreground">
-            {formatCurrency(currentMonth)}
+            {formatCurrency(currentPeriod)}
             <span className="text-sm font-normal text-muted-foreground ml-2">
-              este mês
+              {periodLabel}
             </span>
           </div>
         )}
       </CardHeader>
       <CardContent className="pl-8 pr-4">
         <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -89,7 +103,7 @@ export function RevenueChart({ data = [] }: RevenueChartProps) {
               tickLine={false}
               tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               dx={-5}
-              width={80}
+              width={90}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

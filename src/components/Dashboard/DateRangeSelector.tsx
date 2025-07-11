@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DateRangeSelectorProps {
-  onDateRangeChange: (startDate: Date, endDate: Date) => void;
+  onDateRangeChange: (startDate: Date, endDate: Date, month?: number | 'all') => void;
   selectedYear?: number;
 }
 
@@ -46,7 +46,7 @@ export function DateRangeSelector({ onDateRangeChange, selectedYear }: DateRange
       endDate = new Date(year, month, 0, 23, 59, 59); // Último dia do mês
     }
 
-    onDateRangeChange(startDate, endDate);
+    onDateRangeChange(startDate, endDate, month);
   };
 
   return (

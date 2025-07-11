@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -43,14 +42,16 @@ export function useDashboardData() {
       end: new Date(currentYear, 11, 31, 23, 59, 59) // 31 de dezembro do ano atual
     };
   });
+  const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all');
   const { toast } = useToast();
 
-  const fetchDashboardData = async (customDateRange?: { start: Date; end: Date }) => {
+  const fetchDashboardData = async (customDateRange?: { start: Date; end: Date }, month?: number | 'all') => {
     console.log('🔄 Fetching dashboard data...');
     setLoading(true);
     
     try {
       const range = customDateRange || dateRange;
+      const currentMonth = month !== undefined ? month : selectedMonth;
       const today = new Date();
       const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
       const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
@@ -123,44 +124,43 @@ export function useDashboardData() {
         }
       });
 
-      // Buscar dados de receita por mês do período selecionado
-      const monthlyRevenueQuery = [];
+      // Buscar dados de receita baseado na seleção (mês específico = dados diários, ano todo = dados mensais)
+      const revenueData = [];
       const startYear = range.start.getFullYear();
-      const endYear = range.end.getFullYear();
-      const startMonth = range.start.getMonth();
-      const endMonth = range.end.getMonth();
 
-      // Se for o mesmo ano
-      if (startYear === endYear) {
-        for (let month = startMonth; month <= endMonth; month++) {
-          const startMonthDate = new Date(startYear, month, 1).toISOString();
-          const endMonthDate = new Date(startYear, month + 1, 0, 23, 59, 59, 999).toISOString();
+      if (currentMonth !== 'all' && typeof currentMonth === 'number') {
+        // Mostrar dados diários para o mês selecionado
+        const daysInMonth = new Date(startYear, currentMonth, 0).getDate();
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+          const startDayDate = new Date(startYear, currentMonth - 1, day, 0, 0, 0).toISOString();
+          const endDayDate = new Date(startYear, currentMonth - 1, day, 23, 59, 59, 999).toISOString();
           
-          const { data: monthData, error: monthError } = await supabase
+          const { data: dayData, error: dayError } = await supabase
             .from('appointments')
             .select('price')
-            .gte('start_time', startMonthDate)
-            .lte('start_time', endMonthDate)
+            .gte('start_time', startDayDate)
+            .lte('start_time', endDayDate)
             .not('price', 'is', null);
 
-          if (!monthError && monthData) {
-            const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
-            const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
-            monthlyRevenueQuery.push({
-              name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-              value: monthRevenue
+          if (!dayError && dayData) {
+            const dayRevenue = dayData.reduce((sum, apt) => sum + (apt.price || 0), 0);
+            revenueData.push({
+              name: day.toString().padStart(2, '0'),
+              value: dayRevenue
             });
           }
         }
       } else {
-        // Caso span múltiplos anos (para futuras extensões)
-        for (let year = startYear; year <= endYear; year++) {
-          const yearStart = year === startYear ? startMonth : 0;
-          const yearEnd = year === endYear ? endMonth : 11;
-          
-          for (let month = yearStart; month <= yearEnd; month++) {
-            const startMonthDate = new Date(year, month, 1).toISOString();
-            const endMonthDate = new Date(year, month + 1, 0, 23, 59, 59, 999).toISOString();
+        // Mostrar dados mensais para o ano
+        const endYear = range.end.getFullYear();
+        const startMonth = range.start.getMonth();
+        const endMonth = range.end.getMonth();
+
+        if (startYear === endYear) {
+          for (let month = startMonth; month <= endMonth; month++) {
+            const startMonthDate = new Date(startYear, month, 1).toISOString();
+            const endMonthDate = new Date(startYear, month + 1, 0, 23, 59, 59, 999).toISOString();
             
             const { data: monthData, error: monthError } = await supabase
               .from('appointments')
@@ -171,9 +171,9 @@ export function useDashboardData() {
 
             if (!monthError && monthData) {
               const monthRevenue = monthData.reduce((sum, apt) => sum + (apt.price || 0), 0);
-              const monthName = new Date(year, month).toLocaleDateString('pt-BR', { month: 'short' });
-              monthlyRevenueQuery.push({
-                name: `${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`,
+              const monthName = new Date(startYear, month).toLocaleDateString('pt-BR', { month: 'short' });
+              revenueData.push({
+                name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
                 value: monthRevenue
               });
             }
@@ -209,7 +209,7 @@ export function useDashboardData() {
         })) || []
       );
 
-      setMonthlyRevenueData(monthlyRevenueQuery);
+      setMonthlyRevenueData(revenueData);
 
       console.log('✅ Dashboard data fetched successfully');
     } catch (error) {
@@ -224,10 +224,11 @@ export function useDashboardData() {
     }
   };
 
-  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+  const handleDateRangeChange = (startDate: Date, endDate: Date, month?: number | 'all') => {
     const newRange = { start: startDate, end: endDate };
     setDateRange(newRange);
-    fetchDashboardData(newRange);
+    setSelectedMonth(month || 'all');
+    fetchDashboardData(newRange, month);
   };
 
   useEffect(() => {
@@ -241,6 +242,7 @@ export function useDashboardData() {
     loading,
     refetch: () => fetchDashboardData(),
     onDateRangeChange: handleDateRangeChange,
-    currentDateRange: dateRange
+    currentDateRange: dateRange,
+    selectedMonth
   };
 }
