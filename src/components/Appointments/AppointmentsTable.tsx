@@ -65,7 +65,7 @@ export function AppointmentsTable() {
 
   return (
     <>
-      <Card>
+      <Card data-testid="appointments-table">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">

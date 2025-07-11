@@ -1,4 +1,3 @@
-
 export function usePrintReport() {
   const handlePrint = (activeTab: string) => {
     // Create a new window for printing
@@ -33,35 +32,73 @@ export function usePrintReport() {
         contentToPrint = '<p>Nenhum agendamento encontrado na visualização de calendário.</p>';
       }
     } else {
-      // For table view, get the table content
-      const tableContainer = document.querySelector('[role="tabpanel"][data-state="active"]');
-      const cardContent = tableContainer?.querySelector('.rounded-lg.border');
+      // For table view, get the table content more specifically
+      const activeTabPanel = document.querySelector('[role="tabpanel"][data-state="active"]');
       
-      if (cardContent) {
-        // Clone the card content to modify it for printing
-        const contentClone = cardContent.cloneNode(true) as HTMLElement;
+      if (activeTabPanel) {
+        console.log('Active tab panel found:', activeTabPanel);
         
-        // Remove action buttons and interactive elements
-        const buttons = contentClone.querySelectorAll('button');
-        buttons.forEach(button => button.remove());
+        // Look for the card containing the table
+        const tableCard = activeTabPanel.querySelector('[data-testid="appointments-table"], .rounded-lg.border');
         
-        // Remove the header buttons container
-        const headerActions = contentClone.querySelector('.flex.gap-2');
-        if (headerActions) {
-          headerActions.remove();
-        }
-        
-        // Simplify the table for printing
-        const actionCells = contentClone.querySelectorAll('td:last-child');
-        actionCells.forEach(cell => {
-          if (cell.querySelector('button')) {
-            cell.innerHTML = '<span class="text-xs text-gray-500">-</span>';
+        if (tableCard) {
+          console.log('Table card found:', tableCard);
+          
+          // Clone the card content to modify it for printing
+          const contentClone = tableCard.cloneNode(true) as HTMLElement;
+          
+          // Remove action buttons and interactive elements but keep the table structure
+          const buttons = contentClone.querySelectorAll('button');
+          buttons.forEach(button => {
+            // If it's in the header actions area, remove completely
+            if (button.closest('.flex.gap-2')) {
+              button.remove();
+            } else {
+              // If it's in table cells, replace with a dash
+              button.replaceWith(document.createTextNode('-'));
+            }
+          });
+          
+          // Remove the header buttons container if it exists
+          const headerActions = contentClone.querySelector('.flex.gap-2');
+          if (headerActions) {
+            headerActions.remove();
           }
-        });
-        
-        contentToPrint = contentClone.innerHTML;
+          
+          contentToPrint = contentClone.innerHTML;
+          console.log('Content to print:', contentToPrint);
+        } else {
+          console.log('Table card not found, trying alternative selectors');
+          
+          // Alternative: look for table directly
+          const table = activeTabPanel.querySelector('table');
+          if (table) {
+            console.log('Found table directly:', table);
+            const tableClone = table.cloneNode(true) as HTMLElement;
+            
+            // Remove action buttons from table
+            const actionButtons = tableClone.querySelectorAll('button');
+            actionButtons.forEach(button => {
+              button.replaceWith(document.createTextNode('-'));
+            });
+            
+            // Wrap table in a card-like structure for better printing
+            contentToPrint = `
+              <div class="rounded-lg border p-6">
+                <div class="mb-4">
+                  <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
+                </div>
+                ${tableClone.outerHTML}
+              </div>
+            `;
+          } else {
+            console.log('No table found');
+            contentToPrint = '<p>Nenhum agendamento encontrado na tabela.</p>';
+          }
+        }
       } else {
-        contentToPrint = '<p>Nenhum agendamento encontrado na tabela.</p>';
+        console.log('No active tab panel found');
+        contentToPrint = '<p>Nenhum conteúdo encontrado para impressão.</p>';
       }
     }
 
@@ -222,7 +259,7 @@ export function usePrintReport() {
               color: #c62828 !important;
             }
             
-            /* Table styles */
+            /* Table styles - Enhanced for better visibility */
             .overflow-x-auto {
               overflow: visible !important;
             }
@@ -231,24 +268,38 @@ export function usePrintReport() {
               width: 100%;
               border-collapse: collapse;
               margin: 0;
-              font-size: 9px;
+              font-size: 10px;
               background: white;
+              border: 1px solid #e5e7eb;
             }
             
             th, td {
               border: 1px solid #e5e7eb;
-              padding: 4px 3px;
+              padding: 6px 4px;
               text-align: left;
               vertical-align: top;
               word-wrap: break-word;
-              max-width: 100px;
             }
             
             th {
               background-color: #f9fafb;
               font-weight: 600;
-              font-size: 8px;
+              font-size: 9px;
               color: #374151;
+            }
+            
+            tbody tr:nth-child(even) {
+              background-color: #f9fafb;
+            }
+            
+            /* Status badges in table */
+            .inline-flex {
+              display: inline-block;
+              padding: 2px 6px;
+              border-radius: 12px;
+              font-size: 8px;
+              font-weight: 500;
+              white-space: nowrap;
             }
             
             /* Space utilities */
@@ -292,7 +343,7 @@ export function usePrintReport() {
             }
             
             .text-2xl {
-              font-size: 14px;
+              font-size: 16px;
               font-weight: 600;
               color: #111827;
             }
@@ -338,17 +389,6 @@ export function usePrintReport() {
               align-items: flex-start;
             }
             
-            /* Status badges */
-            .inline-flex {
-              display: inline-block;
-              padding: 1px 4px;
-              border-radius: 3px;
-              font-size: 7px;
-              background: #f3f4f6 !important;
-              color: #374151 !important;
-              border: 1px solid #d1d5db;
-            }
-            
             /* Hide interactive elements */
             button, [role="button"], .cursor-pointer, 
             [class*="hover:"], [class*="focus:"] {
@@ -389,11 +429,11 @@ export function usePrintReport() {
               }
               
               table {
-                font-size: 8px;
+                font-size: 9px;
               }
               
               th, td {
-                padding: 3px 2px;
+                padding: 4px 3px;
               }
               
               .no-print { 
