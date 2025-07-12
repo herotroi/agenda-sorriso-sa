@@ -4,6 +4,7 @@ import { CalendarContent } from './CalendarContent';
 import { CalendarModals } from './CalendarModals';
 import { useCalendarData } from './hooks/useCalendarData';
 import { useCalendarState } from './hooks/useCalendarState';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CalendarViewProps {
   selectedDate?: Date;
@@ -11,6 +12,7 @@ interface CalendarViewProps {
 }
 
 export function CalendarView({ selectedDate: externalSelectedDate, onDateChange: externalOnDateChange }: CalendarViewProps = {}) {
+  const isMobile = useIsMobile();
   const {
     selectedDate: internalSelectedDate,
     setSelectedDate: setInternalSelectedDate,
@@ -69,21 +71,27 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
   if (selectedProfessional) {
     const professional = professionals.find(p => p.id === selectedProfessional);
     return (
-      <ProfessionalDetailView
-        professional={professional!}
-        onBack={handleBackToProfessionalList}
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
+      <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
+        <ProfessionalDetailView
+          professional={professional!}
+          onBack={handleBackToProfessionalList}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
+      </div>
     );
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-sm text-gray-500">Carregando...</div>
+      </div>
+    );
   }
 
   return (
-    <>
+    <div className={`${isMobile ? 'px-1' : 'px-4'}`}>
       <CalendarContent
         professionals={professionals}
         appointments={appointments}
@@ -104,6 +112,6 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
         onDetailsClose={handleDetailsCloseWithRefresh}
         onUpdate={handleAppointmentUpdate}
       />
-    </>
+    </div>
   );
 }

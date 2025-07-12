@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Table } from 'lucide-react';
 import { CalendarView } from '@/components/Calendar/CalendarView';
 import { AppointmentsTable } from '@/components/Appointments/AppointmentsTable';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AgendaTabsProps {
   activeTab: string;
@@ -19,26 +20,30 @@ export function AgendaTabs({
   onDateChange,
   onFiltersChange 
 }: AgendaTabsProps) {
+  const isMobile = useIsMobile();
+
   return (
-    <Tabs defaultValue="calendar" value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="calendar" className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
-          Visualização Calendário
-        </TabsTrigger>
-        <TabsTrigger value="table" className="flex items-center gap-2">
-          <Table className="h-4 w-4" />
-          Tabela de Agendamentos
-        </TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="calendar" className="mt-6">
-        <CalendarView selectedDate={selectedDate} onDateChange={onDateChange} />
-      </TabsContent>
-      
-      <TabsContent value="table" className="mt-6">
-        <AppointmentsTable onFiltersChange={onFiltersChange} />
-      </TabsContent>
-    </Tabs>
+    <div className="w-full">
+      <Tabs defaultValue="calendar" value={activeTab} onValueChange={onTabChange} className="w-full">
+        <TabsList className={`grid w-full grid-cols-2 ${isMobile ? 'mb-4' : 'mb-6'}`}>
+          <TabsTrigger value="calendar" className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            <Calendar className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            {isMobile ? 'Calendário' : 'Visualização Calendário'}
+          </TabsTrigger>
+          <TabsTrigger value="table" className={`flex items-center gap-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            <Table className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            {isMobile ? 'Tabela' : 'Tabela de Agendamentos'}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="calendar" className={`${isMobile ? 'mt-2' : 'mt-6'}`}>
+          <CalendarView selectedDate={selectedDate} onDateChange={onDateChange} />
+        </TabsContent>
+        
+        <TabsContent value="table" className={`${isMobile ? 'mt-2' : 'mt-6'}`}>
+          <AppointmentsTable onFiltersChange={onFiltersChange} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

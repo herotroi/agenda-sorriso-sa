@@ -3,6 +3,7 @@ import { CalendarHeader } from './CalendarHeader';
 import { CalendarGrid } from './CalendarGrid';
 import { ProfessionalTabs } from './ProfessionalTabs';
 import { Appointment } from '@/components/Appointments/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Professional {
   id: string;
@@ -42,8 +43,10 @@ export function CalendarContent({
   onProfessionalClick,
   onAppointmentClick,
 }: CalendarContentProps) {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 ${isMobile ? 'space-y-3' : 'space-y-6'}`}>
       <CalendarHeader
         selectedDate={selectedDate}
         onNavigateDate={onNavigateDate}
@@ -57,13 +60,15 @@ export function CalendarContent({
         selectedDate={selectedDate}
       />
       
-      <CalendarGrid
-        professionals={professionals}
-        appointments={appointments}
-        timeBlocks={timeBlocks}
-        selectedDate={selectedDate}
-        onAppointmentClick={onAppointmentClick}
-      />
+      <div className={`${isMobile ? 'overflow-x-auto' : ''}`}>
+        <CalendarGrid
+          professionals={professionals}
+          appointments={appointments}
+          timeBlocks={timeBlocks}
+          selectedDate={selectedDate}
+          onAppointmentClick={onAppointmentClick}
+        />
+      </div>
     </div>
   );
 }
