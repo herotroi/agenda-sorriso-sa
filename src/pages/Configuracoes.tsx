@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Clock, Palette, CreditCard } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { UserSettingsSection } from '@/components/Configuracoes/UserSettingsSection';
@@ -13,10 +13,6 @@ import { PasswordChangeSection } from '@/components/Configuracoes/PasswordChange
 
 export default function Configuracoes() {
   const [settings, setSettings] = useState({
-    clinic_name: 'ClinicPro',
-    working_hours_start: '08:00',
-    working_hours_end: '18:00',
-    theme_color: '#3b82f6',
     subscription_plan: 'monthly'
   });
   const [loading, setLoading] = useState(false);
@@ -36,10 +32,6 @@ export default function Configuracoes() {
       }, {} as any) || {};
 
       setSettings({
-        clinic_name: settingsMap.clinic_name || 'ClinicPro',
-        working_hours_start: settingsMap.working_hours?.start || '08:00',
-        working_hours_end: settingsMap.working_hours?.end || '18:00',
-        theme_color: settingsMap.theme_color || '#3b82f6',
         subscription_plan: settingsMap.subscription_plan || 'monthly'
       });
     } catch (error) {
@@ -54,40 +46,21 @@ export default function Configuracoes() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const updates = [
-        {
-          key: 'clinic_name',
-          value: settings.clinic_name
-        },
-        {
-          key: 'working_hours',
-          value: {
-            start: settings.working_hours_start,
-            end: settings.working_hours_end
-          }
-        },
-        {
-          key: 'theme_color',
-          value: settings.theme_color
-        },
-        {
-          key: 'subscription_plan',
-          value: settings.subscription_plan
-        }
-      ];
+      const update = {
+        key: 'subscription_plan',
+        value: settings.subscription_plan
+      };
 
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('settings')
-          .upsert({ 
-            key: update.key, 
-            value: update.value 
-          }, { 
-            onConflict: 'key' 
-          });
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ 
+          key: update.key, 
+          value: update.value 
+        }, { 
+          onConflict: 'key' 
+        });
 
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Sucesso',
@@ -118,79 +91,6 @@ export default function Configuracoes() {
 
         {/* Alterar Senha */}
         <PasswordChangeSection />
-
-        {/* Configurações Gerais */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Settings className="h-5 w-5 mr-2" />
-              Configurações Gerais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="clinic_name">Nome da Clínica</Label>
-              <Input
-                id="clinic_name"
-                value={settings.clinic_name}
-                onChange={(e) => setSettings({ ...settings, clinic_name: e.target.value })}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Horário de Funcionamento */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Horário de Funcionamento da Clínica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start_time">Horário de Início</Label>
-                <Input
-                  id="start_time"
-                  type="time"
-                  value={settings.working_hours_start}
-                  onChange={(e) => setSettings({ ...settings, working_hours_start: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="end_time">Horário de Término</Label>
-                <Input
-                  id="end_time"
-                  type="time"
-                  value={settings.working_hours_end}
-                  onChange={(e) => setSettings({ ...settings, working_hours_end: e.target.value })}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tema */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Palette className="h-5 w-5 mr-2" />
-              Tema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="theme_color">Cor do Tema</Label>
-              <Input
-                id="theme_color"
-                type="color"
-                value={settings.theme_color}
-                onChange={(e) => setSettings({ ...settings, theme_color: e.target.value })}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Plano de Assinatura */}
         <Card>
