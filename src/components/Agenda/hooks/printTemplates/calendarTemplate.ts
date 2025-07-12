@@ -1,4 +1,3 @@
-
 import { generateHours, formatTime, getCurrentDate } from '../printUtils';
 import { Appointment, Professional } from './types';
 import { 
@@ -23,21 +22,17 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
   professionals.forEach(prof => {
     const dateStr = selectedDate.toISOString().split('T')[0];
     
-    // Verificar férias
+    // Verificar férias com correção de fuso horário
     if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-      const vacationStart = new Date(prof.vacation_start);
-      const vacationEnd = new Date(prof.vacation_end);
-      
-      // Ajustar as datas para comparação correta
-      const currentDate = new Date(selectedDate);
-      currentDate.setHours(0, 0, 0, 0);
-      vacationStart.setHours(0, 0, 0, 0);
-      vacationEnd.setHours(23, 59, 59, 999);
+      // Criar datas locais sem conversão de fuso horário
+      const vacationStart = new Date(prof.vacation_start + 'T00:00:00');
+      const vacationEnd = new Date(prof.vacation_end + 'T23:59:59');
+      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
       
       console.log(`Checking vacation for ${prof.name}:`, {
-        currentDate: currentDate.toISOString(),
-        vacationStart: vacationStart.toISOString(),
-        vacationEnd: vacationEnd.toISOString(),
+        vacationStart: vacationStart.toDateString(),
+        vacationEnd: vacationEnd.toDateString(),
+        currentDate: currentDate.toDateString(),
         isInVacation: currentDate >= vacationStart && currentDate <= vacationEnd
       });
       

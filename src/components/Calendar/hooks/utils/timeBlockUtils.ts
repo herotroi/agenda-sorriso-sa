@@ -38,12 +38,21 @@ export const generateTimeBlocks = (professionals: Professional[], selectedDate: 
       });
     }
 
-    // Gerar blocos de férias
+    // Gerar blocos de férias com correção de fuso horário
     if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-      const vacationStart = new Date(prof.vacation_start);
-      const vacationEnd = new Date(prof.vacation_end);
+      // Criar datas locais sem conversão de fuso horário
+      const vacationStart = new Date(prof.vacation_start + 'T00:00:00');
+      const vacationEnd = new Date(prof.vacation_end + 'T23:59:59');
+      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
       
-      if (selectedDate >= vacationStart && selectedDate <= vacationEnd) {
+      console.log(`Checking vacation for ${prof.name}:`, {
+        vacationStart: vacationStart.toDateString(),
+        vacationEnd: vacationEnd.toDateString(),
+        currentDate: currentDate.toDateString(),
+        isInVacation: currentDate >= vacationStart && currentDate <= vacationEnd
+      });
+      
+      if (currentDate >= vacationStart && currentDate <= vacationEnd) {
         blocks.push({
           id: `vacation-${prof.id}`,
           type: 'vacation',
