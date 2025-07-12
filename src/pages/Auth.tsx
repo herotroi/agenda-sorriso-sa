@@ -1,115 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Heart, Calendar, Users, FileText, BarChart3, Eye, EyeOff, Check, X } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
+import { AuthLayout } from '@/components/auth/AuthLayout';
+import { FeaturesSection } from '@/components/auth/FeaturesSection';
+import { PasswordResetForm } from '@/components/auth/PasswordResetForm';
+import { AuthTabs } from '@/components/auth/AuthTabs';
 
 const Auth = () => {
   const { user, signIn, signUp, resetPassword, loading } = useAuth();
   const [searchParams] = useSearchParams();
-  
-  // TODOS OS HOOKS DEVEM ESTAR NO INÍCIO - ANTES DE QUALQUER EARLY RETURN
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [resetEmail, setResetEmail] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-  // Verificar se é uma recuperação de senha
   const isPasswordRecovery = searchParams.get('type') === 'recovery';
-  const accessToken = searchParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token');
 
-  // Validação de senha forte para nova senha
-  const validatePassword = (password: string) => {
-    const minLength = password.length >= 8;
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasLowercase = /[a-z]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-    
-    return {
-      minLength,
-      hasUppercase,
-      hasLowercase,
-      hasSpecialChar,
-      isValid: minLength && hasUppercase && hasLowercase && hasSpecialChar
-    };
-  };
-
-  const passwordValidation = validatePassword(password);
-  const newPasswordValidation = validatePassword(newPassword);
-  const passwordsMatch = password === confirmPassword && password !== '';
-  const newPasswordsMatch = newPassword === confirmNewPassword && newPassword !== '';
-
-  // Configurar session quando houver tokens de recuperação
-  useEffect(() => {
-    if (isPasswordRecovery && accessToken && refreshToken) {
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken
-      });
-    }
-  }, [isPasswordRecovery, accessToken, refreshToken]);
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    // Validar nova senha
-    if (!newPasswordValidation.isValid) {
-      setError('A nova senha deve atender a todos os critérios de segurança');
-      setIsLoading(false);
-      return;
-    }
-
-    // Validar confirmação de senha
-    if (!newPasswordsMatch) {
-      setError('As senhas não coincidem');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Atualizar a senha do usuário
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccessMessage('Senha atualizada com sucesso! Redirecionando...');
-        // Redirecionar para o dashboard após sucesso
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 2000);
-      }
-    } catch (error: any) {
-      setError('Erro ao atualizar senha. Tente novamente.');
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignIn = async (email: string, password: string) => {
     setIsLoading(true);
     setError('');
 
@@ -124,24 +31,9 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignUp = async (email: string, password: string, fullName: string) => {
     setIsLoading(true);
     setError('');
-
-    // Validar senha forte
-    if (!passwordValidation.isValid) {
-      setError('A senha deve atender a todos os critérios de segurança');
-      setIsLoading(false);
-      return;
-    }
-
-    // Validar confirmação de senha
-    if (!passwordsMatch) {
-      setError('As senhas não coincidem');
-      setIsLoading(false);
-      return;
-    }
 
     const { error } = await signUp(email, password, fullName);
     
@@ -155,32 +47,28 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleResetPassword = async (email: string) => {
     setIsLoading(true);
     setError('');
     setSuccessMessage('');
 
-    if (!resetEmail) {
+    if (!email) {
       setError('Por favor, informe seu email');
       setIsLoading(false);
       return;
     }
 
-    const { error } = await resetPassword(resetEmail);
+    const { error } = await resetPassword(email);
     
     if (error) {
       setError(error.message);
     } else {
       setSuccessMessage('Link de recuperação enviado! Verifique seu email.');
-      setResetEmail('');
     }
     
     setIsLoading(false);
   };
 
-  // AGORA SIM OS EARLY RETURNS - APÓS TODOS OS HOOKS
-  
   // Redirecionar se já estiver logado (exceto durante recuperação de senha)
   if (user && !isPasswordRecovery) {
     return <Navigate to="/dashboard" replace />;
@@ -194,422 +82,26 @@ const Auth = () => {
     );
   }
 
-  // Mostrar formulário de redefinição de senha se for recuperação
   if (isPasswordRecovery) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-4">
-              <Heart className="h-8 w-8 text-blue-600 mr-2" />
-              <h1 className="text-3xl font-bold text-gray-900">Sistema de Gestão Médica</h1>
-            </div>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Defina sua nova senha
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-center">Nova Senha</CardTitle>
-                <CardDescription className="text-center">
-                  Defina uma nova senha para sua conta
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {error && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {successMessage && (
-                  <Alert className="mb-4 border-green-200 bg-green-50">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
-                  </Alert>
-                )}
-
-                <form onSubmit={handlePasswordReset} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">Nova Senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showNewPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {/* Validação visual da nova senha */}
-                    {newPassword && (
-                      <div className="mt-2 space-y-1 text-sm">
-                        <div className={`flex items-center ${newPasswordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
-                          {newPasswordValidation.minLength ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                          Mínimo 8 caracteres
-                        </div>
-                        <div className={`flex items-center ${newPasswordValidation.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
-                          {newPasswordValidation.hasUppercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                          Uma letra maiúscula
-                        </div>
-                        <div className={`flex items-center ${newPasswordValidation.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
-                          {newPasswordValidation.hasLowercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                          Uma letra minúscula
-                        </div>
-                        <div className={`flex items-center ${newPasswordValidation.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
-                          {newPasswordValidation.hasSpecialChar ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                          Um caractere especial
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmNewPassword">Confirmar Nova Senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmNewPassword"
-                        type={showConfirmNewPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                      >
-                        {showConfirmNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {/* Validação visual da confirmação de senha */}
-                    {confirmNewPassword && (
-                      <div className={`flex items-center text-sm mt-1 ${newPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
-                        {newPasswordsMatch ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                        {newPasswordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading || !newPasswordValidation.isValid || !newPasswordsMatch}
-                  >
-                    {isLoading ? 'Atualizando...' : 'Atualizar Senha'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <AuthLayout>
+        <PasswordResetForm />
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Seção de Apresentação */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Heart className="h-8 w-8 text-blue-600 mr-2" />
-            <h1 className="text-3xl font-bold text-gray-900">Sistema de Gestão Médica</h1>
-          </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Plataforma completa para gerenciamento de consultórios médicos e clínicas
-          </p>
-        </div>
-
-        {/* Features */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-          <div className="text-center p-4">
-            <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Agenda Inteligente</h3>
-            <p className="text-sm text-gray-600">Agendamento otimizado e inteligente</p>
-          </div>
-          <div className="text-center p-4">
-            <Users className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Múltiplos Profissionais</h3>
-            <p className="text-sm text-gray-600">Gestão de equipe médica completa</p>
-          </div>
-          <div className="text-center p-4">
-            <FileText className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Cadastro Ilimitado</h3>
-            <p className="text-sm text-gray-600">Pacientes e profissionais sem limite</p>
-          </div>
-          <div className="text-center p-4">
-            <Heart className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Prontuário Eletrônico</h3>
-            <p className="text-sm text-gray-600">Histórico médico digitalizado</p>
-          </div>
-          <div className="text-center p-4">
-            <BarChart3 className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">Dashboard Interativo</h3>
-            <p className="text-sm text-gray-600">Relatórios e métricas em tempo real</p>
-          </div>
-        </div>
-
-        {/* Formulário de Login/Cadastro/Recuperação */}
-        <div className="max-w-md mx-auto">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-center">Acesse sua conta</CardTitle>
-              <CardDescription className="text-center">
-                Entre com sua conta, cadastre-se ou recupere sua senha
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="login">Entrar</TabsTrigger>
-                  <TabsTrigger value="register">Cadastrar</TabsTrigger>
-                  <TabsTrigger value="reset">Esqueci a Senha</TabsTrigger>
-                </TabsList>
-
-                {error && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {successMessage && (
-                  <Alert className="mt-4 border-green-200 bg-green-50">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
-                  </Alert>
-                )}
-
-                <TabsContent value="login">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Entrando...' : 'Entrar'}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="register">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Nome Completo</Label>
-                      <Input
-                        id="fullName"
-                        type="text"
-                        placeholder="Seu nome completo"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      
-                      {/* Validação visual da senha */}
-                      {password && (
-                        <div className="mt-2 space-y-1 text-sm">
-                          <div className={`flex items-center ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
-                            {passwordValidation.minLength ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                            Mínimo 8 caracteres
-                          </div>
-                          <div className={`flex items-center ${passwordValidation.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
-                            {passwordValidation.hasUppercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                            Uma letra maiúscula
-                          </div>
-                          <div className={`flex items-center ${passwordValidation.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
-                            {passwordValidation.hasLowercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                            Uma letra minúscula
-                          </div>
-                          <div className={`flex items-center ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
-                            {passwordValidation.hasSpecialChar ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                            Um caractere especial
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                      
-                      {/* Validação visual da confirmação de senha */}
-                      {confirmPassword && (
-                        <div className={`flex items-center text-sm mt-1 ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
-                          {passwordsMatch ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
-                          {passwordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isLoading || !passwordValidation.isValid || !passwordsMatch}
-                    >
-                      {isLoading ? 'Cadastrando...' : 'Cadastrar'}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="reset">
-                  <form onSubmit={handleResetPassword} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="resetEmail">Email</Label>
-                      <Input
-                        id="resetEmail"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
-                      <p className="text-sm text-gray-600">
-                        Digite seu email para receber o link de recuperação de senha
-                      </p>
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-12 text-gray-600">
-          <p>&copy; 2024 Sistema de Gestão Médica. Dados seguros e protegidos.</p>
-        </div>
-      </div>
-    </div>
+    <AuthLayout>
+      <FeaturesSection />
+      <AuthTabs
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+        onResetPassword={handleResetPassword}
+        error={error}
+        successMessage={successMessage}
+        isLoading={isLoading}
+      />
+    </AuthLayout>
   );
 };
 
