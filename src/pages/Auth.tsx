@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Heart, Calendar, Users, FileText, BarChart3, Eye, EyeOff, Check, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const { user, signIn, signUp, resetPassword, loading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,13 +23,22 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
-  // Redirecionar se já estiver logado
-  if (user) {
+  // Verificar se é uma recuperação de senha
+  const isPasswordRecovery = searchParams.get('type') === 'recovery';
+  const accessToken = searchParams.get('access_token');
+  const refreshToken = searchParams.get('refresh_token');
+
+  // Redirecionar se já estiver logado (exceto durante recuperação de senha)
+  if (user && !isPasswordRecovery) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Validação de senha forte
+  // Validação de senha forte para nova senha
   const validatePassword = (password: string) => {
     const minLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
@@ -44,7 +55,60 @@ const Auth = () => {
   };
 
   const passwordValidation = validatePassword(password);
+  const newPasswordValidation = validatePassword(newPassword);
   const passwordsMatch = password === confirmPassword && password !== '';
+  const newPasswordsMatch = newPassword === confirmNewPassword && newPassword !== '';
+
+  // Configurar session quando houver tokens de recuperação
+  useEffect(() => {
+    if (isPasswordRecovery && accessToken && refreshToken) {
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+    }
+  }, [isPasswordRecovery, accessToken, refreshToken]);
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Validar nova senha
+    if (!newPasswordValidation.isValid) {
+      setError('A nova senha deve atender a todos os critérios de segurança');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar confirmação de senha
+    if (!newPasswordsMatch) {
+      setError('As senhas não coincidem');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Atualizar a senha do usuário
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccessMessage('Senha atualizada com sucesso! Redirecionando...');
+        // Redirecionar para o dashboard após sucesso
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
+      }
+    } catch (error: any) {
+      setError('Erro ao atualizar senha. Tente novamente.');
+    }
+
+    setIsLoading(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +185,145 @@ const Auth = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Mostrar formulário de redefinição de senha se for recuperação
+  if (isPasswordRecovery) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-4">
+              <Heart className="h-8 w-8 text-blue-600 mr-2" />
+              <h1 className="text-3xl font-bold text-gray-900">Sistema de Gestão Médica</h1>
+            </div>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Defina sua nova senha
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-center">Nova Senha</CardTitle>
+                <CardDescription className="text-center">
+                  Defina uma nova senha para sua conta
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {successMessage && (
+                  <Alert className="mb-4 border-green-200 bg-green-50">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nova Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {/* Validação visual da nova senha */}
+                    {newPassword && (
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div className={`flex items-center ${newPasswordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
+                          {newPasswordValidation.minLength ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                          Mínimo 8 caracteres
+                        </div>
+                        <div className={`flex items-center ${newPasswordValidation.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
+                          {newPasswordValidation.hasUppercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                          Uma letra maiúscula
+                        </div>
+                        <div className={`flex items-center ${newPasswordValidation.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
+                          {newPasswordValidation.hasLowercase ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                          Uma letra minúscula
+                        </div>
+                        <div className={`flex items-center ${newPasswordValidation.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
+                          {newPasswordValidation.hasSpecialChar ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                          Um caractere especial
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmNewPassword">Confirmar Nova Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmNewPassword"
+                        type={showConfirmNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                      >
+                        {showConfirmNewPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {/* Validação visual da confirmação de senha */}
+                    {confirmNewPassword && (
+                      <div className={`flex items-center text-sm mt-1 ${newPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+                        {newPasswordsMatch ? <Check className="h-3 w-3 mr-1" /> : <X className="h-3 w-3 mr-1" />}
+                        {newPasswordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isLoading || !newPasswordValidation.isValid || !newPasswordsMatch}
+                  >
+                    {isLoading ? 'Atualizando...' : 'Atualizar Senha'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
