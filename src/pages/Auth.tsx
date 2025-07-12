@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 const Auth = () => {
   const { user, signIn, signUp, resetPassword, loading } = useAuth();
   const [searchParams] = useSearchParams();
+  
+  // TODOS OS HOOKS DEVEM ESTAR NO INÍCIO - ANTES DE QUALQUER EARLY RETURN
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,11 +35,6 @@ const Auth = () => {
   const isPasswordRecovery = searchParams.get('type') === 'recovery';
   const accessToken = searchParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token');
-
-  // Redirecionar se já estiver logado (exceto durante recuperação de senha)
-  if (user && !isPasswordRecovery) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
   // Validação de senha forte para nova senha
   const validatePassword = (password: string) => {
@@ -180,6 +178,13 @@ const Auth = () => {
     
     setIsLoading(false);
   };
+
+  // AGORA SIM OS EARLY RETURNS - APÓS TODOS OS HOOKS
+  
+  // Redirecionar se já estiver logado (exceto durante recuperação de senha)
+  if (user && !isPasswordRecovery) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (loading) {
     return (
