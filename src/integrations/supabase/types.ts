@@ -579,12 +579,92 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_limits: {
+        Row: {
+          created_at: string
+          has_ehr_access: boolean
+          id: string
+          max_appointments: number
+          max_patients: number
+          max_procedures: number
+          max_professionals: number
+          plan_type: string
+        }
+        Insert: {
+          created_at?: string
+          has_ehr_access?: boolean
+          id?: string
+          max_appointments: number
+          max_patients: number
+          max_procedures: number
+          max_professionals: number
+          plan_type: string
+        }
+        Update: {
+          created_at?: string
+          has_ehr_access?: boolean
+          id?: string
+          max_appointments?: number
+          max_patients?: number
+          max_procedures?: number
+          max_professionals?: number
+          plan_type?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_usage_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          appointments_count: number
+          patients_count: number
+          professionals_count: number
+          procedures_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
