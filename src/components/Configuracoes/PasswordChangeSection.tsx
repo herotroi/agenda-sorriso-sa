@@ -17,10 +17,6 @@ export function PasswordChangeSection() {
     confirmPassword: ''
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setPasswords(prev => ({ ...prev, [field]: value }));
-  };
-
   const handlePasswordChange = async () => {
     if (passwords.newPassword !== passwords.confirmPassword) {
       toast({
@@ -58,16 +54,20 @@ export function PasswordChangeSection() {
         title: 'Sucesso',
         description: 'Senha alterada com sucesso',
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error changing password:', error);
       toast({
         title: 'Erro',
-        description: error.message || 'Erro ao alterar senha',
+        description: 'Erro ao alterar senha',
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (field: keyof typeof passwords, value: string) => {
+    setPasswords(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -79,45 +79,44 @@ export function PasswordChangeSection() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 max-w-md gap-4">
-          <div>
-            <Label htmlFor="current_password">Senha Atual</Label>
-            <Input
-              id="current_password"
-              type="password"
-              value={passwords.currentPassword}
-              onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-              placeholder="Digite sua senha atual"
-            />
-          </div>
-          <div>
-            <Label htmlFor="new_password">Nova Senha</Label>
-            <Input
-              id="new_password"
-              type="password"
-              value={passwords.newPassword}
-              onChange={(e) => handleInputChange('newPassword', e.target.value)}
-              placeholder="Digite a nova senha"
-            />
-          </div>
-          <div>
-            <Label htmlFor="confirm_password">Confirmar Nova Senha</Label>
-            <Input
-              id="confirm_password"
-              type="password"
-              value={passwords.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              placeholder="Confirme a nova senha"
-            />
-          </div>
+        <div>
+          <Label htmlFor="current_password">Senha Atual</Label>
+          <Input
+            id="current_password"
+            type="password"
+            value={passwords.currentPassword}
+            onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+            placeholder="Digite sua senha atual"
+          />
         </div>
-        <Button 
-          onClick={handlePasswordChange} 
-          disabled={loading || !passwords.newPassword || !passwords.confirmPassword}
-          className="w-fit"
-        >
-          {loading ? 'Alterando...' : 'Alterar Senha'}
-        </Button>
+        <div>
+          <Label htmlFor="new_password">Nova Senha</Label>
+          <Input
+            id="new_password"
+            type="password"
+            value={passwords.newPassword}
+            onChange={(e) => handleInputChange('newPassword', e.target.value)}
+            placeholder="Digite a nova senha (mínimo 6 caracteres)"
+          />
+        </div>
+        <div>
+          <Label htmlFor="confirm_password">Confirmar Nova Senha</Label>
+          <Input
+            id="confirm_password"
+            type="password"
+            value={passwords.confirmPassword}
+            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+            placeholder="Confirme a nova senha"
+          />
+        </div>
+        <div className="flex justify-end">
+          <Button 
+            onClick={handlePasswordChange} 
+            disabled={loading || !passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword}
+          >
+            {loading ? 'Alterando...' : 'Alterar Senha'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

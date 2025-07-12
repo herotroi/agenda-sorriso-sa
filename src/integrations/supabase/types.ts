@@ -415,25 +415,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
+          cnpj: string | null
+          cpf: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          neighborhood: string | null
+          number: string | null
+          phone: string | null
+          state: string | null
+          street: string | null
           updated_at: string
+          working_hours_end: string | null
+          working_hours_start: string | null
+          zip_code: string | null
         }
         Insert: {
+          city?: string | null
+          cnpj?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id: string
+          neighborhood?: string | null
+          number?: string | null
+          phone?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string
+          working_hours_end?: string | null
+          working_hours_start?: string | null
+          zip_code?: string | null
         }
         Update: {
+          city?: string | null
+          cnpj?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          neighborhood?: string | null
+          number?: string | null
+          phone?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string
+          working_hours_end?: string | null
+          working_hours_start?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
