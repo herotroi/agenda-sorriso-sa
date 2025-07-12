@@ -72,7 +72,7 @@ export function useSubscriptionLimits() {
         }
         
         // Buscar novamente
-        const { data: newSub, error: newSubError } = await supabaseClient
+        const { data: newSub, error: newSubError } = await supabase
           .from('user_subscriptions')
           .select('plan_type, status')
           .eq('user_id', user.id)
