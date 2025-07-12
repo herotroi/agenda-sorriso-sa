@@ -18,23 +18,28 @@ export function PatientFilters({
   setShowInactive 
 }: PatientFiltersProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-      <div className="relative flex-1 max-w-sm">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+      {/* Search Input */}
+      <div className="relative flex-1 max-w-sm w-full">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder="Pesquisar pacientes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 w-full"
         />
       </div>
-      <div className="flex items-center space-x-2">
+      
+      {/* Show Inactive Toggle */}
+      <div className="flex items-center space-x-2 whitespace-nowrap">
         <Switch
           id="show-inactive"
           checked={showInactive}
           onCheckedChange={setShowInactive}
         />
-        <Label htmlFor="show-inactive">Mostrar inativos</Label>
+        <Label htmlFor="show-inactive" className="text-sm font-medium">
+          Mostrar inativos
+        </Label>
       </div>
     </div>
   );
