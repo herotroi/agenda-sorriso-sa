@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, Clock, Palette, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { UserSettingsSection } from '@/components/Configuracoes/UserSettingsSection';
+import { PasswordChangeSection } from '@/components/Configuracoes/PasswordChangeSection';
 
 export default function Configuracoes() {
   const [settings, setSettings] = useState({
@@ -107,10 +109,17 @@ export default function Configuracoes() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-        <p className="text-gray-600">Gerencie as configurações do sistema</p>
+        <p className="text-gray-600">Gerencie as configurações do sistema e seu perfil</p>
       </div>
 
       <div className="grid gap-6">
+        {/* Configurações do Usuário */}
+        <UserSettingsSection />
+
+        {/* Alterar Senha */}
+        <PasswordChangeSection />
+
+        {/* Configurações Gerais */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -130,11 +139,12 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* Horário de Funcionamento */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Clock className="h-5 w-5 mr-2" />
-              Horário de Funcionamento
+              Horário de Funcionamento da Clínica
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -161,6 +171,7 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* Tema */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -181,6 +192,7 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* Plano de Assinatura */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
