@@ -44,6 +44,8 @@ export function useSubscriptionLimits() {
     }
 
     try {
+      console.log('Fetching subscription data for user:', user.id);
+
       // Buscar assinatura do usuário
       const { data: subscription, error: subError } = await supabase
         .from('user_subscriptions')
@@ -53,23 +55,38 @@ export function useSubscriptionLimits() {
 
       let finalSubscription = subscription;
 
-      if (subError) {
-        console.error('Error fetching subscription:', subError);
+      if (subError && subError.code === 'PGRST116') {
+        console.log('No subscription found, creating free subscription');
         // Se não encontrar assinatura, criar uma gratuita
-        await supabase.from('user_subscriptions').insert({
-          user_id: user.id,
-          plan_type: 'free',
-          status: 'active'
-        });
+        const { error: insertError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: user.id,
+            plan_type: 'free',
+            status: 'active'
+          });
+
+        if (insertError) {
+          console.error('Error creating free subscription:', insertError);
+          throw insertError;
+        }
         
         // Buscar novamente
-        const { data: newSub } = await supabase
+        const { data: newSub, error: newSubError } = await supabaseClient
           .from('user_subscriptions')
           .select('plan_type, status')
           .eq('user_id', user.id)
           .single();
+
+        if (newSubError) {
+          console.error('Error fetching new subscription:', newSubError);
+          throw newSubError;
+        }
         
         finalSubscription = newSub;
+      } else if (subError) {
+        console.error('Error fetching subscription:', subError);
+        throw subError;
       }
 
       // Buscar limites do plano
@@ -79,20 +96,29 @@ export function useSubscriptionLimits() {
         .eq('plan_type', finalSubscription?.plan_type || 'free')
         .single();
 
-      if (limitsError) throw limitsError;
+      if (limitsError) {
+        console.error('Error fetching subscription limits:', limitsError);
+        throw limitsError;
+      }
 
       // Buscar estatísticas de uso
       const { data: usage, error: usageError } = await supabase
         .rpc('get_user_usage_stats', { p_user_id: user.id });
 
-      if (usageError) throw usageError;
+      if (usageError) {
+        console.error('Error fetching usage stats:', usageError);
+        throw usageError;
+      }
 
-      const usageStats = usage[0] || {
+      const usageStats = usage && usage[0] ? usage[0] : {
         appointments_count: 0,
         patients_count: 0,
         professionals_count: 0,
         procedures_count: 0
       };
+
+      console.log('Usage stats:', usageStats);
+      console.log('Limits:', limits);
 
       const subscriptionInfo: SubscriptionData = {
         plan_type: finalSubscription?.plan_type || 'free',
@@ -106,6 +132,7 @@ export function useSubscriptionLimits() {
         hasEHRAccess: limits.has_ehr_access
       };
 
+      console.log('Final subscription info:', subscriptionInfo);
       setSubscriptionData(subscriptionInfo);
     } catch (error) {
       console.error('Error fetching subscription data:', error);
@@ -113,6 +140,30 @@ export function useSubscriptionLimits() {
         title: 'Erro',
         description: 'Erro ao carregar dados da assinatura',
         variant: 'destructive',
+      });
+      
+      // Fallback para plano gratuito
+      setSubscriptionData({
+        plan_type: 'free',
+        status: 'active',
+        limits: {
+          max_appointments: 50,
+          max_patients: 10,
+          max_professionals: 1,
+          max_procedures: 5,
+          has_ehr_access: false
+        },
+        usage: {
+          appointments_count: 0,
+          patients_count: 0,
+          professionals_count: 0,
+          procedures_count: 0
+        },
+        canCreateAppointment: true,
+        canCreatePatient: true,
+        canCreateProfessional: true,
+        canCreateProcedure: true,
+        hasEHRAccess: false
       });
     } finally {
       setLoading(false);

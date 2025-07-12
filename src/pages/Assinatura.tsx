@@ -81,14 +81,18 @@ export default function Assinatura() {
 
   const checkSubscription = async () => {
     try {
+      console.log('Checking subscription...');
       const { data, error } = await supabase.functions.invoke('check-subscription');
       if (error) {
         console.error('Erro ao verificar assinatura:', error);
+        toast.error('Erro ao verificar assinatura');
         return;
       }
+      console.log('Subscription data:', data);
       setCurrentSubscription(data);
     } catch (error) {
       console.error('Erro inesperado:', error);
+      toast.error('Erro inesperado ao verificar assinatura');
     }
   };
 
@@ -97,6 +101,7 @@ export default function Assinatura() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
+      console.log('Fetching usage stats...');
       const { data, error } = await supabase.rpc('get_user_usage_stats', {
         p_user_id: user.user.id
       });
@@ -106,7 +111,13 @@ export default function Assinatura() {
         return;
       }
       
-      setUsageStats(data[0]);
+      console.log('Usage stats:', data);
+      setUsageStats(data && data[0] ? data[0] : {
+        appointments_count: 0,
+        patients_count: 0,
+        professionals_count: 0,
+        procedures_count: 0
+      });
     } catch (error) {
       console.error('Erro inesperado:', error);
     }
@@ -137,16 +148,19 @@ export default function Assinatura() {
 
       if (error) {
         console.error('Erro ao criar checkout:', error);
-        toast.error('Erro ao processar pagamento. Tente novamente.');
+        toast.error(`Erro ao processar pagamento: ${error.message || 'Tente novamente.'}`);
         return;
       }
 
       if (data?.url) {
+        console.log('Redirecting to checkout:', data.url);
         window.open(data.url, '_blank');
+      } else {
+        toast.error('Erro: URL de pagamento não recebida');
       }
     } catch (error) {
       console.error('Erro inesperado:', error);
-      toast.error('Erro inesperado. Tente novamente.');
+      toast.error('Erro inesperado. Verifique sua conexão e tente novamente.');
     } finally {
       setLoading(null);
     }
@@ -154,16 +168,19 @@ export default function Assinatura() {
 
   const handleManageSubscription = async () => {
     try {
+      console.log('Opening customer portal...');
       const { data, error } = await supabase.functions.invoke('customer-portal');
 
       if (error) {
         console.error('Erro ao acessar portal:', error);
-        toast.error('Erro ao acessar portal de gerenciamento.');
+        toast.error(`Erro ao acessar portal: ${error.message || 'Tente novamente.'}`);
         return;
       }
 
       if (data?.url) {
         window.open(data.url, '_blank');
+      } else {
+        toast.error('Erro: URL do portal não recebida');
       }
     } catch (error) {
       console.error('Erro inesperado:', error);
@@ -240,28 +257,28 @@ export default function Assinatura() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <p className="text-2xl font-bold">{usageStats.appointments_count}</p>
+                <p className="text-2xl font-bold">{usageStats.appointments_count || 0}</p>
                 <p className="text-sm text-gray-600">
                   Agendamentos {currentPlan.limits.appointments === -1 ? '' : `/ ${currentPlan.limits.appointments}`}
                 </p>
               </div>
               <div className="text-center">
                 <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl font-bold">{usageStats.patients_count}</p>
+                <p className="text-2xl font-bold">{usageStats.patients_count || 0}</p>
                 <p className="text-sm text-gray-600">
                   Pacientes {currentPlan.limits.patients === -1 ? '' : `/ ${currentPlan.limits.patients}`}
                 </p>
               </div>
               <div className="text-center">
                 <Stethoscope className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                <p className="text-2xl font-bold">{usageStats.professionals_count}</p>
+                <p className="text-2xl font-bold">{usageStats.professionals_count || 0}</p>
                 <p className="text-sm text-gray-600">
                   Profissionais {currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
                 </p>
               </div>
               <div className="text-center">
                 <FileText className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-                <p className="text-2xl font-bold">{usageStats.procedures_count}</p>
+                <p className="text-2xl font-bold">{usageStats.procedures_count || 0}</p>
                 <p className="text-sm text-gray-600">
                   Procedimentos {currentPlan.limits.procedures === -1 ? '' : `/ ${currentPlan.limits.procedures}`}
                 </p>
@@ -291,7 +308,6 @@ export default function Assinatura() {
         </div>
       </div>
 
-      {/* Informações Adicionais */}
       <Card>
         <CardHeader>
           <CardTitle>Informações do Pagamento</CardTitle>
