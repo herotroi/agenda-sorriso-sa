@@ -1,8 +1,9 @@
 
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,29 +15,34 @@ import {
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <header className="bg-white shadow-sm border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 md:py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <h1 className={cn(
+            "font-semibold text-gray-900",
+            isMobile ? "text-lg" : "text-xl md:text-2xl"
+          )}>
             Painel Principal
           </h1>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Notifications */}
           <NotificationDropdown />
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <User className="h-5 w-5" />
+              <Button variant="ghost" size={isMobile ? "sm" : "default"}>
+                <User className={cn("h-4 w-4", !isMobile && "sm:h-5 sm:w-5")} />
+                {!isMobile && <span className="ml-2 hidden sm:inline">Perfil</span>}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48 sm:w-56">
+              <DropdownMenuLabel className="text-sm">
                 {user?.email || 'Usuário'}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

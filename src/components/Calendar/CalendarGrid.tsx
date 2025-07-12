@@ -1,7 +1,10 @@
 
-import { Card, CardContent } from '@/components/ui/card';
-import { ProfessionalColumn } from './ProfessionalColumn';
+import { TimeBlock } from './TimeBlock';
+import { DraggableAppointment } from './DraggableAppointment';
+import { DroppableTimeSlot } from './DroppableTimeSlot';
 import { Appointment } from '@/components/Appointments/types';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Professional {
   id: string;
@@ -9,7 +12,7 @@ interface Professional {
   color: string;
 }
 
-interface TimeBlock {
+interface TimeBlockInterface {
   id: string;
   type: 'break' | 'vacation';
   professional_id: string;
@@ -21,84 +24,192 @@ interface TimeBlock {
 interface CalendarGridProps {
   professionals: Professional[];
   appointments: Appointment[];
-  timeBlocks: TimeBlock[];
+  timeBlocks: TimeBlockInterface[];
   selectedDate: Date;
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
-export function CalendarGrid({ 
-  professionals, 
+export function CalendarGrid({
+  professionals,
   appointments,
   timeBlocks,
-  selectedDate, 
-  onAppointmentClick 
+  selectedDate,
+  onAppointmentClick,
 }: CalendarGridProps) {
-  // Gerar todas as 24 horas do dia (00:00 - 23:00)
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const isMobile = useIsMobile();
 
-  const getAppointmentsForProfessional = (professionalId: string) => {
-    const professionalAppointments = appointments.filter(apt => 
-      apt.professional_id === professionalId
+  // Generate time slots from 8:00 to 18:00
+  const timeSlots = [];
+  for (let hour = 8; hour <= 18; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+
+  const getAppointmentPosition = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const startHour = start.getHours() + start.getMinutes() / 60;
+    const endHour = end.getHours() + end.getMinutes() / 60;
+    
+    const top = (startHour - 8) * (isMobile ? 48 : 64);
+    const height = (endHour - startHour) * (isMobile ? 48 : 64);
+    
+    return {
+      top: `${top}px`,
+      height: `${Math.max(height, isMobile ? 24 : 32)}px`
+    };
+  };
+
+  const getTimeBlockPosition = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const startHour = start.getHours() + start.getMinutes() / 60;
+    const endHour = end.getHours() + end.getMinutes() / 60;
+    
+    const top = (startHour - 8) * (isMobile ? 48 : 64);
+    const height = (endHour - startHour) * (isMobile ? 48 : 64);
+    
+    return {
+      top: `${top}px`,
+      height: `${Math.max(height, isMobile ? 24 : 32)}px`
+    };
+  };
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {professionals.map((professional) => {
+          const professionalAppointments = appointments.filter(
+            (apt) => apt.professional_id === professional.id
+          );
+          const professionalTimeBlocks = timeBlocks.filter(
+            (block) => block.professional_id === professional.id
+          );
+
+          return (
+            <div key={professional.id} className="bg-white rounded-lg border shadow-sm">
+              <div 
+                className="p-3 border-b font-medium text-sm"
+                style={{ borderLeftColor: professional.color, borderLeftWidth: '4px' }}
+              >
+                {professional.name}
+              </div>
+              
+              <ScrollArea className="h-64">
+                <div className="relative">
+                  {timeSlots.map((time, index) => (
+                    <DroppableTimeSlot
+                      key={`${professional.id}-${time}`}
+                      professionalId={professional.id}
+                      timeSlot={time}
+                      selectedDate={selectedDate}
+                    >
+                      <div className="h-12 border-b border-gray-100 flex items-center px-2 text-xs text-gray-500">
+                        {index === 0 && time}
+                      </div>
+                    </DroppableTimeSlot>
+                  ))}
+
+                  {/* Appointments */}
+                  {professionalAppointments.map((appointment) => (
+                    <DraggableAppointment
+                      key={appointment.id}
+                      appointment={appointment}
+                      position={getAppointmentPosition(appointment.start_time, appointment.end_time)}
+                      onClick={() => onAppointmentClick(appointment)}
+                    />
+                  ))}
+
+                  {/* Time Blocks */}
+                  {professionalTimeBlocks.map((timeBlock) => (
+                    <TimeBlock
+                      key={timeBlock.id}
+                      timeBlock={timeBlock}
+                      position={getTimeBlockPosition(timeBlock.start_time, timeBlock.end_time)}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          );
+        })}
+      </div>
     );
-    
-    console.log(`📊 Professional ${professionalId} appointments:`, professionalAppointments.length);
-    
-    return professionalAppointments;
-  };
-
-  const getTimeBlocksForProfessional = (professionalId: string) => {
-    return timeBlocks.filter(block => block.professional_id === professionalId);
-  };
-
-  console.log('🏥 CalendarGrid - Total appointments:', appointments.length);
-  console.log('👥 CalendarGrid - Professionals:', professionals.length);
-  console.log('⏰ CalendarGrid - Time blocks:', timeBlocks.length);
+  }
 
   return (
-    <Card className="w-full overflow-hidden">
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <div 
-            className="grid min-w-max" 
-            style={{ gridTemplateColumns: `80px repeat(${professionals.length}, minmax(200px, 1fr))` }}
-          >
-            {/* Coluna de horários */}
-            <div className="border-r bg-gray-50">
-              <div className="h-12 border-b flex items-center justify-center text-sm font-semibold bg-gray-100 sticky top-0 z-10">
-                Horário
-              </div>
-              {hours.map((hour) => (
-                <div
-                  key={hour}
-                  className="h-16 border-b border-gray-200 flex items-center justify-center text-sm font-medium text-gray-700 bg-gray-50"
-                >
-                  {hour.toString().padStart(2, '0')}:00
-                </div>
-              ))}
+    <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      <ScrollArea className="h-[600px] lg:h-[700px]">
+        <div className="calendar-grid min-w-[800px]" style={{
+          display: 'grid',
+          gridTemplateColumns: `80px repeat(${professionals.length}, minmax(200px, 1fr))`
+        }}>
+          {/* Time column */}
+          <div className="border-r border-gray-200">
+            <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center text-sm font-medium">
+              Hora
             </div>
-
-            {/* Colunas dos profissionais */}
-            {professionals.map((prof) => {
-              const profAppointments = getAppointmentsForProfessional(prof.id);
-              const profTimeBlocks = getTimeBlocksForProfessional(prof.id);
-              
-              console.log(`👤 Professional ${prof.name} (${prof.id}) has ${profAppointments.length} appointments and ${profTimeBlocks.length} time blocks`);
-              
-              return (
-                <ProfessionalColumn
-                  key={prof.id}
-                  professional={prof}
-                  appointments={profAppointments}
-                  timeBlocks={profTimeBlocks}
-                  selectedDate={selectedDate}
-                  hours={hours}
-                  onAppointmentClick={onAppointmentClick}
-                />
-              );
-            })}
+            {timeSlots.map((time) => (
+              <div
+                key={time}
+                className="h-16 border-b border-gray-100 flex items-center justify-center text-sm text-gray-600"
+              >
+                {time}
+              </div>
+            ))}
           </div>
+
+          {/* Professional columns */}
+          {professionals.map((professional) => {
+            const professionalAppointments = appointments.filter(
+              (apt) => apt.professional_id === professional.id
+            );
+            const professionalTimeBlocks = timeBlocks.filter(
+              (block) => block.professional_id === professional.id
+            );
+
+            return (
+              <div key={professional.id} className="border-r border-gray-200 relative">
+                <div 
+                  className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center text-sm font-medium px-2"
+                  style={{ color: professional.color }}
+                >
+                  {professional.name}
+                </div>
+
+                {timeSlots.map((time) => (
+                  <DroppableTimeSlot
+                    key={`${professional.id}-${time}`}
+                    professionalId={professional.id}
+                    timeSlot={time}
+                    selectedDate={selectedDate}
+                  >
+                    <div className="h-16 border-b border-gray-100 relative" />
+                  </DroppableTimeSlot>
+                ))}
+
+                {/* Appointments */}
+                {professionalAppointments.map((appointment) => (
+                  <DraggableAppointment
+                    key={appointment.id}
+                    appointment={appointment}
+                    position={getAppointmentPosition(appointment.start_time, appointment.end_time)}
+                    onClick={() => onAppointmentClick(appointment)}
+                  />
+                ))}
+
+                {/* Time Blocks */}
+                {professionalTimeBlocks.map((timeBlock) => (
+                  <TimeBlock
+                    key={timeBlock.id}
+                    timeBlock={timeBlock}
+                    position={getTimeBlockPosition(timeBlock.start_time, timeBlock.end_time)}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </div>
-      </CardContent>
-    </Card>
+      </ScrollArea>
+    </div>
   );
 }
