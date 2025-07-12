@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { ProcedureForm } from '@/components/Procedures/ProcedureForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,13 +43,20 @@ export default function Procedimentos() {
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchProcedures = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       // Buscar procedimentos
       const { data: proceduresData, error: proceduresError } = await supabase
         .from('procedures')
         .select('*')
+        .eq('user_id', user.id)
         .order('name');
 
       if (proceduresError) throw proceduresError;
@@ -61,7 +69,8 @@ export default function Procedimentos() {
             .select(`
               professional:professionals(id, name, specialty)
             `)
-            .eq('procedure_id', procedure.id);
+            .eq('procedure_id', procedure.id)
+            .eq('user_id', user.id);
 
           if (professionalsError) {
             console.error('Error fetching professionals for procedure:', professionalsError);
@@ -90,14 +99,17 @@ export default function Procedimentos() {
 
   useEffect(() => {
     fetchProcedures();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (id: string, name: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('procedures')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 

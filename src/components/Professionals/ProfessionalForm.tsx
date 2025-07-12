@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { BasicInfoSection } from './form/BasicInfoSection';
 import { WorkingHoursSection } from './form/WorkingHoursSection';
 import { FormActions } from './form/FormActions';
@@ -63,6 +64,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (professional) {
@@ -116,6 +118,15 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (!formData.name.trim()) {
       toast({
         title: 'Erro',
@@ -153,6 +164,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         weekend_shift_start: formData.weekend_shift_active ? formData.weekend_shift_start : null,
         weekend_shift_end: formData.weekend_shift_active ? formData.weekend_shift_end : null,
         active: formData.active,
+        user_id: user.id,
       };
 
       console.log('Sending data to database:', data);
@@ -161,7 +173,8 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         const { error } = await supabase
           .from('professionals')
           .update(data)
-          .eq('id', professional.id);
+          .eq('id', professional.id)
+          .eq('user_id', user.id);
 
         if (error) {
           console.error('Update error:', error);
@@ -175,7 +188,7 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
       } else {
         const { error } = await supabase
           .from('professionals')
-          .insert([data]);
+          .insert(data);
 
         if (error) {
           console.error('Insert error:', error);

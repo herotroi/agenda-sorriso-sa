@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Procedure {
   id: string;
@@ -44,13 +45,17 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
   const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchProfessionals = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('professionals')
         .select('id, name, specialty, active')
         .eq('active', true)
+        .eq('user_id', user.id)
         .order('name');
 
       if (error) throw error;
@@ -61,11 +66,14 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
   };
 
   const fetchProcedureProfessionals = async (procedureId: string) => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('procedure_professionals')
         .select('professional_id')
-        .eq('procedure_id', procedureId);
+        .eq('procedure_id', procedureId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setSelectedProfessionals(data?.map(item => item.professional_id) || []);
@@ -98,7 +106,7 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
         setSelectedProfessionals([]);
       }
     }
-  }, [procedure, isOpen]);
+  }, [procedure, isOpen, user]);
 
   const handleProfessionalToggle = (professionalId: string) => {
     setSelectedProfessionals(prev => 
@@ -109,17 +117,21 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
   };
 
   const saveProcedureProfessionals = async (procedureId: string) => {
+    if (!user) return;
+    
     // Primeiro, remove todas as associações existentes
     await supabase
       .from('procedure_professionals')
       .delete()
-      .eq('procedure_id', procedureId);
+      .eq('procedure_id', procedureId)
+      .eq('user_id', user.id);
 
     // Então, adiciona as novas associações
     if (selectedProfessionals.length > 0) {
       const associations = selectedProfessionals.map(professionalId => ({
         procedure_id: procedureId,
         professional_id: professionalId,
+        user_id: user.id,
       }));
 
       const { error } = await supabase
@@ -132,6 +144,16 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -141,6 +163,7 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
         default_duration: parseInt(formData.default_duration),
         description: formData.description || null,
         active: formData.active,
+        user_id: user.id,
       };
 
       let procedureId: string;
@@ -149,7 +172,8 @@ export function ProcedureForm({ isOpen, onClose, procedure }: ProcedureFormProps
         const { error } = await supabase
           .from('procedures')
           .update(data)
-          .eq('id', procedure.id);
+          .eq('id', procedure.id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
         procedureId = procedure.id;

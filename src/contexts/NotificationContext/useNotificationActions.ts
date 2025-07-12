@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from './types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseNotificationActionsProps {
   notifications: Notification[];
@@ -11,9 +12,15 @@ interface UseNotificationActionsProps {
 
 export const useNotificationActions = ({ notifications, setNotifications }: UseNotificationActionsProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const addNotification = useCallback(async (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     console.log('📢 Adding notification to database:', notification);
+    
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -22,7 +29,8 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
           title: notification.title,
           message: notification.message,
           type: notification.type,
-          appointment_id: notification.appointmentId
+          appointment_id: notification.appointmentId,
+          user_id: user.id,
         })
         .select()
         .single();
@@ -55,16 +63,19 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     } catch (error) {
       console.error('Error adding notification:', error);
     }
-  }, [setNotifications, toast]);
+  }, [setNotifications, toast, user]);
 
   const markAsRead = useCallback(async (id: string) => {
     console.log('📖 Marking notification as read in database:', id);
+    
+    if (!user) return;
     
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error updating notification:', error);
@@ -81,16 +92,19 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  }, [setNotifications]);
+  }, [setNotifications, user]);
 
   const markAllAsRead = useCallback(async () => {
     console.log('📖 Marking all notifications as read in database');
+    
+    if (!user) return;
     
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('read', false);
+        .eq('read', false)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error updating all notifications:', error);
@@ -103,7 +117,7 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
-  }, [setNotifications]);
+  }, [setNotifications, user]);
 
   return {
     addNotification,
