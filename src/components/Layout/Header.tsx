@@ -24,7 +24,7 @@ export function Header() {
         <div className="flex items-center space-x-2 sm:space-x-4">
           <h1 className={cn(
             "font-semibold text-gray-900",
-            isMobile ? "text-lg" : "text-xl md:text-2xl"
+            isMobile ? "text-lg ml-12" : "text-xl md:text-2xl"
           )}>
             Painel Principal
           </h1>
