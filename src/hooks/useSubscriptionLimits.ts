@@ -51,6 +51,8 @@ export function useSubscriptionLimits() {
         .eq('user_id', user.id)
         .single();
 
+      let finalSubscription = subscription;
+
       if (subError) {
         console.error('Error fetching subscription:', subError);
         // Se não encontrar assinatura, criar uma gratuita
@@ -67,14 +69,14 @@ export function useSubscriptionLimits() {
           .eq('user_id', user.id)
           .single();
         
-        subscription = newSub;
+        finalSubscription = newSub;
       }
 
       // Buscar limites do plano
       const { data: limits, error: limitsError } = await supabase
         .from('subscription_limits')
         .select('*')
-        .eq('plan_type', subscription?.plan_type || 'free')
+        .eq('plan_type', finalSubscription?.plan_type || 'free')
         .single();
 
       if (limitsError) throw limitsError;
@@ -93,8 +95,8 @@ export function useSubscriptionLimits() {
       };
 
       const subscriptionInfo: SubscriptionData = {
-        plan_type: subscription?.plan_type || 'free',
-        status: subscription?.status || 'active',
+        plan_type: finalSubscription?.plan_type || 'free',
+        status: finalSubscription?.status || 'active',
         limits: limits,
         usage: usageStats,
         canCreateAppointment: limits.max_appointments === -1 || usageStats.appointments_count < limits.max_appointments,
