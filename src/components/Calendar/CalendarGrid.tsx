@@ -41,7 +41,7 @@ export function CalendarGrid({
   // Generate time slots from 8:00 to 18:00
   const timeSlots = [];
   for (let hour = 8; hour <= 18; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    timeSlots.push(hour);
   }
 
   const getAppointmentPosition = (startTime: string, endTime: string) => {
@@ -96,24 +96,29 @@ export function CalendarGrid({
               
               <ScrollArea className="h-64">
                 <div className="relative">
-                  {timeSlots.map((time, index) => (
-                    <DroppableTimeSlot
-                      key={`${professional.id}-${time}`}
-                      professionalId={professional.id}
-                      timeSlot={time}
-                      selectedDate={selectedDate}
-                    >
-                      <div className="h-12 border-b border-gray-100 flex items-center px-2 text-xs text-gray-500">
-                        {index === 0 && time}
-                      </div>
-                    </DroppableTimeSlot>
-                  ))}
+                  {timeSlots.map((hour) => {
+                    const hasAppointment = professionalAppointments.some(apt => {
+                      const aptStart = new Date(apt.start_time);
+                      return aptStart.getHours() === hour;
+                    });
+
+                    return (
+                      <DroppableTimeSlot
+                        key={`${professional.id}-${hour}`}
+                        hour={hour}
+                        professionalId={professional.id}
+                        date={selectedDate}
+                        hasAppointment={hasAppointment}
+                      />
+                    );
+                  })}
 
                   {/* Appointments */}
                   {professionalAppointments.map((appointment) => (
                     <DraggableAppointment
                       key={appointment.id}
                       appointment={appointment}
+                      professionalColor={professional.color}
                       position={getAppointmentPosition(appointment.start_time, appointment.end_time)}
                       onClick={() => onAppointmentClick(appointment)}
                     />
@@ -148,12 +153,12 @@ export function CalendarGrid({
             <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center text-sm font-medium">
               Hora
             </div>
-            {timeSlots.map((time) => (
+            {timeSlots.map((hour) => (
               <div
-                key={time}
+                key={hour}
                 className="h-16 border-b border-gray-100 flex items-center justify-center text-sm text-gray-600"
               >
-                {time}
+                {hour.toString().padStart(2, '0')}:00
               </div>
             ))}
           </div>
@@ -176,22 +181,29 @@ export function CalendarGrid({
                   {professional.name}
                 </div>
 
-                {timeSlots.map((time) => (
-                  <DroppableTimeSlot
-                    key={`${professional.id}-${time}`}
-                    professionalId={professional.id}
-                    timeSlot={time}
-                    selectedDate={selectedDate}
-                  >
-                    <div className="h-16 border-b border-gray-100 relative" />
-                  </DroppableTimeSlot>
-                ))}
+                {timeSlots.map((hour) => {
+                  const hasAppointment = professionalAppointments.some(apt => {
+                    const aptStart = new Date(apt.start_time);
+                    return aptStart.getHours() === hour;
+                  });
+
+                  return (
+                    <DroppableTimeSlot
+                      key={`${professional.id}-${hour}`}
+                      hour={hour}
+                      professionalId={professional.id}
+                      date={selectedDate}
+                      hasAppointment={hasAppointment}
+                    />
+                  );
+                })}
 
                 {/* Appointments */}
                 {professionalAppointments.map((appointment) => (
                   <DraggableAppointment
                     key={appointment.id}
                     appointment={appointment}
+                    professionalColor={professional.color}
                     position={getAppointmentPosition(appointment.start_time, appointment.end_time)}
                     onClick={() => onAppointmentClick(appointment)}
                   />

@@ -7,13 +7,15 @@ interface DroppableTimeSlotProps {
   professionalId: string;
   date: Date;
   hasAppointment: boolean;
+  children?: React.ReactNode;
 }
 
 export function DroppableTimeSlot({ 
   hour, 
   professionalId, 
   date, 
-  hasAppointment 
+  hasAppointment,
+  children 
 }: DroppableTimeSlotProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const { handleDrop, isDragging } = useDragAndDrop();
@@ -53,6 +55,7 @@ export function DroppableTimeSlot({
           : 'hover:bg-gray-50'
       } ${hasAppointment ? 'cursor-not-allowed' : 'cursor-pointer'}`}
     >
+      {children}
       {isDragOver && !hasAppointment && (
         <div className="flex items-center justify-center h-full text-xs text-green-600 font-medium">
           Soltar aqui

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useAppointmentsData } from '@/hooks/useAppointmentsData';
+import { useAppointmentsData } from './hooks/useAppointmentsData';
 import { AppointmentsTableHeader } from './AppointmentsTableHeader';
 import { AppointmentsTableContent } from './AppointmentsTableContent';
 import { AppointmentsFilters } from './AppointmentsFilters';
@@ -19,27 +19,21 @@ interface AppointmentsTableProps {
 export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<{ statusId?: number; procedureId?: string }>({});
   const isMobile = useIsMobile();
 
   const {
     appointments,
     loading,
-    error,
-    totalPages,
-    totalCount,
-    refreshAppointments
-  } = useAppointmentsData({
-    page: currentPage,
-    limit: isMobile ? 10 : 20,
-    statusId: filters.statusId,
-    procedureId: filters.procedureId
-  });
+    refreshing,
+    handleManualRefresh,
+    handleFiltersChange,
+    activeFilters
+  } = useAppointmentsData();
 
-  const handleFiltersChange = (newFilters: { statusId?: number; procedureId?: string }) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
+  const hasActiveFilters = Boolean(activeFilters.statusId || activeFilters.procedureId);
+
+  const handleFiltersChangeInternal = (newFilters: { statusId?: number; procedureId?: string }) => {
+    handleFiltersChange(newFilters);
     if (onFiltersChange) {
       onFiltersChange(newFilters);
     }
@@ -47,47 +41,40 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
 
   const handleFormClose = () => {
     setIsFormOpen(false);
-    refreshAppointments();
+    handleManualRefresh();
   };
 
   const handleDetailsClose = () => {
     setSelectedAppointment(null);
-    refreshAppointments();
+    handleManualRefresh();
   };
 
-  const handleAppointmentUpdate = () => {
-    refreshAppointments();
+  const handleEditAppointment = (appointment: Appointment, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedAppointment(appointment);
   };
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-red-600">Erro ao carregar agendamentos: {error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <AppointmentsFilters 
-        onFiltersChange={handleFiltersChange}
-        onNewAppointment={() => setIsFormOpen(true)}
+        onFiltersChange={handleFiltersChangeInternal}
       />
 
       <Card>
         <AppointmentsTableHeader
-          totalCount={totalCount}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          loading={loading}
+          appointmentsCount={appointments.length}
+          hasActiveFilters={hasActiveFilters}
+          onCreateAppointment={() => setIsFormOpen(true)}
+          onRefresh={handleManualRefresh}
+          refreshing={refreshing}
         />
         
         <CardContent className="p-0">
           {appointments.length === 0 ? (
-            <AppointmentsEmptyState />
+            <AppointmentsEmptyState 
+              hasActiveFilters={hasActiveFilters}
+              onCreateAppointment={() => setIsFormOpen(true)}
+            />
           ) : (
             <>
               {isMobile ? (
@@ -100,8 +87,8 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-sm">{appointment.patient?.full_name}</p>
-                          <p className="text-xs text-gray-600">{appointment.procedure?.name}</p>
+                          <p className="font-medium text-sm">{appointment.patients?.full_name}</p>
+                          <p className="text-xs text-gray-600">{appointment.procedures?.name}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           appointment.status_id === 1 ? 'bg-green-100 text-green-800' :
@@ -110,11 +97,11 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                           appointment.status_id === 4 ? 'bg-purple-100 text-purple-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {appointment.appointment_status?.label}
+                          {appointment.appointment_statuses?.label}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>{appointment.professional?.name}</span>
+                        <span>{appointment.professionals?.name}</span>
                         <span>
                           {new Date(appointment.start_time).toLocaleDateString('pt-BR')} às{' '}
                           {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
@@ -130,9 +117,9 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                 <ScrollArea className="h-[500px]">
                   <AppointmentsTableContent
                     appointments={appointments}
-                    onAppointmentClick={setSelectedAppointment}
-                    onUpdate={handleAppointmentUpdate}
-                    loading={loading}
+                    hasActiveFilters={hasActiveFilters}
+                    onCreateAppointment={() => setIsFormOpen(true)}
+                    onEditAppointment={handleEditAppointment}
                   />
                 </ScrollArea>
               )}
@@ -152,7 +139,7 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
           appointment={selectedAppointment}
           isOpen={!!selectedAppointment}
           onClose={handleDetailsClose}
-          onUpdate={handleAppointmentUpdate}
+          onUpdate={handleManualRefresh}
         />
       )}
     </div>
