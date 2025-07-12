@@ -1,7 +1,8 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentFormData } from '@/types/appointment-form';
 
 interface Procedure {
@@ -19,9 +20,10 @@ export function useAppointmentAutoSave(
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedData, setLastSavedData] = useState<AppointmentFormData | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const autoSave = useCallback(async (formData: AppointmentFormData) => {
-    if (!appointmentToEdit) return;
+    if (!appointmentToEdit || !user) return;
 
     // Verificar se os dados mudaram desde a última salvagem
     if (lastSavedData && JSON.stringify(formData) === JSON.stringify(lastSavedData)) {
@@ -44,13 +46,15 @@ export function useAppointmentAutoSave(
         end_time: endTime.toISOString(),
         price: procedure?.price || null,
         notes: formData.notes || null,
-        status_id: formData.status_id
+        status_id: formData.status_id,
+        user_id: user.id
       };
 
       const { error } = await supabase
         .from('appointments')
         .update(appointmentData)
-        .eq('id', appointmentToEdit.id);
+        .eq('id', appointmentToEdit.id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -76,9 +80,11 @@ export function useAppointmentAutoSave(
     } finally {
       setIsSaving(false);
     }
-  }, [procedures, appointmentToEdit, lastSavedData, toast, onSuccess]);
+  }, [procedures, appointmentToEdit, lastSavedData, toast, onSuccess, user]);
 
   const manualSave = useCallback(async (formData: AppointmentFormData) => {
+    if (!user) return false;
+    
     setIsSaving(true);
     try {
       const startTime = new Date(formData.start_time);
@@ -95,7 +101,8 @@ export function useAppointmentAutoSave(
         end_time: endTime.toISOString(),
         price: procedure?.price || null,
         notes: formData.notes || null,
-        status_id: formData.status_id
+        status_id: formData.status_id,
+        user_id: user.id
       };
 
       let error;
@@ -103,7 +110,8 @@ export function useAppointmentAutoSave(
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointmentToEdit.id);
+          .eq('id', appointmentToEdit.id)
+          .eq('user_id', user.id);
         error = updateError;
       } else {
         const { error: insertError } = await supabase
@@ -137,7 +145,7 @@ export function useAppointmentAutoSave(
     } finally {
       setIsSaving(false);
     }
-  }, [procedures, appointmentToEdit, toast, onSuccess]);
+  }, [procedures, appointmentToEdit, toast, onSuccess, user]);
 
   return {
     autoSave,

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
+import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentFormData } from '@/types/appointment-form';
 
 interface Procedure {
@@ -21,6 +22,7 @@ export function useAppointmentFormSubmit(
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   const { checkTimeConflict, validateTimeSlot } = useAppointmentValidation();
+  const { user } = useAuth();
 
   const validateForm = async (formData: AppointmentFormData): Promise<boolean> => {
     if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
@@ -71,6 +73,15 @@ export function useAppointmentFormSubmit(
   const handleSubmit = async (e: React.FormEvent, formData: AppointmentFormData) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const isFormValid = await validateForm(formData);
     if (!isFormValid) return;
 
@@ -90,7 +101,8 @@ export function useAppointmentFormSubmit(
         end_time: endTime.toISOString(),
         price: procedure?.price || null,
         notes: formData.notes || null,
-        status_id: formData.status_id
+        status_id: formData.status_id,
+        user_id: user.id
       };
 
       let error;
@@ -98,7 +110,8 @@ export function useAppointmentFormSubmit(
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointmentToEdit.id);
+          .eq('id', appointmentToEdit.id)
+          .eq('user_id', user.id);
         error = updateError;
       } else {
         const { error: insertError } = await supabase

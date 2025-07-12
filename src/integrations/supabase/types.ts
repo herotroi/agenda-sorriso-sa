@@ -55,6 +55,7 @@ export type Database = {
           status: string | null
           status_id: number
           updated_at: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -69,6 +70,7 @@ export type Database = {
           status?: string | null
           status_id?: number
           updated_at?: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -83,6 +85,7 @@ export type Database = {
           status?: string | null
           status_id?: number
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -125,6 +128,7 @@ export type Database = {
           title: string
           type: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           appointment_id?: string | null
@@ -135,6 +139,7 @@ export type Database = {
           title: string
           type: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           appointment_id?: string | null
@@ -145,6 +150,7 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -159,6 +165,7 @@ export type Database = {
           prescription: string | null
           professional_id: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           appointment_id?: string | null
@@ -170,6 +177,7 @@ export type Database = {
           prescription?: string | null
           professional_id?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           appointment_id?: string | null
@@ -181,6 +189,7 @@ export type Database = {
           prescription?: string | null
           professional_id?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -225,6 +234,7 @@ export type Database = {
           street: string | null
           sus_card: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           active?: boolean | null
@@ -244,6 +254,7 @@ export type Database = {
           street?: string | null
           sus_card?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
           active?: boolean | null
@@ -263,6 +274,7 @@ export type Database = {
           street?: string | null
           sus_card?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -272,18 +284,21 @@ export type Database = {
           id: string
           procedure_id: string
           professional_id: string
+          user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           procedure_id: string
           professional_id: string
+          user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           procedure_id?: string
           professional_id?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -312,6 +327,7 @@ export type Database = {
           name: string
           price: number
           updated_at: string
+          user_id: string
         }
         Insert: {
           active?: boolean | null
@@ -322,6 +338,7 @@ export type Database = {
           name: string
           price: number
           updated_at?: string
+          user_id: string
         }
         Update: {
           active?: boolean | null
@@ -332,6 +349,7 @@ export type Database = {
           name?: string
           price?: number
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -352,6 +370,7 @@ export type Database = {
           second_shift_start: string | null
           specialty: string | null
           updated_at: string
+          user_id: string
           vacation_active: boolean | null
           vacation_end: string | null
           vacation_start: string | null
@@ -377,6 +396,7 @@ export type Database = {
           second_shift_start?: string | null
           specialty?: string | null
           updated_at?: string
+          user_id: string
           vacation_active?: boolean | null
           vacation_end?: string | null
           vacation_start?: string | null
@@ -402,6 +422,7 @@ export type Database = {
           second_shift_start?: string | null
           specialty?: string | null
           updated_at?: string
+          user_id?: string
           vacation_active?: boolean | null
           vacation_end?: string | null
           vacation_start?: string | null
@@ -483,6 +504,7 @@ export type Database = {
           patient_id: string | null
           record_id: string | null
           uploaded_at: string
+          user_id: string
         }
         Insert: {
           appointment_id?: string | null
@@ -496,6 +518,7 @@ export type Database = {
           patient_id?: string | null
           record_id?: string | null
           uploaded_at?: string
+          user_id: string
         }
         Update: {
           appointment_id?: string | null
@@ -509,6 +532,7 @@ export type Database = {
           patient_id?: string | null
           record_id?: string | null
           uploaded_at?: string
+          user_id?: string
         }
         Relationships: [
           {

@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppointmentFormState } from './useAppointmentFormState';
+import { useAuth } from '@/contexts/AuthContext';
 import { Patient, Professional, Procedure, AppointmentStatus, AppointmentFormData } from '@/types/appointment-form';
 
 export function useAppointmentFormData(
@@ -13,6 +15,7 @@ export function useAppointmentFormData(
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
+  const { user } = useAuth();
 
   const {
     formData,
@@ -25,18 +28,20 @@ export function useAppointmentFormData(
   } = useAppointmentFormState(selectedProfessionalId);
 
   const fetchData = async () => {
+    if (!user) return;
+    
     try {
       const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
-        // Only fetch active patients
-        supabase.from('patients').select('id, full_name, cpf, phone').eq('active', true).order('full_name'),
-        supabase.from('professionals').select('id, name').eq('active', true).order('name'),
-        // Fetch procedures with their associated professionals
+        // Only fetch active patients for this user
+        supabase.from('patients').select('id, full_name, cpf, phone').eq('active', true).eq('user_id', user.id).order('full_name'),
+        supabase.from('professionals').select('id, name').eq('active', true).eq('user_id', user.id).order('name'),
+        // Fetch procedures with their associated professionals for this user
         supabase.from('procedures').select(`
           *,
           procedure_professionals!inner(
             professional:professionals(id, name, specialty, color)
           )
-        `).eq('active', true).order('name'),
+        `).eq('active', true).eq('user_id', user.id).order('name'),
         supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
       ]);
 
@@ -130,7 +135,7 @@ export function useAppointmentFormData(
     if (isOpen) {
       fetchData();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (isOpen && appointmentToEdit) {

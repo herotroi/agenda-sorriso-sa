@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Professional {
   id: string;
@@ -28,13 +29,17 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchProfessionals = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('professionals')
         .select('id, name')
         .eq('active', true)
+        .eq('user_id', user.id)
         .order('name');
 
       if (error) throw error;
@@ -53,11 +58,11 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         prescription: '',
       });
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientId || !formData.professional_id || !formData.notes) return;
+    if (!patientId || !formData.professional_id || !formData.notes || !user) return;
 
     setLoading(true);
     try {
@@ -68,6 +73,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
           professional_id: formData.professional_id,
           notes: formData.notes,
           prescription: formData.prescription || null,
+          user_id: user.id,
         });
 
       if (error) throw error;

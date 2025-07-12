@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Appointment } from '../types';
 
 interface AppointmentFilters {
@@ -16,8 +17,14 @@ export function useAppointmentsData() {
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<AppointmentFilters>({});
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     console.log('🔄 Fetching appointments data...');
     setRefreshing(true);
     try {
@@ -30,6 +37,7 @@ export function useAppointmentsData() {
           procedures(name),
           appointment_statuses(label, color)
         `)
+        .eq('user_id', user.id)
         .order('start_time', { ascending: false })
         .limit(200);
 
@@ -90,7 +98,7 @@ export function useAppointmentsData() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleManualRefresh = () => {
     fetchData();

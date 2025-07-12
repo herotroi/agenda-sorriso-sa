@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Appointment } from '@/components/Appointments/types';
 
 export function useProfessionalDetailData(professionalId: string, selectedDate: Date) {
@@ -9,8 +10,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const [monthAppointments, setMonthAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchAppointments = async (specificDate?: Date) => {
+    if (!user) return;
+    
     const targetDate = specificDate || selectedDate;
     console.log('🔄 Fetching professional appointments:', { professionalId, targetDate });
     
@@ -40,6 +44,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
           appointment_statuses(label, color)
         `)
         .eq('professional_id', professionalId)
+        .eq('user_id', user.id)
         .gte('start_time', startOfDay.toISOString())
         .lte('start_time', endOfDay.toISOString())
         .order('start_time');
@@ -63,6 +68,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   };
 
   const fetchMonthAppointments = async (date: Date) => {
+    if (!user) return;
+    
     try {
       // Buscar todos os agendamentos do mês
       const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -81,6 +88,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
           appointment_statuses(label, color)
         `)
         .eq('professional_id', professionalId)
+        .eq('user_id', user.id)
         .gte('start_time', startOfMonth.toISOString())
         .lte('start_time', endOfMonth.toISOString())
         .order('start_time');
@@ -94,11 +102,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   };
 
   useEffect(() => {
-    if (professionalId) {
+    if (professionalId && user) {
       fetchAppointments();
       fetchMonthAppointments(selectedDate);
     }
-  }, [selectedDate, professionalId]);
+  }, [selectedDate, professionalId, user]);
 
   return {
     appointments,

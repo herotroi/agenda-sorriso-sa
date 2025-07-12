@@ -18,6 +18,7 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
   
   // Memoized filtering and sorting for better performance
   const filteredAndSortedPatients = useMemo(() => {
+    // Filter only active patients belonging to the current user
     const activePatients = patients.filter(patient => patient.active !== false);
     
     if (!searchTerm.trim()) {

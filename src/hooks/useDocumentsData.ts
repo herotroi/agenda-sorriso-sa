@@ -2,18 +2,23 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ProntuarioDocument } from '@/types/prontuario';
 
 export function useDocumentsData() {
   const [documents, setDocuments] = useState<ProntuarioDocument[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchDocuments = async (patientId: string, appointmentId?: string) => {
+    if (!user) return;
+    
     try {
       let query = supabase
         .from('prontuario_documents')
         .select('*')
         .eq('patient_id', patientId)
+        .eq('user_id', user.id)
         .order('uploaded_at', { ascending: false });
 
       if (appointmentId) {
@@ -58,7 +63,7 @@ export function useDocumentsData() {
     selectedPatient: string,
     selectedAppointment: string | null
   ) => {
-    if (!selectedPatient) {
+    if (!selectedPatient || !user) {
       toast({
         title: 'Erro',
         description: 'Selecione um paciente primeiro',
@@ -91,6 +96,7 @@ export function useDocumentsData() {
           file_size: file.size,
           mime_type: file.type,
           description: description || null,
+          user_id: user.id,
         });
 
       if (dbError) throw dbError;
@@ -122,12 +128,15 @@ export function useDocumentsData() {
     selectedPatient: string,
     selectedAppointment: string | null
   ) => {
+    if (!user) return;
+    
     try {
       // Get document details first
       const { data: docData, error: fetchError } = await supabase
         .from('prontuario_documents')
         .select('file_path')
         .eq('id', documentId)
+        .eq('user_id', user.id)
         .single();
 
       if (fetchError) throw fetchError;
@@ -143,7 +152,8 @@ export function useDocumentsData() {
       const { error: dbError } = await supabase
         .from('prontuario_documents')
         .delete()
-        .eq('id', documentId);
+        .eq('id', documentId)
+        .eq('user_id', user.id);
 
       if (dbError) throw dbError;
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Patient {
   id: string;
@@ -50,8 +51,11 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchPatientRecords = async (patientId: string) => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('patient_records')
@@ -64,6 +68,7 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
           )
         `)
         .eq('patient_id', patientId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -111,10 +116,20 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
       });
       setPatientRecords([]);
     }
-  }, [patient, isOpen]);
+  }, [patient, isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent, onClose: () => void) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -132,13 +147,15 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         sus_card: formData.sus_card || null,
         health_insurance: formData.health_insurance || null,
         notes: formData.notes || null,
+        user_id: user.id,
       };
 
       if (patient) {
         const { error } = await supabase
           .from('patients')
           .update(data)
-          .eq('id', patient.id);
+          .eq('id', patient.id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
 
