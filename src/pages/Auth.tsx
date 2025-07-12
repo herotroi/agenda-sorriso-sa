@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,12 +10,14 @@ import { AlertCircle, Heart, Calendar, Users, FileText, BarChart3, Eye, EyeOff, 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, resetPassword, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -92,6 +93,30 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    if (!resetEmail) {
+      setError('Por favor, informe seu email');
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await resetPassword(resetEmail);
+    
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccessMessage('Link de recuperação enviado! Verifique seu email.');
+      setResetEmail('');
+    }
+    
+    setIsLoading(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -143,26 +168,34 @@ const Auth = () => {
           </div>
         </div>
 
-        {/* Formulário de Login/Cadastro */}
+        {/* Formulário de Login/Cadastro/Recuperação */}
         <div className="max-w-md mx-auto">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-center">Acesse sua conta</CardTitle>
               <CardDescription className="text-center">
-                Entre com sua conta ou cadastre-se para começar
+                Entre com sua conta, cadastre-se ou recupere sua senha
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="login">Entrar</TabsTrigger>
                   <TabsTrigger value="register">Cadastrar</TabsTrigger>
+                  <TabsTrigger value="reset">Esqueci a Senha</TabsTrigger>
                 </TabsList>
 
                 {error && (
                   <Alert variant="destructive" className="mt-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {successMessage && (
+                  <Alert className="mt-4 border-green-200 bg-green-50">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
                   </Alert>
                 )}
 
@@ -329,6 +362,32 @@ const Auth = () => {
                       disabled={isLoading || !passwordValidation.isValid || !passwordsMatch}
                     >
                       {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="reset">
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="resetEmail">Email</Label>
+                      <Input
+                        id="resetEmail"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                      />
+                      <p className="text-sm text-gray-600">
+                        Digite seu email para receber o link de recuperação de senha
+                      </p>
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
                     </Button>
                   </form>
                 </TabsContent>
