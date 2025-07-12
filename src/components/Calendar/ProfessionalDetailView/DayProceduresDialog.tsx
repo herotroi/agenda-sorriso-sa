@@ -1,7 +1,8 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, User, FileText, Edit } from 'lucide-react';
 import { Appointment } from '@/components/Appointments/types';
 
 interface DayProceduresDialogProps {
@@ -24,6 +25,11 @@ export function DayProceduresDialog({
   const sortedAppointments = appointments.sort((a, b) => 
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
+
+  const handleEditAppointment = (appointmentId: string) => {
+    // TODO: Implementar edição do agendamento
+    console.log('Editar agendamento:', appointmentId);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -75,12 +81,23 @@ export function DayProceduresDialog({
                         })}
                       </span>
                     </div>
-                    <Badge 
-                      className="text-white font-semibold"
-                      style={{ backgroundColor: statusColor }}
-                    >
-                      {appointment.appointment_statuses?.label || appointment.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditAppointment(appointment.id)}
+                        className="h-6 w-6 p-0 hover:bg-gray-100"
+                        title="Editar procedimento"
+                      >
+                        <Edit className="h-3 w-3 text-gray-500" />
+                      </Button>
+                      <Badge 
+                        className="text-white font-semibold"
+                        style={{ backgroundColor: statusColor }}
+                      >
+                        {appointment.appointment_statuses?.label || appointment.status}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
