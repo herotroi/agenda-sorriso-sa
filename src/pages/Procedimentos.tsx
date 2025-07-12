@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { ProcedureForm } from '@/components/Procedures/ProcedureForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { UpgradeWarning } from '@/components/Subscription/UpgradeWarning';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,7 @@ export default function Procedimentos() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { subscriptionData, loading: subscriptionLoading, checkLimit, showLimitWarning } = useSubscriptionLimits();
 
   const fetchProcedures = async () => {
     if (!user) {
@@ -140,8 +142,37 @@ export default function Procedimentos() {
     fetchProcedures();
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
+  const handleNewProcedure = () => {
+    if (!checkLimit('procedure')) {
+      showLimitWarning('procedure');
+      return;
+    }
+    setIsFormOpen(true);
+  };
+
+  if (loading || subscriptionLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Verificar se o usuário pode criar procedimentos
+  if (subscriptionData && !subscriptionData.canCreateProcedure && procedures.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <UpgradeWarning
+            title="Limite de Procedimentos Atingido"
+            description="Você atingiu o limite máximo de procedimentos para o seu plano atual."
+            feature="Procedimentos"
+            currentUsage={subscriptionData.usage.procedures_count}
+            maxLimit={subscriptionData.limits.max_procedures}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -150,8 +181,13 @@ export default function Procedimentos() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Procedimentos</h1>
           <p className="text-gray-600">Gerencie os procedimentos da clínica</p>
+          {subscriptionData && subscriptionData.plan_type === 'free' && (
+            <p className="text-sm text-amber-600 mt-1">
+              Plano gratuito: {subscriptionData.usage.procedures_count}/{subscriptionData.limits.max_procedures} procedimentos
+            </p>
+          )}
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={handleNewProcedure}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Procedimento
         </Button>

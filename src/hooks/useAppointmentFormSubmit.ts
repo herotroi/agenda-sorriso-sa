@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { AppointmentFormData } from '@/types/appointment-form';
 
 interface Procedure {
@@ -23,8 +24,15 @@ export function useAppointmentFormSubmit(
   const { toast } = useToast();
   const { checkTimeConflict, validateTimeSlot } = useAppointmentValidation();
   const { user } = useAuth();
+  const { checkLimit, showLimitWarning } = useSubscriptionLimits();
 
   const validateForm = async (formData: AppointmentFormData): Promise<boolean> => {
+    // Verificar limite de agendamentos para novos agendamentos
+    if (!appointmentToEdit && !checkLimit('appointment')) {
+      showLimitWarning('appointment');
+      return false;
+    }
+
     if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
       toast({
         title: 'Campos obrigatórios',
@@ -62,7 +70,7 @@ export function useAppointmentFormSubmit(
         title: 'Conflito de horário',
         description: conflictMessage,
         variant: 'destructive',
-        duration: 8000, // Mostrar por mais tempo para ler a mensagem completa
+        duration: 8000,
       });
       return false;
     }
