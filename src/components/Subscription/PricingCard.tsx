@@ -26,18 +26,30 @@ export function PricingCard({
   onSubscribe 
 }: PricingCardProps) {
   return (
-    <Card className={`relative ${isPopular ? 'border-blue-500 shadow-lg' : ''}`}>
+    <Card className={`relative ${isPopular ? 'border-blue-500 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}>
       {isPopular && (
         <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500">
           Mais Popular
         </Badge>
       )}
       
+      {isCurrentPlan && (
+        <Badge className="absolute -top-2 right-4 bg-green-500">
+          Plano Atual
+        </Badge>
+      )}
+      
       <CardHeader className="text-center pb-2">
         <CardTitle className="text-lg">{title}</CardTitle>
         <div className="mt-4">
-          <span className="text-4xl font-bold">R$ {price}</span>
-          <span className="text-gray-600">/{period}</span>
+          {price === 0 ? (
+            <span className="text-4xl font-bold">Gratuito</span>
+          ) : (
+            <>
+              <span className="text-4xl font-bold">R$ {price}</span>
+              <span className="text-gray-600">/{period}</span>
+            </>
+          )}
         </div>
       </CardHeader>
       
@@ -64,6 +76,8 @@ export function PricingCard({
             </>
           ) : isCurrentPlan ? (
             'Plano Atual'
+          ) : price === 0 ? (
+            'Plano Gratuito'
           ) : (
             'Assinar Agora'
           )}

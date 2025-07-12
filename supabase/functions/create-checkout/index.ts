@@ -56,22 +56,12 @@ serve(async (req) => {
       logStep("No existing customer found");
     }
 
-    // Definir preços baseados no plano
-    let priceData;
+    // Definir price ID baseado no plano
+    let priceId;
     if (planId === 'monthly') {
-      priceData = {
-        currency: "brl",
-        product_data: { name: "Plano Mensal - Sistema de Gestão Clínica" },
-        unit_amount: 4500, // R$ 45,00 em centavos
-        recurring: { interval: "month" },
-      };
+      priceId = 'price_1RjqEpRDyYwOIEUI2xrUMO8P';
     } else if (planId === 'annual') {
-      priceData = {
-        currency: "brl",
-        product_data: { name: "Plano Anual - Sistema de Gestão Clínica" },
-        unit_amount: 3900, // R$ 39,00 em centavos
-        recurring: { interval: "month" },
-      };
+      priceId = 'price_1RjqGgRDyYwOIEUI1FDtx1rm';
     } else {
       throw new Error("Invalid plan ID");
     }
@@ -82,7 +72,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: priceData,
+          price: priceId,
           quantity: 1,
         },
       ],
