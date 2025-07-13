@@ -1,4 +1,3 @@
-
 // Tipos principais do sistema
 export interface Professional {
   id: string;
@@ -13,8 +12,8 @@ export interface Professional {
   isActive: boolean;
   documents: string[];
   createdAt: string;
-  // Database fields
-  color?: string;
+  // Database fields - ensure color is always present
+  color: string; // Changed from optional to required
   working_hours?: any;
   active?: boolean;
   crm_cro?: string;
