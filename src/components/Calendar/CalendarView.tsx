@@ -71,10 +71,33 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
   if (selectedProfessional) {
     const professional = professionals.find(p => p.id === selectedProfessional);
     if (professional) {
+      // Map the professional to include all required fields
+      const mappedProfessional = {
+        ...professional,
+        specialty: professional.specialty || '',
+        email: professional.email || '',
+        phone: professional.phone || '',
+        cro: professional.crm_cro || '',
+        services: [],
+        workingHours: {
+          monday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+          tuesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+          wednesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+          thursday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+          friday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+          saturday: { isWorking: false, startTime: '08:00', endTime: '18:00' },
+          sunday: { isWorking: false, startTime: '08:00', endTime: '18:00' }
+        },
+        calendarColor: professional.color || '#3b82f6',
+        isActive: professional.active !== false,
+        documents: [],
+        createdAt: professional.created_at || new Date().toISOString()
+      };
+      
       return (
         <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
           <ProfessionalDetailView
-            professional={professional}
+            professional={mappedProfessional}
             onBack={handleBackToProfessionalList}
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
@@ -92,10 +115,33 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
     );
   }
 
+  // Map professionals to ensure they have all required fields
+  const mappedProfessionals = professionals.map(prof => ({
+    ...prof,
+    specialty: prof.specialty || '',
+    email: prof.email || '',
+    phone: prof.phone || '',
+    cro: prof.crm_cro || '',
+    services: [],
+    workingHours: {
+      monday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+      tuesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+      wednesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+      thursday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+      friday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+      saturday: { isWorking: false, startTime: '08:00', endTime: '18:00' },
+      sunday: { isWorking: false, startTime: '08:00', endTime: '18:00' }
+    },
+    calendarColor: prof.color || '#3b82f6',
+    isActive: prof.active !== false,
+    documents: [],
+    createdAt: prof.created_at || new Date().toISOString()
+  }));
+
   return (
     <div className={`${isMobile ? 'px-1' : 'px-4'}`}>
       <CalendarContent
-        professionals={professionals}
+        professionals={mappedProfessionals}
         appointments={appointments}
         timeBlocks={timeBlocks}
         selectedDate={selectedDate}

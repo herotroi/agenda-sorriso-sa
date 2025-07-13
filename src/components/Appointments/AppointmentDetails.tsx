@@ -78,7 +78,10 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
               <Separator />
 
               <AppointmentStatusUpdater 
-                appointment={appointment} 
+                appointment={{
+                  ...appointment,
+                  status_id: appointment.status_id || 1
+                }} 
                 onClose={handleClose}
                 onUpdate={handleStatusUpdate}
               />

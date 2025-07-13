@@ -13,6 +13,26 @@ export interface Professional {
   isActive: boolean;
   documents: string[];
   createdAt: string;
+  // Database fields
+  color?: string;
+  working_hours?: any;
+  active?: boolean;
+  crm_cro?: string;
+  first_shift_start?: string;
+  first_shift_end?: string;
+  second_shift_start?: string;
+  second_shift_end?: string;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  break_times?: any;
+  working_days?: boolean[];
+  weekend_shift_active?: boolean;
+  weekend_shift_start?: string;
+  weekend_shift_end?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
 }
 
 export interface WorkingHours {
@@ -45,6 +65,21 @@ export interface Patient {
   medicalHistory: string;
   clinicalNotes: string[];
   createdAt: string;
+  // Database fields
+  full_name?: string;
+  birth_date?: string;
+  health_insurance?: string;
+  sus_card?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  active?: boolean;
+  notes?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface Address {
@@ -67,6 +102,22 @@ export interface Appointment {
   status: AppointmentStatus;
   notes?: string;
   createdAt: string;
+  // Database fields
+  professional_id?: string;
+  patient_id?: string;
+  procedure_id?: string;
+  start_time?: string;
+  end_time?: string;
+  status_id?: number;
+  price?: number;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  // Joined table fields
+  patients?: { full_name: string } | null;
+  professionals?: { name: string; color?: string } | null;
+  procedures?: { name: string } | null;
+  appointment_statuses?: { label: string; color: string } | null;
 }
 
 export type AppointmentStatus = 'confirmado' | 'cancelado' | 'faltou' | 'em-andamento' | 'concluido';

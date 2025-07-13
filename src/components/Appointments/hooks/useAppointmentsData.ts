@@ -58,8 +58,10 @@ export function useAppointmentsData() {
         patientId: apt.patient_id,
         professionalId: apt.professional_id,
         procedureId: apt.procedure_id,
-        date: new Date(apt.start_time).toISOString().split('T')[0]
-      }));
+        date: new Date(apt.start_time).toISOString().split('T')[0],
+        createdAt: apt.created_at,
+        status: apt.status || 'confirmado'
+      })) as Appointment[];
       
       setAllAppointments(mappedAppointments);
       applyFilters(mappedAppointments, filters);

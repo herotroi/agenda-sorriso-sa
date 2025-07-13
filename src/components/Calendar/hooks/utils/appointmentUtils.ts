@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { Appointment } from '@/types';
 
 export async function fetchAppointments(selectedDate: Date): Promise<Appointment[]> {
@@ -45,10 +44,42 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
       patientId: apt.patient_id,
       professionalId: apt.professional_id,
       procedureId: apt.procedure_id,
-      date: new Date(apt.start_time).toISOString().split('T')[0]
-    }));
+      date: new Date(apt.start_time).toISOString().split('T')[0],
+      createdAt: apt.created_at,
+      status: apt.status || 'confirmado'
+    })) as Appointment[];
   } catch (error) {
     console.error('❌ Error fetching appointments:', error);
     return [];
   }
+}
+
+export function checkTimeConflicts(
+  appointments: Appointment[],
+  startTime: Date,
+  endTime: Date,
+  professionalId: string,
+  excludeAppointmentId?: string
+): boolean {
+  return appointments.some(appointment => {
+    // Skip the appointment being edited
+    if (excludeAppointmentId && appointment.id === excludeAppointmentId) {
+      return false;
+    }
+
+    // Only check conflicts for the same professional
+    if (appointment.professionalId !== professionalId) {
+      return false;
+    }
+
+    const appointmentStart = new Date(appointment.startTime);
+    const appointmentEnd = new Date(appointment.endTime);
+
+    // Check for overlap
+    return (
+      (startTime >= appointmentStart && startTime < appointmentEnd) ||
+      (endTime > appointmentStart && endTime <= appointmentEnd) ||
+      (startTime <= appointmentStart && endTime >= appointmentEnd)
+    );
+  });
 }

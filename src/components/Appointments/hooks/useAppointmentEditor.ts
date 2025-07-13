@@ -100,9 +100,21 @@ export function useAppointmentEditor(
       console.log('✅ Update successful, updated data:', data);
 
       if (data && data[0]) {
+        const updatedAppointment = {
+          ...data[0],
+          startTime: data[0].start_time,
+          endTime: data[0].end_time,
+          patientId: data[0].patient_id,
+          professionalId: data[0].professional_id,
+          procedureId: data[0].procedure_id,
+          date: new Date(data[0].start_time).toISOString().split('T')[0],
+          createdAt: data[0].created_at,
+          status: data[0].status || 'confirmado'
+        } as Appointment;
+
         setAppointments(prev => prev.map(appointment => 
           appointment.id === editingCell.appointmentId 
-            ? { ...appointment, ...data[0] }
+            ? updatedAppointment
             : appointment
         ));
       }
