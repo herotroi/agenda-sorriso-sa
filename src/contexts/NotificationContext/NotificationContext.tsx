@@ -13,7 +13,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Load notifications from database
   useNotificationData({ setNotifications });
 
-  const { addNotification, markAsRead, markAllAsRead } = useNotificationActions({
+  const { addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotificationActions({
     notifications,
     setNotifications,
   });
@@ -39,6 +39,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markAsRead,
         markAllAsRead,
         addNotification,
+        deleteNotification,
       }}
     >
       {children}

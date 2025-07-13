@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface DatabaseProfessional {
   id: string;
@@ -46,7 +45,9 @@ export const fetchProfessionals = async (): Promise<DatabaseProfessional[]> => {
       : [],
     working_days: Array.isArray(prof.working_days) 
       ? (prof.working_days as boolean[]) 
-      : [true, true, true, true, true, false, false]
+      : [true, true, true, true, true, false, false],
+    // Ensure color is always available for TimeBlock compatibility
+    color: prof.color || '#3b82f6'
   })) || [];
   
   return processedData;

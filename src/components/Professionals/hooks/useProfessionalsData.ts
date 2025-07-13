@@ -48,7 +48,26 @@ export function useProfessionalsData() {
         calendarColor: prof.color || '#3b82f6',
         isActive: prof.active,
         documents: [],
-        createdAt: prof.created_at
+        createdAt: prof.created_at,
+        // Include database fields for compatibility - ensure color is always present
+        color: prof.color || '#3b82f6',
+        working_hours: prof.working_hours,
+        active: prof.active,
+        crm_cro: prof.crm_cro,
+        first_shift_start: prof.first_shift_start,
+        first_shift_end: prof.first_shift_end,
+        second_shift_start: prof.second_shift_start,
+        second_shift_end: prof.second_shift_end,
+        vacation_active: prof.vacation_active,
+        vacation_start: prof.vacation_start,
+        vacation_end: prof.vacation_end,
+        break_times: prof.break_times,
+        working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : [true, true, true, true, true, false, false],
+        weekend_shift_active: prof.weekend_shift_active,
+        weekend_shift_start: prof.weekend_shift_start,
+        weekend_shift_end: prof.weekend_shift_end,
+        updated_at: prof.updated_at,
+        user_id: prof.user_id
       }));
 
       setProfessionals(mappedProfessionals);

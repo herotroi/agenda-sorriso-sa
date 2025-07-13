@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,15 +12,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNotificationActions } from '@/contexts/NotificationContext/useNotificationActions';
-import { useNotificationData } from '@/contexts/NotificationContext/useNotificationData';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
 import { Appointment, AppointmentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 export function NotificationDropdown() {
-  const { notifications, unreadCount } = useNotificationData();
-  const { markAsRead, deleteNotification } = useNotificationActions();
+  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   
   console.log('🔔 NotificationDropdown render:', {
@@ -28,7 +27,7 @@ export function NotificationDropdown() {
   });
 
   const handleNotificationClick = async (notification: any) => {
-    if (notification.appointment_id) {
+    if (notification.appointmentId) {
       try {
         const { data, error } = await supabase
           .from('appointments')
@@ -39,7 +38,7 @@ export function NotificationDropdown() {
             procedures(name),
             appointment_statuses(label, color)
           `)
-          .eq('id', notification.appointment_id)
+          .eq('id', notification.appointmentId)
           .single();
 
         if (error) throw error;
@@ -173,7 +172,7 @@ export function NotificationDropdown() {
                           {notification.message}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {formatDate(notification.created_at)}
+                          {formatDate(notification.timestamp.toISOString())}
                         </div>
                       </div>
                     </div>

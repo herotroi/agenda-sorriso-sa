@@ -119,9 +119,35 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     }
   }, [setNotifications, user]);
 
+  const deleteNotification = useCallback(async (id: string) => {
+    console.log('🗑️ Deleting notification from database:', id);
+    
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error deleting notification:', error);
+        return;
+      }
+
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== id)
+      );
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  }, [setNotifications, user]);
+
   return {
     addNotification,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
   };
 };

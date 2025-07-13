@@ -33,8 +33,8 @@ export function useProfessionals() {
         isActive: prof.active !== false,
         documents: [],
         createdAt: prof.created_at || new Date().toISOString(),
-        // Include database fields for compatibility
-        color: prof.color,
+        // Include database fields for compatibility - ensure color is always present
+        color: prof.color || '#3b82f6',
         working_hours: prof.working_hours,
         active: prof.active,
         crm_cro: prof.crm_cro,
@@ -46,7 +46,7 @@ export function useProfessionals() {
         vacation_start: prof.vacation_start,
         vacation_end: prof.vacation_end,
         break_times: prof.break_times,
-        working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : [true, true, true, true, true, false, false],
+        working_days: prof.working_days || [true, true, true, true, true, false, false],
         weekend_shift_active: prof.weekend_shift_active,
         weekend_shift_start: prof.weekend_shift_start,
         weekend_shift_end: prof.weekend_shift_end,
