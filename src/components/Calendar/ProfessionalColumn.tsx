@@ -2,13 +2,8 @@
 import { DraggableAppointment } from './DraggableAppointment';
 import { DroppableTimeSlot } from './DroppableTimeSlot';
 import { TimeBlock } from './TimeBlock';
-import { Appointment } from '@/components/Appointments/types';
-
-interface Professional {
-  id: string;
-  name: string;
-  color: string;
-}
+import { Appointment } from '@/types';
+import { Professional } from '@/types';
 
 interface TimeBlockType {
   id: string;
@@ -24,17 +19,19 @@ interface ProfessionalColumnProps {
   appointments: Appointment[];
   timeBlocks: TimeBlockType[];
   selectedDate: Date;
-  hours: number[];
+  timeSlots: { time: string; hour: number; }[];
   onAppointmentClick: (appointment: Appointment) => void;
+  onTimeSlotClick: (professionalId: string, startTime: Date) => void;
 }
 
 export function ProfessionalColumn({ 
   professional, 
   appointments, 
-  timeBlocks,
+  timeBlocks = [],
   selectedDate, 
-  hours, 
-  onAppointmentClick 
+  timeSlots, 
+  onAppointmentClick,
+  onTimeSlotClick
 }: ProfessionalColumnProps) {
   const getItemPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -45,8 +42,8 @@ export function ProfessionalColumn({
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
     
     // Calcular posição precisa baseada no horário
-    const topPosition = startHour * 64 + (startMinutes / 60) * 64; // 64px = altura de cada slot de hora
-    const height = Math.max(duration * 64, 32); // altura mínima de 32px
+    const topPosition = startHour * 80 + (startMinutes / 60) * 80; // 80px por hora
+    const height = Math.max(duration * 80, 32); // altura mínima de 32px
     
     return {
       top: `${topPosition}px`,
@@ -55,31 +52,23 @@ export function ProfessionalColumn({
   };
 
   // Filtrar blocos de tempo para este profissional
-  const professionalTimeBlocks = timeBlocks.filter(block => 
+  const professionalTimeBlocks = timeBlocks ? timeBlocks.filter(block => 
     block.professional_id === professional.id
-  );
+  ) : [];
 
   return (
-    <div className="border-r relative bg-white">
-      <div className="h-12 border-b flex items-center justify-center font-semibold text-sm p-2 bg-gray-100 sticky top-0 z-10">
-        <div className="text-center">
-          <div className="truncate max-w-full" title={professional.name}>
-            {professional.name}
-          </div>
-        </div>
-      </div>
-      
+    <div className="border-r border-gray-200 last:border-r-0">
       <div className="relative">
-        {hours.map((hour) => {
+        {timeSlots.map((slot) => {
           const hasAppointment = appointments.some(apt => {
-            const startHour = new Date(apt.start_time).getHours();
-            return startHour === hour;
+            const startHour = new Date(apt.startTime).getHours();
+            return startHour === slot.hour;
           });
 
           return (
             <DroppableTimeSlot
-              key={hour}
-              hour={hour}
+              key={slot.hour}
+              hour={slot.hour}
               professionalId={professional.id}
               date={selectedDate}
               hasAppointment={hasAppointment}
@@ -102,16 +91,16 @@ export function ProfessionalColumn({
           })}
         </div>
         
-        {/* Agendamentos posicionados absolutamente */}
+        {/* Agendamentos posicionados absolutemente */}
         <div className="absolute inset-0">
           {appointments.map((appointment) => {
-            const position = getItemPosition(appointment.start_time, appointment.end_time);
+            const position = getItemPosition(appointment.startTime, appointment.endTime);
             
             return (
               <DraggableAppointment
                 key={appointment.id}
                 appointment={appointment}
-                professionalColor={professional.color}
+                professionalColor={professional.calendarColor || '#3b82f6'}
                 position={position}
                 onClick={() => onAppointmentClick(appointment)}
               />

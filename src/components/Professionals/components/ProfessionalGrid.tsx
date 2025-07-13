@@ -1,12 +1,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { ProfessionalCard } from './ProfessionalCard';
-import { Professional } from '../types';
+import { Professional } from '@/types';
 
 interface ProfessionalGridProps {
   professionals: Professional[];
   onEdit: (professional: Professional) => void;
-  onDelete: (professional: Professional) => Promise<void>;
+  onDelete: (professionalId: string, professionalName: string) => Promise<void>;
 }
 
 export function ProfessionalGrid({ professionals, onEdit, onDelete }: ProfessionalGridProps) {

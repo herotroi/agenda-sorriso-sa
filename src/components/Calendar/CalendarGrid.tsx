@@ -3,8 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ProfessionalColumn } from './ProfessionalColumn';
-import { Professional } from '@/components/Professionals/types';
-import { Appointment } from '@/components/Appointments/types';
+import { Professional, Appointment } from '@/types';
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -106,11 +105,12 @@ export function CalendarGrid({
               <ProfessionalColumn
                 key={professional.id}
                 professional={professional}
-                currentDate={currentDate}
+                selectedDate={currentDate}
                 appointments={appointments.filter(
-                  (apt) => apt.professional_id === professional.id
+                  (apt) => apt.professionalId === professional.id
                 )}
                 timeSlots={timeSlots}
+                timeBlocks={[]}
                 onAppointmentClick={onAppointmentClick}
                 onTimeSlotClick={onTimeSlotClick}
               />

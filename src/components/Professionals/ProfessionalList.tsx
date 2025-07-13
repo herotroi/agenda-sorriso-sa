@@ -7,7 +7,6 @@ import { ProfessionalGrid } from './components/ProfessionalGrid';
 import { ProfessionalHeader } from './components/ProfessionalHeader';
 import { useProfessionalsData } from './hooks/useProfessionalsData';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
-import { UpgradeWarning } from '@/components/Subscription/UpgradeWarning';
 import type { Professional } from '@/types';
 
 export function ProfessionalList() {
@@ -41,14 +40,14 @@ export function ProfessionalList() {
     refreshProfessionals();
   };
 
-  const handleDeleteProfessional = async (professional: Professional) => {
+  const handleDeleteProfessional = async (professionalId: string, professionalName: string) => {
     if (professionals.length <= 1) {
       alert('Você deve manter pelo menos um profissional cadastrado.');
       return;
     }
     
-    if (window.confirm(`Tem certeza que deseja excluir o profissional ${professional.name}?`)) {
-      await deleteProfessional(professional.id);
+    if (window.confirm(`Tem certeza que deseja excluir o profissional ${professionalName}?`)) {
+      await deleteProfessional(professionalId);
     }
   };
 
