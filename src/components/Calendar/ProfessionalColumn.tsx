@@ -56,8 +56,8 @@ export function ProfessionalColumn({
   ) : [];
 
   return (
-    <div className="border-r border-gray-200 last:border-r-0">
-      <div className="relative">
+    <div className="border-r border-gray-100 last:border-r-0 relative">
+      <div className="relative min-h-full">
         {timeSlots.map((slot) => {
           const hasAppointment = appointments.some(apt => {
             const startHour = new Date(apt.startTime).getHours();
@@ -65,18 +65,25 @@ export function ProfessionalColumn({
           });
 
           return (
-            <DroppableTimeSlot
+            <div
               key={slot.hour}
-              hour={slot.hour}
-              professionalId={professional.id}
-              date={selectedDate}
-              hasAppointment={hasAppointment}
-            />
+              className="h-20 border-b border-gray-100 hover:bg-gray-50 transition-colors relative"
+              onClick={() => {
+                if (!hasAppointment) {
+                  const startTime = new Date(selectedDate);
+                  startTime.setHours(slot.hour, 0, 0, 0);
+                  onTimeSlotClick(professional.id, startTime);
+                }
+              }}
+            >
+              {/* Linha de meia hora */}
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-50"></div>
+            </div>
           );
         })}
         
         {/* Blocos de tempo (folgas e férias) posicionados absolutamente */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           {professionalTimeBlocks.map((timeBlock) => {
             const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
             
@@ -90,8 +97,8 @@ export function ProfessionalColumn({
           })}
         </div>
         
-        {/* Agendamentos posicionados absolutemente */}
-        <div className="absolute inset-0">
+        {/* Agendamentos posicionados absolutamente */}
+        <div className="absolute inset-0 pointer-events-none">
           {appointments.map((appointment) => {
             // Convert appointment fields to match DraggableAppointment expectations
             const position = getItemPosition(appointment.startTime, appointment.endTime);
@@ -109,13 +116,14 @@ export function ProfessionalColumn({
             };
             
             return (
-              <DraggableAppointment
-                key={appointment.id}
-                appointment={draggableAppointment}
-                professionalColor={professional.calendarColor || '#3b82f6'}
-                position={position}
-                onClick={() => onAppointmentClick(appointment)}
-              />
+              <div key={appointment.id} className="pointer-events-auto">
+                <DraggableAppointment
+                  appointment={draggableAppointment}
+                  professionalColor={professional.calendarColor || professional.color}
+                  position={position}
+                  onClick={() => onAppointmentClick(appointment)}
+                />
+              </div>
             );
           })}
         </div>

@@ -47,7 +47,7 @@ export function DroppableTimeSlot({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      className={`h-16 border-b border-gray-200 transition-colors relative ${
+      className={`h-20 border-b border-gray-100 transition-colors relative ${
         isDragOver && !hasAppointment 
           ? 'bg-green-100 border-green-300' 
           : hasAppointment 
@@ -63,7 +63,7 @@ export function DroppableTimeSlot({
       )}
       
       {/* Linha de grade sutil para cada 30 minutos */}
-      <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-100"></div>
+      <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-50"></div>
     </div>
   );
 }

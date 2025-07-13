@@ -4,6 +4,7 @@ import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ProfessionalColumn } from './ProfessionalColumn';
 import { Professional, Appointment } from '@/types';
+import { useTimeBlocks } from './hooks/useTimeBlocks';
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -22,6 +23,7 @@ export function CalendarGrid({
 }: CalendarGridProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
+  const { timeBlocks } = useTimeBlocks(professionals, currentDate);
 
   // Gerar horários de 00:00 às 23:00
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
@@ -91,7 +93,7 @@ export function CalendarGrid({
             {timeSlots.map((slot) => (
               <div
                 key={slot.time}
-                className="h-20 flex items-start justify-center pt-2 border-b border-gray-200 last:border-b-0"
+                className="h-20 flex items-start justify-center pt-2 border-b border-gray-100 last:border-b-0"
               >
                 <span className="text-xs text-gray-500 font-medium">
                   {slot.time}
@@ -110,7 +112,9 @@ export function CalendarGrid({
                   (apt) => apt.professionalId === professional.id
                 )}
                 timeSlots={timeSlots}
-                timeBlocks={[]}
+                timeBlocks={timeBlocks.filter(block => 
+                  block.professional_id === professional.id
+                )}
                 onAppointmentClick={onAppointmentClick}
                 onTimeSlotClick={onTimeSlotClick}
               />

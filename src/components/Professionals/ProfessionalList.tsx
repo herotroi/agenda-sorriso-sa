@@ -7,11 +7,10 @@ import { ProfessionalGrid } from './components/ProfessionalGrid';
 import { ProfessionalHeader } from './components/ProfessionalHeader';
 import { useProfessionalsData } from './hooks/useProfessionalsData';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
-import { Professional } from '@/types';
 
 export function ProfessionalList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null);
+  const [editingProfessional, setEditingProfessional] = useState<any | null>(null);
   const { 
     professionals, 
     loading, 
@@ -29,7 +28,7 @@ export function ProfessionalList() {
     setIsFormOpen(true);
   };
 
-  const handleEditProfessional = (professional: Professional) => {
+  const handleEditProfessional = (professional: any) => {
     setEditingProfessional(professional);
     setIsFormOpen(true);
   };

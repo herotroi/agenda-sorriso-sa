@@ -17,61 +17,68 @@ export function TimeBlock({ timeBlock, position }: TimeBlockProps) {
   const getBlockColor = (type: string) => {
     switch (type) {
       case 'break':
-        return '#fecaca'; // vermelho claro para intervalos
+        return '#fed7d7'; // vermelho claro para intervalos
       case 'vacation':
-        return '#fca5a5'; // vermelho um pouco mais escuro para férias
+        return '#fbb6ce'; // rosa claro para férias
       default:
-        return '#fecaca';
+        return '#fed7d7';
     }
   };
 
   const getBorderColor = (type: string) => {
     switch (type) {
       case 'break':
-        return '#ef4444'; // vermelho para intervalos
+        return '#f56565'; // vermelho para intervalos
       case 'vacation':
-        return '#dc2626'; // vermelho mais escuro para férias
+        return '#ed64a6'; // rosa para férias
       default:
-        return '#ef4444';
+        return '#f56565';
+    }
+  };
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'break':
+        return '☕';
+      case 'vacation':
+        return '🏖️';
+      default:
+        return '⏰';
     }
   };
 
   const startTime = new Date(timeBlock.start_time);
   const endTime = new Date(timeBlock.end_time);
   
-  const timeRange = `${startTime.toLocaleTimeString('pt-BR', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  })} - ${endTime.toLocaleTimeString('pt-BR', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  })}`;
+  const timeRange = timeBlock.type === 'vacation' 
+    ? 'Dia inteiro'
+    : `${startTime.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })} - ${endTime.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`;
 
   return (
     <div
-      className="absolute left-1 right-1 rounded-md p-2 text-xs border-l-4 overflow-hidden z-5"
+      className="absolute left-1 right-1 rounded-md p-2 text-xs border-l-4 overflow-hidden z-10 pointer-events-auto"
       style={{
         ...position,
         backgroundColor: getBlockColor(timeBlock.type),
         borderLeftColor: getBorderColor(timeBlock.type),
         minHeight: '32px',
-        color: '#7f1d1d'
+        color: '#2d3748'
       }}
     >
       <div className="space-y-1">
-        <div className="font-semibold truncate text-xs">
+        <div className="font-semibold truncate text-xs flex items-center gap-1">
+          <span>{getIcon(timeBlock.type)}</span>
           {timeBlock.title}
         </div>
-        {timeBlock.type === 'break' && (
-          <div className="text-xs">
-            {timeRange}
-          </div>
-        )}
-        {timeBlock.type === 'vacation' && (
-          <div className="text-xs">
-            Dia inteiro
-          </div>
-        )}
+        <div className="text-xs opacity-75">
+          {timeRange}
+        </div>
       </div>
     </div>
   );
