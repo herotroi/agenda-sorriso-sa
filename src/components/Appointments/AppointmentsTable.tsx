@@ -7,7 +7,7 @@ import { AppointmentsFilters } from './AppointmentsFilters';
 import { AppointmentsEmptyState } from './AppointmentsEmptyState';
 import { AppointmentForm } from './AppointmentForm';
 import { AppointmentDetails } from './AppointmentDetails';
-import { Appointment } from './types';
+import { Appointment } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -103,8 +103,8 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                       <div className="flex justify-between items-center text-xs text-gray-500">
                         <span>{appointment.professionals?.name}</span>
                         <span>
-                          {new Date(appointment.start_time).toLocaleDateString('pt-BR')} às{' '}
-                          {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
+                          {new Date(appointment.startTime).toLocaleDateString('pt-BR')} às{' '}
+                          {new Date(appointment.startTime).toLocaleTimeString('pt-BR', { 
                             hour: '2-digit', 
                             minute: '2-digit' 
                           })}

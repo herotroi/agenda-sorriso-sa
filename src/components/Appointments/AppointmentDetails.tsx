@@ -10,7 +10,7 @@ import { AppointmentInfo } from './AppointmentInfo';
 import { AppointmentStatusUpdater } from './AppointmentStatusUpdater';
 import { AppointmentActions } from './AppointmentActions';
 import { AppointmentForm } from './AppointmentForm';
-import { Appointment } from './types';
+import { Appointment } from '@/types';
 
 interface AppointmentDetailsProps {
   appointment: Appointment;
@@ -99,7 +99,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
       <AppointmentForm
         isOpen={isEditFormOpen}
         onClose={handleEditFormClose}
-        selectedDate={new Date(appointment.start_time)}
+        selectedDate={new Date(appointment.startTime)}
         appointmentToEdit={appointment}
       />
     </>

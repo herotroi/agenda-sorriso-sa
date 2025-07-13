@@ -1,7 +1,7 @@
 
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Appointment } from '@/components/Appointments/types';
+import { Appointment } from '@/types';
 
 interface CalendarModalsProps {
   isFormOpen: boolean;

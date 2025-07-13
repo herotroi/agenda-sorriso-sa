@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { fetchAppointments } from './utils/appointmentUtils';
-import { Appointment } from '@/components/Appointments/types';
+import { Appointment } from '@/types';
 
 export function useAppointments(selectedDate: Date) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);

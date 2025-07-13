@@ -6,7 +6,7 @@ import { Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Appointment } from '@/components/Appointments/types';
+import { Appointment, Professional } from '@/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
@@ -15,17 +15,6 @@ import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/usePro
 import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
 import { supabase } from '@/integrations/supabase/client';
 import { generateTimeBlocks } from './hooks/utils/timeBlockUtils';
-
-interface Professional {
-  id: string;
-  name: string;
-  color: string;
-  break_times?: Array<{ start: string; end: string }>;
-  vacation_active?: boolean;
-  vacation_start?: string;
-  vacation_end?: string;
-  working_days?: boolean[];
-}
 
 interface TimeBlock {
   id: string;
@@ -66,7 +55,6 @@ export function ProfessionalDetailView({
     selectedDate
   );
 
-  // Buscar dados completos do profissional
   useEffect(() => {
     const fetchProfessionalData = async () => {
       try {
@@ -81,12 +69,19 @@ export function ProfessionalDetailView({
         if (data) {
           const processedProfessional = {
             ...data,
-            break_times: Array.isArray(data.break_times) 
-              ? (data.break_times as Array<{ start: string; end: string }>) 
-              : [],
-            working_days: Array.isArray(data.working_days) 
-              ? (data.working_days as boolean[]) 
-              : [true, true, true, true, true, false, false]
+            calendarColor: data.color,
+            workingHours: {
+              monday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+              tuesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+              wednesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+              thursday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+              friday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
+              saturday: { isWorking: false, startTime: '08:00', endTime: '18:00' },
+              sunday: { isWorking: false, startTime: '08:00', endTime: '18:00' }
+            },
+            services: [],
+            documents: [],
+            isActive: data.active
           };
           setProfessional(processedProfessional);
         }
@@ -98,7 +93,6 @@ export function ProfessionalDetailView({
     fetchProfessionalData();
   }, [professional.id]);
 
-  // Gerar time blocks quando os dados do profissional mudam
   useEffect(() => {
     if (professional && (professional.break_times || professional.vacation_active)) {
       const blocks = generateTimeBlocks([professional], selectedDate);
@@ -190,7 +184,7 @@ export function ProfessionalDetailView({
             <div className="flex items-center gap-3">
               <div 
                 className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: professional.color }}
+                style={{ backgroundColor: professional.calendarColor }}
               />
               {professional.name} - {selectedDate.toLocaleDateString('pt-BR', { 
                 weekday: 'long', 
@@ -262,7 +256,7 @@ export function ProfessionalDetailView({
         date={selectedDayDate}
         appointments={selectedDayAppointments}
         professionalName={professional.name}
-        professionalColor={professional.color}
+        professionalColor={professional.calendarColor}
       />
     </div>
   );

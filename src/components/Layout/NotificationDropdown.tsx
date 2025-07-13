@@ -1,94 +1,144 @@
-import React, { useState } from 'react';
-import { Bell, Check, CheckCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
+import { Bell, BellRing } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNotifications } from '@/contexts/NotificationContext/NotificationContext';
-import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Appointment } from '@/components/Appointments/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
+import { Appointment } from '@/types';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+  appointment_id?: string;
+}
 
 export function NotificationDropdown() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
+  const { user } = useAuth();
 
-  console.log('🔔 NotificationDropdown render:', { 
-    notificationsCount: notifications.length, 
-    unreadCount 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      console.log('📊 Fetching notifications from database...');
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+
+        console.log('📊 Loaded notifications from database:', data?.length || 0);
+        setNotifications(data || []);
+        setUnreadCount((data || []).filter(n => !n.read).length);
+        
+        updateNotificationState({
+          total: data?.length || 0,
+          unread: (data || []).filter(n => !n.read).length,
+          notifications: data || []
+        });
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
+
+  const updateNotificationState = (state: { total: number; unread: number; notifications: any[] }) => {
+    console.log('📊 Notifications updated:', state);
+  };
+
+  console.log('🔔 NotificationDropdown render:', {
+    notificationsCount: notifications.length,
+    unreadCount: unreadCount
   });
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'appointment_updated':
-        return '📝';
-      case 'appointment_created':
-        return '➕';
-      case 'appointment_deleted':
-        return '🗑️';
-      default:
-        return '🔔';
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.read) {
+      try {
+        await supabase
+          .from('notifications')
+          .update({ read: true })
+          .eq('id', notification.id);
+        
+        // Update local state
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    // If notification is about an appointment, fetch and show appointment details
+    if (notification.appointment_id) {
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patients(full_name),
+            professionals(name),
+            procedures(name),
+            appointment_statuses(label, color)
+          `)
+          .eq('id', notification.appointment_id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedAppointment = {
+            ...data,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            patientId: data.patient_id,
+            professionalId: data.professional_id,
+            procedureId: data.procedure_id,
+            date: new Date(data.start_time).toISOString().split('T')[0]
+          };
+          setSelectedAppointment(mappedAppointment);
+          setIsAppointmentDetailsOpen(true);
+        }
+      } catch (error) {
+        console.error('Error fetching appointment details:', error);
+      }
     }
   };
 
-  const fetchAppointmentDetails = async (appointmentId: string) => {
-    setIsLoading(true);
+  const clearAllNotifications = async () => {
+    if (!user) return;
+    
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          patients(full_name),
-          professionals(name),
-          procedures(name),
-          appointment_statuses(label, color)
-        `)
-        .eq('id', appointmentId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching appointment:', error);
-        return null;
-      }
-
-      return data;
+      await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+      
+      setNotifications([]);
+      setUnreadCount(0);
     } catch (error) {
-      console.error('Error fetching appointment:', error);
-      return null;
-    } finally {
-      setIsLoading(false);
+      console.error('Error clearing notifications:', error);
     }
-  };
-
-  const handleNotificationClick = async (notification: any) => {
-    console.log('📖 Clicking notification:', notification.id);
-    markAsRead(notification.id);
-
-    // Se a notificação tem um appointmentId e não é de exclusão, buscar os detalhes
-    if (notification.appointmentId && notification.type !== 'appointment_deleted') {
-      const appointmentDetails = await fetchAppointmentDetails(notification.appointmentId);
-      if (appointmentDetails) {
-        setSelectedAppointment(appointmentDetails);
-      }
-    }
-  };
-
-  const handleMarkAllAsRead = () => {
-    console.log('📖 Marking all as read');
-    markAllAsRead();
-  };
-
-  const handleCloseAppointmentDetails = () => {
-    setSelectedAppointment(null);
   };
 
   return (
@@ -96,73 +146,57 @@ export function NotificationDropdown() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-5 w-5" />
+            {unreadCount > 0 ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
+              <Badge 
+                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                variant="destructive"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
-          <DropdownMenuLabel className="flex items-center justify-between">
-            <span>Notificações</span>
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleMarkAllAsRead}
-                className="h-auto p-1"
-                title="Marcar todas como lidas"
-              >
-                <CheckCheck className="h-4 w-4" />
+          <div className="flex items-center justify-between p-2 border-b">
+            <h3 className="font-semibold">Notificações</h3>
+            {notifications.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearAllNotifications}>
+                Limpar todas
               </Button>
             )}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
+          </div>
           {notifications.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-muted-foreground">
               Nenhuma notificação
             </div>
           ) : (
-            <ScrollArea className="h-[300px]">
+            <div className="max-h-96 overflow-y-auto">
               {notifications.map((notification) => (
                 <DropdownMenuItem
                   key={notification.id}
-                  className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${
-                    !notification.read ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''
-                  } ${isLoading ? 'opacity-50' : ''}`}
+                  className="p-3 cursor-pointer"
                   onClick={() => handleNotificationClick(notification)}
-                  disabled={isLoading}
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <span className="text-lg">
-                      {getNotificationIcon(notification.type)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className={`text-sm truncate ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
-                          {notification.title}
-                        </p>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 truncate">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatDistanceToNow(notification.timestamp, {
-                          addSuffix: true,
-                          locale: ptBR,
-                        })}
-                      </p>
+                  <div className="flex flex-col space-y-1 w-full">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-medium ${!notification.read ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {notification.title}
+                      </span>
+                      {!notification.read && (
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      )}
                     </div>
+                    <span className="text-xs text-muted-foreground">
+                      {notification.message}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(notification.created_at).toLocaleString('pt-BR')}
+                    </span>
                   </div>
                 </DropdownMenuItem>
               ))}
-            </ScrollArea>
+            </div>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -170,9 +204,11 @@ export function NotificationDropdown() {
       {selectedAppointment && (
         <AppointmentDetails
           appointment={selectedAppointment}
-          isOpen={!!selectedAppointment}
-          onClose={handleCloseAppointmentDetails}
-          onUpdate={handleCloseAppointmentDetails}
+          isOpen={isAppointmentDetailsOpen}
+          onClose={() => {
+            setIsAppointmentDetailsOpen(false);
+            setSelectedAppointment(null);
+          }}
         />
       )}
     </>

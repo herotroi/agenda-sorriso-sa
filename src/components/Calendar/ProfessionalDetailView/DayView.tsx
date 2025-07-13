@@ -1,11 +1,5 @@
 
-import { Appointment } from '@/components/Appointments/types';
-
-interface Professional {
-  id: string;
-  name: string;
-  color: string;
-}
+import { Appointment, Professional } from '@/types';
 
 interface TimeBlock {
   id: string;
@@ -136,9 +130,9 @@ export function DayView({ professional, appointments, timeBlocks, onAppointmentC
           
           {/* Appointments */}
           {appointments.map((appointment) => {
-            const position = getItemPosition(appointment.start_time, appointment.end_time);
+            const position = getItemPosition(appointment.startTime, appointment.endTime);
             const statusColor = appointment.appointment_statuses?.color || '#6b7280';
-            const lighterBgColor = getLighterColor(professional.color, 0.15);
+            const lighterBgColor = getLighterColor(professional.calendarColor, 0.15);
             
             return (
               <div
@@ -160,10 +154,10 @@ export function DayView({ professional, appointments, timeBlocks, onAppointmentC
                     {appointment.procedures?.name}
                   </div>
                   <div className="text-xs text-gray-600">
-                    {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
+                    {new Date(appointment.startTime).toLocaleTimeString('pt-BR', { 
                       hour: '2-digit', 
                       minute: '2-digit' 
-                    })} - {new Date(appointment.end_time).toLocaleTimeString('pt-BR', { 
+                    })} - {new Date(appointment.endTime).toLocaleTimeString('pt-BR', { 
                       hour: '2-digit', 
                       minute: '2-digit' 
                     })}

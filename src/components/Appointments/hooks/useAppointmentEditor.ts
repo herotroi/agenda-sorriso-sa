@@ -2,8 +2,14 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Appointment, EditingCell } from '../types';
+import { Appointment } from '@/types';
 import { useAppointmentValidation } from './useAppointmentValidation';
+
+interface EditingCell {
+  appointmentId: string;
+  field: string;
+  value: string;
+}
 
 export function useAppointmentEditor(
   appointments: Appointment[],
@@ -47,21 +53,21 @@ export function useAppointmentEditor(
         updated_at: new Date().toISOString()
       };
       
-      if (editingCell.field === 'start_time') {
+      if (editingCell.field === 'startTime') {
         const startTime = new Date(editingCell.value);
         const appointment = appointments.find(a => a.id === editingCell.appointmentId);
         if (appointment) {
-          const currentEndTime = new Date(appointment.end_time);
-          const currentStartTime = new Date(appointment.start_time);
+          const currentEndTime = new Date(appointment.endTime);
+          const currentStartTime = new Date(appointment.startTime);
           const duration = currentEndTime.getTime() - currentStartTime.getTime();
           const newEndTime = new Date(startTime.getTime() + duration);
           
           updateData.start_time = startTime.toISOString();
           updateData.end_time = newEndTime.toISOString();
         }
-      } else if (editingCell.field === 'professional_id') {
+      } else if (editingCell.field === 'professionalId') {
         updateData.professional_id = editingCell.value;
-      } else if (editingCell.field === 'procedure_id') {
+      } else if (editingCell.field === 'procedureId') {
         updateData.procedure_id = editingCell.value || null;
       } else if (editingCell.field === 'status_id') {
         updateData.status_id = parseInt(editingCell.value);

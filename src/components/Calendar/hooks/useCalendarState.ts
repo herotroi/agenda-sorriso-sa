@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Appointment } from '@/components/Appointments/types';
+import { Appointment } from '@/types';
 
 export function useCalendarState() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -12,10 +12,13 @@ export function useCalendarState() {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
     setSelectedDate(newDate);
+    return newDate;
   };
 
   const goToToday = () => {
-    setSelectedDate(new Date());
+    const today = new Date();
+    setSelectedDate(today);
+    return today;
   };
 
   const handleFormClose = () => {

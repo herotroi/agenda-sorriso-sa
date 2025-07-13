@@ -1,5 +1,8 @@
 
-import { ValidationResult } from '../types';
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
 
 export function useAppointmentValidation(professionals: any[], procedures: any[], statuses: any[]) {
   const validateFieldValue = (field: string, value: string): ValidationResult => {

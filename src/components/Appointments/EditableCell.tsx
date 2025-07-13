@@ -3,7 +3,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Edit2, Save, X } from 'lucide-react';
-import { Appointment, EditingCell } from './types';
+import { Appointment } from '@/types';
+
+interface EditingCell {
+  appointmentId: string;
+  field: string;
+  value: string;
+}
 
 interface EditableCellProps {
   appointment: Appointment;

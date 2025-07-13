@@ -2,7 +2,7 @@
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
-import { Appointment } from './types';
+import { Appointment } from '@/types';
 
 interface AppointmentRowProps {
   appointment: Appointment;
@@ -22,7 +22,7 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
         {appointment.procedures?.name || 'Nenhum'}
       </TableCell>
       <TableCell>
-        {new Date(appointment.start_time).toLocaleString('pt-BR')}
+        {new Date(appointment.startTime).toLocaleString('pt-BR')}
       </TableCell>
       <TableCell>
         <span 

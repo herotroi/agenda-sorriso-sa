@@ -39,6 +39,12 @@ export function CalendarContent({
 }: CalendarContentProps) {
   const isMobile = useIsMobile();
 
+  // Map professionals to include the color property needed by ProfessionalTabs
+  const mappedProfessionals = professionals.map(prof => ({
+    ...prof,
+    color: prof.calendarColor
+  }));
+
   return (
     <div className={`space-y-4 ${isMobile ? 'space-y-3' : 'space-y-6'}`}>
       <CalendarHeader
@@ -49,7 +55,7 @@ export function CalendarContent({
       />
       
       <ProfessionalTabs
-        professionals={professionals}
+        professionals={mappedProfessionals}
         onProfessionalClick={onProfessionalClick}
         selectedDate={selectedDate}
       />
@@ -57,7 +63,7 @@ export function CalendarContent({
       <div className={`${isMobile ? 'overflow-x-auto' : ''}`}>
         <CalendarGrid
           currentDate={selectedDate}
-          professionals={professionals}
+          professionals={mappedProfessionals}
           appointments={appointments}
           onAppointmentClick={onAppointmentClick}
           onTimeSlotClick={(professionalId: string, startTime: Date) => {

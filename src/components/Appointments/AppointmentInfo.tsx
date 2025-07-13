@@ -1,6 +1,6 @@
 
 import { Clock, User } from 'lucide-react';
-import { Appointment } from './types';
+import { Appointment } from '@/types';
 
 interface AppointmentInfoProps {
   appointment: Appointment;
@@ -29,12 +29,12 @@ export function AppointmentInfo({ appointment }: AppointmentInfoProps) {
         <div className="flex items-center gap-2 text-gray-600">
           <Clock className="h-4 w-4" />
           <span>
-            {new Date(appointment.start_time).toLocaleDateString('pt-BR')} às{' '}
-            {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
+            {new Date(appointment.startTime).toLocaleDateString('pt-BR')} às{' '}
+            {new Date(appointment.startTime).toLocaleTimeString('pt-BR', { 
               hour: '2-digit', 
               minute: '2-digit' 
             })} -{' '}
-            {new Date(appointment.end_time).toLocaleTimeString('pt-BR', { 
+            {new Date(appointment.endTime).toLocaleTimeString('pt-BR', { 
               hour: '2-digit', 
               minute: '2-digit' 
             })}

@@ -70,16 +70,18 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
 
   if (selectedProfessional) {
     const professional = professionals.find(p => p.id === selectedProfessional);
-    return (
-      <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
-        <ProfessionalDetailView
-          professional={professional!}
-          onBack={handleBackToProfessionalList}
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-        />
-      </div>
-    );
+    if (professional) {
+      return (
+        <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
+          <ProfessionalDetailView
+            professional={professional}
+            onBack={handleBackToProfessionalList}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+        </div>
+      );
+    }
   }
 
   if (loading) {

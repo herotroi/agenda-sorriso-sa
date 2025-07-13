@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Appointment } from '../types';
+import { Appointment } from '@/types';
 
 interface AppointmentFilters {
   statusId?: number;
@@ -49,8 +49,20 @@ export function useAppointmentsData() {
       });
 
       const fetchedAppointments = appointmentsRes.data || [];
-      setAllAppointments(fetchedAppointments);
-      applyFilters(fetchedAppointments, filters);
+      
+      // Map database fields to frontend interface
+      const mappedAppointments = fetchedAppointments.map(apt => ({
+        ...apt,
+        startTime: apt.start_time,
+        endTime: apt.end_time,
+        patientId: apt.patient_id,
+        professionalId: apt.professional_id,
+        procedureId: apt.procedure_id,
+        date: new Date(apt.start_time).toISOString().split('T')[0]
+      }));
+      
+      setAllAppointments(mappedAppointments);
+      applyFilters(mappedAppointments, filters);
     } catch (error) {
       console.error('❌ Error fetching data:', error);
       toast({
@@ -77,7 +89,7 @@ export function useAppointmentsData() {
     // Filter by procedure
     if (currentFilters.procedureId) {
       filtered = filtered.filter(appointment => 
-        appointment.procedure_id === currentFilters.procedureId
+        appointment.procedureId === currentFilters.procedureId
       );
     }
 

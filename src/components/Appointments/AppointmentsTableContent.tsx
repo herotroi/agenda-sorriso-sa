@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/table';
 import { AppointmentRow } from './AppointmentRow';
 import { AppointmentsEmptyState } from './AppointmentsEmptyState';
-import { Appointment } from './types';
+import { Appointment } from '@/types';
 
 interface AppointmentsTableContentProps {
   appointments: Appointment[];
