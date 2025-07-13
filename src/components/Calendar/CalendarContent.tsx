@@ -2,8 +2,7 @@
 import { CalendarHeader } from './CalendarHeader';
 import { CalendarGrid } from './CalendarGrid';
 import { ProfessionalTabs } from './ProfessionalTabs';
-import { Appointment } from '@/components/Appointments/types';
-import { Professional } from '@/components/Professionals/types';
+import { Professional, Appointment } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TimeBlock {

@@ -7,7 +7,7 @@ import { ProfessionalGrid } from './components/ProfessionalGrid';
 import { ProfessionalHeader } from './components/ProfessionalHeader';
 import { useProfessionalsData } from './hooks/useProfessionalsData';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
-import type { Professional } from '@/types';
+import { Professional } from '@/types';
 
 export function ProfessionalList() {
   const [isFormOpen, setIsFormOpen] = useState(false);

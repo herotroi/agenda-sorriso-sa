@@ -2,8 +2,7 @@
 import { DraggableAppointment } from './DraggableAppointment';
 import { DroppableTimeSlot } from './DroppableTimeSlot';
 import { TimeBlock } from './TimeBlock';
-import { Appointment } from '@/types';
-import { Professional } from '@/types';
+import { Professional, Appointment } from '@/types';
 
 interface TimeBlockType {
   id: string;
@@ -94,12 +93,25 @@ export function ProfessionalColumn({
         {/* Agendamentos posicionados absolutemente */}
         <div className="absolute inset-0">
           {appointments.map((appointment) => {
+            // Convert appointment fields to match DraggableAppointment expectations
             const position = getItemPosition(appointment.startTime, appointment.endTime);
+            
+            const draggableAppointment = {
+              id: appointment.id,
+              patient_id: appointment.patientId,
+              professional_id: appointment.professionalId,
+              start_time: appointment.startTime,
+              end_time: appointment.endTime,
+              status: appointment.status,
+              patients: { full_name: 'Patient Name' }, // This would come from joined data
+              procedures: appointment.procedureId ? { name: 'Procedure Name' } : null,
+              appointment_statuses: { label: appointment.status, color: '#10b981' }
+            };
             
             return (
               <DraggableAppointment
                 key={appointment.id}
-                appointment={appointment}
+                appointment={draggableAppointment}
                 professionalColor={professional.calendarColor || '#3b82f6'}
                 position={position}
                 onClick={() => onAppointmentClick(appointment)}
