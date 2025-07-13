@@ -6,7 +6,7 @@ import { Professional } from '../types';
 interface ProfessionalGridProps {
   professionals: Professional[];
   onEdit: (professional: Professional) => void;
-  onDelete: (professionalId: string, professionalName: string) => Promise<void>;
+  onDelete: (professional: Professional) => Promise<void>;
 }
 
 export function ProfessionalGrid({ professionals, onEdit, onDelete }: ProfessionalGridProps) {

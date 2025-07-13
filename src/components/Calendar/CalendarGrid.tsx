@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ProfessionalColumn } from './ProfessionalColumn';
-import type { Professional, Appointment } from '@/types';
+import { Professional } from '@/components/Professionals/types';
+import { Appointment } from '@/components/Appointments/types';
 
 interface CalendarGridProps {
   currentDate: Date;

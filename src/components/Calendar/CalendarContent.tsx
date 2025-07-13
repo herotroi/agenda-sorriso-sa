@@ -3,13 +3,8 @@ import { CalendarHeader } from './CalendarHeader';
 import { CalendarGrid } from './CalendarGrid';
 import { ProfessionalTabs } from './ProfessionalTabs';
 import { Appointment } from '@/components/Appointments/types';
+import { Professional } from '@/components/Professionals/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-interface Professional {
-  id: string;
-  name: string;
-  color: string;
-}
 
 interface TimeBlock {
   id: string;
@@ -62,11 +57,13 @@ export function CalendarContent({
       
       <div className={`${isMobile ? 'overflow-x-auto' : ''}`}>
         <CalendarGrid
+          currentDate={selectedDate}
           professionals={professionals}
           appointments={appointments}
-          timeBlocks={timeBlocks}
-          selectedDate={selectedDate}
           onAppointmentClick={onAppointmentClick}
+          onTimeSlotClick={(professionalId: string, startTime: Date) => {
+            // Handle time slot click
+          }}
         />
       </div>
     </div>

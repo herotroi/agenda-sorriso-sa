@@ -38,6 +38,34 @@ export function useProfessionalsData() {
     }
   };
 
+  const deleteProfessional = async (professionalId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('professionals')
+        .delete()
+        .eq('id', professionalId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Profissional excluído com sucesso',
+      });
+
+      await fetchProfessionals();
+    } catch (error) {
+      console.error('Error deleting professional:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir profissional',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     fetchProfessionals();
   }, [user]);
@@ -45,6 +73,7 @@ export function useProfessionalsData() {
   return {
     professionals,
     loading,
-    refetchProfessionals: fetchProfessionals,
+    deleteProfessional,
+    refreshProfessionals: fetchProfessionals,
   };
 }
