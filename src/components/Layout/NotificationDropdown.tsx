@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,13 +11,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNotificationContext } from '@/contexts/NotificationContext';
+import { useNotificationActions } from '@/contexts/NotificationContext/useNotificationActions';
+import { useNotificationData } from '@/contexts/NotificationContext/useNotificationData';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
 import { Appointment, AppointmentStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 export function NotificationDropdown() {
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotificationContext();
+  const { notifications, unreadCount } = useNotificationData();
+  const { markAsRead, deleteNotification } = useNotificationActions();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   
   console.log('🔔 NotificationDropdown render:', {

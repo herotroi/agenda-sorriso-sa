@@ -1,18 +1,35 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface Professional {
+interface DatabaseProfessional {
   id: string;
   name: string;
-  color: string;
+  specialty?: string;
+  email?: string;
+  phone?: string;
+  color?: string;
+  crm_cro?: string;
   break_times?: Array<{ start: string; end: string }>;
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
   working_days?: boolean[];
+  working_hours?: any;
+  active?: boolean;
+  first_shift_start?: string;
+  first_shift_end?: string;
+  second_shift_start?: string;
+  second_shift_end?: string;
+  weekend_shift_active?: boolean;
+  weekend_shift_start?: string;
+  weekend_shift_end?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
 }
 
-export const fetchProfessionals = async (): Promise<Professional[]> => {
+export const fetchProfessionals = async (): Promise<DatabaseProfessional[]> => {
   const { data, error } = await supabase
     .from('professionals')
     .select('*')
