@@ -1,95 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, BellRing } from 'lucide-react';
+
+import { useState, useEffect } from 'react';
+import { Bell, Check, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useNotificationContext } from '@/contexts/NotificationContext';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Appointment } from '@/types';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  created_at: string;
-  appointment_id?: string;
-}
+import { Appointment, AppointmentStatus } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export function NotificationDropdown() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotificationContext();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchNotifications = async () => {
-      console.log('📊 Fetching notifications from database...');
-      try {
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        console.log('📊 Loaded notifications from database:', data?.length || 0);
-        setNotifications(data || []);
-        setUnreadCount((data || []).filter(n => !n.read).length);
-        
-        updateNotificationState({
-          total: data?.length || 0,
-          unread: (data || []).filter(n => !n.read).length,
-          notifications: data || []
-        });
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      }
-    };
-
-    fetchNotifications();
-  }, [user]);
-
-  const updateNotificationState = (state: { total: number; unread: number; notifications: any[] }) => {
-    console.log('📊 Notifications updated:', state);
-  };
-
+  
   console.log('🔔 NotificationDropdown render:', {
     notificationsCount: notifications.length,
-    unreadCount: unreadCount
+    unreadCount
   });
 
-  const handleNotificationClick = async (notification: Notification) => {
-    // Mark as read if not already read
-    if (!notification.read) {
-      try {
-        await supabase
-          .from('notifications')
-          .update({ read: true })
-          .eq('id', notification.id);
-        
-        // Update local state
-        setNotifications(prev => 
-          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
-
-    // If notification is about an appointment, fetch and show appointment details
+  const handleNotificationClick = async (notification: any) => {
     if (notification.appointment_id) {
       try {
         const { data, error } = await supabase
@@ -107,38 +44,78 @@ export function NotificationDropdown() {
         if (error) throw error;
 
         if (data) {
-          const mappedAppointment = {
-            ...data,
+          // Helper function to map status
+          const mapStatus = (status: string | null): AppointmentStatus => {
+            if (!status) return 'confirmado';
+            const validStatuses: AppointmentStatus[] = ['confirmado', 'cancelado', 'faltou', 'em-andamento', 'concluido'];
+            return validStatuses.includes(status as AppointmentStatus) ? status as AppointmentStatus : 'confirmado';
+          };
+
+          const appointment: Appointment = {
+            id: data.id,
+            professionalId: data.professional_id,
+            patientId: data.patient_id,
+            date: new Date(data.start_time).toISOString().split('T')[0],
             startTime: data.start_time,
             endTime: data.end_time,
-            patientId: data.patient_id,
-            professionalId: data.professional_id,
             procedureId: data.procedure_id,
-            date: new Date(data.start_time).toISOString().split('T')[0],
-            createdAt: data.created_at || new Date().toISOString()
+            status: mapStatus(data.status),
+            notes: data.notes,
+            createdAt: data.created_at || new Date().toISOString(),
+            // Database fields
+            created_at: data.created_at,
+            end_time: data.end_time,
+            patient_id: data.patient_id,
+            price: data.price,
+            procedure_id: data.procedure_id,
+            professional_id: data.professional_id,
+            start_time: data.start_time,
+            status_id: data.status_id,
+            updated_at: data.updated_at,
+            user_id: data.user_id,
+            // Joined table fields
+            patients: data.patients,
+            professionals: data.professionals,
+            procedures: data.procedures,
+            appointment_statuses: data.appointment_statuses
           };
-          setSelectedAppointment(mappedAppointment);
-          setIsAppointmentDetailsOpen(true);
+
+          setSelectedAppointment(appointment);
         }
       } catch (error) {
-        console.error('Error fetching appointment details:', error);
+        console.error('Error fetching appointment:', error);
       }
+    }
+
+    if (!notification.read) {
+      markAsRead(notification.id);
     }
   };
 
-  const clearAllNotifications = async () => {
-    if (!user) return;
-    
-    try {
-      await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', user.id);
-      
-      setNotifications([]);
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error clearing notifications:', error);
+  const handleDeleteNotification = (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteNotification(notificationId);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'appointment_created':
+        return '📅';
+      case 'appointment_updated':
+        return '✏️';
+      case 'appointment_cancelled':
+        return '❌';
+      default:
+        return '🔔';
     }
   };
 
@@ -147,69 +124,95 @@ export function NotificationDropdown() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="relative">
-            {unreadCount > 0 ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <Badge 
-                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                variant="destructive"
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
               >
                 {unreadCount > 9 ? '9+' : unreadCount}
               </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80">
-          <div className="flex items-center justify-between p-2 border-b">
-            <h3 className="font-semibold">Notificações</h3>
-            {notifications.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearAllNotifications}>
-                Limpar todas
-              </Button>
+
+        <DropdownMenuContent className="w-80" align="end">
+          <DropdownMenuLabel className="flex items-center justify-between">
+            Notificações
+            {unreadCount > 0 && (
+              <Badge variant="secondary">{unreadCount} não lidas</Badge>
             )}
-          </div>
-          {notifications.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              Nenhuma notificação
-            </div>
-          ) : (
-            <div className="max-h-96 overflow-y-auto">
-              {notifications.map((notification) => (
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+
+          <ScrollArea className="h-96">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Nenhuma notificação
+              </div>
+            ) : (
+              notifications.map((notification) => (
                 <DropdownMenuItem
                   key={notification.id}
-                  className="p-3 cursor-pointer"
+                  className={`flex flex-col items-start gap-2 p-3 cursor-pointer ${
+                    !notification.read ? 'bg-muted/50' : ''
+                  }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex flex-col space-y-1 w-full">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm font-medium ${!notification.read ? 'text-primary' : 'text-muted-foreground'}`}>
-                        {notification.title}
+                  <div className="flex items-start justify-between w-full gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <span className="text-lg">
+                        {getNotificationIcon(notification.type)}
                       </span>
-                      {!notification.read && (
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
+                          {notification.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {notification.message}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {formatDate(notification.created_at)}
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {notification.message}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(notification.created_at).toLocaleString('pt-BR')}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {!notification.read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:text-destructive"
+                        onClick={(e) => handleDeleteNotification(notification.id, e)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </DropdownMenuItem>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </ScrollArea>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {selectedAppointment && (
         <AppointmentDetails
           appointment={selectedAppointment}
-          isOpen={isAppointmentDetailsOpen}
-          onClose={() => {
-            setIsAppointmentDetailsOpen(false);
-            setSelectedAppointment(null);
-          }}
+          isOpen={!!selectedAppointment}
+          onClose={() => setSelectedAppointment(null)}
+          onUpdate={() => {}}
         />
       )}
     </>

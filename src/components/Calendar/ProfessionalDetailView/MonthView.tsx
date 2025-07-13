@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Calendar, CalendarContent, CalendarGrid, CalendarHeader } from '@/components/ui/calendar';
+import { Calendar } from '@/components/ui/calendar';
 import { Appointment, Professional } from '@/types';
 
 interface MonthViewProps {
@@ -29,8 +30,8 @@ export function MonthView({
   }, {});
 
   return (
-    <CalendarContent>
-      <CalendarHeader>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => onNavigateMonth('prev')}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -40,8 +41,9 @@ export function MonthView({
         <Button variant="ghost" size="sm" onClick={() => onNavigateMonth('next')}>
           <ChevronRight className="h-4 w-4" />
         </Button>
-      </CalendarHeader>
-      <CalendarGrid>
+      </div>
+      
+      <div className="flex justify-center">
         <Calendar
           mode="single"
           showOutsideDays
@@ -52,8 +54,9 @@ export function MonthView({
               onDayClick(date, appointmentsForDay);
             }
           }}
+          className="rounded-md border"
         />
-      </CalendarGrid>
-    </CalendarContent>
+      </div>
+    </div>
   );
 }

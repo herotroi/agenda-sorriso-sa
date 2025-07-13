@@ -71,7 +71,7 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
   if (selectedProfessional) {
     const professional = professionals.find(p => p.id === selectedProfessional);
     if (professional) {
-      // Map the professional to include all required fields from database to frontend interface
+      // Map the database professional to frontend interface
       const mappedProfessional = {
         id: professional.id,
         name: professional.name,

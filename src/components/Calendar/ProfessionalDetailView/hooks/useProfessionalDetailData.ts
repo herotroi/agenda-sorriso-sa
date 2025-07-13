@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Appointment } from '@/types';
+import { Appointment, AppointmentStatus } from '@/types';
 
 export function useProfessionalDetailData(professionalId: string, selectedDate: Date) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -11,6 +11,13 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Helper function to map status
+  const mapStatus = (status: string | null): AppointmentStatus => {
+    if (!status) return 'confirmado';
+    const validStatuses: AppointmentStatus[] = ['confirmado', 'cancelado', 'faltou', 'em-andamento', 'concluido'];
+    return validStatuses.includes(status as AppointmentStatus) ? status as AppointmentStatus : 'confirmado';
+  };
 
   const fetchAppointments = async (specificDate?: Date) => {
     if (!user) return;
@@ -55,15 +62,33 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       console.log('📋 Professional appointments data:', data);
       
       // Map database fields to frontend interface
-      const mappedAppointments = (data || []).map(apt => ({
-        ...apt,
+      const mappedAppointments: Appointment[] = (data || []).map(apt => ({
+        id: apt.id,
+        professionalId: apt.professional_id,
+        patientId: apt.patient_id,
+        date: new Date(apt.start_time).toISOString().split('T')[0],
         startTime: apt.start_time,
         endTime: apt.end_time,
-        patientId: apt.patient_id,
-        professionalId: apt.professional_id,
         procedureId: apt.procedure_id,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        createdAt: apt.created_at || new Date().toISOString()
+        status: mapStatus(apt.status),
+        notes: apt.notes,
+        createdAt: apt.created_at || new Date().toISOString(),
+        // Database fields
+        created_at: apt.created_at,
+        end_time: apt.end_time,
+        patient_id: apt.patient_id,
+        price: apt.price,
+        procedure_id: apt.procedure_id,
+        professional_id: apt.professional_id,
+        start_time: apt.start_time,
+        status_id: apt.status_id,
+        updated_at: apt.updated_at,
+        user_id: apt.user_id,
+        // Joined table fields
+        patients: apt.patients,
+        professionals: apt.professionals,
+        procedures: apt.procedures,
+        appointment_statuses: apt.appointment_statuses
       }));
       
       setAppointments(mappedAppointments);
@@ -108,15 +133,33 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       if (error) throw error;
       
       // Map database fields to frontend interface
-      const mappedAppointments = (data || []).map(apt => ({
-        ...apt,
+      const mappedAppointments: Appointment[] = (data || []).map(apt => ({
+        id: apt.id,
+        professionalId: apt.professional_id,
+        patientId: apt.patient_id,
+        date: new Date(apt.start_time).toISOString().split('T')[0],
         startTime: apt.start_time,
         endTime: apt.end_time,
-        patientId: apt.patient_id,
-        professionalId: apt.professional_id,
         procedureId: apt.procedure_id,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        createdAt: apt.created_at || new Date().toISOString()
+        status: mapStatus(apt.status),
+        notes: apt.notes,
+        createdAt: apt.created_at || new Date().toISOString(),
+        // Database fields
+        created_at: apt.created_at,
+        end_time: apt.end_time,
+        patient_id: apt.patient_id,
+        price: apt.price,
+        procedure_id: apt.procedure_id,
+        professional_id: apt.professional_id,
+        start_time: apt.start_time,
+        status_id: apt.status_id,
+        updated_at: apt.updated_at,
+        user_id: apt.user_id,
+        // Joined table fields
+        patients: apt.patients,
+        professionals: apt.professionals,
+        procedures: apt.procedures,
+        appointment_statuses: apt.appointment_statuses
       }));
       
       setMonthAppointments(mappedAppointments);

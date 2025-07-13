@@ -102,7 +102,7 @@ export function ProfessionalDetailView({
             vacation_start: data.vacation_start,
             vacation_end: data.vacation_end,
             break_times: data.break_times,
-            working_days: data.working_days,
+            working_days: Array.isArray(data.working_days) ? data.working_days as boolean[] : [true, true, true, true, true, false, false],
             weekend_shift_active: data.weekend_shift_active,
             weekend_shift_start: data.weekend_shift_start,
             weekend_shift_end: data.weekend_shift_end,
