@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { PricingCard } from '@/components/Subscription/PricingCard';
+import { CouponSection } from '@/components/Configuracoes/CouponSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ export default function Assinatura() {
   const [usageStats, setUsageStats] = useState<any>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [hasAutomacao, setHasAutomacao] = useState(false);
 
   const checkSubscription = async () => {
     try {
@@ -118,6 +120,17 @@ export default function Assinatura() {
         professionals_count: 0,
         procedures_count: 0
       });
+
+      // Check if user has automacao
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('automacao')
+        .eq('id', user.user.id)
+        .single();
+
+      if (!profileError && profile) {
+        setHasAutomacao(profile.automacao || false);
+      }
     } catch (error) {
       console.error('Erro inesperado:', error);
     }
@@ -135,6 +148,11 @@ export default function Assinatura() {
   const handleSubscribe = async (planId: string) => {
     if (planId === 'free') {
       toast.info('Você já está no plano gratuito');
+      return;
+    }
+
+    if (hasAutomacao) {
+      toast.info('Você já possui acesso ilimitado ativo');
       return;
     }
 
@@ -208,6 +226,9 @@ export default function Assinatura() {
         <p className="text-gray-600">Gerencie sua assinatura e planos</p>
       </div>
 
+      {/* Cupom Section */}
+      <CouponSection />
+
       {/* Status da Assinatura Atual */}
       <Card>
         <CardHeader>
@@ -221,20 +242,22 @@ export default function Assinatura() {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Badge variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}>
-                  {currentSubscription?.status === 'active' ? 'Ativo' : 'Inativo'}
+                  {hasAutomacao ? 'Ilimitado' : (currentSubscription?.status === 'active' ? 'Ativo' : 'Inativo')}
                 </Badge>
-                <span className="text-sm text-gray-600">{currentPlan.title}</span>
+                <span className="text-sm text-gray-600">
+                  {hasAutomacao ? 'Acesso Ilimitado' : currentPlan.title}
+                </span>
               </div>
-              {currentSubscription?.current_period_end && (
+              {currentSubscription?.current_period_end && !hasAutomacao && (
                 <p className="text-sm text-gray-600">
                   Próxima cobrança: {new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}
                 </p>
               )}
               <p className="text-lg font-semibold">
-                {currentPlan.price === 0 ? 'Gratuito' : `R$ ${currentPlan.price},00/${currentPlan.period}`}
+                {hasAutomacao ? 'Ilimitado' : (currentPlan.price === 0 ? 'Gratuito' : `R$ ${currentPlan.price},00/${currentPlan.period}`)}
               </p>
             </div>
-            {currentSubscription?.plan_type !== 'free' && (
+            {currentSubscription?.plan_type !== 'free' && !hasAutomacao && (
               <Button variant="outline" onClick={handleManageSubscription}>
                 <Settings className="h-4 w-4 mr-2" />
                 Gerenciar Assinatura
@@ -259,28 +282,28 @@ export default function Assinatura() {
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                 <p className="text-2xl font-bold">{usageStats.appointments_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Agendamentos {currentPlan.limits.appointments === -1 ? '' : `/ ${currentPlan.limits.appointments}`}
+                  Agendamentos {hasAutomacao || currentPlan.limits.appointments === -1 ? '' : `/ ${currentPlan.limits.appointments}`}
                 </p>
               </div>
               <div className="text-center">
                 <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
                 <p className="text-2xl font-bold">{usageStats.patients_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Pacientes {currentPlan.limits.patients === -1 ? '' : `/ ${currentPlan.limits.patients}`}
+                  Pacientes {hasAutomacao || currentPlan.limits.patients === -1 ? '' : `/ ${currentPlan.limits.patients}`}
                 </p>
               </div>
               <div className="text-center">
                 <Stethoscope className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                 <p className="text-2xl font-bold">{usageStats.professionals_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Profissionais {currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
+                  Profissionais {hasAutomacao || currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
                 </p>
               </div>
               <div className="text-center">
                 <FileText className="h-8 w-8 mx-auto mb-2 text-orange-600" />
                 <p className="text-2xl font-bold">{usageStats.procedures_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Procedimentos {currentPlan.limits.procedures === -1 ? '' : `/ ${currentPlan.limits.procedures}`}
+                  Procedimentos {hasAutomacao || currentPlan.limits.procedures === -1 ? '' : `/ ${currentPlan.limits.procedures}`}
                 </p>
               </div>
             </div>
@@ -288,25 +311,27 @@ export default function Assinatura() {
         </Card>
       )}
 
-      {/* Planos Disponíveis */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Planos Disponíveis</h2>
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl">
-          {plans.map((plan) => (
-            <PricingCard
-              key={plan.id}
-              title={plan.title}
-              price={plan.price}
-              period={plan.period}
-              features={plan.features}
-              isPopular={plan.isPopular}
-              isCurrentPlan={currentSubscription?.plan_type === plan.id}
-              onSubscribe={() => handleSubscribe(plan.id)}
-              loading={loading === plan.id}
-            />
-          ))}
+      {/* Planos Disponíveis - Only show if user doesn't have automacao */}
+      {!hasAutomacao && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Planos Disponíveis</h2>
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl">
+            {plans.map((plan) => (
+              <PricingCard
+                key={plan.id}
+                title={plan.title}
+                price={plan.price}
+                period={plan.period}
+                features={plan.features}
+                isPopular={plan.isPopular}
+                isCurrentPlan={currentSubscription?.plan_type === plan.id}
+                onSubscribe={() => handleSubscribe(plan.id)}
+                loading={loading === plan.id}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <Card>
         <CardHeader>

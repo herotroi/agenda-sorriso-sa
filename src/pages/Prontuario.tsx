@@ -10,7 +10,7 @@ import { UpgradeWarning } from '@/components/Subscription/UpgradeWarning';
 
 export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { subscriptionData, loading: subscriptionLoading } = useSubscriptionLimits();
+  const { subscriptionData, loading: subscriptionLoading, checkLimit, showLimitWarning } = useSubscriptionLimits();
   const {
     patients,
     selectedPatient,
@@ -33,7 +33,19 @@ export default function Prontuario() {
   };
 
   const handleNewAppointment = () => {
+    if (!checkLimit('ehr')) {
+      showLimitWarning('ehr');
+      return;
+    }
     setIsFormOpen(true);
+  };
+
+  const handleDocumentUploadWithCheck = async (file: File, description: string) => {
+    if (!checkLimit('ehr')) {
+      showLimitWarning('ehr');
+      return;
+    }
+    return handleDocumentUpload(file, description);
   };
 
   const handleClearSelection = () => {
@@ -48,29 +60,34 @@ export default function Prontuario() {
     );
   }
 
-  // Verificar se o usuário tem acesso ao prontuário eletrônico
-  if (subscriptionData && !subscriptionData.hasEHRAccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <UpgradeWarning
-            title="Prontuário Eletrônico Indisponível"
-            description="O prontuário eletrônico não está disponível no plano gratuito. Faça upgrade para ter acesso completo aos registros dos pacientes."
-            feature="Prontuário Eletrônico"
-          />
-        </div>
-      </div>
-    );
-  }
+  const canUseEHR = checkLimit('ehr');
 
   return (
     <div className="space-y-6">
       <ProntuarioHeader
         selectedPatient={selectedPatient}
         onNewAppointment={handleNewAppointment}
+        canCreate={canUseEHR}
       />
 
-      {/* Patient Search */}
+      {subscriptionData && (
+        <div className={`border rounded-lg p-4 ${canUseEHR ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">
+                Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
+              </p>
+              <p className="text-sm">
+                {canUseEHR ? 
+                  'Acesso completo ao prontuário eletrônico' : 
+                  'Visualização permitida - Upgrade necessário for criar registros'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PatientSearch
         patients={patients}
         selectedPatient={selectedPatient}
@@ -84,9 +101,10 @@ export default function Prontuario() {
           onAppointmentSelect={setSelectedAppointment}
           loading={loading}
           documents={documents}
-          onDocumentUpload={handleDocumentUpload}
+          onDocumentUpload={handleDocumentUploadWithCheck}
           onDocumentDelete={handleDocumentDelete}
           onClearSelection={handleClearSelection}
+          canCreate={canUseEHR}
         />
       )}
 

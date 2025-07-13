@@ -1,43 +1,46 @@
 
-import { FileText } from 'lucide-react';
 import { DocumentListItem } from './DocumentListItem';
-import type { ProntuarioDocument, Appointment } from '@/types/prontuario';
+import type { Appointment, ProntuarioDocument } from '@/types/prontuario';
 
 interface DocumentListProps {
   documents: ProntuarioDocument[];
   appointmentId: string | null;
   onDocumentDelete: (documentId: string) => Promise<void>;
   appointments: Appointment[];
+  canDelete: boolean;
 }
 
-export function DocumentList({ documents, appointmentId, onDocumentDelete, appointments }: DocumentListProps) {
-  // Filter documents by appointment if selected
-  const filteredDocuments = appointmentId 
-    ? documents.filter(doc => doc.appointment_id === appointmentId)
+export function DocumentList({
+  documents,
+  appointmentId,
+  onDocumentDelete,
+  appointments,
+  canDelete,
+}: DocumentListProps) {
+  const filteredDocuments = appointmentId
+    ? documents.filter((doc) => doc.appointment_id === appointmentId)
     : documents;
 
   if (filteredDocuments.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-        <p className="text-sm">
-          {appointmentId 
-            ? 'Nenhum documento para este procedimento' 
-            : 'Nenhum documento encontrado'
-          }
-        </p>
+        <p>Nenhum documento encontrado</p>
+        {!canDelete && (
+          <p className="text-xs mt-2">Upgrade necessário para adicionar documentos</p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 max-h-[500px] overflow-y-auto">
-      {filteredDocuments.map((doc) => (
+    <div className="space-y-2">
+      {filteredDocuments.map((document) => (
         <DocumentListItem
-          key={doc.id}
-          document={doc}
+          key={document.id}
+          document={document}
           onDelete={onDocumentDelete}
           appointments={appointments}
+          canDelete={canDelete}
         />
       ))}
     </div>

@@ -1,117 +1,93 @@
 
 import { useState } from 'react';
-import { PatientListHeader } from './components/PatientListHeader';
-import { PatientFilters } from './components/PatientFilters';
-import { PatientGrid } from './components/PatientGrid';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { PatientForm } from './PatientForm';
-import { PatientDetails } from './PatientDetails';
+import { PatientTable } from './components/PatientTable';
 import { usePatientData } from './hooks/usePatientData';
-import { usePatientFilters } from './hooks/usePatientFilters';
-import { usePatientFormState } from './hooks/usePatientFormState';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Patient } from '@/types/patient';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import type { Patient } from '@/types/patient';
 
 export function PatientList() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const { toast } = useToast();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const { patients, loading, deletePatient, refreshPatients } = usePatientData();
+  const { subscriptionData, checkLimit, showLimitWarning } = useSubscriptionLimits();
 
-  const { patients, loading, refetchPatients } = usePatientData();
-  const { 
-    filteredPatients, 
-    searchTerm, 
-    setSearchTerm, 
-    showInactive, 
-    setShowInactive 
-  } = usePatientFilters(patients);
-
-  const {
-    isFormOpen,
-    editingPatient,
-    openForm,
-    closeForm
-  } = usePatientFormState();
+  const handleAddPatient = () => {
+    if (!checkLimit('patient')) {
+      showLimitWarning('patient');
+      return;
+    }
+    setEditingPatient(null);
+    setIsFormOpen(true);
+  };
 
   const handleEditPatient = (patient: Patient) => {
-    openForm(patient);
+    setEditingPatient(patient);
+    setIsFormOpen(true);
   };
 
-  const handleDeletePatient = async (patientId: string, patientName: string) => {
-    try {
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('id', patientId);
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingPatient(null);
+    refreshPatients();
+  };
 
-      if (error) throw error;
-
-      toast({
-        title: 'Sucesso',
-        description: `Paciente ${patientName} excluído com sucesso`,
-      });
-      
-      refetchPatients();
-    } catch (error) {
-      console.error('Error deleting patient:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao excluir paciente',
-        variant: 'destructive',
-      });
+  const handleDeletePatient = async (patient: Patient) => {
+    if (window.confirm(`Tem certeza que deseja excluir o paciente ${patient.full_name}?`)) {
+      await deletePatient(patient.id);
     }
-  };
-
-  const handleViewPatient = (patient: Patient) => {
-    setSelectedPatient(patient);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Carregando pacientes...</p>
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
-      <PatientListHeader
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onAddPatient={() => openForm()}
-      />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
+          <p className="text-gray-600">Gerencie os pacientes da sua clínica</p>
+        </div>
+        <Button onClick={handleAddPatient}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Paciente
+        </Button>
+      </div>
 
-      <PatientFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        showInactive={showInactive}
-        setShowInactive={setShowInactive}
-      />
+      {subscriptionData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-900">
+                Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
+              </p>
+              <p className="text-sm text-blue-700">
+                Pacientes: {subscriptionData.usage.patients_count}
+                {!subscriptionData.hasAutomacao && subscriptionData.limits.max_patients !== -1 && ` / ${subscriptionData.limits.max_patients}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <PatientGrid
-        patients={filteredPatients}
+      <PatientTable
+        patients={patients}
         onEdit={handleEditPatient}
-        onViewDetails={handleViewPatient}
         onDelete={handleDeletePatient}
       />
 
       <PatientForm
         isOpen={isFormOpen}
-        onClose={closeForm}
+        onClose={handleCloseForm}
         patient={editingPatient}
       />
-
-      {selectedPatient && (
-        <PatientDetails
-          isOpen={!!selectedPatient}
-          onClose={() => setSelectedPatient(null)}
-          patient={selectedPatient}
-        />
-      )}
     </div>
   );
 }

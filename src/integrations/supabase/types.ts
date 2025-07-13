@@ -118,6 +118,36 @@ export type Database = {
           },
         ]
       }
+      cupons: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          limite_uso: number
+          updated_at: string
+          uso_atual: number
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          limite_uso?: number
+          updated_at?: string
+          uso_atual?: number
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          limite_uso?: number
+          updated_at?: string
+          uso_atual?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           appointment_id: string | null
@@ -436,6 +466,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          automacao: boolean
           city: string | null
           cnpj: string | null
           cpf: string | null
@@ -454,6 +485,7 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          automacao?: boolean
           city?: string | null
           cnpj?: string | null
           cpf?: string | null
@@ -472,6 +504,7 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
+          automacao?: boolean
           city?: string | null
           cnpj?: string | null
           cpf?: string | null

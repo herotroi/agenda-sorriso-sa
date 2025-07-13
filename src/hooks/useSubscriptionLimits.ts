@@ -29,6 +29,7 @@ interface SubscriptionData {
   canCreateProfessional: boolean;
   canCreateProcedure: boolean;
   hasEHRAccess: boolean;
+  hasAutomacao: boolean;
 }
 
 export function useSubscriptionLimits() {
@@ -46,6 +47,46 @@ export function useSubscriptionLimits() {
     try {
       console.log('Fetching subscription data for user:', user.id);
 
+      // Buscar perfil do usuário para verificar automação
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('automacao')
+        .eq('id', user.id)
+        .single();
+
+      const hasAutomacao = profile?.automacao || false;
+      console.log('User has automacao:', hasAutomacao);
+
+      // Se tem automação, retorna acesso ilimitado
+      if (hasAutomacao) {
+        const unlimitedData: SubscriptionData = {
+          plan_type: 'unlimited',
+          status: 'active',
+          limits: {
+            max_appointments: -1,
+            max_patients: -1,
+            max_professionals: -1,
+            max_procedures: -1,
+            has_ehr_access: true
+          },
+          usage: {
+            appointments_count: 0,
+            patients_count: 0,
+            professionals_count: 0,
+            procedures_count: 0
+          },
+          canCreateAppointment: true,
+          canCreatePatient: true,
+          canCreateProfessional: true,
+          canCreateProcedure: true,
+          hasEHRAccess: true,
+          hasAutomacao: true
+        };
+        setSubscriptionData(unlimitedData);
+        setLoading(false);
+        return;
+      }
+
       // Buscar assinatura do usuário
       const { data: subscription, error: subError } = await supabase
         .from('user_subscriptions')
@@ -57,7 +98,6 @@ export function useSubscriptionLimits() {
 
       if (subError && subError.code === 'PGRST116') {
         console.log('No subscription found, creating free subscription');
-        // Se não encontrar assinatura, criar uma gratuita
         const { error: insertError } = await supabase
           .from('user_subscriptions')
           .insert({
@@ -71,7 +111,6 @@ export function useSubscriptionLimits() {
           throw insertError;
         }
         
-        // Buscar novamente
         const { data: newSub, error: newSubError } = await supabase
           .from('user_subscriptions')
           .select('plan_type, status')
@@ -129,7 +168,8 @@ export function useSubscriptionLimits() {
         canCreatePatient: limits.max_patients === -1 || usageStats.patients_count < limits.max_patients,
         canCreateProfessional: limits.max_professionals === -1 || usageStats.professionals_count < limits.max_professionals,
         canCreateProcedure: limits.max_procedures === -1 || usageStats.procedures_count < limits.max_procedures,
-        hasEHRAccess: limits.has_ehr_access
+        hasEHRAccess: limits.has_ehr_access,
+        hasAutomacao: hasAutomacao
       };
 
       console.log('Final subscription info:', subscriptionInfo);
@@ -142,7 +182,6 @@ export function useSubscriptionLimits() {
         variant: 'destructive',
       });
       
-      // Fallback para plano gratuito
       setSubscriptionData({
         plan_type: 'free',
         status: 'active',
@@ -163,7 +202,8 @@ export function useSubscriptionLimits() {
         canCreatePatient: true,
         canCreateProfessional: true,
         canCreateProcedure: true,
-        hasEHRAccess: false
+        hasEHRAccess: false,
+        hasAutomacao: false
       });
     } finally {
       setLoading(false);
@@ -176,6 +216,9 @@ export function useSubscriptionLimits() {
 
   const checkLimit = (type: 'appointment' | 'patient' | 'professional' | 'procedure' | 'ehr') => {
     if (!subscriptionData) return false;
+
+    // Se tem automação, sempre permite
+    if (subscriptionData.hasAutomacao) return true;
 
     switch (type) {
       case 'appointment':

@@ -12,6 +12,7 @@ interface ProntuarioContentProps {
   onDocumentUpload: (file: File, description: string) => Promise<void>;
   onDocumentDelete: (documentId: string) => Promise<void>;
   onClearSelection: () => void;
+  canCreate: boolean;
 }
 
 export function ProntuarioContent({
@@ -23,6 +24,7 @@ export function ProntuarioContent({
   onDocumentUpload,
   onDocumentDelete,
   onClearSelection,
+  canCreate,
 }: ProntuarioContentProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -42,6 +44,7 @@ export function ProntuarioContent({
         onDocumentUpload={onDocumentUpload}
         onDocumentDelete={onDocumentDelete}
         appointments={appointments}
+        canUpload={canCreate}
       />
     </div>
   );

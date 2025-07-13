@@ -10,6 +10,7 @@ interface DocumentManagerProps {
   onDocumentUpload: (file: File, description: string) => Promise<void>;
   onDocumentDelete: (documentId: string) => Promise<void>;
   appointments: Appointment[];
+  canUpload: boolean;
 }
 
 export function DocumentManager({ 
@@ -17,7 +18,8 @@ export function DocumentManager({
   documents, 
   onDocumentUpload, 
   onDocumentDelete,
-  appointments
+  appointments,
+  canUpload
 }: DocumentManagerProps) {
   return (
     <Card>
@@ -25,6 +27,7 @@ export function DocumentManager({
         documents={documents}
         appointmentId={appointmentId}
         onDocumentUpload={onDocumentUpload}
+        canUpload={canUpload}
       />
       
       <CardContent>
@@ -33,6 +36,7 @@ export function DocumentManager({
           appointmentId={appointmentId}
           onDocumentDelete={onDocumentDelete}
           appointments={appointments}
+          canDelete={canUpload}
         />
       </CardContent>
     </Card>
