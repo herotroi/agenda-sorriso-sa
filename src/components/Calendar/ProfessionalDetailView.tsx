@@ -67,9 +67,15 @@ export function ProfessionalDetailView({
         if (error) throw error;
 
         if (data) {
-          const processedProfessional = {
-            ...data,
-            calendarColor: data.color,
+          // Map database professional to frontend Professional interface
+          const processedProfessional: Professional = {
+            id: data.id,
+            name: data.name,
+            specialty: data.specialty || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            cro: data.crm_cro || '',
+            services: [],
             workingHours: {
               monday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
               tuesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
@@ -79,9 +85,29 @@ export function ProfessionalDetailView({
               saturday: { isWorking: false, startTime: '08:00', endTime: '18:00' },
               sunday: { isWorking: false, startTime: '08:00', endTime: '18:00' }
             },
-            services: [],
+            calendarColor: data.color || '#3b82f6',
+            isActive: data.active !== false,
             documents: [],
-            isActive: data.active
+            createdAt: data.created_at || new Date().toISOString(),
+            // Include database fields for compatibility
+            color: data.color,
+            working_hours: data.working_hours,
+            active: data.active,
+            crm_cro: data.crm_cro,
+            first_shift_start: data.first_shift_start,
+            first_shift_end: data.first_shift_end,
+            second_shift_start: data.second_shift_start,
+            second_shift_end: data.second_shift_end,
+            vacation_active: data.vacation_active,
+            vacation_start: data.vacation_start,
+            vacation_end: data.vacation_end,
+            break_times: data.break_times,
+            working_days: data.working_days,
+            weekend_shift_active: data.weekend_shift_active,
+            weekend_shift_start: data.weekend_shift_start,
+            weekend_shift_end: data.weekend_shift_end,
+            updated_at: data.updated_at,
+            user_id: data.user_id
           };
           setProfessional(processedProfessional);
         }

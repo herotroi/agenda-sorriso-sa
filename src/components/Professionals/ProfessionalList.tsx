@@ -16,7 +16,7 @@ export function ProfessionalList() {
     professionals, 
     loading, 
     deleteProfessional, 
-    refreshProfessionals 
+    refetchProfessionals 
   } = useProfessionalsData();
   const { subscriptionData, checkLimit, showLimitWarning } = useSubscriptionLimits();
 
@@ -37,7 +37,7 @@ export function ProfessionalList() {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingProfessional(null);
-    refreshProfessionals();
+    refetchProfessionals();
   };
 
   const handleDeleteProfessional = async (professionalId: string, professionalName: string) => {

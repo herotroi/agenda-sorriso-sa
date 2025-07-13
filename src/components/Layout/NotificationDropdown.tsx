@@ -114,7 +114,8 @@ export function NotificationDropdown() {
             patientId: data.patient_id,
             professionalId: data.professional_id,
             procedureId: data.procedure_id,
-            date: new Date(data.start_time).toISOString().split('T')[0]
+            date: new Date(data.start_time).toISOString().split('T')[0],
+            createdAt: data.created_at || new Date().toISOString()
           };
           setSelectedAppointment(mappedAppointment);
           setIsAppointmentDetailsOpen(true);

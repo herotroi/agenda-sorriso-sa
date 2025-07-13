@@ -62,7 +62,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         patientId: apt.patient_id,
         professionalId: apt.professional_id,
         procedureId: apt.procedure_id,
-        date: new Date(apt.start_time).toISOString().split('T')[0]
+        date: new Date(apt.start_time).toISOString().split('T')[0],
+        createdAt: apt.created_at || new Date().toISOString()
       }));
       
       setAppointments(mappedAppointments);
@@ -114,7 +115,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         patientId: apt.patient_id,
         professionalId: apt.professional_id,
         procedureId: apt.procedure_id,
-        date: new Date(apt.start_time).toISOString().split('T')[0]
+        date: new Date(apt.start_time).toISOString().split('T')[0],
+        createdAt: apt.created_at || new Date().toISOString()
       }));
       
       setMonthAppointments(mappedAppointments);
