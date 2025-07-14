@@ -70,14 +70,38 @@ export function useProfessionalWorkingHours() {
     const appointmentDate = new Date(appointmentDateTime);
     const dayOfWeek = appointmentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const appointmentTime = appointmentDate.toTimeString().slice(0, 5); // HH:MM
-    const appointmentDateOnly = appointmentDate.toISOString().split('T')[0];
+    const appointmentDateOnly = new Date(
+      appointmentDate.getFullYear(),
+      appointmentDate.getMonth(),
+      appointmentDate.getDate()
+    );
 
-    // Verificar se está de férias
+    // Verificar se está de férias com parsing correto
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      const vacationStart = new Date(professional.vacation_start);
-      const vacationEnd = new Date(professional.vacation_end);
+      const vacationStartParts = professional.vacation_start.split('-');
+      const vacationEndParts = professional.vacation_end.split('-');
       
-      if (appointmentDate >= vacationStart && appointmentDate <= vacationEnd) {
+      const vacationStart = new Date(
+        parseInt(vacationStartParts[0]), 
+        parseInt(vacationStartParts[1]) - 1, 
+        parseInt(vacationStartParts[2])
+      );
+      
+      const vacationEnd = new Date(
+        parseInt(vacationEndParts[0]), 
+        parseInt(vacationEndParts[1]) - 1, 
+        parseInt(vacationEndParts[2])
+      );
+      
+      console.log('Vacation validation:', {
+        professionalName: professional.name,
+        appointmentDateOnly: appointmentDateOnly.toDateString(),
+        vacationStart: vacationStart.toDateString(),
+        vacationEnd: vacationEnd.toDateString(),
+        isInVacation: appointmentDateOnly >= vacationStart && appointmentDateOnly <= vacationEnd
+      });
+      
+      if (appointmentDateOnly >= vacationStart && appointmentDateOnly <= vacationEnd) {
         return {
           isWorkingDay: false,
           isWithinShift: false,
