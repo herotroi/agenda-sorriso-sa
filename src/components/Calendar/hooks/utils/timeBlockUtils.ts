@@ -40,14 +40,24 @@ export const generateTimeBlocks = (professionals: Professional[], selectedDate: 
 
     // Gerar blocos de férias com correção precisa de datas
     if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-      // Criar datas usando apenas ano, mês e dia (sem horário)
-      const vacationStart = new Date(prof.vacation_start + 'T00:00:00.000Z');
-      const vacationEnd = new Date(prof.vacation_end + 'T23:59:59.999Z');
+      // Normalizar a data atual para comparação (apenas ano, mês e dia)
       const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
       
-      // Normalizar datas para comparação apenas por dia
-      const vacationStartDay = new Date(vacationStart.getFullYear(), vacationStart.getMonth(), vacationStart.getDate());
-      const vacationEndDay = new Date(vacationEnd.getFullYear(), vacationEnd.getMonth(), vacationEnd.getDate());
+      // Criar datas de início e fim das férias normalizadas
+      const vacationStartParts = prof.vacation_start.split('-');
+      const vacationEndParts = prof.vacation_end.split('-');
+      
+      const vacationStartDay = new Date(
+        parseInt(vacationStartParts[0]), 
+        parseInt(vacationStartParts[1]) - 1, 
+        parseInt(vacationStartParts[2])
+      );
+      
+      const vacationEndDay = new Date(
+        parseInt(vacationEndParts[0]), 
+        parseInt(vacationEndParts[1]) - 1, 
+        parseInt(vacationEndParts[2])
+      );
       
       console.log(`Checking vacation for ${prof.name}:`, {
         vacationStartOriginal: prof.vacation_start,
@@ -64,7 +74,7 @@ export const generateTimeBlocks = (professionals: Professional[], selectedDate: 
         }
       });
       
-      // Verificar se a data atual está dentro do período de férias (inclusive)
+      // Verificar se a data atual está dentro do período de férias (inclusive apenas até o último dia)
       if (currentDate >= vacationStartDay && currentDate <= vacationEndDay) {
         blocks.push({
           id: `vacation-${prof.id}`,

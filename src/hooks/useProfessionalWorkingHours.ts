@@ -77,12 +77,21 @@ export function useProfessionalWorkingHours() {
 
     // Verificar se está de férias com lógica corrigida
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      // Criar datas normalizadas apenas com ano, mês e dia
-      const vacationStart = new Date(professional.vacation_start + 'T00:00:00.000Z');
-      const vacationEnd = new Date(professional.vacation_end + 'T23:59:59.999Z');
+      // Criar datas normalizadas usando split para evitar problemas de timezone
+      const vacationStartParts = professional.vacation_start.split('-');
+      const vacationEndParts = professional.vacation_end.split('-');
       
-      const vacationStartDay = new Date(vacationStart.getFullYear(), vacationStart.getMonth(), vacationStart.getDate());
-      const vacationEndDay = new Date(vacationEnd.getFullYear(), vacationEnd.getMonth(), vacationEnd.getDate());
+      const vacationStartDay = new Date(
+        parseInt(vacationStartParts[0]), 
+        parseInt(vacationStartParts[1]) - 1, 
+        parseInt(vacationStartParts[2])
+      );
+      
+      const vacationEndDay = new Date(
+        parseInt(vacationEndParts[0]), 
+        parseInt(vacationEndParts[1]) - 1, 
+        parseInt(vacationEndParts[2])
+      );
       
       console.log('Vacation validation:', {
         professionalName: professional.name,
@@ -99,6 +108,7 @@ export function useProfessionalWorkingHours() {
         }
       });
       
+      // Verificar se está dentro do período de férias (inclusive apenas até o último dia especificado)
       if (appointmentDateOnly >= vacationStartDay && appointmentDateOnly <= vacationEndDay) {
         return {
           isWorkingDay: false,
