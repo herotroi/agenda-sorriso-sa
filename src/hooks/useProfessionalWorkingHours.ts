@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
@@ -76,32 +75,31 @@ export function useProfessionalWorkingHours() {
       appointmentDate.getDate()
     );
 
-    // Verificar se está de férias com parsing correto
+    // Verificar se está de férias com lógica corrigida
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      const vacationStartParts = professional.vacation_start.split('-');
-      const vacationEndParts = professional.vacation_end.split('-');
+      // Criar datas normalizadas apenas com ano, mês e dia
+      const vacationStart = new Date(professional.vacation_start + 'T00:00:00.000Z');
+      const vacationEnd = new Date(professional.vacation_end + 'T23:59:59.999Z');
       
-      const vacationStart = new Date(
-        parseInt(vacationStartParts[0]), 
-        parseInt(vacationStartParts[1]) - 1, 
-        parseInt(vacationStartParts[2])
-      );
-      
-      const vacationEnd = new Date(
-        parseInt(vacationEndParts[0]), 
-        parseInt(vacationEndParts[1]) - 1, 
-        parseInt(vacationEndParts[2])
-      );
+      const vacationStartDay = new Date(vacationStart.getFullYear(), vacationStart.getMonth(), vacationStart.getDate());
+      const vacationEndDay = new Date(vacationEnd.getFullYear(), vacationEnd.getMonth(), vacationEnd.getDate());
       
       console.log('Vacation validation:', {
         professionalName: professional.name,
         appointmentDateOnly: appointmentDateOnly.toDateString(),
-        vacationStart: vacationStart.toDateString(),
-        vacationEnd: vacationEnd.toDateString(),
-        isInVacation: appointmentDateOnly >= vacationStart && appointmentDateOnly <= vacationEnd
+        vacationStartDay: vacationStartDay.toDateString(),
+        vacationEndDay: vacationEndDay.toDateString(),
+        vacationStartOriginal: professional.vacation_start,
+        vacationEndOriginal: professional.vacation_end,
+        isInVacation: appointmentDateOnly >= vacationStartDay && appointmentDateOnly <= vacationEndDay,
+        comparison: {
+          appointmentTime: appointmentDateOnly.getTime(),
+          startTime: vacationStartDay.getTime(),
+          endTime: vacationEndDay.getTime()
+        }
       });
       
-      if (appointmentDateOnly >= vacationStart && appointmentDateOnly <= vacationEnd) {
+      if (appointmentDateOnly >= vacationStartDay && appointmentDateOnly <= vacationEndDay) {
         return {
           isWorkingDay: false,
           isWithinShift: false,
