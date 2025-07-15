@@ -23,12 +23,13 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
   professionals.forEach(prof => {
     const dateStr = selectedDate.toISOString().split('T')[0];
     
-    // Gerar blocos de férias usando utilitário centralizado
+    // Gerar blocos de férias usando utilitário centralizado (já com ajuste de datas)
     const vacationBlock = generateVacationBlock(prof, selectedDate);
     if (vacationBlock) {
       blocks.push({
         ...vacationBlock,
-        id: `vacation-${prof.id}-${dateStr}` // Manter ID único para impressão
+        id: `vacation-${prof.id}-${dateStr}`, // Manter ID único para impressão
+        title: `Férias - ${prof.name}` // Melhorar título para exibição
       });
       console.log(`Added vacation block for ${prof.name}`);
     }
@@ -129,14 +130,30 @@ export const generateCalendarPrintTemplate = (
       // Add time blocks first
       if (hourTimeBlocks.length > 0) {
         const timeBlockContent = hourTimeBlocks.map(block => {
-          const bgColor = block.type === 'vacation' ? '#fef3c7' : '#e5e7eb'; // Yellow for vacation, gray for break
-          const textColor = block.type === 'vacation' ? '#92400e' : '#374151';
-          const borderColor = block.type === 'vacation' ? '#f59e0b' : '#6b7280';
+          const isVacation = block.type === 'vacation';
+          const bgColor = isVacation ? '#fef3c7' : '#f3f4f6'; // Yellow for vacation, light gray for break
+          const textColor = isVacation ? '#92400e' : '#374151';
+          const borderColor = isVacation ? '#f59e0b' : '#6b7280';
+          const icon = isVacation ? '🏖️' : '☕';
           
           return `
-            <div class="time-block ${block.type}" style="background-color: ${bgColor}; color: ${textColor}; border-left: 4px solid ${borderColor}; padding: 4px 8px; margin-bottom: 2px; border-radius: 4px; font-size: 12px;">
-              <div class="block-title" style="font-weight: 600;">${block.title}</div>
-              ${block.type === 'vacation' ? '<div class="block-icon" style="display: inline;">🏖️</div>' : '<div class="block-icon" style="display: inline;">☕</div>'}
+            <div class="time-block ${block.type}" style="
+              background-color: ${bgColor}; 
+              color: ${textColor}; 
+              border-left: 4px solid ${borderColor}; 
+              padding: 6px 10px; 
+              margin-bottom: 4px; 
+              border-radius: 6px; 
+              font-size: 11px;
+              font-weight: 500;
+              text-align: center;
+              ${isVacation ? 'background-image: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);' : ''}
+            ">
+              <div class="block-icon" style="font-size: 14px; margin-bottom: 2px;">${icon}</div>
+              <div class="block-title" style="font-weight: 600; line-height: 1.2;">
+                ${isVacation ? 'FÉRIAS' : 'PAUSA'}
+              </div>
+              ${!isVacation ? `<div style="font-size: 10px; opacity: 0.8;">${block.title.replace('Pausa ', '')}</div>` : ''}
             </div>
           `;
         }).join('');

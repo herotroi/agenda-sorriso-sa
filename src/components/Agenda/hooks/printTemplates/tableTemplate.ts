@@ -15,10 +15,16 @@ export const generateTablePrintTemplate = (appointments: Appointment[], professi
     const timeBlocksData = professionals.map(prof => {
       let profInfo = `<h4>${prof.name}</h4>`;
       
-      // Férias
+      // Férias - ajustar datas para começar e terminar um dia antes
       if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-        const startDate = new Date(prof.vacation_start).toLocaleDateString('pt-BR');
-        const endDate = new Date(prof.vacation_end).toLocaleDateString('pt-BR');
+        const originalStart = new Date(prof.vacation_start);
+        const originalEnd = new Date(prof.vacation_end);
+        
+        originalStart.setDate(originalStart.getDate() - 1);
+        originalEnd.setDate(originalEnd.getDate() - 1);
+        
+        const startDate = originalStart.toLocaleDateString('pt-BR');
+        const endDate = originalEnd.toLocaleDateString('pt-BR');
         profInfo += `<p>🏖️ <strong>Férias:</strong> ${startDate} até ${endDate}</p>`;
       }
       

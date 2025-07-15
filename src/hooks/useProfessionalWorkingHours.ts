@@ -76,9 +76,19 @@ export function useProfessionalWorkingHours() {
       appointmentDate.getDate()
     );
 
-    // Verificar se está de férias usando utilitário centralizado
+    // Verificar se está de férias usando utilitário centralizado com ajuste de datas
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      if (isDateInVacationPeriod(appointmentDateOnly, professional.vacation_start, professional.vacation_end)) {
+      // Ajustar as datas para começar e terminar um dia antes
+      const startDate = new Date(professional.vacation_start);
+      const endDate = new Date(professional.vacation_end);
+      
+      startDate.setDate(startDate.getDate() - 1);
+      endDate.setDate(endDate.getDate() - 1);
+      
+      const adjustedStart = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+      const adjustedEnd = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+      
+      if (isDateInVacationPeriod(appointmentDateOnly, adjustedStart, adjustedEnd)) {
         return {
           isWorkingDay: false,
           isWithinShift: false,

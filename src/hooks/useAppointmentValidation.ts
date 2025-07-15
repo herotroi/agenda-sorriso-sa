@@ -88,12 +88,22 @@ export const useAppointmentValidation = () => {
         return breakConflict;
       }
 
-      // Verificar se está em período de férias usando utilitário centralizado
+      // Verificar se está em período de férias usando utilitário centralizado com ajuste de datas
       const professional = professionals.find(p => p.id === professionalId);
       if (professional?.vacation_active && professional.vacation_start && professional.vacation_end) {
         const appointmentDate = new Date(startTime);
         
-        if (isDateInVacationPeriod(appointmentDate, professional.vacation_start, professional.vacation_end)) {
+        // Ajustar as datas para começar e terminar um dia antes
+        const startDate = new Date(professional.vacation_start);
+        const endDate = new Date(professional.vacation_end);
+        
+        startDate.setDate(startDate.getDate() - 1);
+        endDate.setDate(endDate.getDate() - 1);
+        
+        const adjustedStart = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+        const adjustedEnd = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+        
+        if (isDateInVacationPeriod(appointmentDate, adjustedStart, adjustedEnd)) {
           return {
             hasConflict: true,
             message: 'Profissional está de férias neste período. Escolha outra data.'
