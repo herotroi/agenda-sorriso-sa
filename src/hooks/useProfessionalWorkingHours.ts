@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
+import { isDateInVacationPeriod } from '@/utils/vacationDateUtils';
 
 interface Professional {
   id: string;
@@ -75,48 +76,16 @@ export function useProfessionalWorkingHours() {
       appointmentDate.getDate()
     );
 
-    // Verificar se está de férias com lógica corrigida
+    // Verificar se está de férias usando utilitário centralizado
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      // Criar datas normalizadas usando split para evitar problemas de timezone
-      const vacationStartParts = professional.vacation_start.split('-');
-      const vacationEndParts = professional.vacation_end.split('-');
-      
-      const vacationStartDay = new Date(
-        parseInt(vacationStartParts[0]), 
-        parseInt(vacationStartParts[1]) - 1, 
-        parseInt(vacationStartParts[2])
-      );
-      
-      const vacationEndDay = new Date(
-        parseInt(vacationEndParts[0]), 
-        parseInt(vacationEndParts[1]) - 1, 
-        parseInt(vacationEndParts[2])
-      );
-      
-      console.log('Vacation validation:', {
-        professionalName: professional.name,
-        appointmentDateOnly: appointmentDateOnly.toDateString(),
-        vacationStartDay: vacationStartDay.toDateString(),
-        vacationEndDay: vacationEndDay.toDateString(),
-        vacationStartOriginal: professional.vacation_start,
-        vacationEndOriginal: professional.vacation_end,
-        isInVacation: appointmentDateOnly >= vacationStartDay && appointmentDateOnly <= vacationEndDay,
-        comparison: {
-          appointmentTime: appointmentDateOnly.getTime(),
-          startTime: vacationStartDay.getTime(),
-          endTime: vacationEndDay.getTime()
-        }
-      });
-      
-      // Verificar se está dentro do período de férias (inclusive apenas até o último dia especificado)
-      if (appointmentDateOnly >= vacationStartDay && appointmentDateOnly <= vacationEndDay) {
+      if (isDateInVacationPeriod(appointmentDateOnly, professional.vacation_start, professional.vacation_end)) {
         return {
           isWorkingDay: false,
           isWithinShift: false,
           isOnBreak: false,
           isOnVacation: true,
           isAvailable: false,
-          message: 'Profissional está de férias neste período'
+          message: `${professional.name} está de férias de ${professional.vacation_start} a ${professional.vacation_end}.`
         };
       }
     }

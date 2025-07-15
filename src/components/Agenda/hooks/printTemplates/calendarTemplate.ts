@@ -7,6 +7,7 @@ import {
   getStatusColor,
   getAppointmentDurationInHours 
 } from './appointmentUtils';
+import { generateVacationBlock } from '@/utils/vacationDateUtils';
 
 // Função para gerar blocos de pausa e férias
 const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) => {
@@ -22,31 +23,14 @@ const generateTimeBlocks = (professionals: Professional[], selectedDate: Date) =
   professionals.forEach(prof => {
     const dateStr = selectedDate.toISOString().split('T')[0];
     
-    // Verificar férias com correção de fuso horário
-    if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-      // Criar datas locais sem conversão de fuso horário
-      const vacationStart = new Date(prof.vacation_start + 'T00:00:00');
-      const vacationEnd = new Date(prof.vacation_end + 'T23:59:59');
-      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-      
-      console.log(`Checking vacation for ${prof.name}:`, {
-        vacationStart: vacationStart.toDateString(),
-        vacationEnd: vacationEnd.toDateString(),
-        currentDate: currentDate.toDateString(),
-        isInVacation: currentDate >= vacationStart && currentDate <= vacationEnd
+    // Gerar blocos de férias usando utilitário centralizado
+    const vacationBlock = generateVacationBlock(prof, selectedDate);
+    if (vacationBlock) {
+      blocks.push({
+        ...vacationBlock,
+        id: `vacation-${prof.id}-${dateStr}` // Manter ID único para impressão
       });
-      
-      if (currentDate >= vacationStart && currentDate <= vacationEnd) {
-        blocks.push({
-          id: `vacation-${prof.id}-${dateStr}`,
-          type: 'vacation',
-          professional_id: prof.id,
-          start_time: `${dateStr}T00:00:00`,
-          end_time: `${dateStr}T23:59:59`,
-          title: 'Férias'
-        });
-        console.log(`Added vacation block for ${prof.name}`);
-      }
+      console.log(`Added vacation block for ${prof.name}`);
     }
 
     // Verificar pausas

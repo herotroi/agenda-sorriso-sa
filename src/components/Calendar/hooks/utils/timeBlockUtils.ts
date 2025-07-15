@@ -1,4 +1,6 @@
 
+import { generateVacationBlock } from '@/utils/vacationDateUtils';
+
 interface Professional {
   id: string;
   name: string;
@@ -38,53 +40,10 @@ export const generateTimeBlocks = (professionals: Professional[], selectedDate: 
       });
     }
 
-    // Gerar blocos de férias com correção precisa de datas
-    if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-      // Normalizar a data atual para comparação (apenas ano, mês e dia)
-      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-      
-      // Criar datas de início e fim das férias normalizadas
-      const vacationStartParts = prof.vacation_start.split('-');
-      const vacationEndParts = prof.vacation_end.split('-');
-      
-      const vacationStartDay = new Date(
-        parseInt(vacationStartParts[0]), 
-        parseInt(vacationStartParts[1]) - 1, 
-        parseInt(vacationStartParts[2])
-      );
-      
-      const vacationEndDay = new Date(
-        parseInt(vacationEndParts[0]), 
-        parseInt(vacationEndParts[1]) - 1, 
-        parseInt(vacationEndParts[2])
-      );
-      
-      console.log(`Checking vacation for ${prof.name}:`, {
-        vacationStartOriginal: prof.vacation_start,
-        vacationEndOriginal: prof.vacation_end,
-        vacationStartDay: vacationStartDay.toDateString(),
-        vacationEndDay: vacationEndDay.toDateString(),
-        currentDate: currentDate.toDateString(),
-        selectedDate: selectedDate.toDateString(),
-        isInVacation: currentDate >= vacationStartDay && currentDate <= vacationEndDay,
-        comparison: {
-          currentTime: currentDate.getTime(),
-          startTime: vacationStartDay.getTime(),
-          endTime: vacationEndDay.getTime()
-        }
-      });
-      
-      // Verificar se a data atual está dentro do período de férias (inclusive apenas até o último dia)
-      if (currentDate >= vacationStartDay && currentDate <= vacationEndDay) {
-        blocks.push({
-          id: `vacation-${prof.id}`,
-          type: 'vacation',
-          professional_id: prof.id,
-          start_time: `${dateStr}T00:00:00`,
-          end_time: `${dateStr}T23:59:59`,
-          title: 'Férias'
-        });
-      }
+    // Gerar blocos de férias usando utilitário centralizado
+    const vacationBlock = generateVacationBlock(prof, selectedDate);
+    if (vacationBlock) {
+      blocks.push(vacationBlock);
     }
   });
 

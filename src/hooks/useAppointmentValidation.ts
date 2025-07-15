@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useProfessionalWorkingHours } from './useProfessionalWorkingHours';
+import { isDateInVacationPeriod } from '@/utils/vacationDateUtils';
 
 interface TimeSlot {
   start_time: string;
@@ -87,14 +88,12 @@ export const useAppointmentValidation = () => {
         return breakConflict;
       }
 
-      // Verificar se está em período de férias
+      // Verificar se está em período de férias usando utilitário centralizado
       const professional = professionals.find(p => p.id === professionalId);
       if (professional?.vacation_active && professional.vacation_start && professional.vacation_end) {
         const appointmentDate = new Date(startTime);
-        const vacationStart = new Date(professional.vacation_start);
-        const vacationEnd = new Date(professional.vacation_end);
         
-        if (appointmentDate >= vacationStart && appointmentDate <= vacationEnd) {
+        if (isDateInVacationPeriod(appointmentDate, professional.vacation_start, professional.vacation_end)) {
           return {
             hasConflict: true,
             message: 'Profissional está de férias neste período. Escolha outra data.'
