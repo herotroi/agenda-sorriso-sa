@@ -68,6 +68,10 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
     return today;
   };
 
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+  };
+
   if (selectedProfessional) {
     const professional = professionals.find(p => p.id === selectedProfessional);
     if (professional) {
@@ -104,6 +108,7 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
         onNewAppointment={() => setIsFormOpen(true)}
         onProfessionalClick={handleProfessionalClick}
         onAppointmentClick={handleAppointmentClick}
+        onDateSelect={handleDateSelect}
       />
 
       <CalendarModals

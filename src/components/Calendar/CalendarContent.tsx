@@ -24,6 +24,7 @@ interface CalendarContentProps {
   onNewAppointment: () => void;
   onProfessionalClick: (professionalId: string) => void;
   onAppointmentClick: (appointment: Appointment) => void;
+  onDateSelect?: (date: Date) => void;
 }
 
 export function CalendarContent({
@@ -36,6 +37,7 @@ export function CalendarContent({
   onNewAppointment,
   onProfessionalClick,
   onAppointmentClick,
+  onDateSelect,
 }: CalendarContentProps) {
   const isMobile = useIsMobile();
 
@@ -52,6 +54,7 @@ export function CalendarContent({
         onNavigateDate={onNavigateDate}
         onGoToToday={onGoToToday}
         onNewAppointment={onNewAppointment}
+        onDateSelect={onDateSelect}
       />
       
       <ProfessionalTabs
