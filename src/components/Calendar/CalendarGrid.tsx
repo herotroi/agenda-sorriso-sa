@@ -88,21 +88,23 @@ export function CalendarGrid({
         className="overflow-y-auto"
         style={{ height: containerHeight }}
       >
-        <div className="flex">
+        <div className="flex relative">
           <div className="w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
             {timeSlots.map((slot) => (
               <div
                 key={slot.time}
-                className="h-20 flex items-start justify-center pt-2 border-b border-gray-100 last:border-b-0"
+                className="h-20 flex items-start justify-center pt-2 border-b border-gray-100 last:border-b-0 relative"
               >
                 <span className="text-xs text-gray-500 font-medium">
                   {slot.time}
                 </span>
+                {/* Linha de meia hora */}
+                <div className="absolute top-10 left-0 right-0 h-px bg-gray-100"></div>
               </div>
             ))}
           </div>
 
-          <div className="flex-1 grid grid-flow-col auto-cols-fr">
+          <div className="flex-1 grid grid-flow-col auto-cols-fr relative">
             {professionals.map((professional) => (
               <ProfessionalColumn
                 key={professional.id}
