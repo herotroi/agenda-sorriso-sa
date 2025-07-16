@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Appointment, Professional } from '@/types';
-import { isDateInVacationPeriod } from '@/utils/vacationDateUtils';
 
 interface MonthViewProps {
   professional: Professional;
@@ -61,11 +60,23 @@ export function MonthView({
   };
 
   const isVacationDay = (date: Date) => {
-    return professional.vacation_active && isDateInVacationPeriod(
-      date,
-      professional.vacation_start || null,
-      professional.vacation_end || null
-    );
+    if (!professional.vacation_active || !professional.vacation_start || !professional.vacation_end) {
+      return false;
+    }
+
+    // Ajustar as datas para começar e terminar um dia antes
+    const startDate = new Date(professional.vacation_start);
+    const endDate = new Date(professional.vacation_end);
+    
+    startDate.setDate(startDate.getDate() - 1);
+    endDate.setDate(endDate.getDate() - 1);
+    
+    // Normalizar as datas para comparação (apenas ano, mês e dia)
+    const normalizedCheckDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    
+    return normalizedCheckDate >= normalizedStartDate && normalizedCheckDate <= normalizedEndDate;
   };
 
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
