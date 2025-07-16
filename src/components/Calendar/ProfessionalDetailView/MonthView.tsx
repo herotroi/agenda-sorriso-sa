@@ -64,12 +64,9 @@ export function MonthView({
       return false;
     }
 
-    // Ajustar as datas para começar e terminar um dia antes
+    // Usar as datas exatamente como estão cadastradas no banco de dados
     const startDate = new Date(professional.vacation_start);
     const endDate = new Date(professional.vacation_end);
-    
-    startDate.setDate(startDate.getDate() - 1);
-    endDate.setDate(endDate.getDate() - 1);
     
     // Normalizar as datas para comparação (apenas ano, mês e dia)
     const normalizedCheckDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
