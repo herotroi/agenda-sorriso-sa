@@ -76,8 +76,6 @@ export function ProfessionalColumn({
                 }
               }}
             >
-              {/* Linha de meia hora centralizada */}
-              <div className="absolute top-10 left-0 right-0 h-px bg-gray-100"></div>
             </div>
           );
         })}

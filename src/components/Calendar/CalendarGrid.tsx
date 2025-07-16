@@ -98,8 +98,6 @@ export function CalendarGrid({
                 <span className="text-xs text-gray-500 font-medium">
                   {slot.time}
                 </span>
-                {/* Linha de meia hora */}
-                <div className="absolute top-10 left-0 right-0 h-px bg-gray-100"></div>
               </div>
             ))}
           </div>
