@@ -35,6 +35,15 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
     handleSubmit,
   } = usePatientForm(patient, isOpen);
 
+  // Validação dos campos obrigatórios
+  const isFormValid = !!(
+    formData.full_name && 
+    formData.cpf && 
+    formData.gender && 
+    formData.birth_date && 
+    formData.phone
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto">
@@ -124,7 +133,7 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
           <PatientFormActions
             onClose={onClose}
             loading={loading}
-            isFormValid={!!formData.full_name}
+            isFormValid={isFormValid}
           />
         </form>
       </DialogContent>

@@ -161,6 +161,52 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
       });
       return;
     }
+
+    // Validação dos campos obrigatórios
+    if (!formData.full_name) {
+      toast({
+        title: 'Erro',
+        description: 'Nome é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.cpf) {
+      toast({
+        title: 'Erro',
+        description: 'CPF é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.gender) {
+      toast({
+        title: 'Erro',
+        description: 'Sexo é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.birth_date) {
+      toast({
+        title: 'Erro',
+        description: 'Data de nascimento é obrigatória',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.phone) {
+      toast({
+        title: 'Erro',
+        description: 'Telefone é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setLoading(true);
 

@@ -15,7 +15,7 @@ export function PatientContactInfo({ formData, setFormData, applyPhoneMask }: Pa
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
-        <Label htmlFor="phone">Telefone</Label>
+        <Label htmlFor="phone">Telefone *</Label>
         <Input
           id="phone"
           value={formData.phone}
@@ -25,6 +25,7 @@ export function PatientContactInfo({ formData, setFormData, applyPhoneMask }: Pa
           }}
           placeholder="(11) 99999-9999"
           maxLength={15}
+          required
         />
       </div>
       <div>

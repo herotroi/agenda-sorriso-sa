@@ -13,6 +13,7 @@ interface PatientBasicInfoProps {
     gender: string;
     profession: string;
     marital_status: string;
+    phone: string;
   };
   setFormData: (data: any) => void;
   applyCpfMask: (value: string) => string;
@@ -43,7 +44,7 @@ export function PatientBasicInfo({ formData, setFormData, applyCpfMask }: Patien
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="cpf">CPF</Label>
+          <Label htmlFor="cpf">CPF *</Label>
           <Input
             id="cpf"
             value={formData.cpf}
@@ -53,15 +54,17 @@ export function PatientBasicInfo({ formData, setFormData, applyCpfMask }: Patien
             }}
             placeholder="000.000.000-00"
             maxLength={14}
+            required
           />
         </div>
         <div>
-          <Label htmlFor="birth_date">Data de Nascimento</Label>
+          <Label htmlFor="birth_date">Data de Nascimento *</Label>
           <Input
             id="birth_date"
             type="date"
             value={formData.birth_date}
             onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+            required
           />
         </div>
       </div>
@@ -69,7 +72,7 @@ export function PatientBasicInfo({ formData, setFormData, applyCpfMask }: Patien
       {/* Informações pessoais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="gender">Sexo</Label>
+          <Label htmlFor="gender">Sexo *</Label>
           <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione o sexo" />
