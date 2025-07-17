@@ -254,17 +254,25 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string
+          gender: string | null
           health_insurance: string | null
+          height_cm: number | null
           id: string
+          marital_status: string | null
           neighborhood: string | null
           notes: string | null
           number: string | null
           phone: string | null
+          photo_url: string | null
+          profession: string | null
+          responsible_cpf: string | null
+          responsible_name: string | null
           state: string | null
           street: string | null
           sus_card: string | null
           updated_at: string
           user_id: string
+          weight_kg: number | null
         }
         Insert: {
           active?: boolean | null
@@ -274,17 +282,25 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name: string
+          gender?: string | null
           health_insurance?: string | null
+          height_cm?: number | null
           id?: string
+          marital_status?: string | null
           neighborhood?: string | null
           notes?: string | null
           number?: string | null
           phone?: string | null
+          photo_url?: string | null
+          profession?: string | null
+          responsible_cpf?: string | null
+          responsible_name?: string | null
           state?: string | null
           street?: string | null
           sus_card?: string | null
           updated_at?: string
           user_id: string
+          weight_kg?: number | null
         }
         Update: {
           active?: boolean | null
@@ -294,17 +310,25 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string
+          gender?: string | null
           health_insurance?: string | null
+          height_cm?: number | null
           id?: string
+          marital_status?: string | null
           neighborhood?: string | null
           notes?: string | null
           number?: string | null
           phone?: string | null
+          photo_url?: string | null
+          profession?: string | null
+          responsible_cpf?: string | null
+          responsible_name?: string | null
           state?: string | null
           street?: string | null
           sus_card?: string | null
           updated_at?: string
           user_id?: string
+          weight_kg?: number | null
         }
         Relationships: []
       }

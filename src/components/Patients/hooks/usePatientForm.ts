@@ -20,6 +20,14 @@ interface Patient {
   birth_date?: string;
   notes?: string;
   active?: boolean;
+  photo_url?: string;
+  gender?: string;
+  profession?: string;
+  marital_status?: string;
+  weight_kg?: number;
+  height_cm?: number;
+  responsible_name?: string;
+  responsible_cpf?: string;
 }
 
 interface PatientRecord {
@@ -47,6 +55,14 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
     birth_date: '',
     notes: '',
     active: true,
+    photo_url: '',
+    gender: '',
+    profession: '',
+    marital_status: '',
+    weight_kg: '',
+    height_cm: '',
+    responsible_name: '',
+    responsible_cpf: '',
   });
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,6 +111,14 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         birth_date: patient.birth_date || '',
         notes: patient.notes || '',
         active: patient.active !== undefined ? patient.active : true,
+        photo_url: patient.photo_url || '',
+        gender: patient.gender || '',
+        profession: patient.profession || '',
+        marital_status: patient.marital_status || '',
+        weight_kg: patient.weight_kg ? patient.weight_kg.toString() : '',
+        height_cm: patient.height_cm ? patient.height_cm.toString() : '',
+        responsible_name: patient.responsible_name || '',
+        responsible_cpf: patient.responsible_cpf || '',
       });
       fetchPatientRecords(patient.id);
     } else if (isOpen) {
@@ -113,6 +137,14 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         birth_date: '',
         notes: '',
         active: true,
+        photo_url: '',
+        gender: '',
+        profession: '',
+        marital_status: '',
+        weight_kg: '',
+        height_cm: '',
+        responsible_name: '',
+        responsible_cpf: '',
       });
       setPatientRecords([]);
     }
@@ -147,6 +179,14 @@ export function usePatientForm(patient: Patient | null, isOpen: boolean) {
         sus_card: formData.sus_card || null,
         health_insurance: formData.health_insurance || null,
         notes: formData.notes || null,
+        photo_url: formData.photo_url || null,
+        gender: formData.gender || null,
+        profession: formData.profession || null,
+        marital_status: formData.marital_status || null,
+        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+        height_cm: formData.height_cm ? parseInt(formData.height_cm) : null,
+        responsible_name: formData.responsible_name || null,
+        responsible_cpf: formData.responsible_cpf || null,
         user_id: user.id,
       };
 

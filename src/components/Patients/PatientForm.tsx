@@ -4,6 +4,7 @@ import { PatientBasicInfo } from './form/PatientBasicInfo';
 import { PatientContactInfo } from './form/PatientContactInfo';
 import { PatientAddressInfo } from './form/PatientAddressInfo';
 import { PatientHealthInfo } from './form/PatientHealthInfo';
+import { PatientAdditionalInfo } from './form/PatientAdditionalInfo';
 import { PatientMedicalHistory } from './form/PatientMedicalHistory';
 import { PatientNotesSection } from './form/PatientNotesSection';
 import { PatientStatusToggle } from './form/PatientStatusToggle';
@@ -63,6 +64,12 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
           <PatientHealthInfo
             formData={formData}
             setFormData={setFormData}
+          />
+
+          <PatientAdditionalInfo
+            formData={formData}
+            setFormData={setFormData}
+            applyCpfMask={applyCpfMask}
           />
 
           <PatientStatusToggle
