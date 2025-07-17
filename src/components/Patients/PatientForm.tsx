@@ -12,6 +12,7 @@ import { PatientFormActions } from './form/PatientFormActions';
 import { usePatientForm } from './hooks/usePatientForm';
 import { applyCpfMask, applyPhoneMask } from './utils/inputMasks';
 import { Patient } from '@/types/patient';
+import { Separator } from '@/components/ui/separator';
 
 interface PatientFormProps {
   isOpen: boolean;
@@ -36,56 +37,90 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl">
             {patient ? 'Editar Paciente' : 'Novo Paciente'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={(e) => handleSubmit(e, onClose)} className="space-y-4">
-          <PatientBasicInfo
-            formData={formData}
-            setFormData={setFormData}
-            applyCpfMask={applyCpfMask}
-          />
+        
+        <form onSubmit={(e) => handleSubmit(e, onClose)} className="space-y-6">
+          {/* Informações Básicas */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Dados Básicos</h3>
+            <PatientBasicInfo
+              formData={formData}
+              setFormData={setFormData}
+              applyCpfMask={applyCpfMask}
+            />
+          </div>
 
-          <PatientContactInfo
-            formData={formData}
-            setFormData={setFormData}
-            applyPhoneMask={applyPhoneMask}
-          />
+          <Separator />
 
+          {/* Contato */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Informações de Contato</h3>
+            <PatientContactInfo
+              formData={formData}
+              setFormData={setFormData}
+              applyPhoneMask={applyPhoneMask}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Endereço */}
           <PatientAddressInfo
             formData={formData}
             setFormData={setFormData}
             brazilianStates={brazilianStates}
           />
 
-          <PatientHealthInfo
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Separator />
 
+          {/* Informações de Saúde */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Informações de Saúde</h3>
+            <PatientHealthInfo
+              formData={formData}
+              setFormData={setFormData}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Informações Adicionais */}
           <PatientAdditionalInfo
             formData={formData}
             setFormData={setFormData}
             applyCpfMask={applyCpfMask}
           />
 
+          <Separator />
+
+          {/* Status */}
           <PatientStatusToggle
             active={formData.active}
             onToggle={(active) => setFormData({ ...formData, active })}
           />
 
+          {/* Histórico Médico */}
           {patient && (
-            <PatientMedicalHistory patientRecords={patientRecords} />
+            <>
+              <Separator />
+              <PatientMedicalHistory patientRecords={patientRecords} />
+            </>
           )}
 
+          <Separator />
+
+          {/* Observações */}
           <PatientNotesSection
             formData={formData}
             setFormData={setFormData}
           />
 
+          {/* Ações do formulário */}
           <PatientFormActions
             onClose={onClose}
             loading={loading}
