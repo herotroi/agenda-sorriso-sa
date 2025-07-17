@@ -25,10 +25,15 @@ export function PhotoCapture({ photoUrl, onPhotoChange, patientName }: PhotoCapt
         video: { facingMode: 'user' } 
       });
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setIsCapturing(true);
+      
+      // Aguardar um pouco antes de definir o srcObject
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.play();
+        }
+      }, 100);
     } catch (error) {
       console.error('Erro ao acessar a câmera:', error);
       alert('Não foi possível acessar a câmera. Verifique as permissões.');
@@ -39,6 +44,9 @@ export function PhotoCapture({ photoUrl, onPhotoChange, patientName }: PhotoCapt
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setIsCapturing(false);
   };
@@ -106,7 +114,9 @@ export function PhotoCapture({ photoUrl, onPhotoChange, patientName }: PhotoCapt
               ref={videoRef}
               autoPlay
               playsInline
-              className="w-64 h-48 rounded-lg border"
+              muted
+              className="w-64 h-48 rounded-lg border bg-black"
+              style={{ transform: 'scaleX(-1)' }}
             />
             <div className="flex justify-center space-x-2 mt-2">
               <Button onClick={capturePhoto} size="sm">

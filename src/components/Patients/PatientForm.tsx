@@ -45,9 +45,9 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
         </DialogHeader>
         
         <form onSubmit={(e) => handleSubmit(e, onClose)} className="space-y-6">
-          {/* Informações Básicas */}
+          {/* Informações Pessoais */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Dados Básicos</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Informações Pessoais</h3>
             <PatientBasicInfo
               formData={formData}
               setFormData={setFormData}
