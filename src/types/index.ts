@@ -1,3 +1,6 @@
+
+export type AppointmentStatus = 'confirmado' | 'cancelado' | 'faltou' | 'em-andamento' | 'concluido';
+
 export interface Patient {
   id: string;
   full_name: string;
@@ -20,17 +23,26 @@ export interface Professional {
   specialty?: string;
   email?: string;
   phone?: string;
-  color?: string;
+  color: string;
   calendarColor?: string;
   created_at: string;
   updated_at: string;
   active?: boolean;
   user_id: string;
   break_times?: string | any[];
-  working_days?: string;
+  working_days?: string | boolean[];
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
+  crm_cro?: string;
+  first_shift_start?: string;
+  first_shift_end?: string;
+  second_shift_start?: string;
+  second_shift_end?: string;
+  weekend_shift_active?: boolean;
+  weekend_shift_start?: string;
+  weekend_shift_end?: string;
+  working_hours?: any;
 }
 
 export interface Appointment {
@@ -47,7 +59,7 @@ export interface Appointment {
   endTime: string;
   notes?: string;
   price?: number;
-  status?: string;
+  status?: AppointmentStatus;
   status_id?: number;
   created_at: string;
   createdAt: string;
@@ -80,6 +92,7 @@ export interface Procedure {
   price: number;
   default_duration: number;
   active: boolean;
+  professionals?: Professional[];
 }
 
 export interface ApiResponse<T> {

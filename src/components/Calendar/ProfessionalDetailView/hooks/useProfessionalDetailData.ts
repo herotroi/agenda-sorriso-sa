@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Appointment, AppointmentStatus } from '@/types';
+import { Appointment } from '@/types';
+
+type AppointmentStatus = 'confirmado' | 'cancelado' | 'faltou' | 'em-andamento' | 'concluido';
 
 export function useProfessionalDetailData(professionalId: string, selectedDate: Date) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);

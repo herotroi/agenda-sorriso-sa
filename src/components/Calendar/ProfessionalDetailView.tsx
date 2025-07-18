@@ -1,289 +1,177 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
-import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Appointment, Professional } from '@/types';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
-import { DayProceduresDialog } from './ProfessionalDetailView/DayProceduresDialog';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
-import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
-import { supabase } from '@/integrations/supabase/client';
-import { generateTimeBlocks } from './hooks/utils/timeBlockUtils';
-
-interface TimeBlock {
-  id: string;
-  type: 'break' | 'vacation';
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  title: string;
-}
+import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
+import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
+import { Professional } from '@/types';
 
 interface ProfessionalDetailViewProps {
   professional: Professional;
-  onBack: () => void;
   selectedDate: Date;
-  onDateChange: (date: Date) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function ProfessionalDetailView({ 
-  professional: initialProfessional, 
-  onBack, 
+  professional, 
   selectedDate, 
-  onDateChange 
+  isOpen, 
+  onClose 
 }: ProfessionalDetailViewProps) {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [searchDate, setSearchDate] = useState('');
-  const [activeTab, setActiveTab] = useState('day');
-  const [professional, setProfessional] = useState<Professional>(initialProfessional);
-  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([]);
-  const [proceduresDialogOpen, setProceduresDialogOpen] = useState(false);
-  const [selectedDayAppointments, setSelectedDayAppointments] = useState<Appointment[]>([]);
-  const [selectedDayDate, setSelectedDayDate] = useState<Date>(new Date());
-  const { toast } = useToast();
-  const { handlePrint } = usePrintReport();
+  const [currentView, setCurrentView] = useState<'day' | 'month'>('day');
+  const [currentDate, setCurrentDate] = useState(selectedDate);
+  const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
 
   const { appointments, monthAppointments, loading, fetchAppointments } = useProfessionalDetailData(
     professional.id, 
-    selectedDate
+    currentDate
   );
 
-  useEffect(() => {
-    const fetchProfessionalData = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('professionals')
-          .select('*')
-          .eq('id', professional.id)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          // Map database professional to frontend Professional interface
-          const processedProfessional: Professional = {
-            id: data.id,
-            name: data.name,
-            specialty: data.specialty || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            cro: data.crm_cro || '',
-            services: [],
-            workingHours: {
-              monday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
-              tuesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
-              wednesday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
-              thursday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
-              friday: { isWorking: true, startTime: '08:00', endTime: '18:00' },
-              saturday: { isWorking: false, startTime: '08:00', endTime: '18:00' },
-              sunday: { isWorking: false, startTime: '08:00', endTime: '18:00' }
-            },
-            calendarColor: data.color || '#3b82f6',
-            isActive: data.active !== false,
-            documents: [],
-            createdAt: data.created_at || new Date().toISOString(),
-            // Include database fields for compatibility
-            color: data.color,
-            working_hours: data.working_hours,
-            active: data.active,
-            crm_cro: data.crm_cro,
-            first_shift_start: data.first_shift_start,
-            first_shift_end: data.first_shift_end,
-            second_shift_start: data.second_shift_start,
-            second_shift_end: data.second_shift_end,
-            vacation_active: data.vacation_active,
-            vacation_start: data.vacation_start,
-            vacation_end: data.vacation_end,
-            break_times: data.break_times,
-            working_days: Array.isArray(data.working_days) ? data.working_days as boolean[] : [true, true, true, true, true, false, false],
-            weekend_shift_active: data.weekend_shift_active,
-            weekend_shift_start: data.weekend_shift_start,
-            weekend_shift_end: data.weekend_shift_end,
-            updated_at: data.updated_at,
-            user_id: data.user_id
-          };
-          setProfessional(processedProfessional);
-        }
-      } catch (error) {
-        console.error('Error fetching professional data:', error);
-      }
-    };
-
-    fetchProfessionalData();
-  }, [professional.id]);
-
-  useEffect(() => {
-    if (professional && (professional.break_times || professional.vacation_active)) {
-      const blocks = generateTimeBlocks([professional], selectedDate);
-      setTimeBlocks(blocks);
-    }
-  }, [professional, selectedDate]);
-
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-    onDateChange(newDate);
+  const handleDateChange = (date: Date) => {
+    setCurrentDate(date);
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-    onDateChange(newDate);
+  const handleNewAppointment = () => {
+    setIsAppointmentFormOpen(true);
   };
 
-  const goToToday = () => {
-    onDateChange(new Date());
-  };
-
-  const handleSearchDate = () => {
-    if (searchDate) {
-      const date = new Date(searchDate);
-      if (!isNaN(date.getTime())) {
-        onDateChange(date);
-        setSearchDate('');
-      } else {
-        toast({
-          title: 'Data inválida',
-          description: 'Por favor, insira uma data válida',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
-  const handleFormClose = () => {
-    setIsFormOpen(false);
+  const handleAppointmentFormClose = () => {
+    setIsAppointmentFormOpen(false);
     fetchAppointments();
   };
 
-  const handleDetailsClose = () => {
+  const handleAppointmentClick = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setIsAppointmentDetailsOpen(true);
+  };
+
+  const handleAppointmentDetailsClose = () => {
+    setIsAppointmentDetailsOpen(false);
     setSelectedAppointment(null);
     fetchAppointments();
   };
 
-  const handleAppointmentUpdate = () => {
-    fetchAppointments();
-  };
+  // Tratar propriedades JSON do profissional
+  const breakTimes = Array.isArray(professional.break_times) 
+    ? professional.break_times 
+    : (typeof professional.break_times === 'string' ? JSON.parse(professional.break_times || '[]') : []);
+    
+  const workingDays = Array.isArray(professional.working_days)
+    ? professional.working_days
+    : (typeof professional.working_days === 'string' ? JSON.parse(professional.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false]);
 
-  const handleDayClick = (date: Date, dayAppointments?: Appointment[]) => {
-    if (dayAppointments && dayAppointments.length > 0) {
-      setSelectedDayDate(date);
-      setSelectedDayAppointments(dayAppointments);
-      setProceduresDialogOpen(true);
-    } else {
-      onDateChange(date);
-    }
+  const professionalWithParsedData = {
+    ...professional,
+    break_times: breakTimes,
+    working_days: workingDays
   };
-
-  const handlePrintProfessional = () => {
-    const printActiveTab = activeTab === 'day' ? 'calendar' : 'table';
-    const printDate = activeTab === 'day' ? selectedDate : undefined;
-    handlePrint(printActiveTab, printDate, professional.id);
-  };
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
-  }
 
   return (
-    <div className="space-y-6">
-      <ProfessionalDetailViewHeader
-        onBack={onBack}
-        onNavigateDate={navigateDate}
-        onGoToToday={goToToday}
-        searchDate={searchDate}
-        onSearchDateChange={setSearchDate}
-        onSearchDate={handleSearchDate}
-        onNewAppointment={() => setIsFormOpen(true)}
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: professional.calendarColor }}
-              />
-              {professional.name} - {selectedDate.toLocaleDateString('pt-BR', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-7xl max-h-[95vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+                <div>
+                  <DialogTitle className="text-xl font-semibold">
+                    {professional.name}
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={currentView === 'day' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('day')}
+                  className="flex items-center gap-2"
+                >
+                  <Clock className="h-4 w-4" />
+                  Dia
+                </Button>
+                <Button
+                  variant={currentView === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentView('month')}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Mês
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handlePrintProfessional}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Printer className="h-4 w-4" />
-              Imprimir Relatório
-            </Button>
-          </CardTitle>
-        </CardHeader>
+          </DialogHeader>
 
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="day">Dia</TabsTrigger>
-              <TabsTrigger value="month">Mês</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="day" className="mt-6">
-              <DayView
-                professional={professional}
-                appointments={appointments}
-                timeBlocks={timeBlocks}
-                onAppointmentClick={setSelectedAppointment}
-              />
-            </TabsContent>
-
-            <TabsContent value="month" className="mt-6">
-              <MonthView
-                professional={professional}
-                appointments={monthAppointments}
-                selectedDate={selectedDate}
-                onNavigateMonth={navigateMonth}
-                onDayClick={handleDayClick}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          <div className="flex-1 overflow-hidden">
+            <ProfessionalDetailViewHeader
+              professional={professionalWithParsedData}
+              currentDate={currentDate}
+              onDateChange={handleDateChange}
+              onNewAppointment={handleNewAppointment}
+              view={currentView}
+            />
+            
+            <div className="px-6 pb-6 h-[calc(95vh-180px)] overflow-auto">
+              {currentView === 'day' ? (
+                <DayView
+                  professional={professionalWithParsedData}
+                  appointments={appointments}
+                  selectedDate={currentDate}
+                  loading={loading}
+                  onAppointmentClick={handleAppointmentClick}
+                />
+              ) : (
+                <MonthView
+                  professional={professionalWithParsedData}
+                  appointments={monthAppointments}
+                  selectedDate={currentDate}
+                  onDateChange={handleDateChange}
+                  onAppointmentClick={handleAppointmentClick}
+                />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AppointmentForm
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        selectedDate={selectedDate}
+        isOpen={isAppointmentFormOpen}
+        onClose={handleAppointmentFormClose}
+        selectedDate={currentDate}
         selectedProfessionalId={professional.id}
       />
 
       {selectedAppointment && (
         <AppointmentDetails
           appointment={selectedAppointment}
-          isOpen={!!selectedAppointment}
-          onClose={handleDetailsClose}
-          onUpdate={handleAppointmentUpdate}
+          isOpen={isAppointmentDetailsOpen}
+          onClose={handleAppointmentDetailsClose}
+          onUpdate={fetchAppointments}
         />
       )}
-
-      <DayProceduresDialog
-        isOpen={proceduresDialogOpen}
-        onClose={() => setProceduresDialogOpen(false)}
-        date={selectedDayDate}
-        appointments={selectedDayAppointments}
-        professionalName={professional.name}
-        professionalColor={professional.calendarColor}
-      />
-    </div>
+    </>
   );
 }

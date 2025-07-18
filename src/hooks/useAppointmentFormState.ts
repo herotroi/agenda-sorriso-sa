@@ -13,7 +13,7 @@ export function useAppointmentFormState(selectedProfessionalId?: string) {
     duration: '60',
     notes: '',
     status_id: 1,
-    price: 0
+    is_blocked: false
   });
 
   // Estados para armazenar os valores originais (para máscara)
@@ -29,7 +29,7 @@ export function useAppointmentFormState(selectedProfessionalId?: string) {
     duration: false,
     notes: false,
     status_id: false,
-    price: false
+    is_blocked: false
   });
 
   const resetFieldModifications = () => {
@@ -42,7 +42,7 @@ export function useAppointmentFormState(selectedProfessionalId?: string) {
       duration: false,
       notes: false,
       status_id: false,
-      price: false
+      is_blocked: false
     });
   };
 

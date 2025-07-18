@@ -19,9 +19,13 @@ export const useDragAndDrop = () => {
   const { toast } = useToast();
   const { checkTimeConflict } = useAppointmentValidation();
 
-  const handleDragStart = (appointment: Appointment) => {
+  const startDrag = (appointment: Appointment) => {
     setDraggedAppointment(appointment);
     setIsDragging(true);
+  };
+
+  const handleDragStart = (appointment: Appointment) => {
+    startDrag(appointment);
   };
 
   const handleDragEnd = () => {
@@ -91,6 +95,7 @@ export const useDragAndDrop = () => {
     draggedAppointment,
     isDragging,
     handleDragStart,
+    startDrag,
     handleDragEnd,
     handleDrop
   };

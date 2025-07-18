@@ -45,6 +45,12 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
     handleClose();
   };
 
+  // Garantir que o appointment tem status definido
+  const appointmentWithStatus = {
+    ...appointment,
+    status: appointment.status || 'confirmado'
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -73,13 +79,13 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
               <Separator />
 
-              <AppointmentInfo appointment={appointment} />
+              <AppointmentInfo appointment={appointmentWithStatus} />
 
               <Separator />
 
               <AppointmentStatusUpdater 
                 appointment={{
-                  ...appointment,
+                  ...appointmentWithStatus,
                   status_id: appointment.status_id || 1
                 }} 
                 onClose={handleClose}
