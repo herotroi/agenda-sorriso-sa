@@ -1,13 +1,15 @@
 
-import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, RefreshCw, Plus } from 'lucide-react';
+import { CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, RefreshCw, Printer } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface AppointmentsTableHeaderProps {
   appointmentsCount: number;
   hasActiveFilters: boolean;
   onCreateAppointment: () => void;
   onRefresh: () => void;
+  onPrint: () => void;
   refreshing: boolean;
 }
 
@@ -16,42 +18,51 @@ export function AppointmentsTableHeader({
   hasActiveFilters,
   onCreateAppointment,
   onRefresh,
+  onPrint,
   refreshing
 }: AppointmentsTableHeaderProps) {
   return (
     <CardHeader>
-      <CardTitle className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          <div className="flex flex-col">
-            <span>Tabela de Agendamentos</span>
-            {hasActiveFilters && (
-              <span className="text-sm font-normal text-muted-foreground">
-                {appointmentsCount} resultado{appointmentsCount !== 1 ? 's' : ''} encontrado{appointmentsCount !== 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <CardTitle className="text-lg">Agendamentos</CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            {appointmentsCount} {hasActiveFilters ? 'filtrados' : 'total'}
+          </Badge>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={onCreateAppointment}
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPrint}
+            className="flex items-center gap-2"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Agendamento
+            <Printer className="h-4 w-4" />
+            Imprimir
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onRefresh}
             disabled={refreshing}
+            className="flex items-center gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Atualizar
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
+          </Button>
+          
+          <Button
+            onClick={onCreateAppointment}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Agendamento
           </Button>
         </div>
-      </CardTitle>
+      </div>
     </CardHeader>
   );
 }

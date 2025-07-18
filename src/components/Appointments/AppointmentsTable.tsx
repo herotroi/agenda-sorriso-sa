@@ -7,6 +7,7 @@ import { AppointmentsFilters } from './AppointmentsFilters';
 import { AppointmentsEmptyState } from './AppointmentsEmptyState';
 import { AppointmentForm } from './AppointmentForm';
 import { AppointmentDetails } from './AppointmentDetails';
+import { AppointmentsPrintOptions } from './AppointmentsPrintOptions';
 import { Appointment } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,6 +20,7 @@ interface AppointmentsTableProps {
 export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isPrintOptionsOpen, setIsPrintOptionsOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const {
@@ -54,6 +56,10 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
     setSelectedAppointment(appointment);
   };
 
+  const handlePrint = () => {
+    setIsPrintOptionsOpen(true);
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <AppointmentsFilters 
@@ -66,6 +72,7 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
           hasActiveFilters={hasActiveFilters}
           onCreateAppointment={() => setIsFormOpen(true)}
           onRefresh={handleManualRefresh}
+          onPrint={handlePrint}
           refreshing={refreshing}
         />
         
@@ -142,6 +149,14 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
           onUpdate={handleManualRefresh}
         />
       )}
+
+      <AppointmentsPrintOptions
+        isOpen={isPrintOptionsOpen}
+        onClose={() => setIsPrintOptionsOpen(false)}
+        appointments={appointments}
+        activeFilters={activeFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
     </div>
   );
 }

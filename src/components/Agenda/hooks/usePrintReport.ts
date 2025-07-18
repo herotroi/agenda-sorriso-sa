@@ -54,15 +54,21 @@ export function usePrintReport() {
         console.log('Preparing table print with filters:', filters, 'professional:', professionalId || 'all');
         
         let appointments;
+        let printTitle = 'Tabela de Agendamentos';
         
-        // Se há filtros ativos, usar função de busca filtrada
+        // Determinar qual tipo de busca fazer e o título apropriado
         if (filters && (filters.statusId || filters.procedureId)) {
+          // Se há filtros ativos, usar função de busca filtrada
           appointments = await fetchFilteredAppointments(filters, professionalId);
+          printTitle = 'Tabela de Agendamentos - Filtrados';
+        } else if (selectedDate) {
+          // Se há data selecionada, buscar por data
+          appointments = await fetchDateAppointments(selectedDate, professionalId);
+          printTitle = `Tabela de Agendamentos - ${getFormattedDate(selectedDate)}`;
         } else {
-          // Usar função padrão se não há filtros
-          appointments = selectedDate ? 
-            await fetchDateAppointments(selectedDate, professionalId) : 
-            await fetchAllAppointments(professionalId);
+          // Usar função padrão para todos os agendamentos
+          appointments = await fetchAllAppointments(professionalId);
+          printTitle = 'Tabela de Agendamentos - Todos';
         }
 
         const allProfessionals = await fetchProfessionalsData();
@@ -87,9 +93,10 @@ export function usePrintReport() {
         if (!appointments || appointments.length === 0) {
           const professionalText = professionalId ? ' para este profissional' : '';
           const filtersText = filters && (filters.statusId || filters.procedureId) ? ' com os filtros aplicados' : '';
-          contentToPrint = `<p>Nenhum agendamento encontrado${professionalText}${filtersText} para impressão da tabela.</p>`;
+          const dateText = selectedDate ? ` para o dia ${getFormattedDate(selectedDate)}` : '';
+          contentToPrint = `<p>Nenhum agendamento encontrado${professionalText}${filtersText}${dateText} para impressão da tabela.</p>`;
         } else {
-          contentToPrint = generateTablePrintTemplate(appointments, professionals);
+          contentToPrint = generateTablePrintTemplate(appointments, professionals, printTitle);
         }
       }
     } catch (error) {

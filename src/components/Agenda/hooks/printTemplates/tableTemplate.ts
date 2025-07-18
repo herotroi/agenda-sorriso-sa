@@ -2,12 +2,18 @@
 import { Appointment } from './types';
 import { convertToLocalTime, getStatusColor } from './appointmentUtils';
 
-export const generateTablePrintTemplate = (appointments: Appointment[], professionals?: any[]): string => {
+export const generateTablePrintTemplate = (
+  appointments: Appointment[], 
+  professionals?: any[], 
+  customTitle?: string
+): string => {
   console.log('Generating table template with:', appointments?.length || 0, 'appointments');
 
   if (!appointments || appointments.length === 0) {
     return '<p>Nenhum agendamento encontrado.</p>';
   }
+
+  const tableTitle = customTitle || 'Tabela de Agendamentos';
 
   // Gerar informações de pausas e férias por profissional
   let timeBlocksInfo = '';
@@ -78,7 +84,7 @@ export const generateTablePrintTemplate = (appointments: Appointment[], professi
   return `
     <div class="rounded-lg border p-6">
       <div class="mb-4">
-        <h2 class="text-2xl font-semibold">Tabela de Agendamentos</h2>
+        <h2 class="text-2xl font-semibold">${tableTitle}</h2>
         <p class="text-sm text-gray-600 mt-2">Total de agendamentos: ${appointments.length}</p>
       </div>
       
