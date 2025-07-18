@@ -46,6 +46,7 @@ export type Database = {
           created_at: string
           end_time: string
           id: string
+          is_blocked: boolean | null
           notes: string | null
           patient_id: string | null
           price: number | null
@@ -61,6 +62,7 @@ export type Database = {
           created_at?: string
           end_time: string
           id?: string
+          is_blocked?: boolean | null
           notes?: string | null
           patient_id?: string | null
           price?: number | null
@@ -76,6 +78,7 @@ export type Database = {
           created_at?: string
           end_time?: string
           id?: string
+          is_blocked?: boolean | null
           notes?: string | null
           patient_id?: string | null
           price?: number | null

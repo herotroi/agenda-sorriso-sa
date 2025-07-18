@@ -46,7 +46,8 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
       procedureId: apt.procedure_id,
       date: new Date(apt.start_time).toISOString().split('T')[0],
       createdAt: apt.created_at,
-      status: apt.status || 'confirmado'
+      status: apt.status || 'confirmado',
+      isBlocked: apt.is_blocked || false
     })) as Appointment[];
   } catch (error) {
     console.error('❌ Error fetching appointments:', error);

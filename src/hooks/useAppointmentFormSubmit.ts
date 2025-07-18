@@ -33,13 +33,26 @@ export function useAppointmentFormSubmit(
       return false;
     }
 
-    if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive',
-      });
-      return false;
+    // Para agendamentos bloqueados, apenas validar campos obrigatórios básicos
+    if (formData.is_blocked) {
+      if (!formData.professional_id || !formData.start_time) {
+        toast({
+          title: 'Campos obrigatórios',
+          description: 'Preencha profissional e horário para o bloqueio',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    } else {
+      // Validação completa para agendamentos normais
+      if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
+        toast({
+          title: 'Campos obrigatórios',
+          description: 'Preencha todos os campos obrigatórios',
+          variant: 'destructive',
+        });
+        return false;
+      }
     }
 
     const startTime = new Date(formData.start_time);
@@ -102,14 +115,15 @@ export function useAppointmentFormSubmit(
       const procedure = procedures.find(p => p.id === formData.procedure_id);
 
       const appointmentData = {
-        patient_id: formData.patient_id,
+        patient_id: formData.is_blocked ? null : formData.patient_id,
         professional_id: formData.professional_id,
-        procedure_id: formData.procedure_id || null,
+        procedure_id: formData.is_blocked ? null : (formData.procedure_id || null),
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        price: procedure?.price || null,
-        notes: formData.notes || null,
-        status_id: formData.status_id,
+        price: formData.is_blocked ? null : (procedure?.price || null),
+        notes: formData.is_blocked ? 'Horário bloqueado' : (formData.notes || null),
+        status_id: formData.is_blocked ? 1 : formData.status_id,
+        is_blocked: formData.is_blocked || false,
         user_id: user.id
       };
 
@@ -130,9 +144,13 @@ export function useAppointmentFormSubmit(
 
       if (error) throw error;
 
+      const successMessage = formData.is_blocked 
+        ? (appointmentToEdit ? 'Bloqueio atualizado com sucesso' : 'Horário bloqueado com sucesso')
+        : (appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso');
+
       toast({
         title: 'Sucesso',
-        description: appointmentToEdit ? 'Agendamento atualizado com sucesso' : 'Agendamento criado com sucesso',
+        description: successMessage,
       });
 
       onClose(true);

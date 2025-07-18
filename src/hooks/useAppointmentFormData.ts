@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAppointmentFormState } from './useAppointmentFormState';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Patient, Professional, Procedure, AppointmentStatus, AppointmentFormData } from '@/types/appointment-form';
+import { AppointmentFormData, Patient, Professional, Procedure, AppointmentStatus } from '@/types/appointment-form';
 
 export function useAppointmentFormData(
   isOpen: boolean,
@@ -11,38 +10,64 @@ export function useAppointmentFormData(
   selectedDate: Date,
   selectedProfessionalId?: string
 ) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const [patients, setPatients] = useState<Patient[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
-  const { user } = useAuth();
+  const [originalData, setOriginalData] = useState<AppointmentFormData | null>(null);
+  const [fieldModified, setFieldModified] = useState<Record<string, boolean>>({});
 
-  const {
-    formData,
-    setFormData,
-    originalData,
-    setOriginalData,
-    fieldModified,
-    setFieldModified,
-    resetFieldModifications
-  } = useAppointmentFormState(selectedProfessionalId);
+  const [formData, setFormData] = useState<AppointmentFormData>({
+    patient_id: '',
+    professional_id: selectedProfessionalId || '',
+    procedure_id: '',
+    start_time: selectedDate.toISOString().slice(0, 16),
+    duration: '60',
+    notes: '',
+    status_id: 1,
+    is_blocked: false
+  });
+
+  const handleFieldChange = (field: string, value: any) => {
+    setFieldModified(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  const handleProcedureChange = (procedureId: string) => {
+    const procedure = procedures.find(p => p.id === procedureId);
+    if (procedure) {
+      setFormData(prev => ({
+        ...prev,
+        procedure_id: procedureId,
+        duration: procedure.default_duration.toString()
+      }));
+      handleFieldChange('procedure_id', procedureId);
+      handleFieldChange('duration', procedure.default_duration.toString());
+    }
+  };
+
+  const getFinalFormData = () => {
+    return formData;
+  };
+
+  const resetFieldModifications = () => {
+    setFieldModified({});
+  };
 
   const fetchData = async () => {
     if (!user) return;
-    
+
     try {
       const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
-        // Only fetch active patients for this user
-        supabase.from('patients').select('id, full_name, cpf, phone').eq('active', true).eq('user_id', user.id).order('full_name'),
-        supabase.from('professionals').select('id, name').eq('active', true).eq('user_id', user.id).order('name'),
-        // Fetch procedures with their associated professionals for this user
-        supabase.from('procedures').select(`
-          *,
-          procedure_professionals!inner(
-            professional:professionals(id, name, specialty, color)
-          )
-        `).eq('active', true).eq('user_id', user.id).order('name'),
-        supabase.from('appointment_statuses').select('id, label, key').eq('active', true).order('id')
+        supabase.from('patients').select('*').eq('user_id', user.id).eq('active', true),
+        supabase.from('professionals').select('*').eq('user_id', user.id).eq('active', true),
+        supabase.from('procedures').select('*').eq('user_id', user.id).eq('active', true),
+        supabase.from('appointment_statuses').select('*').eq('active', true)
       ]);
 
       if (patientsRes.error) throw patientsRes.error;
@@ -52,83 +77,16 @@ export function useAppointmentFormData(
 
       setPatients(patientsRes.data || []);
       setProfessionals(professionalsRes.data || []);
-      
-      // Transform procedures data to include professionals array
-      const transformedProcedures = (proceduresRes.data || []).map(proc => ({
-        ...proc,
-        professionals: proc.procedure_professionals?.map(pp => pp.professional).filter(Boolean) || []
-      }));
-      
-      setProcedures(transformedProcedures);
+      setProcedures(proceduresRes.data || []);
       setStatuses(statusesRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching form data:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar dados do formulário',
+        variant: 'destructive',
+      });
     }
-  };
-
-  const formatDateTimeLocal = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const handleProcedureChange = (procedureId: string) => {
-    const procedure = procedures.find(p => p.id === procedureId);
-    const duration = procedure ? procedure.default_duration.toString() : formData.duration;
-    
-    console.log('Procedure selection changed:', procedureId);
-    setFormData(prev => ({
-      ...prev,
-      procedure_id: procedureId,
-      duration: duration
-    }));
-    
-    setFieldModified(prev => ({
-      ...prev,
-      procedure_id: true,
-      duration: true
-    }));
-  };
-
-  const handleFieldChange = (field: string, value: any) => {
-    console.log(`Field ${field} changed to:`, value);
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    setFieldModified(prev => ({
-      ...prev,
-      [field]: true
-    }));
-  };
-
-  const getFinalFieldValue = (field: keyof AppointmentFormData) => {
-    if (fieldModified[field] || !originalData) {
-      return formData[field];
-    }
-    return originalData[field];
-  };
-
-  const getFinalFormData = (): AppointmentFormData => {
-    if (!originalData) {
-      return formData;
-    }
-
-    const finalData: AppointmentFormData = { ...originalData };
-    
-    (Object.keys(fieldModified) as Array<keyof AppointmentFormData>).forEach((field) => {
-      if (fieldModified[field]) {
-        (finalData as any)[field] = formData[field];
-      }
-    });
-
-    console.log('Final form data for submission:', finalData);
-    return finalData;
   };
 
   useEffect(() => {
@@ -138,47 +96,35 @@ export function useAppointmentFormData(
   }, [isOpen, user]);
 
   useEffect(() => {
-    if (isOpen && appointmentToEdit) {
-      const startTime = new Date(appointmentToEdit.start_time);
-      const endTime = new Date(appointmentToEdit.end_time);
-      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-      
-      const editFormData: AppointmentFormData = {
+    if (appointmentToEdit) {
+      const editData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
-        start_time: formatDateTimeLocal(startTime),
-        end_time: formatDateTimeLocal(endTime),
-        duration: duration.toString(),
+        start_time: new Date(appointmentToEdit.start_time).toISOString().slice(0, 16),
+        duration: Math.round((new Date(appointmentToEdit.end_time).getTime() - new Date(appointmentToEdit.start_time).getTime()) / (1000 * 60)).toString(),
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
-        price: appointmentToEdit.price || 0
+        is_blocked: appointmentToEdit.is_blocked || false
       };
-      
-      console.log('Setting original appointment data for editing:', editFormData);
-      setOriginalData(editFormData);
-      setFormData(editFormData); // Manter os mesmos dados no formData inicialmente
-      resetFieldModifications();
-    } else if (isOpen && !appointmentToEdit) {
-      const defaultTime = selectedDate.toISOString().split('T')[0] + 'T09:00';
-      const newFormData: AppointmentFormData = {
+      setFormData(editData);
+      setOriginalData(editData);
+    } else {
+      const newData = {
         patient_id: '',
         professional_id: selectedProfessionalId || '',
         procedure_id: '',
-        start_time: defaultTime,
-        end_time: defaultTime,
+        start_time: selectedDate.toISOString().slice(0, 16),
         duration: '60',
         notes: '',
         status_id: 1,
-        price: 0
+        is_blocked: false
       };
-      
-      console.log('Setting default form data for new appointment:', newFormData);
-      setFormData(newFormData);
+      setFormData(newData);
       setOriginalData(null);
-      resetFieldModifications();
     }
-  }, [isOpen, appointmentToEdit, selectedDate, selectedProfessionalId]);
+    setFieldModified({});
+  }, [appointmentToEdit, selectedDate, selectedProfessionalId, isOpen]);
 
   return {
     patients,
@@ -191,10 +137,7 @@ export function useAppointmentFormData(
     handleFieldChange,
     originalData,
     fieldModified,
-    getFinalFieldValue,
     getFinalFormData,
     resetFieldModifications
   };
 }
-
-export type { AppointmentFormData };

@@ -10,16 +10,21 @@ interface AppointmentRowProps {
 }
 
 export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
+  const isBlocked = appointment.is_blocked || appointment.isBlocked;
+  
   return (
-    <TableRow key={appointment.id}>
+    <TableRow 
+      key={appointment.id} 
+      className={isBlocked ? 'bg-gray-100 text-gray-500' : ''}
+    >
       <TableCell className="font-medium">
-        {appointment.patients?.full_name || 'N/A'}
+        {isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'N/A')}
       </TableCell>
       <TableCell>
         {appointment.professionals?.name || 'N/A'}
       </TableCell>
       <TableCell>
-        {appointment.procedures?.name || 'Nenhum'}
+        {isBlocked ? 'Bloqueio' : (appointment.procedures?.name || 'Nenhum')}
       </TableCell>
       <TableCell>
         {new Date(appointment.startTime).toLocaleString('pt-BR')}
@@ -28,20 +33,22 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
         <span 
           className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
           style={{
-            backgroundColor: appointment.appointment_statuses?.color + '20',
-            color: appointment.appointment_statuses?.color || '#6b7280'
+            backgroundColor: isBlocked ? '#9ca3af20' : (appointment.appointment_statuses?.color + '20'),
+            color: isBlocked ? '#6b7280' : (appointment.appointment_statuses?.color || '#6b7280')
           }}
         >
-          {appointment.appointment_statuses?.label || 'N/A'}
+          {isBlocked ? 'Bloqueado' : (appointment.appointment_statuses?.label || 'N/A')}
         </span>
       </TableCell>
       <TableCell>
         <span className="text-sm text-gray-600">
-          {appointment.notes ? (
-            appointment.notes.length > 30 
-              ? appointment.notes.substring(0, 30) + '...'
-              : appointment.notes
-          ) : 'Sem observações'}
+          {isBlocked ? 'Horário bloqueado para agendamentos' : 
+            (appointment.notes ? (
+              appointment.notes.length > 30 
+                ? appointment.notes.substring(0, 30) + '...'
+                : appointment.notes
+            ) : 'Sem observações')
+          }
         </span>
       </TableCell>
       <TableCell>
