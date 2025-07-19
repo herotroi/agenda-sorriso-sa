@@ -9,7 +9,7 @@ import type { Professional, Appointment } from '@/types';
 interface DayViewProps {
   professional: Professional;
   appointments: Appointment[];
-  currentDate: Date;
+  selectedDate: Date;
   loading: boolean;
   onAppointmentClick: (appointment: Appointment) => void;
 }
@@ -17,7 +17,7 @@ interface DayViewProps {
 export function DayView({
   professional,
   appointments,
-  currentDate,
+  selectedDate,
   loading,
   onAppointmentClick
 }: DayViewProps) {
@@ -58,7 +58,7 @@ export function DayView({
     <div className="space-y-4">
       <div className="text-center">
         <h3 className="text-lg font-semibold">
-          {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+          {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
         <p className="text-sm text-gray-500">
           {appointments.length} agendamento{appointments.length !== 1 ? 's' : ''}

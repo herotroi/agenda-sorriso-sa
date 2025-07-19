@@ -1,17 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { generateTimeBlocks } from './utils/timeBlockUtils';
-
-interface Professional {
-  id: string;
-  name: string;
-  color: string;
-  break_times?: Array<{ start: string; end: string }>;
-  vacation_active?: boolean;
-  vacation_start?: string;
-  vacation_end?: string;
-  working_days?: boolean[];
-}
+import type { Professional } from '@/types';
 
 interface TimeBlock {
   id: string;
