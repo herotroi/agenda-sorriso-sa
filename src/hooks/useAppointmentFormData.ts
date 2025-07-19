@@ -109,8 +109,23 @@ export function useAppointmentFormData(
       const proceduresWithProfessionals = (proceduresRes.data || []).map(procedure => {
         const associatedProfessionals = (procedureProfessionalsRes.data || [])
           .filter(pp => pp.procedure_id === procedure.id)
-          .map(pp => pp.professionals)
-          .filter(Boolean);
+          .map(pp => {
+            const prof = pp.professionals;
+            if (!prof) return null;
+            
+            // Transform professional data to match interface
+            return {
+              ...prof,
+              working_hours: prof.working_hours || { start: "08:00", end: "18:00" },
+              break_times: Array.isArray(prof.break_times) 
+                ? prof.break_times 
+                : (typeof prof.break_times === 'string' ? JSON.parse(prof.break_times || '[]') : []),
+              working_days: Array.isArray(prof.working_days)
+                ? prof.working_days
+                : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false])
+            };
+          })
+          .filter(Boolean) as Professional[];
         
         return {
           ...procedure,

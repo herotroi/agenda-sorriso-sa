@@ -30,7 +30,7 @@ export interface Professional {
   active?: boolean;
   user_id: string;
   break_times?: string | any[];
-  working_days?: string;
+  working_days?: string | boolean[];
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
@@ -50,6 +50,7 @@ export interface Procedure {
   name: string;
   price: number;
   default_duration: number;
+  active?: boolean;
   professionals?: Professional[];
 }
 
