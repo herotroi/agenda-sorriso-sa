@@ -1,17 +1,13 @@
 
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Clock } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Eye } from 'lucide-react';
+import type { Professional } from '@/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
-import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
-import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Professional } from '@/types';
 
 interface ProfessionalDetailViewProps {
   professional: Professional;
@@ -20,158 +16,84 @@ interface ProfessionalDetailViewProps {
   onClose: () => void;
 }
 
-export function ProfessionalDetailView({ 
-  professional, 
-  selectedDate, 
-  isOpen, 
-  onClose 
+export function ProfessionalDetailView({
+  professional,
+  selectedDate: initialDate,
+  isOpen,
+  onClose
 }: ProfessionalDetailViewProps) {
-  const [currentView, setCurrentView] = useState<'day' | 'month'>('day');
-  const [currentDate, setCurrentDate] = useState(selectedDate);
-  const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
-
-  const { appointments, monthAppointments, loading, fetchAppointments } = useProfessionalDetailData(
-    professional.id, 
-    currentDate
+  const [currentDate, setCurrentDate] = useState(initialDate);
+  const [view, setView] = useState<'day' | 'month'>('day');
+  
+  const { appointments, loading, handleAppointmentClick } = useProfessionalDetailData(
+    professional.id,
+    currentDate,
+    view
   );
 
-  const handleDateChange = (date: Date) => {
-    setCurrentDate(date);
-  };
-
-  const handleNewAppointment = () => {
-    setIsAppointmentFormOpen(true);
-  };
-
-  const handleAppointmentFormClose = () => {
-    setIsAppointmentFormOpen(false);
-    fetchAppointments();
-  };
-
-  const handleAppointmentClick = (appointment: any) => {
-    setSelectedAppointment(appointment);
-    setIsAppointmentDetailsOpen(true);
-  };
-
-  const handleAppointmentDetailsClose = () => {
-    setIsAppointmentDetailsOpen(false);
-    setSelectedAppointment(null);
-    fetchAppointments();
-  };
-
-  // Tratar propriedades JSON do profissional
-  const breakTimes = Array.isArray(professional.break_times) 
-    ? professional.break_times 
-    : (typeof professional.break_times === 'string' ? JSON.parse(professional.break_times || '[]') : []);
-    
-  const workingDays = Array.isArray(professional.working_days)
-    ? professional.working_days
-    : (typeof professional.working_days === 'string' ? JSON.parse(professional.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false]);
-
-  const professionalWithParsedData = {
+  // Ensure professional has required working_hours property
+  const professionalWithDefaults = {
     ...professional,
-    break_times: breakTimes,
-    working_days: workingDays
+    working_hours: professional.working_hours || { start: "08:00", end: "18:00" }
   };
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-7xl max-h-[95vh] p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClose}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-                <div>
-                  <DialogTitle className="text-xl font-semibold">
-                    {professional.name}
-                  </DialogTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={currentView === 'day' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('day')}
-                  className="flex items-center gap-2"
-                >
-                  <Clock className="h-4 w-4" />
-                  Dia
-                </Button>
-                <Button
-                  variant={currentView === 'month' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentView('month')}
-                  className="flex items-center gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Mês
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Detalhes do Profissional - {professional.name}
+          </DialogTitle>
+        </DialogHeader>
 
-          <div className="flex-1 overflow-hidden">
-            <ProfessionalDetailViewHeader
-              professional={professionalWithParsedData}
-              currentDate={currentDate}
-              onDateChange={handleDateChange}
-              onNewAppointment={handleNewAppointment}
-              view={currentView}
-            />
-            
-            <div className="px-6 pb-6 h-[calc(95vh-180px)] overflow-auto">
-              {currentView === 'day' ? (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <Tabs value={view} onValueChange={(value) => setView(value as 'day' | 'month')} className="flex-1 flex flex-col">
+            <div className="flex-shrink-0 space-y-4">
+              <ProfessionalDetailViewHeader
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onNewAppointment={() => {}}
+                view={view}
+              />
+              
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="day" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Visão Diária
+                </TabsTrigger>
+                <TabsTrigger value="month" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Visão Mensal
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <TabsContent value="day" className="mt-4">
                 <DayView
-                  professional={professionalWithParsedData}
+                  professional={professionalWithDefaults}
                   appointments={appointments}
                   selectedDate={currentDate}
                   loading={loading}
                   onAppointmentClick={handleAppointmentClick}
                 />
-              ) : (
+              </TabsContent>
+              
+              <TabsContent value="month" className="mt-4">
                 <MonthView
-                  professional={professionalWithParsedData}
-                  appointments={monthAppointments}
+                  professional={professionalWithDefaults}
+                  appointments={appointments}
                   selectedDate={currentDate}
-                  onDateChange={handleDateChange}
+                  onDateChange={setCurrentDate}
+                  loading={loading}
                   onAppointmentClick={handleAppointmentClick}
                 />
-              )}
+              </TabsContent>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AppointmentForm
-        isOpen={isAppointmentFormOpen}
-        onClose={handleAppointmentFormClose}
-        selectedDate={currentDate}
-        selectedProfessionalId={professional.id}
-      />
-
-      {selectedAppointment && (
-        <AppointmentDetails
-          appointment={selectedAppointment}
-          isOpen={isAppointmentDetailsOpen}
-          onClose={handleAppointmentDetailsClose}
-          onUpdate={fetchAppointments}
-        />
-      )}
-    </>
+          </Tabs>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
