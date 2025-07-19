@@ -1,180 +1,131 @@
 
-import { Appointment, Professional } from '@/types';
-
-interface TimeBlock {
-  id: string;
-  type: 'break' | 'vacation';
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  title: string;
-}
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Clock, User, FileText } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import type { Professional, Appointment } from '@/types';
 
 interface DayViewProps {
   professional: Professional;
   appointments: Appointment[];
-  timeBlocks: TimeBlock[];
+  currentDate: Date;
+  loading: boolean;
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
-export function DayView({ professional, appointments, timeBlocks, onAppointmentClick }: DayViewProps) {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  const getItemPosition = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    
-    const startHour = start.getHours() + start.getMinutes() / 60;
-    const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    
+export function DayView({
+  professional,
+  appointments,
+  currentDate,
+  loading,
+  onAppointmentClick
+}: DayViewProps) {
+  const timeSlots = Array.from({ length: 24 }, (_, i) => {
+    const hour = i;
     return {
-      top: `${startHour * 60}px`,
-      height: `${Math.max(duration * 60, 30)}px`
+      time: `${hour.toString().padStart(2, '0')}:00`,
+      hour: hour,
     };
+  });
+
+  const getAppointmentsForHour = (hour: number) => {
+    return appointments.filter(apt => {
+      const startHour = new Date(apt.start_time).getHours();
+      return startHour === hour;
+    });
   };
 
-  const getLighterColor = (color: string, opacity: number = 0.15) => {
-    // Convert hex to RGB and add opacity
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  };
-
-  const getTimeBlockColor = (type: string) => {
-    switch (type) {
-      case 'break':
-        return '#fecaca'; // vermelho claro para intervalos
-      case 'vacation':
-        return '#fca5a5'; // vermelho um pouco mais escuro para férias
-      default:
-        return '#fecaca';
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'confirmado': return 'bg-green-100 text-green-800';
+      case 'cancelado': return 'bg-red-100 text-red-800';
+      case 'em-andamento': return 'bg-blue-100 text-blue-800';
+      case 'concluido': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getTimeBlockBorderColor = (type: string) => {
-    switch (type) {
-      case 'break':
-        return '#ef4444'; // vermelho para intervalos
-      case 'vacation':
-        return '#dc2626'; // vermelho mais escuro para férias
-      default:
-        return '#ef4444';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-sm text-gray-500">Carregando agendamentos...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative border rounded-lg">
-      {/* Timeline */}
-      <div className="grid grid-cols-[100px_1fr]">
-        {/* Hours column */}
-        <div className="border-r">
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className="h-[60px] border-b flex items-start justify-center pt-1 text-xs text-gray-500"
-            >
-              {hour.toString().padStart(2, '0')}:00
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold">
+          {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+        </h3>
+        <p className="text-sm text-gray-500">
+          {appointments.length} agendamento{appointments.length !== 1 ? 's' : ''}
+        </p>
+      </div>
 
-        {/* Content column */}
-        <div className="relative">
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className="h-[60px] border-b border-gray-100 hover:bg-gray-50"
-            />
-          ))}
+      <div className="grid gap-2 max-h-96 overflow-y-auto">
+        {timeSlots.map((slot) => {
+          const hourAppointments = getAppointmentsForHour(slot.hour);
           
-          {/* Time Blocks (pausas e férias) */}
-          {timeBlocks.map((timeBlock) => {
-            const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
-            const startTime = new Date(timeBlock.start_time);
-            const endTime = new Date(timeBlock.end_time);
-            
-            const timeRange = timeBlock.type === 'vacation' 
-              ? 'Dia inteiro'
-              : `${startTime.toLocaleTimeString('pt-BR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })} - ${endTime.toLocaleTimeString('pt-BR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}`;
-            
-            return (
-              <div
-                key={timeBlock.id}
-                className="absolute left-2 right-2 rounded-lg p-3 text-xs border-l-4 overflow-hidden z-10"
-                style={{
-                  ...position,
-                  backgroundColor: getTimeBlockColor(timeBlock.type),
-                  borderLeftColor: getTimeBlockBorderColor(timeBlock.type),
-                  color: '#7f1d1d'
-                }}
-              >
-                <div className="space-y-1">
-                  <div className="font-semibold truncate">
-                    {timeBlock.title}
-                  </div>
-                  <div className="text-xs">
-                    {timeRange}
-                  </div>
-                </div>
+          return (
+            <div key={slot.time} className="flex gap-4 min-h-[60px]">
+              <div className="w-16 text-sm text-gray-500 font-medium pt-2">
+                {slot.time}
               </div>
-            );
-          })}
-          
-          {/* Appointments */}
-          {appointments.map((appointment) => {
-            const position = getItemPosition(appointment.startTime, appointment.endTime);
-            const statusColor = appointment.appointment_statuses?.color || '#6b7280';
-            const lighterBgColor = getLighterColor(professional.calendarColor, 0.15);
-            
-            return (
-              <div
-                key={appointment.id}
-                onClick={() => onAppointmentClick(appointment)}
-                className={`absolute left-2 right-2 rounded-lg p-3 text-xs cursor-pointer hover:opacity-90 transition-all shadow-sm border-l-8 overflow-hidden z-20`}
-                style={{
-                  ...position,
-                  backgroundColor: lighterBgColor,
-                  borderLeftColor: statusColor,
-                  color: '#1f2937'
-                }}
-              >
-                <div className="space-y-1">
-                  <div className="font-semibold truncate text-gray-800">
-                    {appointment.patients?.full_name}
+              <div className="flex-1">
+                {hourAppointments.length > 0 ? (
+                  <div className="space-y-2">
+                    {hourAppointments.map((appointment) => (
+                      <Card 
+                        key={appointment.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => onAppointmentClick(appointment)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
+                              </div>
+                              {appointment.patients && (
+                                <div className="flex items-center gap-1 text-sm">
+                                  <User className="h-3 w-3" />
+                                  {appointment.patients.full_name}
+                                </div>
+                              )}
+                            </div>
+                            <Badge className={getStatusColor(appointment.status)}>
+                              {appointment.status === 'confirmado' ? 'Confirmado' :
+                               appointment.status === 'cancelado' ? 'Cancelado' :
+                               appointment.status === 'em-andamento' ? 'Em andamento' :
+                               appointment.status === 'concluido' ? 'Concluído' : 'Confirmado'}
+                            </Badge>
+                          </div>
+                          {appointment.procedures && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <FileText className="h-3 w-3 inline mr-1" />
+                              {appointment.procedures.name}
+                            </div>
+                          )}
+                          {appointment.notes && (
+                            <div className="mt-2 text-xs text-gray-500 truncate">
+                              {appointment.notes}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  <div className="truncate text-gray-700">
-                    {appointment.procedures?.name}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {new Date(appointment.startTime).toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })} - {new Date(appointment.endTime).toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </div>
-                  <div className="flex justify-start">
-                    <div 
-                      className="text-xs font-bold px-2 py-1 rounded-full text-white truncate max-w-full"
-                      style={{ backgroundColor: statusColor }}
-                    >
-                      {appointment.appointment_statuses?.label || appointment.status}
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <div className="h-12 border-l-2 border-gray-200"></div>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ import {
   Stethoscope,
   IdCard
 } from 'lucide-react';
-import { Professional } from '@/types';
+import type { Professional } from '@/types';
 import { ProfessionalForm } from '../ProfessionalForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProfessionalDetailView } from '@/components/Calendar/ProfessionalDetailView';

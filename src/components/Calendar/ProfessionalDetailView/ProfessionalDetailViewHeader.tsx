@@ -1,65 +1,76 @@
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { format, addDays, subDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import type { Professional } from '@/types';
 
 interface ProfessionalDetailViewHeaderProps {
-  onBack: () => void;
-  onNavigateDate: (direction: 'prev' | 'next') => void;
-  onGoToToday: () => void;
-  searchDate: string;
-  onSearchDateChange: (date: string) => void;
-  onSearchDate: () => void;
+  professional: Professional;
+  currentDate: Date;
+  onDateChange: (date: Date) => void;
   onNewAppointment: () => void;
+  view: 'day' | 'month';
 }
 
 export function ProfessionalDetailViewHeader({
-  onBack,
-  onNavigateDate,
-  onGoToToday,
-  searchDate,
-  onSearchDateChange,
-  onSearchDate,
-  onNewAppointment
+  professional,
+  currentDate,
+  onDateChange,
+  onNewAppointment,
+  view
 }: ProfessionalDetailViewHeaderProps) {
+  const handlePreviousDate = () => {
+    const newDate = view === 'day' ? subDays(currentDate, 1) : new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    onDateChange(newDate);
+  };
+
+  const handleNextDate = () => {
+    const newDate = view === 'day' ? addDays(currentDate, 1) : new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    onDateChange(newDate);
+  };
+
+  const handleToday = () => {
+    onDateChange(new Date());
+  };
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-        
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={() => onNavigateDate('prev')}>
+    <div className="flex items-center justify-between p-6 border-b">
+      <div className="flex items-center gap-4">
+        <div 
+          className="w-4 h-4 rounded-full"
+          style={{ backgroundColor: professional.color }}
+        />
+        <div>
+          <h2 className="text-lg font-semibold">{professional.name}</h2>
+          {professional.specialty && (
+            <p className="text-sm text-gray-500">{professional.specialty}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePreviousDate}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={onGoToToday}>
-            Hoje
+          <Button variant="outline" size="sm" onClick={handleToday}>
+            <CalendarIcon className="h-4 w-4 mr-1" />
+            {view === 'day' 
+              ? format(currentDate, "dd 'de' MMMM", { locale: ptBR })
+              : format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
+            }
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onNavigateDate('next')}>
+          <Button variant="outline" size="sm" onClick={handleNextDate}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Input
-            type="date"
-            value={searchDate}
-            onChange={(e) => onSearchDateChange(e.target.value)}
-            placeholder="Buscar data..."
-            className="w-40"
-          />
-          <Button variant="outline" size="sm" onClick={onSearchDate}>
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button onClick={onNewAppointment} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Agendamento
+        </Button>
       </div>
-
-      <Button onClick={onNewAppointment}>
-        <Plus className="h-4 w-4 mr-2" />
-        Novo Agendamento
-      </Button>
     </div>
   );
 }
