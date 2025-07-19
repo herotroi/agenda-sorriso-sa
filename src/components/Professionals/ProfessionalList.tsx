@@ -39,13 +39,16 @@ export function ProfessionalList() {
     refetchProfessionals();
   };
 
-  const handleDeleteProfessional = async (professionalId: string, professionalName: string) => {
+  const handleDeleteProfessional = async (professionalId: string) => {
+    const professional = professionals.find(p => p.id === professionalId);
+    if (!professional) return;
+
     if (professionals.length <= 1) {
       alert('Você deve manter pelo menos um profissional cadastrado.');
       return;
     }
     
-    if (window.confirm(`Tem certeza que deseja excluir o profissional ${professionalName}?`)) {
+    if (window.confirm(`Tem certeza que deseja excluir o profissional ${professional.name}?`)) {
       await deleteProfessional(professionalId);
     }
   };
