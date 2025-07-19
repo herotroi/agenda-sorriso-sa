@@ -5,18 +5,22 @@ import { DurationInput } from './DurationInput';
 
 interface DateTimeDurationSectionProps {
   formData: AppointmentFormData;
-  handleFieldChange: {
-    startTime: (value: string) => void;
-    duration: (value: string) => void;
-  };
-  originalData?: AppointmentFormData | null;
+  onFieldChange: (field: keyof AppointmentFormData, value: any) => void;
+  originalData: AppointmentFormData | null;
+  fieldModified: Record<string, boolean>;
 }
 
 export function DateTimeDurationSection({
   formData,
-  handleFieldChange,
-  originalData
+  onFieldChange,
+  originalData,
+  fieldModified
 }: DateTimeDurationSectionProps) {
+  const handleFieldChange = {
+    startTime: (value: string) => onFieldChange('start_time', value),
+    duration: (value: string) => onFieldChange('duration', value)
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <DateTimeInput
