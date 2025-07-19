@@ -46,10 +46,13 @@ export function useAppointmentFormData(
       setFormData(prev => ({
         ...prev,
         procedure_id: procedureId,
-        duration: procedure.default_duration.toString()
+        duration: procedure.default_duration.toString(),
+        // Limpar profissional selecionado ao trocar procedimento
+        professional_id: ''
       }));
       handleFieldChange('procedure_id', procedureId);
       handleFieldChange('duration', procedure.default_duration.toString());
+      handleFieldChange('professional_id', '');
     }
   };
 
@@ -65,23 +68,33 @@ export function useAppointmentFormData(
     if (!user) return;
 
     try {
-      const [patientsRes, professionalsRes, proceduresRes, statusesRes] = await Promise.all([
+      // Buscar dados em paralelo
+      const [patientsRes, professionalsRes, proceduresRes, statusesRes, procedureProfessionalsRes] = await Promise.all([
         supabase.from('patients').select('*').eq('user_id', user.id).eq('active', true),
         supabase.from('professionals').select('*').eq('user_id', user.id).eq('active', true),
         supabase.from('procedures').select('*').eq('user_id', user.id).eq('active', true),
-        supabase.from('appointment_statuses').select('*').eq('active', true)
+        supabase.from('appointment_statuses').select('*').eq('active', true),
+        supabase.from('procedure_professionals')
+          .select(`
+            procedure_id,
+            professional_id,
+            professionals!inner(*)
+          `)
+          .eq('user_id', user.id)
       ]);
 
       if (patientsRes.error) throw patientsRes.error;
       if (professionalsRes.error) throw professionalsRes.error;
       if (proceduresRes.error) throw proceduresRes.error;
       if (statusesRes.error) throw statusesRes.error;
+      if (procedureProfessionalsRes.error) throw procedureProfessionalsRes.error;
 
       setPatients(patientsRes.data || []);
       
-      // Transform professionals data to match interface
+      // Transform professionals data to match interface with working_hours default
       const transformedProfessionals = (professionalsRes.data || []).map(prof => ({
         ...prof,
+        working_hours: prof.working_hours || { start: "08:00", end: "18:00" },
         break_times: Array.isArray(prof.break_times) 
           ? prof.break_times 
           : (typeof prof.break_times === 'string' ? JSON.parse(prof.break_times || '[]') : []),
@@ -91,7 +104,21 @@ export function useAppointmentFormData(
       }));
       
       setProfessionals(transformedProfessionals);
-      setProcedures(proceduresRes.data || []);
+
+      // Associar profissionais aos procedimentos
+      const proceduresWithProfessionals = (proceduresRes.data || []).map(procedure => {
+        const associatedProfessionals = (procedureProfessionalsRes.data || [])
+          .filter(pp => pp.procedure_id === procedure.id)
+          .map(pp => pp.professionals)
+          .filter(Boolean);
+        
+        return {
+          ...procedure,
+          professionals: associatedProfessionals
+        };
+      });
+
+      setProcedures(proceduresWithProfessionals);
       setStatuses(statusesRes.data || []);
     } catch (error) {
       console.error('Error fetching form data:', error);

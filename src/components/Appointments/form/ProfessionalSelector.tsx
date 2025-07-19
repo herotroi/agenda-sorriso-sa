@@ -11,6 +11,7 @@ interface ProfessionalSelectorProps {
   onChange: (value: string) => void;
   currentProfessionalName?: string;
   selectedProcedureId?: string;
+  isBlocked?: boolean;
 }
 
 export function ProfessionalSelector({ 
@@ -19,24 +20,35 @@ export function ProfessionalSelector({
   value, 
   onChange, 
   currentProfessionalName,
-  selectedProcedureId 
+  selectedProcedureId,
+  isBlocked = false
 }: ProfessionalSelectorProps) {
-  // Filtrar profissionais baseado no procedimento selecionado
-  const filteredProfessionals = professionals.filter(professional => {
-    // Se não há procedimento selecionado, não mostrar nenhum profissional
-    if (!selectedProcedureId) return false;
-    
-    // Encontrar o procedimento selecionado
-    const selectedProcedure = procedures.find(proc => proc.id === selectedProcedureId);
-    
-    // Se o procedimento tem profissionais associados, verificar se o profissional está na lista
-    if (selectedProcedure?.professionals && selectedProcedure.professionals.length > 0) {
-      return selectedProcedure.professionals.some(prof => prof.id === professional.id);
+  // Para horários bloqueados, mostrar todos os profissionais ativos
+  // Para agendamentos normais, filtrar apenas os profissionais habilitados para o procedimento
+  const filteredProfessionals = isBlocked 
+    ? professionals.filter(prof => prof.active !== false)
+    : professionals.filter(professional => {
+        // Se não há procedimento selecionado, não mostrar nenhum profissional
+        if (!selectedProcedureId) return false;
+        
+        // Encontrar o procedimento selecionado
+        const selectedProcedure = procedures.find(proc => proc.id === selectedProcedureId);
+        
+        // Se o procedimento tem profissionais associados, verificar se o profissional está na lista
+        if (selectedProcedure?.professionals && selectedProcedure.professionals.length > 0) {
+          return selectedProcedure.professionals.some(prof => prof.id === professional.id);
+        }
+        
+        // Se o procedimento não tem profissionais associados, não mostrar nenhum profissional
+        return false;
+      });
+
+  const getPlaceholder = () => {
+    if (isBlocked) {
+      return "Selecione o profissional";
     }
-    
-    // Se o procedimento não tem profissionais associados, não mostrar nenhum profissional
-    return false;
-  });
+    return selectedProcedureId ? "Selecione o profissional" : "Selecione primeiro um procedimento";
+  };
 
   return (
     <FormField 
@@ -47,18 +59,18 @@ export function ProfessionalSelector({
         <SelectTrigger className="w-full">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
-            <SelectValue placeholder={selectedProcedureId ? "Selecione o profissional" : "Selecione primeiro um procedimento"} />
+            <SelectValue placeholder={getPlaceholder()} />
           </div>
         </SelectTrigger>
         <SelectContent>
-          {!selectedProcedureId && (
+          {!isBlocked && !selectedProcedureId && (
             <div className="px-2 py-1 text-sm text-gray-500">
               Selecione primeiro um procedimento
             </div>
           )}
-          {selectedProcedureId && filteredProfessionals.length === 0 && (
+          {!isBlocked && selectedProcedureId && filteredProfessionals.length === 0 && (
             <div className="px-2 py-1 text-sm text-gray-500">
-              Nenhum profissional disponível para este procedimento
+              Nenhum profissional habilitado para este procedimento
             </div>
           )}
           {filteredProfessionals.map((professional) => (

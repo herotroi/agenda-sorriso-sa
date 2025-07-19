@@ -9,20 +9,22 @@ interface ProcedureSelectorProps {
   value: string;
   onChange: (value: string) => void;
   currentProcedureName?: string;
+  disabled?: boolean;
 }
 
 export function ProcedureSelector({ 
   procedures, 
   value, 
   onChange, 
-  currentProcedureName
+  currentProcedureName,
+  disabled = false
 }: ProcedureSelectorProps) {
   return (
     <FormField 
       label="Procedimento" 
       currentValue={currentProcedureName}
     >
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full">
           <div className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4 text-muted-foreground" />

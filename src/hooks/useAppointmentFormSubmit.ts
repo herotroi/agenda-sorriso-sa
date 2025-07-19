@@ -45,7 +45,7 @@ export function useAppointmentFormSubmit(
       }
     } else {
       // Validação completa para agendamentos normais
-      if (!formData.patient_id || !formData.professional_id || !formData.start_time) {
+      if (!formData.patient_id || !formData.professional_id || !formData.procedure_id || !formData.start_time) {
         toast({
           title: 'Campos obrigatórios',
           description: 'Preencha todos os campos obrigatórios',
@@ -121,7 +121,7 @@ export function useAppointmentFormSubmit(
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         price: formData.is_blocked ? null : (procedure?.price || null),
-        notes: formData.is_blocked ? 'Horário bloqueado' : (formData.notes || null),
+        notes: formData.is_blocked ? (formData.notes || 'Horário bloqueado') : (formData.notes || null),
         status_id: formData.is_blocked ? 1 : formData.status_id,
         is_blocked: formData.is_blocked || false,
         user_id: user.id

@@ -25,25 +25,28 @@ export function PatientProfessionalSection({
   originalData,
   fieldModified
 }: PatientProfessionalSectionProps) {
-  // Se for agendamento bloqueado, não mostrar paciente e procedimento
+  // Se for agendamento bloqueado, mostrar apenas profissional
   if (formData.is_blocked) {
     return (
-      <div className="grid grid-cols-1 gap-6">
-        <ProfessionalSelector
-          professionals={professionals}
-          procedures={procedures}
-          value={formData.professional_id}
-          onChange={(value) => onFieldChange('professional_id', value)}
-          currentProfessionalName={originalData && !fieldModified.professional_id 
-            ? professionals.find(p => p.id === originalData.professional_id)?.name 
-            : undefined
-          }
-          selectedProcedureId={formData.procedure_id}
-        />
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-6">
+          <ProfessionalSelector
+            professionals={professionals}
+            procedures={procedures}
+            value={formData.professional_id}
+            onChange={(value) => onFieldChange('professional_id', value)}
+            currentProfessionalName={originalData && !fieldModified.professional_id 
+              ? professionals.find(p => p.id === originalData.professional_id)?.name 
+              : undefined
+            }
+            isBlocked={true}
+          />
+        </div>
       </div>
     );
   }
 
+  // Para agendamentos normais, mostrar fluxo completo
   return (
     <div className="space-y-6">
       {/* Primeira linha: Paciente e Procedimento */}
@@ -59,7 +62,7 @@ export function PatientProfessionalSection({
         />
         
         <ProcedureSelector
-          procedures={procedures}
+          procedures={procedures.filter(p => p.active !== false)}
           value={formData.procedure_id}
           onChange={onProcedureChange}
           currentProcedureName={originalData && !fieldModified.procedure_id 
@@ -82,6 +85,7 @@ export function PatientProfessionalSection({
               : undefined
             }
             selectedProcedureId={formData.procedure_id}
+            isBlocked={false}
           />
         </div>
       )}
