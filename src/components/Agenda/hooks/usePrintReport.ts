@@ -24,10 +24,23 @@ export function usePrintReport() {
           fetchDateAppointments(selectedDate, professionalId)
         ]);
 
-        // Use professionals directly as they already match the Professional interface
-        const professionals = professionalId 
+        // Transform professionals data to match interface
+        const professionals = (professionalId 
           ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals;
+          : allProfessionals
+        ).map(prof => ({
+          ...prof,
+          // Ensure break_times is properly typed
+          break_times: Array.isArray(prof.break_times) 
+            ? prof.break_times as Array<{ start: string; end: string }>
+            : [],
+          // Ensure working_days is properly typed
+          working_days: Array.isArray(prof.working_days) 
+            ? prof.working_days as boolean[]
+            : [true, true, true, true, true, false, false],
+          // Ensure active has a default
+          active: prof.active ?? true
+        }));
 
         console.log('Data fetched - Professionals:', professionals?.length, 'Appointments:', appointments?.length);
 
@@ -75,10 +88,23 @@ export function usePrintReport() {
 
         const allProfessionals = await fetchProfessionalsData();
 
-        // Filter professionals if specific professional is selected
-        const professionals = professionalId 
+        // Transform professionals data to match interface
+        const professionals = (professionalId 
           ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals;
+          : allProfessionals
+        ).map(prof => ({
+          ...prof,
+          // Ensure break_times is properly typed
+          break_times: Array.isArray(prof.break_times) 
+            ? prof.break_times as Array<{ start: string; end: string }>
+            : [],
+          // Ensure working_days is properly typed
+          working_days: Array.isArray(prof.working_days) 
+            ? prof.working_days as boolean[]
+            : [true, true, true, true, true, false, false],
+          // Ensure active has a default
+          active: prof.active ?? true
+        }));
         
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
