@@ -21,6 +21,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     return validStatuses.includes(status as AppointmentStatus) ? status as AppointmentStatus : 'confirmado';
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    console.log('Appointment clicked:', appointment);
+    // Add any additional logic for appointment click handling here
+  };
+
   const fetchAppointments = async (specificDate?: Date) => {
     if (!user) return;
     
@@ -181,6 +186,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     appointments,
     monthAppointments,
     loading,
-    fetchAppointments
+    fetchAppointments,
+    handleAppointmentClick
   };
 }

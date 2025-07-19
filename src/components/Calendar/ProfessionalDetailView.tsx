@@ -25,10 +25,9 @@ export function ProfessionalDetailView({
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [view, setView] = useState<'day' | 'month'>('day');
   
-  const { appointments, loading, handleAppointmentClick } = useProfessionalDetailData(
+  const { appointments, monthAppointments, loading, handleAppointmentClick } = useProfessionalDetailData(
     professional.id,
-    currentDate,
-    view
+    currentDate
   );
 
   // Ensure professional has required working_hours property
@@ -51,6 +50,7 @@ export function ProfessionalDetailView({
           <Tabs value={view} onValueChange={(value) => setView(value as 'day' | 'month')} className="flex-1 flex flex-col">
             <div className="flex-shrink-0 space-y-4">
               <ProfessionalDetailViewHeader
+                professional={professionalWithDefaults}
                 currentDate={currentDate}
                 onDateChange={setCurrentDate}
                 onNewAppointment={() => {}}
@@ -74,7 +74,7 @@ export function ProfessionalDetailView({
                 <DayView
                   professional={professionalWithDefaults}
                   appointments={appointments}
-                  selectedDate={currentDate}
+                  currentDate={currentDate}
                   loading={loading}
                   onAppointmentClick={handleAppointmentClick}
                 />
@@ -83,10 +83,9 @@ export function ProfessionalDetailView({
               <TabsContent value="month" className="mt-4">
                 <MonthView
                   professional={professionalWithDefaults}
-                  appointments={appointments}
+                  appointments={monthAppointments}
                   selectedDate={currentDate}
                   onDateChange={setCurrentDate}
-                  loading={loading}
                   onAppointmentClick={handleAppointmentClick}
                 />
               </TabsContent>
