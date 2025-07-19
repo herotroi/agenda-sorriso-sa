@@ -13,21 +13,12 @@ interface TimeBlock {
 interface DayViewProps {
   professional: Professional;
   appointments: Appointment[];
-  selectedDate: Date;
-  loading: boolean;
+  timeBlocks: TimeBlock[];
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
-export function DayView({ professional, appointments, selectedDate, loading, onAppointmentClick }: DayViewProps) {
+export function DayView({ professional, appointments, timeBlocks, onAppointmentClick }: DayViewProps) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-sm text-gray-500">Carregando...</div>
-      </div>
-    );
-  }
 
   const getItemPosition = (startTime: string, endTime: string) => {
     const start = new Date(startTime);
@@ -49,6 +40,28 @@ export function DayView({ professional, appointments, selectedDate, loading, onA
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const getTimeBlockColor = (type: string) => {
+    switch (type) {
+      case 'break':
+        return '#fecaca'; // vermelho claro para intervalos
+      case 'vacation':
+        return '#fca5a5'; // vermelho um pouco mais escuro para férias
+      default:
+        return '#fecaca';
+    }
+  };
+
+  const getTimeBlockBorderColor = (type: string) => {
+    switch (type) {
+      case 'break':
+        return '#ef4444'; // vermelho para intervalos
+      case 'vacation':
+        return '#dc2626'; // vermelho mais escuro para férias
+      default:
+        return '#ef4444';
+    }
   };
 
   return (
@@ -76,11 +89,50 @@ export function DayView({ professional, appointments, selectedDate, loading, onA
             />
           ))}
           
+          {/* Time Blocks (pausas e férias) */}
+          {timeBlocks.map((timeBlock) => {
+            const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
+            const startTime = new Date(timeBlock.start_time);
+            const endTime = new Date(timeBlock.end_time);
+            
+            const timeRange = timeBlock.type === 'vacation' 
+              ? 'Dia inteiro'
+              : `${startTime.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })} - ${endTime.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}`;
+            
+            return (
+              <div
+                key={timeBlock.id}
+                className="absolute left-2 right-2 rounded-lg p-3 text-xs border-l-4 overflow-hidden z-10"
+                style={{
+                  ...position,
+                  backgroundColor: getTimeBlockColor(timeBlock.type),
+                  borderLeftColor: getTimeBlockBorderColor(timeBlock.type),
+                  color: '#7f1d1d'
+                }}
+              >
+                <div className="space-y-1">
+                  <div className="font-semibold truncate">
+                    {timeBlock.title}
+                  </div>
+                  <div className="text-xs">
+                    {timeRange}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          
           {/* Appointments */}
           {appointments.map((appointment) => {
             const position = getItemPosition(appointment.startTime, appointment.endTime);
             const statusColor = appointment.appointment_statuses?.color || '#6b7280';
-            const lighterBgColor = getLighterColor(professional.calendarColor || professional.color, 0.15);
+            const lighterBgColor = getLighterColor(professional.calendarColor, 0.15);
             
             return (
               <div

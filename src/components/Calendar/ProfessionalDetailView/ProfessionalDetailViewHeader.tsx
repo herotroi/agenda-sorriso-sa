@@ -1,73 +1,63 @@
 
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Professional } from '@/types';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 interface ProfessionalDetailViewHeaderProps {
-  professional: Professional;
-  currentDate: Date;
-  onDateChange: (date: Date) => void;
+  onBack: () => void;
+  onNavigateDate: (direction: 'prev' | 'next') => void;
+  onGoToToday: () => void;
+  searchDate: string;
+  onSearchDateChange: (date: string) => void;
+  onSearchDate: () => void;
   onNewAppointment: () => void;
-  view: 'day' | 'month';
 }
 
 export function ProfessionalDetailViewHeader({
-  professional,
-  currentDate,
-  onDateChange,
-  onNewAppointment,
-  view
+  onBack,
+  onNavigateDate,
+  onGoToToday,
+  searchDate,
+  onSearchDateChange,
+  onSearchDate,
+  onNewAppointment
 }: ProfessionalDetailViewHeaderProps) {
-  const handlePrevious = () => {
-    const newDate = new Date(currentDate);
-    if (view === 'day') {
-      newDate.setDate(newDate.getDate() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() - 1);
-    }
-    onDateChange(newDate);
-  };
-
-  const handleNext = () => {
-    const newDate = new Date(currentDate);
-    if (view === 'day') {
-      newDate.setDate(newDate.getDate() + 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
-    }
-    onDateChange(newDate);
-  };
-
-  const handleToday = () => {
-    onDateChange(new Date());
-  };
-
   return (
-    <div className="flex items-center justify-between p-4 border-b">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevious}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-4">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => onNavigateDate('prev')}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToday}>
+          <Button variant="outline" size="sm" onClick={onGoToToday}>
             Hoje
           </Button>
+          <Button variant="outline" size="sm" onClick={() => onNavigateDate('next')}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold">{professional.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {format(currentDate, view === 'day' ? "EEEE, dd 'de' MMMM 'de' yyyy" : "MMMM 'de' yyyy", { locale: ptBR })}
-          </p>
+
+        <div className="flex items-center space-x-2">
+          <Input
+            type="date"
+            value={searchDate}
+            onChange={(e) => onSearchDateChange(e.target.value)}
+            placeholder="Buscar data..."
+            className="w-40"
+          />
+          <Button variant="outline" size="sm" onClick={onSearchDate}>
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      <Button onClick={onNewAppointment} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
+
+      <Button onClick={onNewAppointment}>
+        <Plus className="h-4 w-4 mr-2" />
         Novo Agendamento
       </Button>
     </div>

@@ -8,10 +8,12 @@ interface PatientProfessionalSectionProps {
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];
-  onFieldChange: (field: keyof AppointmentFormData, value: any) => void;
-  onProcedureChange: (procedureId: string) => void;
-  originalData: AppointmentFormData | null;
-  fieldModified: Record<string, boolean>;
+  handleFieldChange: {
+    patient: (value: string) => void;
+    professional: (value: string) => void;
+  };
+  currentPatientName?: string;
+  currentProfessionalName?: string;
 }
 
 export function PatientProfessionalSection({
@@ -19,24 +21,10 @@ export function PatientProfessionalSection({
   patients,
   professionals,
   procedures,
-  onFieldChange,
-  onProcedureChange,
-  originalData,
-  fieldModified
+  handleFieldChange,
+  currentPatientName,
+  currentProfessionalName
 }: PatientProfessionalSectionProps) {
-  const handleFieldChange = {
-    patient: (value: string) => onFieldChange('patient_id', value),
-    professional: (value: string) => onFieldChange('professional_id', value)
-  };
-
-  const currentPatientName = originalData && !fieldModified.patient_id 
-    ? patients.find(p => p.id === originalData.patient_id)?.full_name 
-    : undefined;
-
-  const currentProfessionalName = originalData && !fieldModified.professional_id 
-    ? professionals.find(p => p.id === originalData.professional_id)?.name 
-    : undefined;
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <PatientSelector

@@ -10,16 +10,16 @@ interface MonthViewProps {
   professional: Professional;
   appointments: Appointment[];
   selectedDate: Date;
-  onDateChange: (date: Date) => void;
-  onAppointmentClick: (appointment: Appointment) => void;
+  onNavigateMonth: (direction: 'prev' | 'next') => void;
+  onDayClick: (date: Date, appointments?: Appointment[]) => void;
 }
 
 export function MonthView({ 
   professional, 
   appointments, 
   selectedDate, 
-  onDateChange, 
-  onAppointmentClick 
+  onNavigateMonth, 
+  onDayClick 
 }: MonthViewProps) {
   const appointmentsByDay = appointments.reduce((acc: { [key: string]: Appointment[] }, appointment) => {
     const day = new Date(appointment.startTime).toISOString().split('T')[0];
@@ -29,23 +29,6 @@ export function MonthView({
     acc[day].push(appointment);
     return acc;
   }, {});
-
-  const onNavigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    if (direction === 'next') {
-      newDate.setMonth(newDate.getMonth() + 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() - 1);
-    }
-    onDateChange(newDate);
-  };
-
-  const onDayClick = (date: Date, appointments?: Appointment[]) => {
-    onDateChange(date);
-    if (appointments && appointments.length > 0) {
-      onAppointmentClick(appointments[0]);
-    }
-  };
 
   // Get the first day of the month and calculate calendar grid
   const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);

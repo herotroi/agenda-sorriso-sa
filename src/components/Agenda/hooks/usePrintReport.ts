@@ -2,7 +2,7 @@
 import { getCurrentDate, getFormattedDate, openPrintWindow } from './printUtils';
 import { fetchProfessionalsData, fetchDateAppointments, fetchAllAppointments, fetchFilteredAppointments } from './printDataFetchers';
 import { generateCalendarPrintTemplate, generateTablePrintTemplate } from './printTemplates';
-import { Professional, Appointment } from '@/types';
+import { Professional } from './printTemplates/types';
 
 export function usePrintReport() {
   const handlePrint = async (
@@ -24,23 +24,21 @@ export function usePrintReport() {
           fetchDateAppointments(selectedDate, professionalId)
         ]);
 
-        // Transform professionals data to match interface
-        const professionals = (professionalId 
-          ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals
-        ).map(prof => ({
-          ...prof,
-          // Ensure break_times is properly typed
-          break_times: Array.isArray(prof.break_times) 
-            ? prof.break_times as Array<{ start: string; end: string }>
-            : [],
-          // Ensure working_days is properly typed
-          working_days: Array.isArray(prof.working_days) 
-            ? prof.working_days as boolean[]
-            : [true, true, true, true, true, false, false],
-          // Ensure active has a default
-          active: prof.active ?? true
+        // Convert and filter professionals with proper type handling
+        const convertedProfessionals: Professional[] = allProfessionals.map(prof => ({
+          id: prof.id,
+          name: prof.name,
+          active: prof.active || false,
+          break_times: (Array.isArray(prof.break_times) ? prof.break_times : []) as Array<{ start: string; end: string }>,
+          vacation_active: Boolean(prof.vacation_active),
+          vacation_start: prof.vacation_start || undefined,
+          vacation_end: prof.vacation_end || undefined,
+          working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : undefined
         }));
+
+        const professionals = professionalId 
+          ? convertedProfessionals.filter(prof => prof.id === professionalId)
+          : convertedProfessionals;
 
         console.log('Data fetched - Professionals:', professionals?.length, 'Appointments:', appointments?.length);
 
@@ -49,21 +47,8 @@ export function usePrintReport() {
             ? '<p>Profissional não encontrado para impressão do calendário.</p>'
             : '<p>Nenhum profissional ativo encontrado para impressão do calendário.</p>';
         } else {
-          // Map appointments to ensure they match the Appointment interface
-          const mappedAppointments = appointments?.map(apt => ({
-            ...apt,
-            startTime: apt.start_time,
-            endTime: apt.end_time,
-            createdAt: apt.created_at,
-            date: apt.start_time.split('T')[0],
-            patientId: apt.patient_id,
-            professionalId: apt.professional_id,
-            procedureId: apt.procedure_id,
-            isBlocked: apt.is_blocked || false,
-            user_id: apt.user_id || ''
-          })) || [];
-
-          contentToPrint = generateCalendarPrintTemplate(professionals, mappedAppointments, selectedDate);
+          // Passar selectedDate para o template do calendário
+          contentToPrint = generateCalendarPrintTemplate(professionals, appointments || [], selectedDate);
         }
       } else {
         console.log('Preparing table print with filters:', filters, 'professional:', professionalId || 'all');
@@ -88,23 +73,20 @@ export function usePrintReport() {
 
         const allProfessionals = await fetchProfessionalsData();
 
-        // Transform professionals data to match interface
-        const professionals = (professionalId 
-          ? allProfessionals.filter(prof => prof.id === professionalId)
-          : allProfessionals
-        ).map(prof => ({
+        // Convert professionals with proper type handling for table template
+        const convertedProfessionals = allProfessionals.map(prof => ({
           ...prof,
-          // Ensure break_times is properly typed
-          break_times: Array.isArray(prof.break_times) 
-            ? prof.break_times as Array<{ start: string; end: string }>
-            : [],
-          // Ensure working_days is properly typed
-          working_days: Array.isArray(prof.working_days) 
-            ? prof.working_days as boolean[]
-            : [true, true, true, true, true, false, false],
-          // Ensure active has a default
-          active: prof.active ?? true
+          break_times: Array.isArray(prof.break_times) ? prof.break_times as Array<{ start: string; end: string }> : [],
+          vacation_active: prof.vacation_active || false,
+          vacation_start: prof.vacation_start || undefined,
+          vacation_end: prof.vacation_end || undefined,
+          working_days: Array.isArray(prof.working_days) ? prof.working_days as boolean[] : undefined
         }));
+
+        // Filter professionals if specific professional is selected
+        const professionals = professionalId 
+          ? convertedProfessionals.filter(prof => prof.id === professionalId)
+          : convertedProfessionals;
         
         console.log('Appointments fetched for print:', appointments?.length || 0);
         
@@ -114,21 +96,7 @@ export function usePrintReport() {
           const dateText = selectedDate ? ` para o dia ${getFormattedDate(selectedDate)}` : '';
           contentToPrint = `<p>Nenhum agendamento encontrado${professionalText}${filtersText}${dateText} para impressão da tabela.</p>`;
         } else {
-          // Map appointments to ensure they match the Appointment interface
-          const mappedAppointments = appointments.map(apt => ({
-            ...apt,
-            startTime: apt.start_time,
-            endTime: apt.end_time,
-            createdAt: apt.created_at,
-            date: apt.start_time.split('T')[0],
-            patientId: apt.patient_id,
-            professionalId: apt.professional_id,
-            procedureId: apt.procedure_id,
-            isBlocked: apt.is_blocked || false,
-            user_id: apt.user_id || ''
-          }));
-
-          contentToPrint = generateTablePrintTemplate(mappedAppointments, professionals, printTitle);
+          contentToPrint = generateTablePrintTemplate(appointments, professionals, printTitle);
         }
       }
     } catch (error) {
