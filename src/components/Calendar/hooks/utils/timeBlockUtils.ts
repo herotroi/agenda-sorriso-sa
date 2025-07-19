@@ -16,24 +16,9 @@ export const generateTimeBlocks = (professionals: Professional[], selectedDate: 
   const dateStr = selectedDate.toISOString().split('T')[0];
 
   professionals.forEach(prof => {
-    // Gerar blocos de folga (break times) - handle string | any[] type safely
-    let breakTimes: Array<{ start: string; end: string }> = [];
+    // Gerar blocos de folga (break times) - handle array safely
+    const breakTimes = prof.break_times || [];
     
-    if (prof.break_times) {
-      if (Array.isArray(prof.break_times)) {
-        breakTimes = prof.break_times;
-      } else if (typeof prof.break_times === 'string') {
-        try {
-          const parsed = JSON.parse(prof.break_times);
-          if (Array.isArray(parsed)) {
-            breakTimes = parsed;
-          }
-        } catch (e) {
-          console.warn('Failed to parse break_times:', e);
-        }
-      }
-    }
-
     breakTimes.forEach((breakTime, index) => {
       if (breakTime && breakTime.start && breakTime.end) {
         blocks.push({

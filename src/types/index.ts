@@ -29,8 +29,8 @@ export interface Professional {
   updated_at: string;
   active?: boolean;
   user_id: string;
-  break_times?: string | any[];
-  working_days?: string | boolean[];
+  break_times?: Array<{ start: string; end: string }>;
+  working_days?: boolean[];
   vacation_active?: boolean;
   vacation_start?: string;
   vacation_end?: string;
