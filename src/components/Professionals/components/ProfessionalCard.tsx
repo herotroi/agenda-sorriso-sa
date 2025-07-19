@@ -219,7 +219,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
       <ProfessionalForm
         isOpen={isEditFormOpen}
         onClose={handleEditFormClose}
-        professionalToEdit={professional}
+        professional={professional}
       />
 
       <ProfessionalDetailView

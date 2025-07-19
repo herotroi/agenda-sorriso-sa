@@ -6,7 +6,7 @@ import { Professional } from '@/types';
 interface ProfessionalGridProps {
   professionals: Professional[];
   onEdit: (professional: Professional) => void;
-  onDelete: (professionalId: string, professionalName: string) => Promise<void>;
+  onDelete: (professionalId: string) => Promise<void>;
 }
 
 export function ProfessionalGrid({ professionals, onEdit, onDelete }: ProfessionalGridProps) {
@@ -20,14 +20,18 @@ export function ProfessionalGrid({ professionals, onEdit, onDelete }: Profession
     );
   }
 
+  const handleDelete = async (id: string) => {
+    await onDelete(id);
+  };
+
   return (
     <div className="grid gap-4">
       {professionals.map((professional) => (
         <ProfessionalCard
           key={professional.id}
           professional={professional}
-          onEdit={onEdit}
-          onDelete={onDelete}
+          onUpdate={() => window.location.reload()}
+          onDelete={handleDelete}
         />
       ))}
     </div>

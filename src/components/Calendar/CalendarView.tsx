@@ -79,9 +79,9 @@ export function CalendarView({ selectedDate: externalSelectedDate, onDateChange:
         <div className={`${isMobile ? 'px-2' : 'px-4'}`}>
           <ProfessionalDetailView
             professional={professional}
-            onBack={handleBackToProfessionalList}
             selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            isOpen={true}
+            onClose={handleBackToProfessionalList}
           />
         </div>
       );

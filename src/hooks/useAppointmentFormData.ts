@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +26,7 @@ export function useAppointmentFormData(
     professional_id: selectedProfessionalId || '',
     procedure_id: '',
     start_time: selectedDate.toISOString().slice(0, 16),
+    end_time: '',
     duration: '60',
     notes: '',
     status_id: 1,
@@ -76,7 +78,19 @@ export function useAppointmentFormData(
       if (statusesRes.error) throw statusesRes.error;
 
       setPatients(patientsRes.data || []);
-      setProfessionals(professionalsRes.data || []);
+      
+      // Transform professionals data to match interface
+      const transformedProfessionals = (professionalsRes.data || []).map(prof => ({
+        ...prof,
+        break_times: Array.isArray(prof.break_times) 
+          ? prof.break_times 
+          : (typeof prof.break_times === 'string' ? JSON.parse(prof.break_times || '[]') : []),
+        working_days: Array.isArray(prof.working_days)
+          ? prof.working_days
+          : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false])
+      }));
+      
+      setProfessionals(transformedProfessionals);
       setProcedures(proceduresRes.data || []);
       setStatuses(statusesRes.data || []);
     } catch (error) {
@@ -97,12 +111,17 @@ export function useAppointmentFormData(
 
   useEffect(() => {
     if (appointmentToEdit) {
+      const startTime = new Date(appointmentToEdit.start_time);
+      const endTime = new Date(appointmentToEdit.end_time);
+      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)).toString();
+      
       const editData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
-        start_time: new Date(appointmentToEdit.start_time).toISOString().slice(0, 16),
-        duration: Math.round((new Date(appointmentToEdit.end_time).getTime() - new Date(appointmentToEdit.start_time).getTime()) / (1000 * 60)).toString(),
+        start_time: startTime.toISOString().slice(0, 16),
+        end_time: endTime.toISOString().slice(0, 16),
+        duration: duration,
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
         is_blocked: appointmentToEdit.is_blocked || false
@@ -110,11 +129,17 @@ export function useAppointmentFormData(
       setFormData(editData);
       setOriginalData(editData);
     } else {
+      const startTime = selectedDate.toISOString().slice(0, 16);
+      const endDate = new Date(selectedDate);
+      endDate.setMinutes(endDate.getMinutes() + 60);
+      const endTime = endDate.toISOString().slice(0, 16);
+      
       const newData = {
         patient_id: '',
         professional_id: selectedProfessionalId || '',
         procedure_id: '',
-        start_time: selectedDate.toISOString().slice(0, 16),
+        start_time: startTime,
+        end_time: endTime,
         duration: '60',
         notes: '',
         status_id: 1,

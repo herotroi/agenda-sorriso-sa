@@ -20,7 +20,7 @@ interface AppointmentFormFieldsProps {
   procedures: Procedure[];
   statuses: AppointmentStatus[];
   onProcedureChange: (procedureId: string) => void;
-  onFieldChange: (field: string, value: any) => void;
+  handleFieldChange: (field: string, value: any) => void;
   originalData: AppointmentFormData | null;
   fieldModified: Record<string, boolean>;
 }
@@ -33,7 +33,7 @@ export function AppointmentFormFields({
   procedures,
   statuses,
   onProcedureChange,
-  onFieldChange,
+  handleFieldChange,
   originalData,
   fieldModified
 }: AppointmentFormFieldsProps) {
@@ -42,7 +42,7 @@ export function AppointmentFormFields({
       ...formData,
       [field]: value
     });
-    onFieldChange(field, value);
+    handleFieldChange(field, value);
   };
 
   return (
@@ -85,7 +85,6 @@ export function AppointmentFormFields({
       <NotesInput
         value={formData.notes}
         onChange={(value) => handleFieldUpdate('notes', value)}
-        isBlocked={formData.is_blocked}
         currentValue={originalData && !fieldModified.notes ? originalData.notes : undefined}
       />
     </div>
