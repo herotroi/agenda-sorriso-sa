@@ -29,11 +29,6 @@ export interface Professional {
   updated_at: string;
   active?: boolean;
   user_id: string;
-  break_times?: string | any[];
-  working_days?: string | boolean[];
-  vacation_active?: boolean;
-  vacation_start?: string;
-  vacation_end?: string;
   crm_cro?: string;
   first_shift_start?: string;
   first_shift_end?: string;
@@ -42,32 +37,31 @@ export interface Professional {
   weekend_shift_active?: boolean;
   weekend_shift_start?: string;
   weekend_shift_end?: string;
-  working_hours?: any;
+  vacation_active?: boolean;
+  vacation_start?: string;
+  vacation_end?: string;
+  // Propriedades obrigatórias padronizadas
+  working_hours: { start: string; end: string };
+  break_times: Array<{ start: string; end: string }>;
+  working_days: boolean[];
 }
 
 export interface Appointment {
   id: string;
   patient_id?: string | null;
-  patientId?: string | null;
   professional_id?: string;
-  professionalId?: string;
   procedure_id?: string | null;
-  procedureId?: string | null;
   start_time: string;
-  startTime: string;
   end_time: string;
-  endTime: string;
   notes?: string;
   price?: number;
   status?: AppointmentStatus;
   status_id?: number;
   created_at: string;
-  createdAt: string;
   updated_at: string;
   date: string;
   user_id: string;
   is_blocked?: boolean;
-  isBlocked?: boolean;
   
   // Relacionamentos
   patients?: {

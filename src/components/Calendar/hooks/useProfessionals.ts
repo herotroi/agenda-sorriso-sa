@@ -27,13 +27,13 @@ export function useProfessionals() {
       // Transform the data to match our interface
       const transformedData: Professional[] = (data || []).map(prof => ({
         ...prof,
+        working_hours: prof.working_hours || { start: "08:00", end: "18:00" },
         break_times: Array.isArray(prof.break_times) 
           ? prof.break_times 
           : (typeof prof.break_times === 'string' ? JSON.parse(prof.break_times || '[]') : []),
         working_days: Array.isArray(prof.working_days)
           ? prof.working_days
-          : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false]),
-        working_hours: prof.working_hours || { start: "08:00", end: "18:00" }
+          : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false])
       }));
 
       setProfessionals(transformedData);

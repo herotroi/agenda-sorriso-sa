@@ -91,7 +91,7 @@ export function useAppointmentFormData(
 
       setPatients(patientsRes.data || []);
       
-      // Transform professionals data to match interface with working_hours default
+      // Transform professionals data to match updated interface
       const transformedProfessionals = (professionalsRes.data || []).map(prof => ({
         ...prof,
         working_hours: prof.working_hours || { start: "08:00", end: "18:00" },

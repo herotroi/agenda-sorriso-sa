@@ -23,7 +23,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
 
   const handleAppointmentClick = (appointment: Appointment) => {
     console.log('Appointment clicked:', appointment);
-    // Add any additional logic for appointment click handling here
+    // Implementar lógica adicional conforme necessário
   };
 
   const fetchAppointments = async (specificDate?: Date) => {
@@ -68,34 +68,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       console.log('✅ Professional appointments fetched:', data?.length || 0);
       console.log('📋 Professional appointments data:', data);
       
-      // Map database fields to frontend interface
+      // Mapear dados sem duplicar propriedades
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
-        id: apt.id,
-        professionalId: apt.professional_id,
-        patientId: apt.patient_id,
+        ...apt,
         date: new Date(apt.start_time).toISOString().split('T')[0],
-        startTime: apt.start_time,
-        endTime: apt.end_time,
-        procedureId: apt.procedure_id,
-        status: mapStatus(apt.status),
-        notes: apt.notes,
-        createdAt: apt.created_at || new Date().toISOString(),
-        // Database fields
-        created_at: apt.created_at,
-        end_time: apt.end_time,
-        patient_id: apt.patient_id,
-        price: apt.price,
-        procedure_id: apt.procedure_id,
-        professional_id: apt.professional_id,
-        start_time: apt.start_time,
-        status_id: apt.status_id,
-        updated_at: apt.updated_at,
-        user_id: apt.user_id,
-        // Joined table fields
-        patients: apt.patients,
-        professionals: apt.professionals,
-        procedures: apt.procedures,
-        appointment_statuses: apt.appointment_statuses
+        status: mapStatus(apt.status)
       }));
       
       setAppointments(mappedAppointments);
@@ -139,34 +116,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
 
       if (error) throw error;
       
-      // Map database fields to frontend interface
+      // Mapear dados sem duplicar propriedades
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
-        id: apt.id,
-        professionalId: apt.professional_id,
-        patientId: apt.patient_id,
+        ...apt,
         date: new Date(apt.start_time).toISOString().split('T')[0],
-        startTime: apt.start_time,
-        endTime: apt.end_time,
-        procedureId: apt.procedure_id,
-        status: mapStatus(apt.status),
-        notes: apt.notes,
-        createdAt: apt.created_at || new Date().toISOString(),
-        // Database fields
-        created_at: apt.created_at,
-        end_time: apt.end_time,
-        patient_id: apt.patient_id,
-        price: apt.price,
-        procedure_id: apt.procedure_id,
-        professional_id: apt.professional_id,
-        start_time: apt.start_time,
-        status_id: apt.status_id,
-        updated_at: apt.updated_at,
-        user_id: apt.user_id,
-        // Joined table fields
-        patients: apt.patients,
-        professionals: apt.professionals,
-        procedures: apt.procedures,
-        appointment_statuses: apt.appointment_statuses
+        status: mapStatus(apt.status)
       }));
       
       setMonthAppointments(mappedAppointments);

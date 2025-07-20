@@ -58,22 +58,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
     return isActive ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />;
   };
 
-  // Ensure professional has all required properties for ProfessionalDetailView
-  const professionalForDetailView: Professional & { 
-    working_hours: { start: string; end: string };
-    break_times: Array<{ start: string; end: string }>;
-    working_days: boolean[];
-  } = {
-    ...professional,
-    working_hours: professional.working_hours || { start: "08:00", end: "18:00" },
-    break_times: Array.isArray(professional.break_times) 
-      ? professional.break_times 
-      : (typeof professional.break_times === 'string' ? JSON.parse(professional.break_times || '[]') : []),
-    working_days: Array.isArray(professional.working_days)
-      ? professional.working_days
-      : (typeof professional.working_days === 'string' ? JSON.parse(professional.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false])
-  };
-
   return (
     <>
       <Card className="hover:shadow-md transition-shadow">
@@ -239,7 +223,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
       />
 
       <ProfessionalDetailView
-        professional={professionalForDetailView}
+        professional={professional}
         selectedDate={new Date()}
         isOpen={isDetailViewOpen}
         onClose={() => setIsDetailViewOpen(false)}

@@ -50,16 +50,10 @@ export function useAppointmentsData() {
 
       const fetchedAppointments = appointmentsRes.data || [];
       
-      // Map database fields to frontend interface
+      // Mapear dados para garantir consistência, sem duplicar propriedades
       const mappedAppointments = fetchedAppointments.map(apt => ({
         ...apt,
-        startTime: apt.start_time,
-        endTime: apt.end_time,
-        patientId: apt.patient_id,
-        professionalId: apt.professional_id,
-        procedureId: apt.procedure_id,
         date: new Date(apt.start_time).toISOString().split('T')[0],
-        createdAt: apt.created_at,
         status: apt.status || 'confirmado'
       })) as Appointment[];
       
@@ -91,7 +85,7 @@ export function useAppointmentsData() {
     // Filter by procedure
     if (currentFilters.procedureId) {
       filtered = filtered.filter(appointment => 
-        appointment.procedureId === currentFilters.procedureId
+        appointment.procedure_id === currentFilters.procedureId
       );
     }
 

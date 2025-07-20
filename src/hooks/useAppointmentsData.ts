@@ -19,11 +19,7 @@ export function useAppointmentsData() {
       const { data, error } = await supabase
         .from('appointments')
         .select(`
-          id,
-          start_time,
-          end_time,
-          notes,
-          price,
+          *,
           procedures(name),
           professionals(name)
         `)
@@ -32,7 +28,14 @@ export function useAppointmentsData() {
         .order('start_time', { ascending: false });
 
       if (error) throw error;
-      setAppointments(data || []);
+      
+      // Mapear dados para garantir consistência
+      const mappedAppointments = (data || []).map(apt => ({
+        ...apt,
+        date: new Date(apt.start_time).toISOString().split('T')[0]
+      })) as Appointment[];
+      
+      setAppointments(mappedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
       toast({
