@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Eye } from 'lucide-react';
 import type { Professional } from '@/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
+import { PrintButton } from './ProfessionalDetailView/PrintButton';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
 
 interface ProfessionalDetailViewProps {
@@ -40,14 +42,21 @@ export function ProfessionalDetailView({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Detalhes do Profissional - {professional.name}
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Detalhes do Profissional - {professional.name}
+            </div>
+            <PrintButton 
+              professional={professionalWithDefaults} 
+              currentDate={currentDate} 
+              view={view} 
+            />
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <Tabs value={view} onValueChange={(value) => setView(value as 'day' | 'month')} className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <Tabs value={view} onValueChange={(value) => setView(value as 'day' | 'month')} className="flex-1 flex flex-col min-h-0">
             <div className="flex-shrink-0 space-y-4">
               <ProfessionalDetailViewHeader
                 professional={professionalWithDefaults}
@@ -69,25 +78,33 @@ export function ProfessionalDetailView({
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-auto">
-              <TabsContent value="day" className="mt-4">
-                <DayView
-                  professional={professionalWithDefaults}
-                  appointments={appointments}
-                  currentDate={currentDate}
-                  loading={loading}
-                  onAppointmentClick={handleAppointmentClick}
-                />
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <TabsContent value="day" className="mt-4 h-full">
+                <ScrollArea className="h-full">
+                  <div className="pr-4">
+                    <DayView
+                      professional={professionalWithDefaults}
+                      appointments={appointments}
+                      currentDate={currentDate}
+                      loading={loading}
+                      onAppointmentClick={handleAppointmentClick}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="month" className="mt-4">
-                <MonthView
-                  professional={professionalWithDefaults}
-                  appointments={monthAppointments}
-                  selectedDate={currentDate}
-                  onDateChange={setCurrentDate}
-                  onAppointmentClick={handleAppointmentClick}
-                />
+              <TabsContent value="month" className="mt-4 h-full">
+                <ScrollArea className="h-full">
+                  <div className="pr-4">
+                    <MonthView
+                      professional={professionalWithDefaults}
+                      appointments={monthAppointments}
+                      selectedDate={currentDate}
+                      onDateChange={setCurrentDate}
+                      onAppointmentClick={handleAppointmentClick}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </div>
           </Tabs>
