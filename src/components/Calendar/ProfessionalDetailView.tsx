@@ -40,24 +40,26 @@ export function ProfessionalDetailView({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Detalhes do Profissional - {professional.name}
-            </div>
-            <PrintButton 
-              professional={professionalWithDefaults} 
-              currentDate={currentDate} 
-              view={view} 
-            />
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-5xl w-[95vw] h-[95vh] overflow-hidden flex flex-col p-0">
+        <div className="flex-shrink-0 p-6 pb-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Detalhes do Profissional - {professional.name}
+              </div>
+              <PrintButton 
+                professional={professionalWithDefaults} 
+                currentDate={currentDate} 
+                view={view} 
+              />
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-6">
           <Tabs value={view} onValueChange={(value) => setView(value as 'day' | 'month')} className="flex-1 flex flex-col min-h-0">
-            <div className="flex-shrink-0 space-y-4">
+            <div className="flex-shrink-0 space-y-4 pb-4">
               <ProfessionalDetailViewHeader
                 professional={professionalWithDefaults}
                 currentDate={currentDate}
@@ -79,9 +81,9 @@ export function ProfessionalDetailView({
             </div>
 
             <div className="flex-1 min-h-0 overflow-hidden">
-              <TabsContent value="day" className="mt-4 h-full">
-                <ScrollArea className="h-full">
-                  <div className="pr-4">
+              <TabsContent value="day" className="mt-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1 h-full">
+                  <div className="p-4">
                     <DayView
                       professional={professionalWithDefaults}
                       appointments={appointments}
@@ -93,9 +95,9 @@ export function ProfessionalDetailView({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="month" className="mt-4 h-full">
-                <ScrollArea className="h-full">
-                  <div className="pr-4">
+              <TabsContent value="month" className="mt-0 h-full data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1 h-full">
+                  <div className="p-4">
                     <MonthView
                       professional={professionalWithDefaults}
                       appointments={monthAppointments}

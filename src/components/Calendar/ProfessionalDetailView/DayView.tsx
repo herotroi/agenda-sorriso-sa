@@ -56,7 +56,7 @@ export function DayView({
 
   return (
     <div className="space-y-4">
-      <div className="text-center">
+      <div className="text-center sticky top-0 bg-background z-10 pb-4 border-b">
         <h3 className="text-lg font-semibold">
           {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
@@ -65,16 +65,16 @@ export function DayView({
         </p>
       </div>
 
-      <div className="grid gap-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2">
         {timeSlots.map((slot) => {
           const hourAppointments = getAppointmentsForHour(slot.hour);
           
           return (
-            <div key={slot.time} className="flex gap-4 min-h-[60px]">
-              <div className="w-16 text-sm text-gray-500 font-medium pt-2">
+            <div key={slot.time} className="flex gap-4 min-h-[60px] border-b border-gray-100 last:border-b-0 pb-2">
+              <div className="w-16 text-sm text-gray-500 font-medium pt-2 flex-shrink-0">
                 {slot.time}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 {hourAppointments.length > 0 ? (
                   <div className="space-y-2">
                     {hourAppointments.map((appointment) => (
@@ -84,20 +84,20 @@ export function DayView({
                         onClick={() => onAppointmentClick(appointment)}
                       >
                         <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-3 flex-wrap min-w-0">
+                              <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
                                 <Clock className="h-3 w-3" />
                                 {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
                               </div>
                               {appointment.patients && (
-                                <div className="flex items-center gap-1 text-sm">
-                                  <User className="h-3 w-3" />
-                                  {appointment.patients.full_name}
+                                <div className="flex items-center gap-1 text-sm min-w-0">
+                                  <User className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{appointment.patients.full_name}</span>
                                 </div>
                               )}
                             </div>
-                            <Badge className={getStatusColor(appointment.status)}>
+                            <Badge className={`${getStatusColor(appointment.status)} flex-shrink-0`}>
                               {appointment.status === 'confirmado' ? 'Confirmado' :
                                appointment.status === 'cancelado' ? 'Cancelado' :
                                appointment.status === 'em-andamento' ? 'Em andamento' :
@@ -105,9 +105,9 @@ export function DayView({
                             </Badge>
                           </div>
                           {appointment.procedures && (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <FileText className="h-3 w-3 inline mr-1" />
-                              {appointment.procedures.name}
+                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
+                              <FileText className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{appointment.procedures.name}</span>
                             </div>
                           )}
                           {appointment.notes && (
