@@ -59,7 +59,11 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   };
 
   // Ensure professional has all required properties for ProfessionalDetailView
-  const professionalForDetailView = {
+  const professionalForDetailView: Professional & { 
+    working_hours: { start: string; end: string };
+    break_times: Array<{ start: string; end: string }>;
+    working_days: boolean[];
+  } = {
     ...professional,
     working_hours: professional.working_hours || { start: "08:00", end: "18:00" },
     break_times: Array.isArray(professional.break_times) 
