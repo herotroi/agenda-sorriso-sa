@@ -36,7 +36,10 @@ export function useProfessionalsData() {
         working_days: Array.isArray(prof.working_days)
           ? prof.working_days
           : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false]),
-        working_hours: prof.working_hours || { start: "08:00", end: "18:00" }
+        working_hours: typeof prof.working_hours === 'object' && prof.working_hours !== null
+          ? prof.working_hours as { start: string; end: string }
+          : { start: "08:00", end: "18:00" },
+        active: prof.active ?? true
       }));
 
       setProfessionals(transformedData);
@@ -52,7 +55,7 @@ export function useProfessionalsData() {
     }
   };
 
-  const deleteProfessional = async (professionalId: string) => {  // Removido segundo parâmetro
+  const deleteProfessional = async (professionalId: string) => {
     try {
       const { error } = await supabase
         .from('professionals')

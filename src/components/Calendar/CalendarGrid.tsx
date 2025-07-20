@@ -109,7 +109,7 @@ export function CalendarGrid({
                 professional={professional}
                 selectedDate={currentDate}
                 appointments={appointments.filter(
-                  (apt) => apt.professionalId === professional.id
+                  (apt) => apt.professional_id === professional.id
                 )}
                 timeSlots={timeSlots}
                 timeBlocks={timeBlocks.filter(block => 

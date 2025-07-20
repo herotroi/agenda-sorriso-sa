@@ -60,7 +60,7 @@ export function ProfessionalColumn({
       <div className="relative min-h-full">
         {timeSlots.map((slot) => {
           const hasAppointment = appointments.some(apt => {
-            const startHour = new Date(apt.startTime).getHours();
+            const startHour = new Date(apt.start_time).getHours();
             return startHour === slot.hour;
           });
 
@@ -98,19 +98,18 @@ export function ProfessionalColumn({
         {/* Agendamentos posicionados absolutamente */}
         <div className="absolute inset-0 pointer-events-none">
           {appointments.map((appointment) => {
-            // Convert appointment fields to match DraggableAppointment expectations
-            const position = getItemPosition(appointment.startTime, appointment.endTime);
+            const position = getItemPosition(appointment.start_time, appointment.end_time);
             
             const draggableAppointment = {
               id: appointment.id,
-              patient_id: appointment.patientId,
-              professional_id: appointment.professionalId,
-              start_time: appointment.startTime,
-              end_time: appointment.endTime,
+              patient_id: appointment.patient_id,
+              professional_id: appointment.professional_id,
+              start_time: appointment.start_time,
+              end_time: appointment.end_time,
               status: appointment.status,
-              patients: { full_name: 'Patient Name' }, // This would come from joined data
-              procedures: appointment.procedureId ? { name: 'Procedure Name' } : null,
-              appointment_statuses: { label: appointment.status, color: '#10b981' }
+              patients: appointment.patients,
+              procedures: appointment.procedures,
+              appointment_statuses: appointment.appointment_statuses
             };
             
             return (

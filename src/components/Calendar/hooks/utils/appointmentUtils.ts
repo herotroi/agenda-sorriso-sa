@@ -39,15 +39,8 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
     // Map database fields to frontend interface
     return (data || []).map(apt => ({
       ...apt,
-      startTime: apt.start_time,
-      endTime: apt.end_time,
-      patientId: apt.patient_id,
-      professionalId: apt.professional_id,
-      procedureId: apt.procedure_id,
       date: new Date(apt.start_time).toISOString().split('T')[0],
-      createdAt: apt.created_at,
-      status: apt.status || 'confirmado',
-      isBlocked: apt.is_blocked || false
+      status: apt.status || 'confirmado'
     })) as Appointment[];
   } catch (error) {
     console.error('❌ Error fetching appointments:', error);
@@ -69,12 +62,12 @@ export function checkTimeConflicts(
     }
 
     // Only check conflicts for the same professional
-    if (appointment.professionalId !== professionalId) {
+    if (appointment.professional_id !== professionalId) {
       return false;
     }
 
-    const appointmentStart = new Date(appointment.startTime);
-    const appointmentEnd = new Date(appointment.endTime);
+    const appointmentStart = new Date(appointment.start_time);
+    const appointmentEnd = new Date(appointment.end_time);
 
     // Check for overlap
     return (

@@ -1,220 +1,144 @@
 
-import { useState, useEffect } from 'react';
-import { Bell, Check, Trash2 } from 'lucide-react';
+import { Bell, X, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
-import { Appointment, AppointmentStatus } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { useNotificationContext } from '@/contexts/NotificationContext';
+import { Appointment } from '@/types';
 
 export function NotificationDropdown() {
-  const { notifications, unreadCount, markAsRead, deleteNotification } = useNotifications();
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  
-  console.log('🔔 NotificationDropdown render:', {
-    notificationsCount: notifications.length,
-    unreadCount
-  });
-
-  const handleNotificationClick = async (notification: any) => {
-    if (notification.appointmentId) {
-      try {
-        const { data, error } = await supabase
-          .from('appointments')
-          .select(`
-            *,
-            patients(full_name),
-            professionals(name),
-            procedures(name),
-            appointment_statuses(label, color)
-          `)
-          .eq('id', notification.appointmentId)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          // Helper function to map status
-          const mapStatus = (status: string | null): AppointmentStatus => {
-            if (!status) return 'confirmado';
-            const validStatuses: AppointmentStatus[] = ['confirmado', 'cancelado', 'faltou', 'em-andamento', 'concluido'];
-            return validStatuses.includes(status as AppointmentStatus) ? status as AppointmentStatus : 'confirmado';
-          };
-
-          const appointment: Appointment = {
-            id: data.id,
-            professionalId: data.professional_id,
-            patientId: data.patient_id,
-            date: new Date(data.start_time).toISOString().split('T')[0],
-            startTime: data.start_time,
-            endTime: data.end_time,
-            procedureId: data.procedure_id,
-            status: mapStatus(data.status),
-            notes: data.notes,
-            createdAt: data.created_at || new Date().toISOString(),
-            // Database fields
-            created_at: data.created_at,
-            end_time: data.end_time,
-            patient_id: data.patient_id,
-            price: data.price,
-            procedure_id: data.procedure_id,
-            professional_id: data.professional_id,
-            start_time: data.start_time,
-            status_id: data.status_id,
-            updated_at: data.updated_at,
-            user_id: data.user_id,
-            // Joined table fields
-            patients: data.patients,
-            professionals: data.professionals,
-            procedures: data.procedures,
-            appointment_statuses: data.appointment_statuses
-          };
-
-          setSelectedAppointment(appointment);
-        }
-      } catch (error) {
-        console.error('Error fetching appointment:', error);
-      }
-    }
-
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-  };
-
-  const handleDeleteNotification = (notificationId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    deleteNotification(notificationId);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const { 
+    notifications, 
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    createAppointmentFromNotification
+  } = useNotificationContext();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'appointment_created':
-        return '📅';
-      case 'appointment_updated':
-        return '✏️';
+      case 'appointment_reminder':
+        return <Calendar className="h-4 w-4 text-blue-500" />;
       case 'appointment_cancelled':
-        return '❌';
+        return <X className="h-4 w-4 text-red-500" />;
       default:
-        return '🔔';
+        return <Bell className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const handleCreateAppointment = async (notification: any) => {
+    try {
+      const appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at' | 'date' | 'status'> = {
+        patient_id: null,
+        professional_id: notification.appointment_id,
+        procedure_id: null,
+        start_time: new Date().toISOString(),
+        end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        notes: `Criado a partir da notificação: ${notification.title}`,
+        price: null,
+        status_id: 1,
+        user_id: '', // Will be set by the backend
+        is_blocked: false
+      };
+
+      await createAppointmentFromNotification(notification.id, appointmentData);
+    } catch (error) {
+      console.error('Error creating appointment from notification:', error);
     }
   };
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent className="w-80" align="end">
-          <DropdownMenuLabel className="flex items-center justify-between">
-            Notificações
-            {unreadCount > 0 && (
-              <Badge variant="secondary">{unreadCount} não lidas</Badge>
-            )}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-
-          <ScrollArea className="h-96">
-            {notifications.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                Nenhuma notificação
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <DropdownMenuItem
-                  key={notification.id}
-                  className={`flex flex-col items-start gap-2 p-3 cursor-pointer ${
-                    !notification.read ? 'bg-muted/50' : ''
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
+    <div className="relative">
+      <Button variant="ghost" size="sm" className="relative">
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+            {unreadCount}
+          </Badge>
+        )}
+      </Button>
+      
+      {notifications.length > 0 && (
+        <Card className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto z-50 shadow-lg">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">Notificações</CardTitle>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="text-xs"
                 >
-                  <div className="flex items-start justify-between w-full gap-2">
-                    <div className="flex items-start gap-2 flex-1">
-                      <span className="text-lg">
-                        {getNotificationIcon(notification.type)}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-sm ${!notification.read ? 'font-semibold' : ''}`}>
-                          {notification.title}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {notification.message}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {formatDate(notification.timestamp.toISOString())}
-                        </div>
-                      </div>
+                  <Check className="h-3 w-3 mr-1" />
+                  Marcar todas como lidas
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-3 rounded-lg border ${
+                  !notification.read ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-2 flex-1">
+                    {getNotificationIcon(notification.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(notification.created_at).toLocaleString('pt-BR')}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification.id);
-                          }}
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    {!notification.read && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 hover:text-destructive"
-                        onClick={(e) => handleDeleteNotification(notification.id, e)}
+                        onClick={() => markAsRead(notification.id)}
+                        className="h-6 w-6 p-0"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Check className="h-3 w-3" />
                       </Button>
-                    </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteNotification(notification.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
-                </DropdownMenuItem>
-              ))
-            )}
-          </ScrollArea>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {selectedAppointment && (
-        <AppointmentDetails
-          appointment={selectedAppointment}
-          isOpen={!!selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
-          onUpdate={() => {}}
-        />
+                </div>
+                
+                {notification.type === 'appointment_reminder' && (
+                  <div className="mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCreateAppointment(notification)}
+                      className="text-xs"
+                    >
+                      Criar Agendamento
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
-    </>
+    </div>
   );
 }

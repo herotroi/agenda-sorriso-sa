@@ -22,7 +22,7 @@ export const fetchProfessionals = async (): Promise<Professional[]> => {
     calendarColor: prof.color || '#3b82f6',
     created_at: prof.created_at,
     updated_at: prof.updated_at,
-    active: prof.active,
+    active: prof.active ?? true,
     user_id: prof.user_id,
     crm_cro: prof.crm_cro,
     first_shift_start: prof.first_shift_start,
@@ -42,7 +42,9 @@ export const fetchProfessionals = async (): Promise<Professional[]> => {
     working_days: Array.isArray(prof.working_days) 
       ? prof.working_days as boolean[]
       : (typeof prof.working_days === 'string' ? JSON.parse(prof.working_days || '[true,true,true,true,true,false,false]') : [true,true,true,true,true,false,false]),
-    working_hours: prof.working_hours || { start: "08:00", end: "18:00" }
+    working_hours: typeof prof.working_hours === 'object' && prof.working_hours !== null
+      ? prof.working_hours as { start: string; end: string }
+      : { start: "08:00", end: "18:00" }
   })) || [];
   
   return processedData;

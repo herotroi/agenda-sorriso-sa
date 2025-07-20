@@ -53,21 +53,21 @@ export function useAppointmentEditor(
         updated_at: new Date().toISOString()
       };
       
-      if (editingCell.field === 'startTime') {
+      if (editingCell.field === 'start_time') {
         const startTime = new Date(editingCell.value);
         const appointment = appointments.find(a => a.id === editingCell.appointmentId);
         if (appointment) {
-          const currentEndTime = new Date(appointment.endTime);
-          const currentStartTime = new Date(appointment.startTime);
+          const currentEndTime = new Date(appointment.end_time);
+          const currentStartTime = new Date(appointment.start_time);
           const duration = currentEndTime.getTime() - currentStartTime.getTime();
           const newEndTime = new Date(startTime.getTime() + duration);
           
           updateData.start_time = startTime.toISOString();
           updateData.end_time = newEndTime.toISOString();
         }
-      } else if (editingCell.field === 'professionalId') {
+      } else if (editingCell.field === 'professional_id') {
         updateData.professional_id = editingCell.value;
-      } else if (editingCell.field === 'procedureId') {
+      } else if (editingCell.field === 'procedure_id') {
         updateData.procedure_id = editingCell.value || null;
       } else if (editingCell.field === 'status_id') {
         updateData.status_id = parseInt(editingCell.value);
@@ -102,13 +102,7 @@ export function useAppointmentEditor(
       if (data && data[0]) {
         const updatedAppointment = {
           ...data[0],
-          startTime: data[0].start_time,
-          endTime: data[0].end_time,
-          patientId: data[0].patient_id,
-          professionalId: data[0].professional_id,
-          procedureId: data[0].procedure_id,
           date: new Date(data[0].start_time).toISOString().split('T')[0],
-          createdAt: data[0].created_at,
           status: data[0].status || 'confirmado'
         } as Appointment;
 

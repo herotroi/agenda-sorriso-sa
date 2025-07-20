@@ -28,7 +28,7 @@ export function DayProceduresDialog({
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
 
   const sortedAppointments = appointments.sort((a, b) => 
-    new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
 
   const handleEditAppointment = (appointment: Appointment) => {
@@ -71,8 +71,8 @@ export function DayProceduresDialog({
               </div>
             ) : (
               sortedAppointments.map((appointment) => {
-                const startTime = new Date(appointment.startTime);
-                const endTime = new Date(appointment.endTime);
+                const startTime = new Date(appointment.start_time);
+                const endTime = new Date(appointment.end_time);
                 const statusColor = appointment.appointment_statuses?.color || '#6b7280';
 
                 return (
@@ -156,7 +156,7 @@ export function DayProceduresDialog({
         <AppointmentForm
           isOpen={isEditFormOpen}
           onClose={handleEditFormClose}
-          selectedDate={new Date(appointmentToEdit.startTime)}
+          selectedDate={new Date(appointmentToEdit.start_time)}
           appointmentToEdit={appointmentToEdit}
         />
       )}

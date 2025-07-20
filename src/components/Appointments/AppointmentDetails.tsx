@@ -108,7 +108,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
       <AppointmentForm
         isOpen={isEditFormOpen}
         onClose={handleEditFormClose}
-        selectedDate={new Date(appointment.startTime)}
+        selectedDate={new Date(appointment.start_time)}
         appointmentToEdit={appointment}
       />
     </>

@@ -10,7 +10,7 @@ interface AppointmentRowProps {
 }
 
 export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
-  const isBlocked = appointment.is_blocked || appointment.isBlocked;
+  const isBlocked = appointment.is_blocked;
   
   return (
     <TableRow 
@@ -27,7 +27,7 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
         {isBlocked ? 'Bloqueio' : (appointment.procedures?.name || 'Nenhum')}
       </TableCell>
       <TableCell>
-        {new Date(appointment.startTime).toLocaleString('pt-BR')}
+        {new Date(appointment.start_time).toLocaleString('pt-BR')}
       </TableCell>
       <TableCell>
         <span 
