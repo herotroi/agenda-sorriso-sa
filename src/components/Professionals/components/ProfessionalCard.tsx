@@ -243,6 +243,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
         <ProfessionalDetailView
           professional={professional}
           selectedDate={selectedDate}
+          isOpen={showDetailView}
           onClose={handleCloseDetailView}
         />
       )}

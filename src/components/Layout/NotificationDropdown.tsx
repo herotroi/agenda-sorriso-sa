@@ -1,3 +1,4 @@
+
 import { Bell, X, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +28,11 @@ export function NotificationDropdown() {
   };
 
   const handleCreateAppointment = async (notification: any) => {
+    if (!createAppointmentFromNotification) {
+      console.warn('createAppointmentFromNotification is not available');
+      return;
+    }
+
     try {
       const appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at' | 'date' | 'status'> = {
         patient_id: null,
@@ -95,7 +101,7 @@ export function NotificationDropdown() {
                         {notification.message}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {new Date(notification.created_at).toLocaleString('pt-BR')}
+                        {new Date(notification.timestamp).toLocaleString('pt-BR')}
                       </p>
                     </div>
                   </div>
@@ -121,7 +127,7 @@ export function NotificationDropdown() {
                   </div>
                 </div>
                 
-                {notification.type === 'appointment_reminder' && (
+                {notification.type === 'appointment_reminder' && createAppointmentFromNotification && (
                   <div className="mt-2">
                     <Button
                       variant="outline"
