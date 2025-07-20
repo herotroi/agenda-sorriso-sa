@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Edit, Trash2, Eye, Calendar, Clock, Briefcase, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -244,7 +243,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
         <ProfessionalDetailView
           professional={professional}
           selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
           onClose={handleCloseDetailView}
         />
       )}

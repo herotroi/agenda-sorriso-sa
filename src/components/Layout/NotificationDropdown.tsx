@@ -1,9 +1,8 @@
-
 import { Bell, X, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useNotificationContext } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { Appointment } from '@/types';
 
 export function NotificationDropdown() {
@@ -14,7 +13,7 @@ export function NotificationDropdown() {
     markAllAsRead,
     deleteNotification,
     createAppointmentFromNotification
-  } = useNotificationContext();
+  } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
