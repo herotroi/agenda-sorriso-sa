@@ -32,11 +32,27 @@ export function DayView({
   const getAppointmentsForHour = (hour: number) => {
     return appointments.filter(apt => {
       const startHour = new Date(apt.start_time).getHours();
-      return startHour === hour;
+      const endHour = new Date(apt.end_time).getHours();
+      
+      // Para agendamentos normais, pausas e férias que começam nesta hora
+      if (startHour === hour) return true;
+      
+      // Para agendamentos que se estendem por esta hora
+      if (hour > startHour && hour < endHour) return true;
+      
+      // Para agendamentos que terminam nesta hora
+      if (hour === endHour && new Date(apt.end_time).getMinutes() > 0 && startHour !== endHour) return true;
+      
+      return false;
     });
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusColor = (status?: string, type?: string) => {
+    // Cores especiais para férias e pausas
+    if (type === 'vacation') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    if (type === 'break') return 'bg-gray-100 text-gray-800 border-gray-300';
+    
+    // Cores normais para agendamentos
     switch (status) {
       case 'confirmado': return 'bg-green-100 text-green-800';
       case 'cancelado': return 'bg-red-100 text-red-800';
@@ -44,6 +60,12 @@ export function DayView({
       case 'concluido': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getCardStyle = (type?: string) => {
+    if (type === 'vacation') return 'border-yellow-300 bg-yellow-50';
+    if (type === 'break') return 'border-gray-300 bg-gray-50';
+    return '';
   };
 
   if (loading) {
@@ -54,6 +76,10 @@ export function DayView({
     );
   }
 
+  // Separar agendamentos normais dos especiais para contagem
+  const regularAppointments = appointments.filter(apt => !(apt as any).type);
+  const specialItems = appointments.filter(apt => (apt as any).type);
+
   return (
     <div className="space-y-4">
       <div className="text-center sticky top-0 bg-background z-10 pb-4 border-b">
@@ -61,7 +87,8 @@ export function DayView({
           {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
         <p className="text-sm text-gray-500">
-          {appointments.length} agendamento{appointments.length !== 1 ? 's' : ''}
+          {regularAppointments.length} agendamento{regularAppointments.length !== 1 ? 's' : ''}
+          {specialItems.length > 0 && ` • ${specialItems.length} item${specialItems.length !== 1 ? 's' : ''} especial${specialItems.length !== 1 ? 'is' : ''}`}
         </p>
       </div>
 
@@ -77,47 +104,58 @@ export function DayView({
               <div className="flex-1 min-w-0">
                 {hourAppointments.length > 0 ? (
                   <div className="space-y-2">
-                    {hourAppointments.map((appointment) => (
-                      <Card 
-                        key={appointment.id}
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => onAppointmentClick(appointment)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-3 flex-wrap min-w-0">
-                              <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
-                                <Clock className="h-3 w-3" />
-                                {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
-                              </div>
-                              {appointment.patients && (
-                                <div className="flex items-center gap-1 text-sm min-w-0">
-                                  <User className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">{appointment.patients.full_name}</span>
+                    {hourAppointments.map((appointment) => {
+                      const itemType = (appointment as any).type;
+                      const isSpecialItem = itemType === 'vacation' || itemType === 'break';
+                      
+                      return (
+                        <Card 
+                          key={appointment.id}
+                          className={`cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
+                          onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-3 flex-wrap min-w-0">
+                                <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
+                                  <Clock className="h-3 w-3" />
+                                  {isSpecialItem && itemType === 'vacation' 
+                                    ? 'Dia todo' 
+                                    : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`
+                                  }
                                 </div>
-                              )}
+                                {appointment.patients && (
+                                  <div className="flex items-center gap-1 text-sm min-w-0">
+                                    <User className="h-3 w-3 flex-shrink-0" />
+                                    <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
+                                      {appointment.patients.full_name}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <Badge className={`${getStatusColor(appointment.status, itemType)} flex-shrink-0`}>
+                                {appointment.appointment_statuses?.label || 
+                                 (appointment.status === 'confirmado' ? 'Confirmado' :
+                                  appointment.status === 'cancelado' ? 'Cancelado' :
+                                  appointment.status === 'em-andamento' ? 'Em andamento' :
+                                  appointment.status === 'concluido' ? 'Concluído' : 'Confirmado')}
+                              </Badge>
                             </div>
-                            <Badge className={`${getStatusColor(appointment.status)} flex-shrink-0`}>
-                              {appointment.status === 'confirmado' ? 'Confirmado' :
-                               appointment.status === 'cancelado' ? 'Cancelado' :
-                               appointment.status === 'em-andamento' ? 'Em andamento' :
-                               appointment.status === 'concluido' ? 'Concluído' : 'Confirmado'}
-                            </Badge>
-                          </div>
-                          {appointment.procedures && (
-                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
-                              <FileText className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">{appointment.procedures.name}</span>
-                            </div>
-                          )}
-                          {appointment.notes && (
-                            <div className="mt-2 text-xs text-gray-500 truncate">
-                              {appointment.notes}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
+                            {appointment.procedures && !isSpecialItem && (
+                              <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
+                                <FileText className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{appointment.procedures.name}</span>
+                              </div>
+                            )}
+                            {appointment.notes && (
+                              <div className="mt-2 text-xs text-gray-500 truncate">
+                                {appointment.notes}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="h-12 border-l-2 border-gray-200"></div>
