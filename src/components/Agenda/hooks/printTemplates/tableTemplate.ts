@@ -19,35 +19,52 @@ export const generateTablePrintTemplate = (
   let timeBlocksInfo = '';
   if (professionals && professionals.length > 0) {
     const timeBlocksData = professionals.map(prof => {
-      let profInfo = `<h4>${prof.name}</h4>`;
+      let profInfo = `<h4 style="margin-bottom: 8px; color: #374151; font-weight: 600;">${prof.name}</h4>`;
+      let hasTimeBlocks = false;
       
-      // Férias - ajustar datas para começar e terminar um dia antes
+      // Férias - verificar se estão ativas e exibir as datas originais
       if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-        const originalStart = new Date(prof.vacation_start);
-        const originalEnd = new Date(prof.vacation_end);
-        
-        originalStart.setDate(originalStart.getDate() - 1);
-        originalEnd.setDate(originalEnd.getDate() - 1);
-        
-        const startDate = originalStart.toLocaleDateString('pt-BR');
-        const endDate = originalEnd.toLocaleDateString('pt-BR');
-        profInfo += `<p>🏖️ <strong>Férias:</strong> ${startDate} até ${endDate}</p>`;
+        const startDate = new Date(prof.vacation_start).toLocaleDateString('pt-BR');
+        const endDate = new Date(prof.vacation_end).toLocaleDateString('pt-BR');
+        profInfo += `<p style="margin: 4px 0; color: #4b5563;">🏖️ <strong>Férias:</strong> ${startDate} até ${endDate}</p>`;
+        hasTimeBlocks = true;
       }
       
-      // Pausas
-      if (prof.break_times && Array.isArray(prof.break_times) && prof.break_times.length > 0) {
-        const breaks = prof.break_times.map((bt: any) => `${bt.start} - ${bt.end}`).join(', ');
-        profInfo += `<p>☕ <strong>Pausas:</strong> ${breaks}</p>`;
+      // Pausas - verificar se existem e são válidas
+      if (prof.break_times) {
+        let breakTimes = [];
+        try {
+          // Garantir que break_times seja um array
+          if (Array.isArray(prof.break_times)) {
+            breakTimes = prof.break_times;
+          } else if (typeof prof.break_times === 'string') {
+            breakTimes = JSON.parse(prof.break_times);
+          }
+        } catch (e) {
+          console.warn('Failed to parse break_times:', e);
+        }
+        
+        if (breakTimes.length > 0) {
+          const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
+          if (validBreaks.length > 0) {
+            const breaks = validBreaks.map(bt => `${bt.start} - ${bt.end}`).join(', ');
+            profInfo += `<p style="margin: 4px 0; color: #4b5563;">☕ <strong>Pausas:</strong> ${breaks}</p>`;
+            hasTimeBlocks = true;
+          }
+        }
       }
       
-      return profInfo;
-    }).join('');
+      // Só retornar informações se houver pausas ou férias
+      return hasTimeBlocks ? profInfo : '';
+    }).filter(info => info.trim() !== '').join('<div style="margin-bottom: 16px;"></div>');
 
     if (timeBlocksData.trim()) {
       timeBlocksInfo = `
-        <div class="time-blocks-section" style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
-          <h3 style="margin-bottom: 16px; color: #374151;">Pausas e Férias dos Profissionais</h3>
-          ${timeBlocksData}
+        <div class="time-blocks-section" style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <h3 style="margin-bottom: 16px; color: #374151; font-weight: 600; font-size: 16px;">Pausas e Férias dos Profissionais</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${timeBlocksData}
+          </div>
         </div>
       `;
     }
@@ -66,40 +83,39 @@ export const generateTablePrintTemplate = (
     
     return `
       <tr>
-        <td>${patientName}</td>
-        <td>${professionalName}</td>
-        <td>${procedureName}</td>
-        <td>${startTime}</td>
-        <td>
-          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
-                style="background-color: ${statusColor}20; color: ${statusColor}">
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${patientName}</td>
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${professionalName}</td>
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${procedureName}</td>
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime}</td>
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+          <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: ${statusColor}20; color: ${statusColor};">
             ${statusLabel}
           </span>
         </td>
-        <td>${displayNotes}</td>
+        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${displayNotes}</td>
       </tr>
     `;
   }).join('');
   
   return `
-    <div class="rounded-lg border p-6">
-      <div class="mb-4">
-        <h2 class="text-2xl font-semibold">${tableTitle}</h2>
-        <p class="text-sm text-gray-600 mt-2">Total de agendamentos: ${appointments.length}</p>
+    <div style="border-radius: 8px; border: 1px solid #e5e7eb; padding: 24px; font-family: system-ui, -apple-system, sans-serif;">
+      <div style="margin-bottom: 16px;">
+        <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #111827;">${tableTitle}</h2>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">Total de agendamentos: ${appointments.length}</p>
       </div>
       
       ${timeBlocksInfo}
       
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse">
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
           <thead>
             <tr>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Paciente</th>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Profissional</th>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Procedimento</th>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Data/Hora</th>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Status</th>
-              <th class="border border-gray-300 px-4 py-2 bg-gray-50 text-left font-medium">Observações</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Paciente</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Profissional</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Procedimento</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Data/Hora</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Status</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Observações</th>
             </tr>
           </thead>
           <tbody>
