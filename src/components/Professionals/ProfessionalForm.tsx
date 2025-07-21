@@ -69,6 +69,16 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
   useEffect(() => {
     if (professional) {
       console.log('Loading professional data:', professional);
+      
+      // Garantir que os dados estão no formato correto
+      const formatTime = (time: string) => {
+        if (!time) return '';
+        if (time.includes(':')) {
+          return time.substring(0, 5); // Remover segundos se houver
+        }
+        return time;
+      };
+
       setFormData({
         name: professional.name || '',
         specialty: professional.specialty || '',
@@ -76,19 +86,19 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
         email: professional.email || '',
         phone: professional.phone || '',
         color: professional.color || '#3b82f6',
-        first_shift_start: professional.first_shift_start || '08:00',
-        first_shift_end: professional.first_shift_end || '12:00',
-        second_shift_start: professional.second_shift_start || '13:30',
-        second_shift_end: professional.second_shift_end || '18:00',
-        break_times: professional.break_times || [],
+        first_shift_start: formatTime(professional.first_shift_start) || '08:00',
+        first_shift_end: formatTime(professional.first_shift_end) || '12:00',
+        second_shift_start: formatTime(professional.second_shift_start) || '13:30',
+        second_shift_end: formatTime(professional.second_shift_end) || '18:00',
+        break_times: Array.isArray(professional.break_times) ? professional.break_times : [],
         vacation_active: professional.vacation_active || false,
         vacation_start: professional.vacation_start || '',
         vacation_end: professional.vacation_end || '',
-        working_days: professional.working_days || [true, true, true, true, true, false, false],
+        working_days: Array.isArray(professional.working_days) ? professional.working_days : [true, true, true, true, true, false, false],
         weekend_shift_active: professional.weekend_shift_active || false,
-        weekend_shift_start: professional.weekend_shift_start || '08:00',
-        weekend_shift_end: professional.weekend_shift_end || '12:00',
-        active: professional.active,
+        weekend_shift_start: formatTime(professional.weekend_shift_start) || '08:00',
+        weekend_shift_end: formatTime(professional.weekend_shift_end) || '12:00',
+        active: professional.active !== undefined ? professional.active : true,
       });
     } else if (isOpen) {
       setFormData({

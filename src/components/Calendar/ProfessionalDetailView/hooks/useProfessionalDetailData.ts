@@ -45,28 +45,57 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     }
   };
 
-  const createVacationItems = (professional: any, targetDate: Date) => {
+  const createVacationItems = (professional: any, targetDate: Date, forMonth: boolean = false) => {
     const items: any[] = [];
     
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
       const startDate = new Date(professional.vacation_start);
       const endDate = new Date(professional.vacation_end);
       
-      // Criar uma entrada para cada dia de férias
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        // Verificar se é o dia alvo (para visualização diária) ou se está no mês (para visualização mensal)
-        const isTargetDay = currentDate.toDateString() === targetDate.toDateString();
-        const isInTargetMonth = currentDate.getMonth() === targetDate.getMonth() && 
-                               currentDate.getFullYear() === targetDate.getFullYear();
+      if (forMonth) {
+        // Para visualização mensal - mostrar apenas se há férias no mês
+        const targetMonth = targetDate.getMonth();
+        const targetYear = targetDate.getFullYear();
         
-        if (isTargetDay || isInTargetMonth) {
+        if ((startDate.getMonth() === targetMonth && startDate.getFullYear() === targetYear) ||
+            (endDate.getMonth() === targetMonth && endDate.getFullYear() === targetYear) ||
+            (startDate < new Date(targetYear, targetMonth, 1) && endDate > new Date(targetYear, targetMonth + 1, 0))) {
+          
+          const currentDate = new Date(Math.max(startDate.getTime(), new Date(targetYear, targetMonth, 1).getTime()));
+          const monthEnd = new Date(targetYear, targetMonth + 1, 0);
+          const finalDate = new Date(Math.min(endDate.getTime(), monthEnd.getTime()));
+          
+          while (currentDate <= finalDate) {
+            items.push({
+              id: `vacation-${professional.id}-${currentDate.getTime()}`,
+              type: 'vacation',
+              professional_id: professional.id,
+              start_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0).toISOString(),
+              end_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59).toISOString(),
+              notes: 'Férias',
+              status: 'vacation',
+              patients: { full_name: '🏖️ FÉRIAS' },
+              professionals: { name: professional.name },
+              procedures: { name: '-' },
+              appointment_statuses: { label: 'Férias', color: '#f59e0b' }
+            });
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        }
+      } else {
+        // Para visualização diária - mostrar apenas se o dia específico está em férias
+        const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        if (targetDateOnly >= startDateOnly && targetDateOnly <= endDateOnly) {
           items.push({
-            id: `vacation-${professional.id}-${currentDate.getTime()}`,
+            id: `vacation-${professional.id}-${targetDate.getTime()}`,
             type: 'vacation',
             professional_id: professional.id,
-            start_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0).toISOString(),
-            end_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59).toISOString(),
+            start_time: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0).toISOString(),
+            end_time: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59).toISOString(),
             notes: 'Férias',
             status: 'vacation',
             patients: { full_name: '🏖️ FÉRIAS' },
@@ -75,8 +104,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
             appointment_statuses: { label: 'Férias', color: '#f59e0b' }
           });
         }
-        
-        currentDate.setDate(currentDate.getDate() + 1);
       }
     }
     
@@ -102,25 +129,26 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       if (breakTimes.length > 0) {
         const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
         
-        validBreaks.forEach((breakTime, index) => {
-          if (forMonth) {
-            // Para visualização mensal, mostrar pausas para cada dia do mês
-            const daysInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        if (forMonth) {
+          // Para visualização mensal - mostrar pausas para cada dia do mês
+          const daysInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+          
+          for (let day = 1; day <= daysInMonth; day++) {
+            const breakDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
+            const dayOfWeek = breakDate.getDay();
             
-            for (let day = 1; day <= daysInMonth; day++) {
-              const breakDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
-              
-              // Verificar se é um dia de trabalho (assumindo segunda a sexta)
-              const dayOfWeek = breakDate.getDay();
-              if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Pular fins de semana
-              
-              const [startHour, startMinute] = breakTime.start.split(':');
-              const [endHour, endMinute] = breakTime.end.split(':');
+            // Verificar se é um dia de trabalho baseado no working_days
+            const workingDays = professional.working_days || [true, true, true, true, true, false, false];
+            if (!workingDays[dayOfWeek]) continue;
+            
+            validBreaks.forEach((breakTime, index) => {
+              const [startHour, startMinute] = breakTime.start.split(':').map(Number);
+              const [endHour, endMinute] = breakTime.end.split(':').map(Number);
               
               const startDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
-                                           parseInt(startHour), parseInt(startMinute), 0);
+                                           startHour, startMinute, 0);
               const endDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
-                                         parseInt(endHour), parseInt(endMinute), 0);
+                                         endHour, endMinute, 0);
               
               items.push({
                 id: `break-${professional.id}-${index}-${breakDate.getTime()}`,
@@ -135,32 +163,39 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
                 procedures: { name: '-' },
                 appointment_statuses: { label: 'Pausa', color: '#6b7280' }
               });
-            }
-          } else {
-            // Para visualização diária, mostrar apenas as pausas do dia específico
-            const [startHour, startMinute] = breakTime.start.split(':');
-            const [endHour, endMinute] = breakTime.end.split(':');
-            
-            const startDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
-                                         parseInt(startHour), parseInt(startMinute), 0);
-            const endDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
-                                       parseInt(endHour), parseInt(endMinute), 0);
-            
-            items.push({
-              id: `break-${professional.id}-${index}-${targetDate.getTime()}`,
-              type: 'break',
-              professional_id: professional.id,
-              start_time: startDateTime.toISOString(),
-              end_time: endDateTime.toISOString(),
-              notes: 'Pausa/Intervalo',
-              status: 'break',
-              patients: { full_name: '☕ PAUSA' },
-              professionals: { name: professional.name },
-              procedures: { name: '-' },
-              appointment_statuses: { label: 'Pausa', color: '#6b7280' }
             });
           }
-        });
+        } else {
+          // Para visualização diária - mostrar apenas as pausas do dia específico
+          const dayOfWeek = targetDate.getDay();
+          const workingDays = professional.working_days || [true, true, true, true, true, false, false];
+          
+          if (workingDays[dayOfWeek]) {
+            validBreaks.forEach((breakTime, index) => {
+              const [startHour, startMinute] = breakTime.start.split(':').map(Number);
+              const [endHour, endMinute] = breakTime.end.split(':').map(Number);
+              
+              const startDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
+                                           startHour, startMinute, 0);
+              const endDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
+                                         endHour, endMinute, 0);
+              
+              items.push({
+                id: `break-${professional.id}-${index}-${targetDate.getTime()}`,
+                type: 'break',
+                professional_id: professional.id,
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                notes: 'Pausa/Intervalo',
+                status: 'break',
+                patients: { full_name: '☕ PAUSA' },
+                professionals: { name: professional.name },
+                procedures: { name: '-' },
+                appointment_statuses: { label: 'Pausa', color: '#6b7280' }
+              });
+            });
+          }
+        }
       }
     }
     
@@ -207,7 +242,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       if (error) throw error;
       
       console.log('✅ Professional appointments fetched:', data?.length || 0);
-      console.log('📋 Professional appointments data:', data);
       
       // Mapear dados de agendamentos regulares
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
@@ -222,7 +256,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       if (professionalData) {
         // Adicionar férias
-        const vacationItems = createVacationItems(professionalData, targetDate);
+        const vacationItems = createVacationItems(professionalData, targetDate, false);
         allItems.push(...vacationItems);
         
         // Adicionar pausas
@@ -287,7 +321,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       if (professionalData) {
         // Adicionar férias
-        const vacationItems = createVacationItems(professionalData, date);
+        const vacationItems = createVacationItems(professionalData, date, true);
         allItems.push(...vacationItems);
         
         // Adicionar pausas

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Edit, Trash2, Eye, Calendar, Clock, Briefcase, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProfessionalDetailView } from '@/components/Calendar/ProfessionalDetailView';
+import { ProfessionalForm } from '@/components/Professionals/ProfessionalForm';
 import { Professional } from '@/types';
 
 interface ProfessionalCardProps {
@@ -17,6 +19,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   console.log('ProfessionalCard professional data:', professional);
   
   const [showDetailView, setShowDetailView] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const workingDaysLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -77,8 +80,18 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
     setShowDetailView(true);
   };
 
+  const handleEdit = () => {
+    console.log('Opening edit form for professional:', professional.id);
+    setShowEditForm(true);
+  };
+
   const handleCloseDetailView = () => {
     setShowDetailView(false);
+  };
+
+  const handleCloseEditForm = () => {
+    setShowEditForm(false);
+    onUpdate(); // Atualizar a lista após fechar o formulário
   };
 
   return (
@@ -205,7 +218,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
             <Button 
               variant="outline" 
               size="sm"
-              onClick={onUpdate}
+              onClick={handleEdit}
               className="flex items-center gap-1"
             >
               <Edit className="h-4 w-4" />
@@ -245,6 +258,15 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
           selectedDate={selectedDate}
           isOpen={showDetailView}
           onClose={handleCloseDetailView}
+        />
+      )}
+
+      {/* Edit Form Modal */}
+      {showEditForm && (
+        <ProfessionalForm
+          isOpen={showEditForm}
+          onClose={handleCloseEditForm}
+          professional={professional}
         />
       )}
     </>
