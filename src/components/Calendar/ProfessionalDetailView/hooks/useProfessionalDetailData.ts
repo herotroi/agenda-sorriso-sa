@@ -14,7 +14,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Helper function to map status
   const mapStatus = (status: string | null): AppointmentStatus => {
     if (!status) return 'confirmado';
     const validStatuses: AppointmentStatus[] = ['confirmado', 'cancelado', 'faltou', 'em-andamento', 'concluido'];
@@ -23,7 +22,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
 
   const handleAppointmentClick = (appointment: Appointment) => {
     console.log('Appointment clicked:', appointment);
-    // Implementar lógica adicional conforme necessário
   };
 
   const fetchProfessionalData = async () => {
@@ -52,18 +50,24 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       const startDate = new Date(professional.vacation_start);
       const endDate = new Date(professional.vacation_end);
       
+      // Ensure the end date includes the full day
+      endDate.setHours(23, 59, 59, 999);
+      
       if (forMonth) {
-        // Para visualização mensal - mostrar apenas se há férias no mês
         const targetMonth = targetDate.getMonth();
         const targetYear = targetDate.getFullYear();
         
-        if ((startDate.getMonth() === targetMonth && startDate.getFullYear() === targetYear) ||
-            (endDate.getMonth() === targetMonth && endDate.getFullYear() === targetYear) ||
-            (startDate < new Date(targetYear, targetMonth, 1) && endDate > new Date(targetYear, targetMonth + 1, 0))) {
-          
-          const currentDate = new Date(Math.max(startDate.getTime(), new Date(targetYear, targetMonth, 1).getTime()));
-          const monthEnd = new Date(targetYear, targetMonth + 1, 0);
+        // Check if vacation overlaps with the target month
+        const monthStart = new Date(targetYear, targetMonth, 1);
+        const monthEnd = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+        
+        if (startDate <= monthEnd && endDate >= monthStart) {
+          // Create vacation items for each day in the month that overlaps with vacation
+          const currentDate = new Date(Math.max(startDate.getTime(), monthStart.getTime()));
           const finalDate = new Date(Math.min(endDate.getTime(), monthEnd.getTime()));
+          
+          // Reset to start of day
+          currentDate.setHours(0, 0, 0, 0);
           
           while (currentDate <= finalDate) {
             items.push({
@@ -84,7 +88,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
           }
         }
       } else {
-        // Para visualização diária - mostrar apenas se o dia específico está em férias
+        // For daily view - show only if the specific day is in vacation
         const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
@@ -130,14 +134,12 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
         
         if (forMonth) {
-          // Para visualização mensal - mostrar pausas para cada dia do mês
           const daysInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
           
           for (let day = 1; day <= daysInMonth; day++) {
             const breakDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
             const dayOfWeek = breakDate.getDay();
             
-            // Verificar se é um dia de trabalho baseado no working_days
             const workingDays = professional.working_days || [true, true, true, true, true, false, false];
             if (!workingDays[dayOfWeek]) continue;
             
@@ -166,7 +168,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
             });
           }
         } else {
-          // Para visualização diária - mostrar apenas as pausas do dia específico
           const dayOfWeek = targetDate.getDay();
           const workingDays = professional.working_days || [true, true, true, true, true, false, false];
           
@@ -211,7 +212,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     try {
       setLoading(true);
       
-      // Buscar apenas para o dia específico (para visualização do dia)
       const startOfDay = new Date(targetDate);
       startOfDay.setHours(0, 0, 0, 0);
       
@@ -243,28 +243,23 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       console.log('✅ Professional appointments fetched:', data?.length || 0);
       
-      // Mapear dados de agendamentos regulares
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
         ...apt,
         date: new Date(apt.start_time).toISOString().split('T')[0],
         status: mapStatus(apt.status)
       }));
       
-      // Buscar dados do profissional para férias e pausas
       const professionalData = await fetchProfessionalData();
       const allItems = [...mappedAppointments];
       
       if (professionalData) {
-        // Adicionar férias
         const vacationItems = createVacationItems(professionalData, targetDate, false);
         allItems.push(...vacationItems);
         
-        // Adicionar pausas
         const breakItems = createBreakItems(professionalData, targetDate, false);
         allItems.push(...breakItems);
       }
       
-      // Ordenar todos os itens por horário
       allItems.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
       
       setAppointments(allItems);
@@ -284,7 +279,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     if (!user) return;
     
     try {
-      // Buscar todos os agendamentos do mês
       const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       startOfMonth.setHours(0, 0, 0, 0);
       
@@ -308,28 +302,23 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
 
       if (error) throw error;
       
-      // Mapear dados de agendamentos regulares
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
         ...apt,
         date: new Date(apt.start_time).toISOString().split('T')[0],
         status: mapStatus(apt.status)
       }));
       
-      // Buscar dados do profissional para férias e pausas
       const professionalData = await fetchProfessionalData();
       const allItems = [...mappedAppointments];
       
       if (professionalData) {
-        // Adicionar férias
         const vacationItems = createVacationItems(professionalData, date, true);
         allItems.push(...vacationItems);
         
-        // Adicionar pausas
         const breakItems = createBreakItems(professionalData, date, true);
         allItems.push(...breakItems);
       }
       
-      // Ordenar todos os itens por horário
       allItems.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
       
       setMonthAppointments(allItems);

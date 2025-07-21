@@ -23,7 +23,7 @@ export function useProfessionalsData() {
         .from('professionals')
         .select('*')
         .eq('user_id', user.id)
-        .order('name');
+        .order('created_at', { ascending: true }); // Maintain creation order
 
       if (error) throw error;
 

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Edit, Trash2, Eye, Calendar, Clock, Briefcase, Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,7 +90,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
 
   const handleCloseEditForm = () => {
     setShowEditForm(false);
-    onUpdate(); // Atualizar a lista após fechar o formulário
+    onUpdate();
   };
 
   return (
@@ -127,15 +126,14 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
                   Em Férias
                 </Badge>
               )}
-              <Badge variant={professional.active ? "default" : "secondary"}>
-                {professional.active ? "Ativo" : "Inativo"}
+              <Badge variant={(professional.active ?? true) ? "default" : "secondary"}>
+                {(professional.active ?? true) ? "Ativo" : "Inativo"}
               </Badge>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Informações de contato */}
           <div className="space-y-2">
             {professional.email && (
               <div className="flex items-center text-sm text-gray-600">
@@ -151,7 +149,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
             )}
           </div>
 
-          {/* Horários de trabalho */}
           <div className="space-y-3">
             <div>
               <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
@@ -183,7 +180,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
             </div>
           </div>
 
-          {/* Turnos extras */}
           {(professional.first_shift_start || professional.second_shift_start || professional.weekend_shift_active) && (
             <div className="pt-2 border-t border-gray-100">
               <div className="text-sm font-medium text-gray-700 mb-2">
@@ -251,7 +247,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
         </CardFooter>
       </Card>
 
-      {/* Detail View Modal */}
       {showDetailView && (
         <ProfessionalDetailView
           professional={professional}
@@ -261,7 +256,6 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
         />
       )}
 
-      {/* Edit Form Modal */}
       {showEditForm && (
         <ProfessionalForm
           isOpen={showEditForm}
