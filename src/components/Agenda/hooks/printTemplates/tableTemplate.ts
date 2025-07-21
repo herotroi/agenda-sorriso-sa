@@ -9,32 +9,39 @@ export const generateTablePrintTemplate = (
 ): string => {
   console.log('Generating table template with:', appointments?.length || 0, 'appointments');
 
-  if (!appointments || appointments.length === 0) {
-    return '<p>Nenhum agendamento encontrado.</p>';
-  }
-
   const tableTitle = customTitle || 'Tabela de Agendamentos';
 
-  // Gerar informações de pausas e férias por profissional
-  let timeBlocksInfo = '';
+  // Criar array combinado de agendamentos + férias + pausas
+  const allTableItems: any[] = [...(appointments || [])];
+
+  // Adicionar férias como itens especiais na tabela
   if (professionals && professionals.length > 0) {
-    const timeBlocksData = professionals.map(prof => {
-      let profInfo = `<h4 style="margin-bottom: 8px; color: #374151; font-weight: 600;">${prof.name}</h4>`;
-      let hasTimeBlocks = false;
-      
-      // Férias - verificar se estão ativas e exibir as datas originais
+    professionals.forEach(prof => {
+      // Adicionar férias ativas
       if (prof.vacation_active && prof.vacation_start && prof.vacation_end) {
-        const startDate = new Date(prof.vacation_start).toLocaleDateString('pt-BR');
-        const endDate = new Date(prof.vacation_end).toLocaleDateString('pt-BR');
-        profInfo += `<p style="margin: 4px 0; color: #4b5563;">🏖️ <strong>Férias:</strong> ${startDate} até ${endDate}</p>`;
-        hasTimeBlocks = true;
+        const startDate = new Date(prof.vacation_start);
+        const endDate = new Date(prof.vacation_end);
+        
+        // Criar uma entrada para cada dia de férias
+        const currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          allTableItems.push({
+            id: `vacation-${prof.id}-${currentDate.getTime()}`,
+            type: 'vacation',
+            professional_name: prof.name,
+            start_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0).toISOString(),
+            end_time: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59).toISOString(),
+            notes: 'Férias',
+            status: 'vacation'
+          });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
       }
-      
-      // Pausas - verificar se existem e são válidas
+
+      // Adicionar pausas para cada dia
       if (prof.break_times) {
         let breakTimes = [];
         try {
-          // Garantir que break_times seja um array
           if (Array.isArray(prof.break_times)) {
             breakTimes = prof.break_times;
           } else if (typeof prof.break_times === 'string') {
@@ -46,71 +53,130 @@ export const generateTablePrintTemplate = (
         
         if (breakTimes.length > 0) {
           const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
-          if (validBreaks.length > 0) {
-            const breaks = validBreaks.map(bt => `${bt.start} - ${bt.end}`).join(', ');
-            profInfo += `<p style="margin: 4px 0; color: #4b5563;">☕ <strong>Pausas:</strong> ${breaks}</p>`;
-            hasTimeBlocks = true;
-          }
+          
+          // Para cada pausa válida, criar entradas para os próximos 30 dias (ou período relevante)
+          validBreaks.forEach((breakTime, index) => {
+            // Vamos mostrar as pausas apenas para hoje e próximos 7 dias para não poluir muito
+            for (let i = 0; i < 7; i++) {
+              const breakDate = new Date();
+              breakDate.setDate(breakDate.getDate() + i);
+              
+              // Criar horário de início da pausa
+              const [startHour, startMinute] = breakTime.start.split(':');
+              const startDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
+                                           parseInt(startHour), parseInt(startMinute), 0);
+              
+              // Criar horário de fim da pausa
+              const [endHour, endMinute] = breakTime.end.split(':');
+              const endDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
+                                         parseInt(endHour), parseInt(endMinute), 0);
+              
+              allTableItems.push({
+                id: `break-${prof.id}-${index}-${breakDate.getTime()}`,
+                type: 'break',
+                professional_name: prof.name,
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                notes: 'Pausa/Intervalo',
+                status: 'break'
+              });
+            }
+          });
         }
       }
-      
-      // Só retornar informações se houver pausas ou férias
-      return hasTimeBlocks ? profInfo : '';
-    }).filter(info => info.trim() !== '').join('<div style="margin-bottom: 16px;"></div>');
-
-    if (timeBlocksData.trim()) {
-      timeBlocksInfo = `
-        <div class="time-blocks-section" style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-          <h3 style="margin-bottom: 16px; color: #374151; font-weight: 600; font-size: 16px;">Pausas e Férias dos Profissionais</h3>
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${timeBlocksData}
-          </div>
-        </div>
-      `;
-    }
+    });
   }
 
-  const tableRows = appointments.map(appointment => {
-    const startDate = convertToLocalTime(appointment.start_time);
+  // Ordenar todos os itens por data/hora
+  allTableItems.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+  if (allTableItems.length === 0) {
+    return '<p>Nenhum agendamento encontrado.</p>';
+  }
+
+  const tableRows = allTableItems.map(item => {
+    const startDate = convertToLocalTime(item.start_time);
+    const endDate = convertToLocalTime(item.end_time);
     const startTime = startDate.toLocaleString('pt-BR');
-    const patientName = appointment.patients?.full_name || 'Paciente não informado';
-    const professionalName = appointment.professionals?.name || 'Profissional não informado';
-    const procedureName = appointment.procedures?.name || 'Sem procedimento';
-    const statusLabel = appointment.appointment_statuses?.label || 'Confirmado';
-    const statusColor = getStatusColor(appointment);
-    const notes = appointment.notes || 'Sem observações';
-    const displayNotes = notes.length > 30 ? notes.substring(0, 30) + '...' : notes;
+    const endTime = endDate.toLocaleString('pt-BR');
     
-    return `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${patientName}</td>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${professionalName}</td>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${procedureName}</td>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime}</td>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
-          <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: ${statusColor}20; color: ${statusColor};">
-            ${statusLabel}
-          </span>
-        </td>
-        <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${displayNotes}</td>
-      </tr>
-    `;
+    // Para agendamentos normais
+    if (item.type !== 'vacation' && item.type !== 'break') {
+      const patientName = item.patients?.full_name || 'Paciente não informado';
+      const professionalName = item.professionals?.name || 'Profissional não informado';
+      const procedureName = item.procedures?.name || 'Sem procedimento';
+      const statusLabel = item.appointment_statuses?.label || 'Confirmado';
+      const statusColor = getStatusColor(item);
+      const notes = item.notes || 'Sem observações';
+      const displayNotes = notes.length > 30 ? notes.substring(0, 30) + '...' : notes;
+      
+      return `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${patientName}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${professionalName}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${procedureName}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+            <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: ${statusColor}20; color: ${statusColor};">
+              ${statusLabel}
+            </span>
+          </td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${displayNotes}</td>
+        </tr>
+      `;
+    }
+    
+    // Para férias
+    if (item.type === 'vacation') {
+      return `
+        <tr style="background-color: #fef3c7;">
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left; font-weight: 600;">🏖️ FÉRIAS</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.professional_name}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">-</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startDate.toLocaleDateString('pt-BR')}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+            <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: #fbbf2420; color: #f59e0b;">
+              Férias
+            </span>
+          </td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.notes}</td>
+        </tr>
+      `;
+    }
+    
+    // Para pausas
+    if (item.type === 'break') {
+      return `
+        <tr style="background-color: #f3f4f6;">
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left; font-weight: 600;">☕ PAUSA</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.professional_name}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">-</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime} - ${endTime}</td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+            <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: #6b728020; color: #6b7280;">
+              Pausa
+            </span>
+          </td>
+          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.notes}</td>
+        </tr>
+      `;
+    }
+    
+    return '';
   }).join('');
   
   return `
     <div style="border-radius: 8px; border: 1px solid #e5e7eb; padding: 24px; font-family: system-ui, -apple-system, sans-serif;">
       <div style="margin-bottom: 16px;">
         <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #111827;">${tableTitle}</h2>
-        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">Total de agendamentos: ${appointments.length}</p>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">Total de itens: ${allTableItems.length} (agendamentos, férias e pausas)</p>
       </div>
-      
-      ${timeBlocksInfo}
       
       <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
           <thead>
             <tr>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Paciente</th>
+              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Paciente/Tipo</th>
               <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Profissional</th>
               <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Procedimento</th>
               <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Data/Hora</th>
