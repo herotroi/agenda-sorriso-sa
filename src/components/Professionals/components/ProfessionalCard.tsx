@@ -23,7 +23,8 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   const [showEditForm, setShowEditForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const workingDaysLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  // Array dos dias da semana conforme cadastrado no banco: [Seg, Ter, Qua, Qui, Sex, Sáb, Dom]
+  const workingDaysLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
   const formatTime = (time: string | null | undefined) => {
     if (!time) return 'N/A';
@@ -31,7 +32,8 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   };
 
   const getActiveWorkingDays = () => {
-    let workingDays = [false, true, true, true, true, true, false]; // Default seg-sex
+    // Usar padrão seg-sex se não houver dados: [true, true, true, true, true, false, false]
+    let workingDays = [true, true, true, true, true, false, false];
     
     // Parse working_days from database
     if (professional.working_days) {
@@ -48,20 +50,10 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
     
     console.log('Working days array:', workingDays);
     
-    // Get active working days
+    // Get active working days baseado no array real do banco
     const activeDays = workingDays
       .map((isActive: boolean, index: number) => isActive ? workingDaysLabels[index] : null)
       .filter(Boolean);
-    
-    // Check if weekend shift is active and add weekend days if they're not already in the list
-    if (professional.weekend_shift_active) {
-      if (!workingDays[0] && !activeDays.includes('Dom')) {
-        activeDays.push('Dom (FDS)');
-      }
-      if (!workingDays[6] && !activeDays.includes('Sáb')) {
-        activeDays.push('Sáb (FDS)');
-      }
-    }
     
     return activeDays.length > 0 ? activeDays.join(', ') : 'Nenhum dia configurado';
   };
