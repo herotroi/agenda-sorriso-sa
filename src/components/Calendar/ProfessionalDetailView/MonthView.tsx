@@ -99,39 +99,43 @@ export function MonthView({
           </h4>
           
           {dayAppointments.length > 0 ? (
-            dayAppointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-                onClick={() => onAppointmentClick(appointment)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">
-                      {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
+            dayAppointments.map((appointment) => {
+              const itemType = (appointment as any).type;
+              
+              return (
+                <div
+                  key={appointment.id}
+                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                  onClick={() => onAppointmentClick(appointment)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">
+                        {format(new Date(appointment.start_time), 'HH:mm')} - {format(new Date(appointment.end_time), 'HH:mm')}
+                      </div>
+                      {appointment.patients && (
+                        <div className="text-sm text-gray-600">
+                          {appointment.patients.full_name}
+                        </div>
+                      )}
+                      {appointment.procedures && (
+                        <div className="text-sm text-gray-500">
+                          {appointment.procedures.name}
+                        </div>
+                      )}
                     </div>
-                    {appointment.patients && (
-                      <div className="text-sm text-gray-600">
-                        {appointment.patients.full_name}
-                      </div>
-                    )}
-                    {appointment.procedures && (
-                      <div className="text-sm text-gray-500">
-                        {appointment.procedures.name}
-                      </div>
-                    )}
+                    <Badge variant="secondary">
+                      {itemType === 'vacation' ? 'Férias' :
+                       itemType === 'break' ? 'Pausa' :
+                       appointment.status === 'confirmado' ? 'Confirmado' :
+                       appointment.status === 'cancelado' ? 'Cancelado' :
+                       appointment.status === 'em-andamento' ? 'Em andamento' :
+                       appointment.status === 'concluido' ? 'Concluído' : 'Confirmado'}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary">
-                    {appointment.status === 'confirmado' ? 'Confirmado' :
-                     appointment.status === 'cancelado' ? 'Cancelado' :
-                     appointment.status === 'em-andamento' ? 'Em andamento' :
-                     appointment.status === 'concluido' ? 'Concluído' : 
-                     appointment.status === 'vacation' ? 'Férias' :
-                     appointment.status === 'break' ? 'Pausa' : 'Confirmado'}
-                  </Badge>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className="text-sm text-gray-500">Nenhum agendamento para este dia.</p>
           )}
