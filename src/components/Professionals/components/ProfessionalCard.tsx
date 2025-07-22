@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Edit, Trash2, Eye, Calendar, Clock, Briefcase, Mail, Phone } from 'lucide-react';
+import { Edit, Trash2, Eye, Calendar, Clock, Briefcase, Mail, Phone, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProfessionalDetailView } from '@/components/Calendar/ProfessionalDetailView';
 import { ProfessionalForm } from '@/components/Professionals/ProfessionalForm';
 import type { Professional } from '@/types';
+import { isDateInVacationPeriod } from '@/utils/vacationDateUtils';
 
 interface ProfessionalCardProps {
   professional: Professional;
@@ -30,14 +31,37 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   };
 
   const getActiveWorkingDays = () => {
-    if (!professional.working_days || !Array.isArray(professional.working_days)) {
-      // Default para seg-sex se não houver dados
-      return 'Seg, Ter, Qua, Qui, Sex';
+    let workingDays = [false, true, true, true, true, true, false]; // Default seg-sex
+    
+    // Parse working_days from database
+    if (professional.working_days) {
+      try {
+        if (Array.isArray(professional.working_days)) {
+          workingDays = professional.working_days;
+        } else if (typeof professional.working_days === 'string') {
+          workingDays = JSON.parse(professional.working_days);
+        }
+      } catch (e) {
+        console.warn('Failed to parse working_days:', e);
+      }
     }
     
-    const activeDays = professional.working_days
+    console.log('Working days array:', workingDays);
+    
+    // Get active working days
+    const activeDays = workingDays
       .map((isActive: boolean, index: number) => isActive ? workingDaysLabels[index] : null)
       .filter(Boolean);
+    
+    // Check if weekend shift is active and add weekend days if they're not already in the list
+    if (professional.weekend_shift_active) {
+      if (!workingDays[0] && !activeDays.includes('Dom')) {
+        activeDays.push('Dom (FDS)');
+      }
+      if (!workingDays[6] && !activeDays.includes('Sáb')) {
+        activeDays.push('Sáb (FDS)');
+      }
+    }
     
     return activeDays.length > 0 ? activeDays.join(', ') : 'Nenhum dia configurado';
   };
@@ -64,9 +88,26 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
       return false;
     }
     const now = new Date();
-    const vacationStart = new Date(professional.vacation_start);
-    const vacationEnd = new Date(professional.vacation_end);
-    return now >= vacationStart && now <= vacationEnd;
+    return isDateInVacationPeriod(now, professional.vacation_start, professional.vacation_end);
+  };
+
+  const getVacationPeriod = () => {
+    if (!professional.vacation_active || !professional.vacation_start || !professional.vacation_end) {
+      return null;
+    }
+    
+    const startDate = new Date(professional.vacation_start + 'T00:00:00');
+    const endDate = new Date(professional.vacation_end + 'T00:00:00');
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: 'numeric'
+      });
+    };
+    
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   };
 
   const handleDelete = async () => {
@@ -126,7 +167,8 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
             </div>
             <div className="flex items-center space-x-1">
               {isOnVacation() && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800">
+                  <Plane className="h-3 w-3 mr-1" />
                   Em Férias
                 </Badge>
               )}
@@ -182,6 +224,19 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
                 {getBreakTimes()}
               </p>
             </div>
+
+            {/* Mostrar período de férias se estiver ativo */}
+            {professional.vacation_active && getVacationPeriod() && (
+              <div>
+                <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Plane className="h-4 w-4 mr-1" />
+                  Período de Férias
+                </div>
+                <p className="text-sm text-gray-600 pl-5">
+                  {getVacationPeriod()}
+                </p>
+              </div>
+            )}
           </div>
 
           {(professional.first_shift_start || professional.second_shift_start || professional.weekend_shift_active) && (
