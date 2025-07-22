@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +49,8 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       const startDate = new Date(professional.vacation_start);
       const endDate = new Date(professional.vacation_end);
       
-      // Ensure the end date includes the full day
+      // Não fazer ajuste nas datas - usar as datas exatas do banco
+      startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
       
       if (forMonth) {

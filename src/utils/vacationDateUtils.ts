@@ -1,3 +1,4 @@
+
 /**
  * Utilitário centralizado para parsing e validação de datas de férias
  * Evita problemas de timezone e garante consistência em toda a aplicação
@@ -58,23 +59,6 @@ export const isDateInVacationPeriod = (
 };
 
 /**
- * Ajusta as datas de férias para começar e terminar um dia antes
- */
-const adjustVacationDates = (vacationStart: string, vacationEnd: string) => {
-  const startDate = parseVacationDate(vacationStart);
-  const endDate = parseVacationDate(vacationEnd);
-  
-  // Subtrair um dia das datas de início e fim
-  startDate.setDate(startDate.getDate() - 1);
-  endDate.setDate(endDate.getDate() - 1);
-  
-  return {
-    adjustedStart: `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`,
-    adjustedEnd: `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`
-  };
-};
-
-/**
  * Gera blocos de férias para um profissional em uma data específica
  */
 export const generateVacationBlock = (
@@ -85,10 +69,8 @@ export const generateVacationBlock = (
     return null;
   }
   
-  // Ajustar as datas para começar e terminar um dia antes
-  const { adjustedStart, adjustedEnd } = adjustVacationDates(professional.vacation_start, professional.vacation_end);
-  
-  if (isDateInVacationPeriod(selectedDate, adjustedStart, adjustedEnd)) {
+  // Usar as datas exatas sem ajustes
+  if (isDateInVacationPeriod(selectedDate, professional.vacation_start, professional.vacation_end)) {
     const dateStr = selectedDate.toISOString().split('T')[0];
     return {
       id: `vacation-${professional.id}`,

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
@@ -76,19 +77,9 @@ export function useProfessionalWorkingHours() {
       appointmentDate.getDate()
     );
 
-    // Verificar se está de férias usando utilitário centralizado com ajuste de datas
+    // Verificar se está de férias usando as datas exatas (sem ajustes)
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      // Ajustar as datas para começar e terminar um dia antes
-      const startDate = new Date(professional.vacation_start);
-      const endDate = new Date(professional.vacation_end);
-      
-      startDate.setDate(startDate.getDate() - 1);
-      endDate.setDate(endDate.getDate() - 1);
-      
-      const adjustedStart = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-      const adjustedEnd = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
-      
-      if (isDateInVacationPeriod(appointmentDateOnly, adjustedStart, adjustedEnd)) {
+      if (isDateInVacationPeriod(appointmentDateOnly, professional.vacation_start, professional.vacation_end)) {
         return {
           isWorkingDay: false,
           isWithinShift: false,
