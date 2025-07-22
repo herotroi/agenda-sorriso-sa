@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -9,30 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BasicInfoSection } from './form/BasicInfoSection';
 import { WorkingHoursSection } from './form/WorkingHoursSection';
 import { FormActions } from './form/FormActions';
-
-interface Professional {
-  id: string;
-  name: string;
-  specialty?: string;
-  crm_cro?: string;
-  email?: string;
-  phone?: string;
-  color: string;
-  working_hours: any;
-  first_shift_start?: string;
-  first_shift_end?: string;
-  second_shift_start?: string;
-  second_shift_end?: string;
-  break_times?: any[];
-  vacation_active?: boolean;
-  vacation_start?: string;
-  vacation_end?: string;
-  working_days?: boolean[];
-  weekend_shift_active?: boolean;
-  weekend_shift_start?: string;
-  weekend_shift_end?: string;
-  active: boolean;
-}
+import type { Professional } from '@/types';
 
 interface ProfessionalFormProps {
   isOpen: boolean;
