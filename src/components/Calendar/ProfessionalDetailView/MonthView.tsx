@@ -3,7 +3,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 import type { Professional, Appointment } from '@/types';
+import { useProfessionalDetailData } from './hooks/useProfessionalDetailData';
 
 interface MonthViewProps {
   professional: Professional;
@@ -20,6 +22,9 @@ export function MonthView({
   onDateChange,
   onAppointmentClick
 }: MonthViewProps) {
+  const [dayAppointments, setDayAppointments] = useState<Appointment[]>([]);
+  const { getAppointmentsForSpecificDate } = useProfessionalDetailData(professional.id, selectedDate);
+
   const getAppointmentsForDate = (date: Date) => {
     return appointments.filter(apt => 
       isSameDay(new Date(apt.start_time), date)
@@ -27,18 +32,36 @@ export function MonthView({
   };
 
   const getDayContent = (date: Date) => {
-    const dayAppointments = getAppointmentsForDate(date);
+    const dayAppts = getAppointmentsForDate(date);
     
-    if (dayAppointments.length === 0) return null;
+    if (dayAppts.length === 0) return null;
     
     return (
       <div className="mt-1">
         <Badge variant="secondary" className="text-xs">
-          {dayAppointments.length}
+          {dayAppts.length}
         </Badge>
       </div>
     );
   };
+
+  const handleDateSelect = async (date: Date) => {
+    onDateChange(date);
+    
+    // Buscar agendamentos específicos do dia incluindo pausas para a lista lateral
+    if (getAppointmentsForSpecificDate) {
+      const specificDayAppointments = await getAppointmentsForSpecificDate(date);
+      setDayAppointments(specificDayAppointments);
+    } else {
+      // Fallback para a lógica original
+      setDayAppointments(getAppointmentsForDate(date));
+    }
+  };
+
+  // Inicializar com agendamentos do dia selecionado
+  useEffect(() => {
+    handleDateSelect(selectedDate);
+  }, [selectedDate, professional.id]);
 
   return (
     <div className="space-y-4">
@@ -56,7 +79,7 @@ export function MonthView({
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={(date) => date && onDateChange(date)}
+            onSelect={(date) => date && handleDateSelect(date)}
             locale={ptBR}
             className="rounded-md border"
             components={{
@@ -75,8 +98,8 @@ export function MonthView({
             Agendamentos para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
           </h4>
           
-          {getAppointmentsForDate(selectedDate).length > 0 ? (
-            getAppointmentsForDate(selectedDate).map((appointment) => (
+          {dayAppointments.length > 0 ? (
+            dayAppointments.map((appointment) => (
               <div
                 key={appointment.id}
                 className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
@@ -102,7 +125,9 @@ export function MonthView({
                     {appointment.status === 'confirmado' ? 'Confirmado' :
                      appointment.status === 'cancelado' ? 'Cancelado' :
                      appointment.status === 'em-andamento' ? 'Em andamento' :
-                     appointment.status === 'concluido' ? 'Concluído' : 'Confirmado'}
+                     appointment.status === 'concluido' ? 'Concluído' : 
+                     appointment.status === 'vacation' ? 'Férias' :
+                     appointment.status === 'break' ? 'Pausa' : 'Confirmado'}
                   </Badge>
                 </div>
               </div>

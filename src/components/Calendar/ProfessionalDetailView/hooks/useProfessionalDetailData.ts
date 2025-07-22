@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -117,44 +118,19 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
         
         if (forMonth) {
-          const daysInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
-          
-          for (let day = 1; day <= daysInMonth; day++) {
-            const breakDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
-            const dayOfWeek = breakDate.getDay();
-            
-            const workingDays = professional.working_days || [true, true, true, true, true, false, false];
-            if (!workingDays[dayOfWeek]) continue;
-            
-            validBreaks.forEach((breakTime, index) => {
-              const [startHour, startMinute] = breakTime.start.split(':').map(Number);
-              const [endHour, endMinute] = breakTime.end.split(':').map(Number);
-              
-              const startDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
-                                           startHour, startMinute, 0);
-              const endDateTime = new Date(breakDate.getFullYear(), breakDate.getMonth(), breakDate.getDate(), 
-                                         endHour, endMinute, 0);
-              
-              items.push({
-                id: `break-${professional.id}-${index}-${breakDate.getTime()}`,
-                type: 'break',
-                professional_id: professional.id,
-                start_time: startDateTime.toISOString(),
-                end_time: endDateTime.toISOString(),
-                notes: 'Pausa/Intervalo',
-                status: 'break',
-                patients: { full_name: '☕ PAUSA' },
-                professionals: { name: professional.name },
-                procedures: { name: '-' },
-                appointment_statuses: { label: 'Pausa', color: '#6b7280' }
-              });
-            });
-          }
+          // Para visão mensal - não mostrar pausas no calendário, apenas quando clicar no dia
+          // Por isso retornamos array vazio aqui
+          return items;
         } else {
+          // Para visão diária - verificar se é dia de trabalho
           const dayOfWeek = targetDate.getDay();
           const workingDays = professional.working_days || [true, true, true, true, true, false, false];
           
-          if (workingDays[dayOfWeek]) {
+          // Verificar se é um dia de trabalho normal ou fim de semana com expediente
+          const isNormalWorkingDay = workingDays[dayOfWeek];
+          const isWeekendWithShift = professional.weekend_shift_active && (dayOfWeek === 0 || dayOfWeek === 6);
+          
+          if (isNormalWorkingDay || isWeekendWithShift) {
             validBreaks.forEach((breakTime, index) => {
               const [startHour, startMinute] = breakTime.start.split(':').map(Number);
               const [endHour, endMinute] = breakTime.end.split(':').map(Number);
@@ -179,6 +155,63 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
               });
             });
           }
+        }
+      }
+    }
+    
+    return items;
+  };
+
+  // Nova função para criar itens de pausa apenas para um dia específico (usado no lado direito da visão mensal)
+  const createBreakItemsForSpecificDay = (professional: any, targetDate: Date) => {
+    const items: any[] = [];
+    
+    if (professional.break_times) {
+      let breakTimes = [];
+      try {
+        if (Array.isArray(professional.break_times)) {
+          breakTimes = professional.break_times;
+        } else if (typeof professional.break_times === 'string') {
+          breakTimes = JSON.parse(professional.break_times);
+        }
+      } catch (e) {
+        console.warn('Failed to parse break_times:', e);
+        return items;
+      }
+      
+      if (breakTimes.length > 0) {
+        const validBreaks = breakTimes.filter(bt => bt && bt.start && bt.end);
+        const dayOfWeek = targetDate.getDay();
+        const workingDays = professional.working_days || [true, true, true, true, true, false, false];
+        
+        // Verificar se é um dia de trabalho normal ou fim de semana com expediente
+        const isNormalWorkingDay = workingDays[dayOfWeek];
+        const isWeekendWithShift = professional.weekend_shift_active && (dayOfWeek === 0 || dayOfWeek === 6);
+        
+        if (isNormalWorkingDay || isWeekendWithShift) {
+          validBreaks.forEach((breakTime, index) => {
+            const [startHour, startMinute] = breakTime.start.split(':').map(Number);
+            const [endHour, endMinute] = breakTime.end.split(':').map(Number);
+            
+            const startDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
+                                         startHour, startMinute, 0);
+            const endDateTime = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 
+                                       endHour, endMinute, 0);
+            
+            items.push({
+              id: `break-${professional.id}-${index}-${targetDate.getTime()}`,
+              type: 'break',
+              professional_id: professional.id,
+              start_time: startDateTime.toISOString(),
+              end_time: endDateTime.toISOString(),
+              notes: 'Pausa/Intervalo',
+              status: 'break',
+              patients: { full_name: '☕ PAUSA' },
+              professionals: { name: professional.name },
+              procedures: { name: '-' },
+              appointment_statuses: { label: 'Pausa', color: '#6b7280' }
+            });
+          });
         }
       }
     }
@@ -295,11 +328,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       const allItems = [...mappedAppointments];
       
       if (professionalData) {
+        // Para visão mensal, incluir férias mas não pausas no calendário
         const vacationItems = createVacationItems(professionalData, date, true);
         allItems.push(...vacationItems);
         
-        const breakItems = createBreakItems(professionalData, date, true);
-        allItems.push(...breakItems);
+        // Não incluir pausas no calendário mensal - elas aparecerão apenas na lista lateral
       }
       
       allItems.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
@@ -307,6 +340,61 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       setMonthAppointments(allItems);
     } catch (error) {
       console.error('❌ Error fetching month appointments:', error);
+    }
+  };
+
+  // Função para buscar itens de um dia específico incluindo pausas (para a lista lateral)
+  const getAppointmentsForSpecificDate = async (date: Date) => {
+    if (!user) return [];
+    
+    try {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          patients(full_name),
+          professionals(name),
+          procedures(name),
+          appointment_statuses(label, color)
+        `)
+        .eq('professional_id', professionalId)
+        .eq('user_id', user.id)
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString())
+        .order('start_time');
+
+      if (error) throw error;
+      
+      const mappedAppointments: Appointment[] = (data || []).map(apt => ({
+        ...apt,
+        date: new Date(apt.start_time).toISOString().split('T')[0],
+        status: mapStatus(apt.status)
+      }));
+      
+      const professionalData = await fetchProfessionalData();
+      const allItems = [...mappedAppointments];
+      
+      if (professionalData) {
+        const vacationItems = createVacationItems(professionalData, date, false);
+        allItems.push(...vacationItems);
+        
+        // Para lista lateral, incluir pausas
+        const breakItems = createBreakItemsForSpecificDay(professionalData, date);
+        allItems.push(...breakItems);
+      }
+      
+      allItems.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      
+      return allItems;
+    } catch (error) {
+      console.error('❌ Error fetching specific date appointments:', error);
+      return [];
     }
   };
 
@@ -322,6 +410,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     monthAppointments,
     loading,
     fetchAppointments,
-    handleAppointmentClick
+    handleAppointmentClick,
+    getAppointmentsForSpecificDate
   };
 }

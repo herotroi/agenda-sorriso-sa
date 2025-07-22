@@ -31,12 +31,15 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
 
   const getActiveWorkingDays = () => {
     if (!professional.working_days || !Array.isArray(professional.working_days)) {
-      return 'N/A';
+      // Default para seg-sex se não houver dados
+      return 'Seg, Ter, Qua, Qui, Sex';
     }
-    return professional.working_days
+    
+    const activeDays = professional.working_days
       .map((isActive: boolean, index: number) => isActive ? workingDaysLabels[index] : null)
-      .filter(Boolean)
-      .join(', ') || 'Nenhum';
+      .filter(Boolean);
+    
+    return activeDays.length > 0 ? activeDays.join(', ') : 'Nenhum dia configurado';
   };
 
   const getWorkingHours = () => {
