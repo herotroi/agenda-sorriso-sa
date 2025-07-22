@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Appointment } from '@/types';
+import { isDateInVacationPeriod } from '@/utils/vacationDateUtils';
 
 type AppointmentStatus = 'confirmado' | 'cancelado' | 'faltou' | 'em-andamento' | 'concluido';
 
@@ -46,30 +47,18 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
     const items: any[] = [];
     
     if (professional.vacation_active && professional.vacation_start && professional.vacation_end) {
-      const startDate = new Date(professional.vacation_start);
-      const endDate = new Date(professional.vacation_end);
-      
-      // Não fazer ajuste nas datas - usar as datas exatas do banco
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-      
       if (forMonth) {
         const targetMonth = targetDate.getMonth();
         const targetYear = targetDate.getFullYear();
         
-        // Check if vacation overlaps with the target month
-        const monthStart = new Date(targetYear, targetMonth, 1);
-        const monthEnd = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+        // Obter todos os dias do mês
+        const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
         
-        if (startDate <= monthEnd && endDate >= monthStart) {
-          // Create vacation items for each day in the month that overlaps with vacation
-          const currentDate = new Date(Math.max(startDate.getTime(), monthStart.getTime()));
-          const finalDate = new Date(Math.min(endDate.getTime(), monthEnd.getTime()));
+        for (let day = 1; day <= daysInMonth; day++) {
+          const currentDate = new Date(targetYear, targetMonth, day);
           
-          // Reset to start of day
-          currentDate.setHours(0, 0, 0, 0);
-          
-          while (currentDate <= finalDate) {
+          // Verificar se este dia está dentro do período de férias
+          if (isDateInVacationPeriod(currentDate, professional.vacation_start, professional.vacation_end)) {
             items.push({
               id: `vacation-${professional.id}-${currentDate.getTime()}`,
               type: 'vacation',
@@ -83,17 +72,11 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
               procedures: { name: '-' },
               appointment_statuses: { label: 'Férias', color: '#f59e0b' }
             });
-            
-            currentDate.setDate(currentDate.getDate() + 1);
           }
         }
       } else {
-        // For daily view - show only if the specific day is in vacation
-        const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        
-        if (targetDateOnly >= startDateOnly && targetDateOnly <= endDateOnly) {
+        // Para visão diária - verificar se o dia específico está em férias
+        if (isDateInVacationPeriod(targetDate, professional.vacation_start, professional.vacation_end)) {
           items.push({
             id: `vacation-${professional.id}-${targetDate.getTime()}`,
             type: 'vacation',

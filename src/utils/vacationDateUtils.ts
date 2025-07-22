@@ -40,6 +40,9 @@ export const isDateInVacationPeriod = (
   const vacationStartDate = parseVacationDate(vacationStart);
   const vacationEndDate = parseVacationDate(vacationEnd);
   
+  // Garantir que a data final das férias inclua o dia completo
+  vacationEndDate.setHours(23, 59, 59, 999);
+  
   console.log('Vacation date validation:', {
     checkDate: normalizedCheckDate.toDateString(),
     vacationStartOriginal: vacationStart,
@@ -54,7 +57,7 @@ export const isDateInVacationPeriod = (
     }
   });
   
-  // Verificar se está dentro do período (inclusive)
+  // Verificar se está dentro do período (inclusive até o final do último dia)
   return normalizedCheckDate >= vacationStartDate && normalizedCheckDate <= vacationEndDate;
 };
 
