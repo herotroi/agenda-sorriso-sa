@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProfessionalDetailView } from '@/components/Calendar/ProfessionalDetailView';
 import { ProfessionalForm } from '@/components/Professionals/ProfessionalForm';
-import { Professional } from '@/types';
+import type { Professional } from '@/types';
 
 interface ProfessionalCardProps {
   professional: Professional;
