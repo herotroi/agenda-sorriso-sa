@@ -105,7 +105,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
   const handleDelete = async () => {
     try {
       await onDelete(professional.id);
-      onUpdate();
+      onUpdate(); // Atualiza apenas a lista
     } catch (error) {
       console.error('Error deleting professional:', error);
     }
@@ -127,7 +127,7 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
 
   const handleCloseEditForm = () => {
     setShowEditForm(false);
-    onUpdate();
+    onUpdate(); // Atualiza apenas a lista após edição
   };
 
   return (

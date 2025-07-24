@@ -23,13 +23,17 @@ export function ProfessionalList() {
   };
 
   const handleDelete = async (professionalId: string) => {
-    await deleteProfessional(professionalId);  // Removido segundo argumento
+    await deleteProfessional(professionalId);
   };
 
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingProfessional(null);
-    fetchProfessionals();
+    fetchProfessionals(); // Atualiza a lista após fechar o formulário
+  };
+
+  const handleUpdate = () => {
+    fetchProfessionals(); // Atualiza a lista
   };
 
   return (
@@ -49,6 +53,7 @@ export function ProfessionalList() {
           professionals={filteredProfessionals}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onUpdate={handleUpdate}
         />
       )}
 

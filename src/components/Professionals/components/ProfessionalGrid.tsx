@@ -7,9 +7,10 @@ interface ProfessionalGridProps {
   professionals: Professional[];
   onEdit: (professional: Professional) => void;
   onDelete: (professionalId: string) => Promise<void>;
+  onUpdate: () => void;
 }
 
-export function ProfessionalGrid({ professionals, onEdit, onDelete }: ProfessionalGridProps) {
+export function ProfessionalGrid({ professionals, onEdit, onDelete, onUpdate }: ProfessionalGridProps) {
   if (professionals.length === 0) {
     return (
       <Card>
@@ -22,6 +23,7 @@ export function ProfessionalGrid({ professionals, onEdit, onDelete }: Profession
 
   const handleDelete = async (id: string) => {
     await onDelete(id);
+    onUpdate(); // Atualiza a lista após exclusão
   };
 
   return (
@@ -30,7 +32,7 @@ export function ProfessionalGrid({ professionals, onEdit, onDelete }: Profession
         <ProfessionalCard
           key={professional.id}
           professional={professional}
-          onUpdate={() => window.location.reload()}
+          onUpdate={onUpdate}
           onDelete={handleDelete}
         />
       ))}
