@@ -59,6 +59,20 @@ export function DraggableAppointment({
   const displayName = isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'Sem paciente');
   const displayProcedure = isBlocked ? '' : (appointment.procedures?.name || '');
 
+  // Determinar a cor de fundo baseada no tipo de agendamento
+  const getBackgroundColor = () => {
+    if (isBlocked) {
+      return '#9ca3af'; // Cor cinza para horários bloqueados
+    }
+    
+    // Para agendamentos comuns, usar a cor do status se disponível, senão a cor do profissional
+    if (appointment.appointment_statuses?.color) {
+      return appointment.appointment_statuses.color;
+    }
+    
+    return professionalColor;
+  };
+
   return (
     <div
       draggable={!isBlocked}
@@ -67,13 +81,13 @@ export function DraggableAppointment({
       onClick={onClick}
       className={`absolute left-1 right-1 rounded-md p-2 text-white text-xs shadow-sm transition-all duration-200 ${
         isBlocked 
-          ? 'bg-gray-400 cursor-not-allowed opacity-75' 
+          ? 'cursor-not-allowed opacity-75' 
           : 'cursor-move hover:shadow-md'
       } ${isDragging ? 'opacity-50 scale-95' : ''}`}
       style={{
         top: position.top,
         height: position.height,
-        backgroundColor: isBlocked ? '#9ca3af' : professionalColor,
+        backgroundColor: getBackgroundColor(),
         minHeight: '32px'
       }}
     >
