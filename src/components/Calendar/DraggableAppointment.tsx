@@ -57,7 +57,7 @@ export function DraggableAppointment({
   });
 
   const displayName = isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'Sem paciente');
-  const displayProcedure = isBlocked ? 'Bloqueio' : (appointment.procedures?.name || '');
+  const displayProcedure = isBlocked ? '' : (appointment.procedures?.name || '');
 
   return (
     <div
