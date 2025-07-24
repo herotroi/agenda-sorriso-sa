@@ -56,13 +56,10 @@ export function DraggableAppointment({
     minute: '2-digit'
   });
 
-  const displayName = isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'Sem paciente');
-  const displayProcedure = isBlocked ? '' : (appointment.procedures?.name || '');
-
   // Determinar a cor de fundo baseada no tipo de agendamento
   const getBackgroundColor = () => {
     if (isBlocked) {
-      return '#9ca3af'; // Cor cinza para horários bloqueados
+      return '#fecaca'; // Vermelho claro para horários bloqueados
     }
     
     // Para agendamentos comuns, usar a cor do status se disponível, senão a cor do profissional
@@ -73,17 +70,54 @@ export function DraggableAppointment({
     return professionalColor;
   };
 
+  const getTextColor = () => {
+    if (isBlocked) {
+      return '#7f1d1d'; // Texto vermelho escuro para horários bloqueados
+    }
+    return '#ffffff'; // Texto branco para agendamentos normais
+  };
+
+  if (isBlocked) {
+    return (
+      <div
+        onClick={onClick}
+        className="absolute left-1 right-1 rounded-md p-2 text-xs shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md"
+        style={{
+          top: position.top,
+          height: position.height,
+          backgroundColor: getBackgroundColor(),
+          color: getTextColor(),
+          minHeight: '32px'
+        }}
+      >
+        <div className="flex flex-col h-full justify-center items-center text-center">
+          <div className="font-semibold text-sm mb-1">
+            Horário Bloqueado
+          </div>
+          <div className="text-xs font-mono mb-1">
+            {startTime} - {endTime}
+          </div>
+          <div className="text-xs opacity-90">
+            Período indisponível
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Renderização para agendamentos normais
+  const displayName = appointment.patients?.full_name || 'Sem paciente';
+  const displayProcedure = appointment.procedures?.name || '';
+
   return (
     <div
-      draggable={!isBlocked}
+      draggable={true}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
-      className={`absolute left-1 right-1 rounded-md p-2 text-white text-xs shadow-sm transition-all duration-200 ${
-        isBlocked 
-          ? 'cursor-not-allowed opacity-75' 
-          : 'cursor-move hover:shadow-md'
-      } ${isDragging ? 'opacity-50 scale-95' : ''}`}
+      className={`absolute left-1 right-1 rounded-md p-2 text-white text-xs shadow-sm transition-all duration-200 cursor-move hover:shadow-md ${
+        isDragging ? 'opacity-50 scale-95' : ''
+      }`}
       style={{
         top: position.top,
         height: position.height,
@@ -106,7 +140,7 @@ export function DraggableAppointment({
           {startTime} - {endTime}
         </div>
         
-        {appointment.appointment_statuses?.label && !isBlocked && (
+        {appointment.appointment_statuses?.label && (
           <div className="text-xs opacity-75">
             {appointment.appointment_statuses.label}
           </div>
