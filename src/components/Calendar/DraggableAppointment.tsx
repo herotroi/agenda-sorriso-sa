@@ -59,7 +59,7 @@ export function DraggableAppointment({
   // Determinar a cor de fundo baseada no tipo de agendamento
   const getBackgroundColor = () => {
     if (isBlocked) {
-      return '#fecaca'; // Vermelho claro para horários bloqueados
+      return '#9ca3af'; // Cinza mais forte para horários bloqueados
     }
     
     // Para agendamentos comuns, usar a cor do status se disponível, senão a cor do profissional
@@ -72,7 +72,7 @@ export function DraggableAppointment({
 
   const getTextColor = () => {
     if (isBlocked) {
-      return '#7f1d1d'; // Texto vermelho escuro para horários bloqueados
+      return '#ffffff'; // Texto branco para horários bloqueados
     }
     return '#ffffff'; // Texto branco para agendamentos normais
   };

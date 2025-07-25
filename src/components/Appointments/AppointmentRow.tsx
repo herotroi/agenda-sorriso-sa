@@ -15,7 +15,7 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
   return (
     <TableRow 
       key={appointment.id} 
-      className={isBlocked ? 'bg-gray-100 text-gray-500' : ''}
+      className={isBlocked ? 'bg-gray-200 text-gray-700' : ''}
     >
       <TableCell className="font-medium">
         {isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'N/A')}
@@ -33,16 +33,16 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
         <span 
           className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
           style={{
-            backgroundColor: isBlocked ? '#9ca3af20' : (appointment.appointment_statuses?.color + '20'),
-            color: isBlocked ? '#6b7280' : (appointment.appointment_statuses?.color || '#6b7280')
+            backgroundColor: isBlocked ? '#9ca3af' : (appointment.appointment_statuses?.color + '20'),
+            color: isBlocked ? '#ffffff' : (appointment.appointment_statuses?.color || '#6b7280')
           }}
         >
-          {isBlocked ? 'Bloqueado' : (appointment.appointment_statuses?.label || 'N/A')}
+          {isBlocked ? 'Horário Bloqueado' : (appointment.appointment_statuses?.label || 'N/A')}
         </span>
       </TableCell>
       <TableCell>
         <span className="text-sm text-gray-600">
-          {isBlocked ? 'Horário bloqueado para agendamentos' : 
+          {isBlocked ? 'Período bloqueado para agendamentos' : 
             (appointment.notes ? (
               appointment.notes.length > 30 
                 ? appointment.notes.substring(0, 30) + '...'

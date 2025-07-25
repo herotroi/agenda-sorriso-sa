@@ -7,6 +7,7 @@ interface AppointmentStatusBadgeProps {
   statusId?: number;
   status?: string;
   statusColor?: string;
+  isBlocked?: boolean;
 }
 
 interface StatusOption {
@@ -16,7 +17,7 @@ interface StatusOption {
   color: string;
 }
 
-export function AppointmentStatusBadge({ statusId, status, statusColor }: AppointmentStatusBadgeProps) {
+export function AppointmentStatusBadge({ statusId, status, statusColor, isBlocked }: AppointmentStatusBadgeProps) {
   const [statusData, setStatusData] = useState<StatusOption | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,6 +58,18 @@ export function AppointmentStatusBadge({ statusId, status, statusColor }: Appoin
     return (
       <Badge className="text-white bg-gray-400">
         Carregando...
+      </Badge>
+    );
+  }
+
+  // Para agendamentos bloqueados, sempre mostrar o status de bloqueio
+  if (isBlocked) {
+    return (
+      <Badge 
+        className="text-white"
+        style={{ backgroundColor: '#9ca3af' }}
+      >
+        Horário Bloqueado
       </Badge>
     );
   }
