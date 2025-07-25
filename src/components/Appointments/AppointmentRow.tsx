@@ -1,7 +1,7 @@
 
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import { Pencil, Lock } from 'lucide-react';
 import { Appointment } from '@/types';
 
 interface AppointmentRowProps {
@@ -15,25 +15,36 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
   return (
     <TableRow 
       key={appointment.id} 
-      className={isBlocked ? 'bg-gray-200 text-gray-700' : ''}
+      className={isBlocked ? 'bg-gray-100 border-l-4 border-l-gray-500' : ''}
     >
       <TableCell className="font-medium">
-        {isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'N/A')}
+        <div className="flex items-center gap-2">
+          {isBlocked && <Lock className="h-4 w-4 text-gray-600" />}
+          <span className={isBlocked ? 'text-gray-700 font-semibold' : ''}>
+            {isBlocked ? 'Horário Bloqueado' : (appointment.patients?.full_name || 'N/A')}
+          </span>
+        </div>
       </TableCell>
       <TableCell>
-        {appointment.professionals?.name || 'N/A'}
+        <span className={isBlocked ? 'text-gray-600' : ''}>
+          {appointment.professionals?.name || 'N/A'}
+        </span>
       </TableCell>
       <TableCell>
-        {isBlocked ? 'Bloqueio' : (appointment.procedures?.name || 'Nenhum')}
+        <span className={isBlocked ? 'text-gray-600 italic' : ''}>
+          {isBlocked ? 'Bloqueio de horário' : (appointment.procedures?.name || 'Nenhum')}
+        </span>
       </TableCell>
       <TableCell>
-        {new Date(appointment.start_time).toLocaleString('pt-BR')}
+        <span className={isBlocked ? 'text-gray-600 font-mono' : ''}>
+          {new Date(appointment.start_time).toLocaleString('pt-BR')}
+        </span>
       </TableCell>
       <TableCell>
         <span 
-          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
           style={{
-            backgroundColor: isBlocked ? '#9ca3af' : (appointment.appointment_statuses?.color + '20'),
+            backgroundColor: isBlocked ? '#6b7280' : (appointment.appointment_statuses?.color + '20'),
             color: isBlocked ? '#ffffff' : (appointment.appointment_statuses?.color || '#6b7280')
           }}
         >
@@ -41,8 +52,8 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
         </span>
       </TableCell>
       <TableCell>
-        <span className="text-sm text-gray-600">
-          {isBlocked ? 'Período bloqueado para agendamentos' : 
+        <span className={`text-sm ${isBlocked ? 'text-gray-600 italic' : 'text-gray-600'}`}>
+          {isBlocked ? 'Período indisponível para agendamentos' : 
             (appointment.notes ? (
               appointment.notes.length > 30 
                 ? appointment.notes.substring(0, 30) + '...'
@@ -57,6 +68,7 @@ export function AppointmentRow({ appointment, onEdit }: AppointmentRowProps) {
           size="sm"
           onClick={(event) => onEdit(appointment, event)}
           className="h-8 w-8 p-0"
+          title={isBlocked ? 'Editar bloqueio' : 'Editar agendamento'}
         >
           <Pencil className="h-4 w-4" />
         </Button>
