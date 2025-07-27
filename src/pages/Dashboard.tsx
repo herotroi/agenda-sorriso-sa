@@ -70,8 +70,8 @@ export default function Dashboard() {
         selectedYear={currentDateRange.start.getFullYear()}
       />
 
-      {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+      {/* Stats Grid - Ajustado para melhor responsividade */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatsCard
           title="Agendamentos Hoje"
           value={stats.todayAppointments}
@@ -121,12 +121,12 @@ export default function Dashboard() {
               ) : (
                 upcomingAppointments.map((appointment) => (
                   <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{appointment.patient}</p>
-                      <p className="text-xs text-gray-600">{appointment.professional}</p>
-                      <p className="text-xs text-gray-500">{appointment.type}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{appointment.patient}</p>
+                      <p className="text-xs text-gray-600 truncate">{appointment.professional}</p>
+                      <p className="text-xs text-gray-500 truncate">{appointment.type}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0 ml-2">
                       <p className="font-medium text-sm">{appointment.time}</p>
                       <div className="w-2 h-2 bg-green-500 rounded-full ml-auto mt-1"></div>
                     </div>
@@ -138,16 +138,16 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Status Overview */}
-      <div className="grid gap-6 md:grid-cols-4">
+      {/* Status Overview - Ajustado para melhor responsividade */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Confirmados</p>
                 <p className="text-2xl font-bold text-green-600">{stats.confirmedCount}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-green-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -155,11 +155,11 @@ export default function Dashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Cancelados</p>
                 <p className="text-2xl font-bold text-red-600">{stats.cancelledCount}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600" />
+              <XCircle className="h-8 w-8 text-red-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -167,11 +167,11 @@ export default function Dashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Faltaram</p>
                 <p className="text-2xl font-bold text-orange-600">{stats.noShowCount}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-orange-600" />
+              <AlertCircle className="h-8 w-8 text-orange-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -179,11 +179,11 @@ export default function Dashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Concluídos</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.completedCount}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-blue-600" />
+              <CheckCircle className="h-8 w-8 text-blue-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
