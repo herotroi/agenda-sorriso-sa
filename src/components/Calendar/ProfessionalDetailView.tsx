@@ -4,12 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Eye } from 'lucide-react';
-import type { Professional } from '@/types';
+import type { Professional, Appointment } from '@/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
 import { MonthView } from './ProfessionalDetailView/MonthView';
 import { PrintButton } from './ProfessionalDetailView/PrintButton';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
+import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
 import { useProfessionalDetailData } from './ProfessionalDetailView/hooks/useProfessionalDetailData';
 
 interface ProfessionalDetailViewProps {
@@ -28,6 +29,7 @@ export function ProfessionalDetailView({
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [view, setView] = useState<'day' | 'month'>('day');
   const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   
   const { appointments, monthAppointments, loading, handleAppointmentClick } = useProfessionalDetailData(
     professional.id,
@@ -46,6 +48,19 @@ export function ProfessionalDetailView({
 
   const handleAppointmentFormClose = () => {
     setIsAppointmentFormOpen(false);
+  };
+
+  const handleAppointmentDetailsClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+  };
+
+  const handleAppointmentDetailsClose = () => {
+    setSelectedAppointment(null);
+  };
+
+  const handleAppointmentUpdate = () => {
+    // Refresh data after appointment update
+    window.location.reload();
   };
 
   return (
@@ -98,7 +113,7 @@ export function ProfessionalDetailView({
                     appointments={appointments}
                     currentDate={currentDate}
                     loading={loading}
-                    onAppointmentClick={handleAppointmentClick}
+                    onAppointmentClick={handleAppointmentDetailsClick}
                   />
                 </TabsContent>
                 
@@ -108,7 +123,7 @@ export function ProfessionalDetailView({
                     appointments={monthAppointments}
                     selectedDate={currentDate}
                     onDateChange={setCurrentDate}
-                    onAppointmentClick={handleAppointmentClick}
+                    onAppointmentClick={handleAppointmentDetailsClick}
                   />
                 </TabsContent>
               </Tabs>
@@ -123,6 +138,15 @@ export function ProfessionalDetailView({
         selectedDate={currentDate}
         selectedProfessionalId={professional.id}
       />
+
+      {selectedAppointment && (
+        <AppointmentDetails
+          appointment={selectedAppointment}
+          isOpen={!!selectedAppointment}
+          onClose={handleAppointmentDetailsClose}
+          onUpdate={handleAppointmentUpdate}
+        />
+      )}
     </>
   );
 }
