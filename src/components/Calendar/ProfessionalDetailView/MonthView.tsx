@@ -58,6 +58,10 @@ export function MonthView({
     }
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    onAppointmentClick(appointment);
+  };
+
   // Inicializar com agendamentos do dia selecionado
   useEffect(() => {
     handleDateSelect(selectedDate);
@@ -105,8 +109,8 @@ export function MonthView({
               return (
                 <div
                   key={appointment.id}
-                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-                  onClick={() => onAppointmentClick(appointment)}
+                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleAppointmentClick(appointment)}
                 >
                   <div className="flex items-center justify-between">
                     <div>
