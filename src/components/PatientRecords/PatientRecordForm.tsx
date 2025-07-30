@@ -93,7 +93,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     if (isOpen && patientId && user?.id) {
       fetchAppointments();
     }
-  }, [isOpen, patientId, user?.id]); // Only depend on user.id, not the entire user object
+  }, [isOpen, patientId, user?.id]);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -175,9 +175,9 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
       if (uploadError) throw uploadError;
 
-      // Save file metadata in database
+      // Save file metadata in database using prontuario_documents table
       const { error: dbError } = await supabase
-        .from('documents')
+        .from('prontuario_documents')
         .insert({
           name: file.name,
           description: description || null,
@@ -231,10 +231,11 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     setLoading(true);
 
     try {
-      // Create patient record
+      // Create patient record with title, content, and notes
       const recordData = {
         title: title.trim(),
         content: content.trim() || null,
+        notes: content.trim() || null, // Map content to notes for compatibility
         patient_id: patientId,
         user_id: user.id,
         created_by: user.id,
@@ -248,7 +249,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
       if (recordError) throw recordError;
 
-      // Associate selected appointments with the record
+      // Associate selected appointments with the record using record_appointments table
       if (selectedAppointments.length > 0) {
         const appointmentAssociations = selectedAppointments.map(appointmentId => ({
           record_id: record.id,

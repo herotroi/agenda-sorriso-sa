@@ -190,37 +190,46 @@ export type Database = {
       patient_records: {
         Row: {
           appointment_id: string | null
+          content: string | null
           created_at: string
+          created_by: string | null
           files: Json | null
           id: string
-          notes: string
+          notes: string | null
           patient_id: string | null
           prescription: string | null
           professional_id: string | null
+          title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           appointment_id?: string | null
+          content?: string | null
           created_at?: string
+          created_by?: string | null
           files?: Json | null
           id?: string
-          notes: string
+          notes?: string | null
           patient_id?: string | null
           prescription?: string | null
           professional_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           appointment_id?: string | null
+          content?: string | null
           created_at?: string
+          created_by?: string | null
           files?: Json | null
           id?: string
-          notes?: string
+          notes?: string | null
           patient_id?: string | null
           prescription?: string | null
           professional_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -564,6 +573,7 @@ export type Database = {
           patient_id: string | null
           record_id: string | null
           uploaded_at: string
+          uploaded_by: string | null
           user_id: string
         }
         Insert: {
@@ -578,6 +588,7 @@ export type Database = {
           patient_id?: string | null
           record_id?: string | null
           uploaded_at?: string
+          uploaded_by?: string | null
           user_id: string
         }
         Update: {
@@ -592,6 +603,7 @@ export type Database = {
           patient_id?: string | null
           record_id?: string | null
           uploaded_at?: string
+          uploaded_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -617,6 +629,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      record_appointments: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          id: string
+          record_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          id?: string
+          record_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+        }
+        Relationships: []
       }
       settings: {
         Row: {
