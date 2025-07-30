@@ -1,10 +1,7 @@
 
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, User, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { User, Phone, FileText } from 'lucide-react';
 import type { Patient } from '@/types/prontuario';
 
 interface PatientSearchProps {
@@ -14,170 +11,90 @@ interface PatientSearchProps {
 }
 
 export function PatientSearch({ patients, selectedPatient, onPatientSelect }: PatientSearchProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Memoized filtering and sorting for better performance
-  const filteredAndSortedPatients = useMemo(() => {
-    // Filter only active patients belonging to the current user
-    const activePatients = patients.filter(patient => patient.active !== false);
-    
-    if (!searchTerm.trim()) {
-      return activePatients.sort((a, b) => a.full_name.localeCompare(b.full_name));
-    }
-    
-    const searchLower = searchTerm.toLowerCase();
-    const filtered = activePatients.filter(patient => {
-      const nameMatch = patient.full_name.toLowerCase().includes(searchLower);
-      const cpfMatch = patient.cpf && patient.cpf.includes(searchTerm);
-      const phoneMatch = patient.phone && patient.phone.includes(searchTerm);
-      
-      return nameMatch || cpfMatch || phoneMatch;
-    });
-    
-    // Sort by relevance: exact matches first, then partial matches
-    return filtered.sort((a, b) => {
-      const aName = a.full_name.toLowerCase();
-      const bName = b.full_name.toLowerCase();
-      
-      // Exact name matches come first
-      if (aName.startsWith(searchLower) && !bName.startsWith(searchLower)) return -1;
-      if (!aName.startsWith(searchLower) && bName.startsWith(searchLower)) return 1;
-      
-      // Then alphabetical order
-      return aName.localeCompare(bName);
-    });
-  }, [patients, searchTerm]);
-
   const selectedPatientData = patients.find(p => p.id === selectedPatient);
 
-  const clearSearch = () => {
-    setSearchTerm('');
-  };
-
-  const clearSelection = () => {
-    onPatientSelect('');
-  };
-
-  const getHighlightedText = (text: string, highlight: string) => {
-    if (!highlight.trim()) return text;
-    
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-    return parts.map((part, index) => 
-      part.toLowerCase() === highlight.toLowerCase() ? 
-        <mark key={index} className="bg-yellow-200 text-black px-0.5 rounded">{part}</mark> : part
-    );
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          Buscar Paciente
-          {selectedPatient && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearSelection}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Limpar Seleção
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Digite nome, CPF ou telefone..."
-            className="pl-10 pr-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearSearch}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        
-        {searchTerm && (
-          <div className="text-sm text-muted-foreground">
-            {filteredAndSortedPatients.length === 0 ? (
-              <span className="text-red-600">Nenhum paciente encontrado para "{searchTerm}"</span>
-            ) : (
-              <span>
-                {filteredAndSortedPatients.length} paciente(s) encontrado(s)
-                {filteredAndSortedPatients.length !== patients.filter(p => p.active !== false).length && 
-                  ` de ${patients.filter(p => p.active !== false).length} total`
-                }
-              </span>
-            )}
-          </div>
-        )}
-        
-        <Select value={selectedPatient || 'no_selection'} onValueChange={(value) => onPatientSelect(value === 'no_selection' ? '' : value)}>
-          <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Selecione um paciente" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <div className="max-h-60 overflow-y-auto">
-              {filteredAndSortedPatients.length === 0 ? (
-                <div className="px-4 py-2 text-sm text-muted-foreground">
-                  {searchTerm ? `Nenhum paciente encontrado para "${searchTerm}"` : 'Nenhum paciente ativo disponível'}
-                </div>
-              ) : (
-                <>
-                  <SelectItem value="no_selection">Selecione um paciente</SelectItem>
-                  {filteredAndSortedPatients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      <div className="flex flex-col w-full">
-                        <span className="font-medium">
-                          {getHighlightedText(patient.full_name, searchTerm)}
-                        </span>
-                        <div className="flex gap-4 text-xs text-muted-foreground">
-                          {patient.cpf && (
-                            <span>CPF: {getHighlightedText(patient.cpf, searchTerm)}</span>
-                          )}
-                          {patient.phone && (
-                            <span>Tel: {getHighlightedText(patient.phone, searchTerm)}</span>
-                          )}
-                        </div>
+    <div className="space-y-4">
+      <Select value={selectedPatient} onValueChange={onPatientSelect}>
+        <SelectTrigger className="h-14 text-base">
+          <SelectValue placeholder="Digite o nome do paciente ou selecione da lista..." />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          {patients.length > 0 ? (
+            patients.map((patient) => (
+              <SelectItem key={patient.id} value={patient.id} className="py-4">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{patient.full_name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {patient.phone && (
+                          <span className="text-sm text-gray-500 flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {patient.phone}
+                          </span>
+                        )}
+                        {patient.cpf && (
+                          <span className="text-sm text-gray-500">
+                            CPF: {patient.cpf}
+                          </span>
+                        )}
                       </div>
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-            </div>
-          </SelectContent>
-        </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={patient.active ? 'default' : 'secondary'} className="text-xs">
+                      {patient.active ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
+                </div>
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="no-patients" disabled>
+              <div className="text-center py-4 text-gray-500">
+                <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p>Nenhum paciente encontrado</p>
+                <p className="text-sm mt-1">Cadastre pacientes primeiro</p>
+              </div>
+            </SelectItem>
+          )}
+        </SelectContent>
+      </Select>
 
-        {selectedPatientData && (
-          <div className="p-4 bg-muted rounded-lg border-l-4 border-primary">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-foreground">{selectedPatientData.full_name}</h4>
-              <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-1 rounded">
-                Selecionado
-              </span>
+      {/* Selected Patient Info */}
+      {selectedPatientData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-full">
+              <User className="h-5 w-5 text-blue-600" />
             </div>
-            <div className="text-sm text-muted-foreground space-y-1">
-              {selectedPatientData.cpf && <p><strong>CPF:</strong> {selectedPatientData.cpf}</p>}
-              {selectedPatientData.phone && <p><strong>Telefone:</strong> {selectedPatientData.phone}</p>}
-              {selectedPatientData.email && <p><strong>Email:</strong> {selectedPatientData.email}</p>}
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-900">{selectedPatientData.full_name}</h3>
+              <div className="flex items-center gap-4 mt-1 text-sm text-blue-700">
+                {selectedPatientData.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {selectedPatientData.phone}
+                  </span>
+                )}
+                {selectedPatientData.cpf && (
+                  <span>CPF: {selectedPatientData.cpf}</span>
+                )}
+                {selectedPatientData.email && (
+                  <span>{selectedPatientData.email}</span>
+                )}
+              </div>
             </div>
+            <Badge variant="default" className="bg-blue-600">
+              Selecionado
+            </Badge>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

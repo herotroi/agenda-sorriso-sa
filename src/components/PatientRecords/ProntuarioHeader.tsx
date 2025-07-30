@@ -1,6 +1,7 @@
 
-import { FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Plus, User } from 'lucide-react';
 
 interface ProntuarioHeaderProps {
   selectedPatient: string;
@@ -11,20 +12,26 @@ interface ProntuarioHeaderProps {
 export function ProntuarioHeader({ selectedPatient, onNewAppointment, canCreate }: ProntuarioHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <div className="p-2 bg-blue-100 rounded-lg">
-          <FileText className="h-6 w-6 text-blue-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Prontuário Eletrônico</h1>
-          <p className="text-gray-600">Gerencie os registros médicos dos pacientes</p>
-        </div>
+      <div className="flex items-center gap-3">
+        {selectedPatient ? (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <User className="h-3 w-3 mr-1" />
+              Paciente Selecionado
+            </Badge>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">
+            Nenhum paciente selecionado
+          </div>
+        )}
       </div>
       
       {selectedPatient && (
-        <Button 
+        <Button
           onClick={onNewAppointment}
           disabled={!canCreate}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nova Consulta
