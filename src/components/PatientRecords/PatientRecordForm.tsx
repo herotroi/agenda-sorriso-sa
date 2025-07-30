@@ -9,14 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, FileText, Pill, Calendar, Upload, X, File } from 'lucide-react';
+import { User, FileText, Pill, Calendar, Upload, X, File, Clock, CheckSquare } from 'lucide-react';
 
 interface Professional {
   id: string;
   name: string;
+}
+
+interface Appointment {
+  id: string;
+  start_time: string;
+  end_time: string;
+  notes?: string;
+  price?: number;
+  procedures?: { name: string } | null;
+  professionals?: { name: string } | null;
 }
 
 interface PatientRecordFormProps {
@@ -33,6 +44,8 @@ interface UploadedFile {
 
 export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordFormProps) {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     professional_id: '',
     notes: '',
@@ -61,17 +74,58 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
+  const fetchAppointments = async () => {
+    if (!user || !patientId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          notes,
+          price,
+          procedures(name),
+          professionals(name)
+        `)
+        .eq('patient_id', patientId)
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchProfessionals();
+      fetchAppointments();
       setFormData({
         professional_id: '',
         notes: '',
         prescription: '',
       });
       setUploadedFiles([]);
+      setSelectedAppointments([]);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, patientId]);
+
+  const handleAppointmentToggle = (appointmentId: string) => {
+    setSelectedAppointments(prev => 
+      prev.includes(appointmentId)
+        ? prev.filter(id => id !== appointmentId)
+        : [...prev, appointmentId]
+    );
+  };
+
+  const getSelectedAppointmentDetails = () => {
+    return appointments.filter(apt => selectedAppointments.includes(apt.id));
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -145,13 +199,31 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
     setLoading(true);
     try {
+      // Criar notas detalhadas incluindo informações dos agendamentos selecionados
+      let detailedNotes = formData.notes;
+      
+      if (selectedAppointments.length > 0) {
+        const selectedDetails = getSelectedAppointmentDetails();
+        detailedNotes += '\n\n--- Consultas Relacionadas ---\n';
+        
+        selectedDetails.forEach((apt, index) => {
+          detailedNotes += `\nConsulta ${index + 1}:\n`;
+          detailedNotes += `Data: ${new Date(apt.start_time).toLocaleDateString('pt-BR')}\n`;
+          detailedNotes += `Horário: ${new Date(apt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n`;
+          if (apt.procedures?.name) detailedNotes += `Procedimento: ${apt.procedures.name}\n`;
+          if (apt.professionals?.name) detailedNotes += `Profissional: ${apt.professionals.name}\n`;
+          if (apt.price) detailedNotes += `Valor: R$ ${apt.price.toFixed(2).replace('.', ',')}\n`;
+          if (apt.notes) detailedNotes += `Observações: ${apt.notes}\n`;
+        });
+      }
+
       // 1. Criar o registro da consulta
       const { data: recordData, error: recordError } = await supabase
         .from('patient_records')
         .insert({
           patient_id: patientId,
           professional_id: formData.professional_id,
-          notes: formData.notes,
+          notes: detailedNotes,
           prescription: formData.prescription || null,
           user_id: user.id,
         })
@@ -179,7 +251,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
       toast({
         title: 'Sucesso',
-        description: 'Consulta registrada com sucesso',
+        description: 'Prontuário registrado com sucesso',
       });
 
       onClose();
@@ -187,7 +259,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
       console.error('Error saving record:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao salvar consulta',
+        description: 'Erro ao salvar prontuário',
         variant: 'destructive',
       });
     } finally {
@@ -205,15 +277,101 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[95vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1200px] max-h-[95vh] overflow-y-auto">
         <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            Nova Consulta
+            <FileText className="h-5 w-5 text-blue-600" />
+            Novo Prontuário
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Appointments Selection Card */}
+          {appointments.length > 0 && (
+            <Card className="border-l-4 border-l-indigo-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CheckSquare className="h-4 w-4" />
+                  Consultas Relacionadas
+                  <Badge variant="secondary" className="text-xs">Opcional</Badge>
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Selecione as consultas que deseja associar a este prontuário
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                  {appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                        selectedAppointments.includes(appointment.id)
+                          ? 'bg-indigo-50 border-indigo-300 shadow-sm'
+                          : 'hover:bg-gray-50 border-gray-200'
+                      }`}
+                      onClick={() => handleAppointmentToggle(appointment.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedAppointments.includes(appointment.id)}
+                          onChange={() => handleAppointmentToggle(appointment.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Calendar className="h-3 w-3 text-gray-500" />
+                            <span className="text-sm font-medium">
+                              {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
+                            </span>
+                            <Clock className="h-3 w-3 text-gray-500 ml-2" />
+                            <span className="text-xs text-gray-500">
+                              {new Date(appointment.start_time).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          
+                          {appointment.procedures?.name && (
+                            <div className="text-xs text-blue-600 mb-1">
+                              {appointment.procedures.name}
+                            </div>
+                          )}
+                          
+                          {appointment.professionals?.name && (
+                            <div className="text-xs text-gray-600 mb-1">
+                              Dr(a). {appointment.professionals.name}
+                            </div>
+                          )}
+                          
+                          {appointment.price && (
+                            <div className="text-xs font-medium text-green-600">
+                              R$ {appointment.price.toFixed(2).replace('.', ',')}
+                            </div>
+                          )}
+                          
+                          {appointment.notes && (
+                            <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                              {appointment.notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedAppointments.length > 0 && (
+                  <div className="mt-3 p-2 bg-indigo-50 rounded-md">
+                    <p className="text-sm text-indigo-700">
+                      {selectedAppointments.length} consulta(s) selecionada(s)
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Professional Selection Card */}
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="pb-3">
@@ -228,7 +386,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
                 onValueChange={(value) => setFormData({ ...formData, professional_id: value })}
               >
                 <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Selecione o profissional responsável pela consulta" />
+                  <SelectValue placeholder="Selecione o profissional responsável pelo prontuário" />
                 </SelectTrigger>
                 <SelectContent>
                   {professionals.map((prof) => (
@@ -251,7 +409,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-4 w-4" />
-                Notas da Consulta
+                Anotações do Prontuário
                 <Badge variant="destructive" className="text-xs">Obrigatório</Badge>
               </CardTitle>
             </CardHeader>
@@ -260,13 +418,13 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={8}
-                placeholder="Descreva detalhadamente:
-• Queixa principal do paciente
-• Exame físico realizado
-• Diagnóstico ou hipótese diagnóstica
-• Procedimentos realizados
-• Orientações fornecidas ao paciente
-• Observações clínicas relevantes"
+                placeholder="Registre informações detalhadas sobre o paciente:
+• Estado atual de saúde
+• Diagnósticos realizados
+• Tratamentos aplicados
+• Evolução do quadro clínico
+• Observações importantes
+• Recomendações para acompanhamento futuro"
                 className="text-base resize-none focus:ring-2 focus:ring-green-500"
                 required
               />
@@ -309,7 +467,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Upload className="h-4 w-4" />
-                Arquivos da Consulta
+                Arquivos do Prontuário
                 <Badge variant="secondary" className="text-xs">Opcional</Badge>
               </CardTitle>
             </CardHeader>
@@ -397,7 +555,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
                   Salvando...
                 </>
               ) : (
-                'Salvar Consulta'
+                'Salvar Prontuário'
               )}
             </Button>
           </div>

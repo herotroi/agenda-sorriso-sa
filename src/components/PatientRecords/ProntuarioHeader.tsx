@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Plus, User } from 'lucide-react';
+import { FileText, Plus, User } from 'lucide-react';
 
 interface ProntuarioHeaderProps {
   selectedPatient: string;
@@ -34,7 +34,7 @@ export function ProntuarioHeader({ selectedPatient, onNewAppointment, canCreate 
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nova Consulta
+          Novo Prontuário
         </Button>
       )}
     </div>
