@@ -4,15 +4,32 @@ import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
 import { ProntuarioHeader } from '@/components/PatientRecords/ProntuarioHeader';
 import { ProntuarioContent } from '@/components/PatientRecords/ProntuarioContent';
+import { PatientRecordsList } from '@/components/PatientRecords/PatientRecordsList';
+import { EditRecordDialog } from '@/components/PatientRecords/EditRecordDialog';
 import { useProntuario } from '@/hooks/useProntuario';
+import { usePatientRecords } from '@/hooks/usePatientRecords';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, Shield, Users, Calendar } from 'lucide-react';
 
+interface PatientRecord {
+  id: string;
+  title?: string;
+  content?: string;
+  notes?: string;
+  prescription?: string;
+  created_at: string;
+  updated_at: string;
+  professionals?: { name: string };
+}
+
 export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<PatientRecord | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const { subscriptionData, loading: subscriptionLoading, checkLimit, showLimitWarning } = useSubscriptionLimits();
   const {
     patients,
@@ -28,10 +45,13 @@ export default function Prontuario() {
     fetchAppointments,
   } = useProntuario();
 
+  const { records, loading: recordsLoading, refetchRecords } = usePatientRecords(selectedPatient);
+
   const handleFormClose = () => {
     setIsFormOpen(false);
     if (selectedPatient) {
       fetchAppointments(selectedPatient);
+      refetchRecords();
     }
   };
 
@@ -53,6 +73,20 @@ export default function Prontuario() {
 
   const handleClearSelection = () => {
     setSelectedAppointment(null);
+  };
+
+  const handleEditRecord = (record: PatientRecord) => {
+    setEditingRecord(record);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setIsEditDialogOpen(false);
+    setEditingRecord(null);
+  };
+
+  const handleRecordUpdated = () => {
+    refetchRecords();
   };
 
   if (subscriptionLoading) {
@@ -138,17 +172,29 @@ export default function Prontuario() {
 
       {/* Main Content */}
       {selectedPatient ? (
-        <ProntuarioContent
-          appointments={appointments}
-          selectedAppointment={selectedAppointment}
-          onAppointmentSelect={setSelectedAppointment}
-          loading={loading}
-          documents={documents}
-          onDocumentUpload={handleDocumentUploadWithCheck}
-          onDocumentDelete={handleDocumentDelete}
-          onClearSelection={handleClearSelection}
-          canCreate={canUseEHR}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Patient Records */}
+          <PatientRecordsList
+            records={records}
+            onEditRecord={handleEditRecord}
+            loading={recordsLoading}
+          />
+
+          {/* Right Column - Appointments and Documents */}
+          <div className="space-y-6">
+            <ProntuarioContent
+              appointments={appointments}
+              selectedAppointment={selectedAppointment}
+              onAppointmentSelect={setSelectedAppointment}
+              loading={loading}
+              documents={documents}
+              onDocumentUpload={handleDocumentUploadWithCheck}
+              onDocumentDelete={handleDocumentDelete}
+              onClearSelection={handleClearSelection}
+              canCreate={canUseEHR}
+            />
+          </div>
+        </div>
       ) : (
         <Card>
           <CardContent className="p-12">
@@ -161,10 +207,18 @@ export default function Prontuario() {
         </Card>
       )}
 
+      {/* Modals */}
       <PatientRecordForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
         patientId={selectedPatient}
+      />
+
+      <EditRecordDialog
+        record={editingRecord}
+        isOpen={isEditDialogOpen}
+        onClose={handleEditDialogClose}
+        onRecordUpdated={handleRecordUpdated}
       />
     </div>
   );
