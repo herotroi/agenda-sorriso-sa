@@ -2,22 +2,20 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, FileText, Pill, Calendar, Upload, X, File, Clock, CheckSquare } from 'lucide-react';
+import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope } from 'lucide-react';
 
-interface Professional {
-  id: string;
-  name: string;
+interface PatientRecordFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  patientId?: string;
 }
 
 interface Appointment {
@@ -26,57 +24,35 @@ interface Appointment {
   end_time: string;
   notes?: string;
   price?: number;
-  procedures?: { name: string } | null;
-  professionals?: { name: string } | null;
+  procedures: { name: string } | null;
+  professionals: { name: string } | null;
 }
 
-interface PatientRecordFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  patientId: string;
-}
-
-interface UploadedFile {
+interface FileUpload {
   file: File;
   description: string;
-  id: string;
+  preview?: string;
 }
 
 export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordFormProps) {
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
   const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
-    professional_id: '',
-    notes: '',
-    prescription: '',
-  });
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingAppointments, setFetchingAppointments] = useState(false);
+  
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const fetchProfessionals = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('professionals')
-        .select('id, name')
-        .eq('active', true)
-        .eq('user_id', user.id)
-        .order('name');
-
-      if (error) throw error;
-      setProfessionals(data || []);
-    } catch (error) {
-      console.error('Error fetching professionals:', error);
-    }
-  };
-
+  // Fetch appointments with proper dependency management
   const fetchAppointments = async () => {
-    if (!user || !patientId) return;
-    
+    if (!user?.id || !patientId) return;
+
+    console.log('Fetching appointments for patient:', patientId);
+    setFetchingAppointments(true);
+
     try {
       const { data, error } = await supabase
         .from('appointments')
@@ -91,29 +67,90 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         `)
         .eq('patient_id', patientId)
         .eq('user_id', user.id)
-        .order('start_time', { ascending: false })
-        .limit(20);
+        .order('start_time', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching appointments:', error);
+        throw error;
+      }
+
+      console.log('Fetched appointments:', data?.length || 0);
       setAppointments(data || []);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('Error loading appointments:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar agendamentos',
+        variant: 'destructive',
+      });
+    } finally {
+      setFetchingAppointments(false);
     }
   };
 
+  // Use useEffect with stable dependencies
   useEffect(() => {
-    if (isOpen) {
-      fetchProfessionals();
+    if (isOpen && patientId && user?.id) {
       fetchAppointments();
-      setFormData({
-        professional_id: '',
-        notes: '',
-        prescription: '',
-      });
-      setUploadedFiles([]);
-      setSelectedAppointments([]);
     }
-  }, [isOpen, user, patientId]);
+  }, [isOpen, patientId, user?.id]); // Only depend on user.id, not the entire user object
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset form state when dialog closes
+      setTitle('');
+      setContent('');
+      setSelectedAppointments([]);
+      setFiles([]);
+      setAppointments([]);
+    }
+  }, [isOpen]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    
+    selectedFiles.forEach(file => {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Erro',
+          description: `Arquivo ${file.name} é muito grande. Máximo 10MB.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newFile: FileUpload = {
+        file,
+        description: '',
+      };
+
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setFiles(prev => prev.map(f => 
+            f.file.name === file.name ? { ...f, preview: result } : f
+          ));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      setFiles(prev => [...prev, newFile]);
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileDescription = (index: number, description: string) => {
+    setFiles(prev => prev.map((f, i) => 
+      i === index ? { ...f, description } : f
+    ));
+  };
 
   const handleAppointmentToggle = (appointmentId: string) => {
     setSelectedAppointments(prev => 
@@ -123,143 +160,138 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     );
   };
 
-  const getSelectedAppointmentDetails = () => {
-    return appointments.filter(apt => selectedAppointments.includes(apt.id));
-  };
+  const uploadFile = async (fileUpload: FileUpload, recordId: string) => {
+    const { file, description } = fileUpload;
+    
+    // Create unique filename with timestamp
+    const timestamp = new Date().getTime();
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${recordId}/${timestamp}.${fileExtension}`;
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach((file) => {
-      // Validar tamanho (máx 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Erro',
-          description: `Arquivo ${file.name} muito grande. Tamanho máximo: 10MB`,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const newFile: UploadedFile = {
-        file,
-        description: '',
-        id: Math.random().toString(36).substring(2),
-      };
-
-      setUploadedFiles(prev => [...prev, newFile]);
-    });
-
-    // Limpar input
-    event.target.value = '';
-  };
-
-  const updateFileDescription = (fileId: string, description: string) => {
-    setUploadedFiles(prev =>
-      prev.map(f => f.id === fileId ? { ...f, description } : f)
-    );
-  };
-
-  const removeFile = (fileId: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
-  };
-
-  const uploadFilesToStorage = async () => {
-    const uploadPromises = uploadedFiles.map(async (fileData) => {
-      const fileExt = fileData.file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${patientId}/${fileName}`;
-
-      // Upload para storage
+    try {
       const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, fileData.file);
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // Retornar dados para inserir no banco
-      return {
-        patient_id: patientId,
-        name: fileData.file.name,
-        file_path: filePath,
-        file_size: fileData.file.size,
-        mime_type: fileData.file.type,
-        description: fileData.description || null,
-        user_id: user!.id,
-      };
-    });
+      // Save file metadata in database
+      const { error: dbError } = await supabase
+        .from('documents')
+        .insert({
+          name: file.name,
+          description: description || null,
+          file_path: fileName,
+          file_size: file.size,
+          mime_type: file.type,
+          record_id: recordId,
+          user_id: user?.id,
+          uploaded_by: user?.id,
+        });
 
-    return Promise.all(uploadPromises);
+      if (dbError) throw dbError;
+
+      console.log('File uploaded successfully:', fileName);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientId || !formData.professional_id || !formData.notes || !user) return;
+    
+    if (!user?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!patientId) {
+      toast({
+        title: 'Erro',
+        description: 'Paciente não selecionado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!title.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Título é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setLoading(true);
-    try {
-      // Criar notas detalhadas incluindo informações dos agendamentos selecionados
-      let detailedNotes = formData.notes;
-      
-      if (selectedAppointments.length > 0) {
-        const selectedDetails = getSelectedAppointmentDetails();
-        detailedNotes += '\n\n--- Consultas Relacionadas ---\n';
-        
-        selectedDetails.forEach((apt, index) => {
-          detailedNotes += `\nConsulta ${index + 1}:\n`;
-          detailedNotes += `Data: ${new Date(apt.start_time).toLocaleDateString('pt-BR')}\n`;
-          detailedNotes += `Horário: ${new Date(apt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n`;
-          if (apt.procedures?.name) detailedNotes += `Procedimento: ${apt.procedures.name}\n`;
-          if (apt.professionals?.name) detailedNotes += `Profissional: ${apt.professionals.name}\n`;
-          if (apt.price) detailedNotes += `Valor: R$ ${apt.price.toFixed(2).replace('.', ',')}\n`;
-          if (apt.notes) detailedNotes += `Observações: ${apt.notes}\n`;
-        });
-      }
 
-      // 1. Criar o registro da consulta
-      const { data: recordData, error: recordError } = await supabase
+    try {
+      // Create patient record
+      const recordData = {
+        title: title.trim(),
+        content: content.trim() || null,
+        patient_id: patientId,
+        user_id: user.id,
+        created_by: user.id,
+      };
+
+      const { data: record, error: recordError } = await supabase
         .from('patient_records')
-        .insert({
-          patient_id: patientId,
-          professional_id: formData.professional_id,
-          notes: detailedNotes,
-          prescription: formData.prescription || null,
-          user_id: user.id,
-        })
+        .insert(recordData)
         .select()
         .single();
 
       if (recordError) throw recordError;
 
-      // 2. Upload dos arquivos se houver
-      if (uploadedFiles.length > 0) {
-        const fileMetadata = await uploadFilesToStorage();
-        
-        // Associar arquivos ao registro criado
-        const documentsToInsert = fileMetadata.map(meta => ({
-          ...meta,
-          record_id: recordData.id,
+      // Associate selected appointments with the record
+      if (selectedAppointments.length > 0) {
+        const appointmentAssociations = selectedAppointments.map(appointmentId => ({
+          record_id: record.id,
+          appointment_id: appointmentId,
         }));
 
-        const { error: documentsError } = await supabase
-          .from('prontuario_documents')
-          .insert(documentsToInsert);
+        const { error: associationError } = await supabase
+          .from('record_appointments')
+          .insert(appointmentAssociations);
 
-        if (documentsError) throw documentsError;
+        if (associationError) {
+          console.error('Error associating appointments:', associationError);
+          // Don't fail the entire operation for this
+        }
+      }
+
+      // Upload files
+      if (files.length > 0) {
+        const uploadPromises = files.map(fileUpload => uploadFile(fileUpload, record.id));
+        
+        try {
+          await Promise.all(uploadPromises);
+        } catch (uploadError) {
+          console.error('Error uploading some files:', uploadError);
+          toast({
+            title: 'Aviso',
+            description: 'Prontuário criado, mas alguns arquivos não puderam ser enviados',
+            variant: 'default',
+          });
+        }
       }
 
       toast({
         title: 'Sucesso',
-        description: 'Prontuário registrado com sucesso',
+        description: 'Prontuário criado com sucesso',
       });
 
       onClose();
     } catch (error) {
-      console.error('Error saving record:', error);
+      console.error('Error creating patient record:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao salvar prontuário',
+        description: 'Erro ao criar prontuário',
         variant: 'destructive',
       });
     } finally {
@@ -267,295 +299,219 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[1200px] max-h-[95vh] overflow-y-auto">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <FileText className="h-5 w-5 text-blue-600" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
             Novo Prontuário
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Appointments Selection Card */}
-          {appointments.length > 0 && (
-            <Card className="border-l-4 border-l-indigo-500">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <CheckSquare className="h-4 w-4" />
-                  Consultas Relacionadas
-                  <Badge variant="secondary" className="text-xs">Opcional</Badge>
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  Selecione as consultas que deseja associar a este prontuário
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+          {/* Basic Information */}
+          <Card className="border-blue-200 bg-blue-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                Informações Básicas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="title">Título do Prontuário *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex: Consulta de retorno, Primeira consulta, etc."
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="content">Descrição/Observações</Label>
+                <Textarea
+                  id="content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Descreva os detalhes da consulta, observações importantes, etc."
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Appointment Selection */}
+          <Card className="border-green-200 bg-green-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-green-600" />
+                Agendamentos Relacionados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {fetchingAppointments ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-green-600 border-t-transparent"></div>
+                  <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
+                </div>
+              ) : appointments.length === 0 ? (
+                <p className="text-gray-500 py-4">Nenhum agendamento encontrado para este paciente.</p>
+              ) : (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
                   {appointments.map((appointment) => (
                     <div
                       key={appointment.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
                         selectedAppointments.includes(appointment.id)
-                          ? 'bg-indigo-50 border-indigo-300 shadow-sm'
-                          : 'hover:bg-gray-50 border-gray-200'
+                          ? 'border-green-300 bg-green-100'
+                          : 'border-gray-200 bg-white hover:bg-gray-50'
                       }`}
-                      onClick={() => handleAppointmentToggle(appointment.id)}
                     >
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={selectedAppointments.includes(appointment.id)}
-                          onChange={() => handleAppointmentToggle(appointment.id)}
-                          className="mt-1"
+                      <Checkbox
+                        checked={selectedAppointments.includes(appointment.id)}
+                        onCheckedChange={() => handleAppointmentToggle(appointment.id)}
+                        className="mt-1"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(appointment.start_time).toLocaleString('pt-BR')}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Clock className="h-4 w-4" />
+                            {new Date(appointment.end_time).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          {appointment.professionals && (
+                            <div className="flex items-center gap-1">
+                              <User className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium">Profissional:</span>
+                              <span>{appointment.professionals.name}</span>
+                            </div>
+                          )}
+                          
+                          {appointment.procedures && (
+                            <div className="flex items-center gap-1">
+                              <Stethoscope className="h-4 w-4 text-purple-600" />
+                              <span className="font-medium">Procedimento:</span>
+                              <span>{appointment.procedures.name}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {appointment.price && (
+                          <div className="flex items-center gap-1 mt-2 text-sm">
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                            <span className="font-medium">Valor:</span>
+                            <span>R$ {appointment.price.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {appointment.notes && (
+                          <div className="mt-2 text-sm">
+                            <span className="font-medium">Observações:</span>
+                            <p className="text-gray-600 mt-1">{appointment.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* File Upload */}
+          <Card className="border-purple-200 bg-purple-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="h-5 w-5 text-purple-600" />
+                Documentos e Arquivos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="files">Adicionar Arquivos</Label>
+                <Input
+                  id="files"
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
+                </p>
+              </div>
+
+              {files.length > 0 && (
+                <div className="space-y-3">
+                  {files.map((fileUpload, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
+                      {fileUpload.preview && (
+                        <img
+                          src={fileUpload.preview}
+                          alt="Preview"
+                          className="w-12 h-12 object-cover rounded"
                         />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Calendar className="h-3 w-3 text-gray-500" />
-                            <span className="text-sm font-medium">
-                              {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
-                            </span>
-                            <Clock className="h-3 w-3 text-gray-500 ml-2" />
-                            <span className="text-xs text-gray-500">
-                              {new Date(appointment.start_time).toLocaleTimeString('pt-BR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                          
-                          {appointment.procedures?.name && (
-                            <div className="text-xs text-blue-600 mb-1">
-                              {appointment.procedures.name}
-                            </div>
-                          )}
-                          
-                          {appointment.professionals?.name && (
-                            <div className="text-xs text-gray-600 mb-1">
-                              Dr(a). {appointment.professionals.name}
-                            </div>
-                          )}
-                          
-                          {appointment.price && (
-                            <div className="text-xs font-medium text-green-600">
-                              R$ {appointment.price.toFixed(2).replace('.', ',')}
-                            </div>
-                          )}
-                          
-                          {appointment.notes && (
-                            <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                              {appointment.notes}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {selectedAppointments.length > 0 && (
-                  <div className="mt-3 p-2 bg-indigo-50 rounded-md">
-                    <p className="text-sm text-indigo-700">
-                      {selectedAppointments.length} consulta(s) selecionada(s)
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Professional Selection Card */}
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-4 w-4" />
-                Profissional Responsável
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select 
-                value={formData.professional_id} 
-                onValueChange={(value) => setFormData({ ...formData, professional_id: value })}
-              >
-                <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Selecione o profissional responsável pelo prontuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  {professionals.map((prof) => (
-                    <SelectItem key={prof.id} value={prof.id} className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          Dr(a).
-                        </Badge>
-                        {prof.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-          {/* Clinical Notes Card */}
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="h-4 w-4" />
-                Anotações do Prontuário
-                <Badge variant="destructive" className="text-xs">Obrigatório</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={8}
-                placeholder="Registre informações detalhadas sobre o paciente:
-• Estado atual de saúde
-• Diagnósticos realizados
-• Tratamentos aplicados
-• Evolução do quadro clínico
-• Observações importantes
-• Recomendações para acompanhamento futuro"
-                className="text-base resize-none focus:ring-2 focus:ring-green-500"
-                required
-              />
-              <div className="mt-2 text-sm text-gray-500">
-                {formData.notes.length} caracteres
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Prescription Card */}
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Pill className="h-4 w-4" />
-                Receita / Prescrição
-                <Badge variant="secondary" className="text-xs">Opcional</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.prescription}
-                onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
-                rows={6}
-                placeholder="Prescreva medicamentos, tratamentos ou orientações:
-• Medicamentos com dosagem e posologia
-• Tratamentos complementares
-• Recomendações de exames
-• Orientações de retorno
-• Cuidados especiais"
-                className="text-base resize-none focus:ring-2 focus:ring-orange-500"
-              />
-              <div className="mt-2 text-sm text-gray-500">
-                {formData.prescription.length} caracteres
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* File Upload Card */}
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Upload className="h-4 w-4" />
-                Arquivos do Prontuário
-                <Badge variant="secondary" className="text-xs">Opcional</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="file-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-purple-200 rounded-lg p-6 text-center hover:border-purple-300 transition-colors">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-purple-400" />
-                      <p className="text-sm font-medium">Clique para adicionar arquivos</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF, DOC, DOCX, JPG, PNG, TXT (máx. 10MB cada)
-                      </p>
-                    </div>
-                  </Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    onChange={handleFileUpload}
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                    className="hidden"
-                  />
-                </div>
-
-                {/* Lista de arquivos selecionados */}
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm">Arquivos selecionados:</h4>
-                    {uploadedFiles.map((fileData) => (
-                      <div key={fileData.id} className="border rounded-lg p-3 bg-gray-50">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2 flex-1">
-                            <File className="h-4 w-4 text-purple-500" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{fileData.file.name}</p>
-                              <p className="text-xs text-gray-500">{formatFileSize(fileData.file.size)}</p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(fileData.id)}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        
                         <Input
+                          value={fileUpload.description}
+                          onChange={(e) => updateFileDescription(index, e.target.value)}
                           placeholder="Descrição do arquivo (opcional)"
-                          value={fileData.description}
-                          onChange={(e) => updateFileDescription(fileData.id, e.target.value)}
-                          className="text-xs"
+                          className="mt-2 h-8 text-xs"
                         />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Separator />
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              className="px-6"
-              disabled={loading}
-            >
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.professional_id || !formData.notes}
-              className="px-8 bg-blue-600 hover:bg-blue-700"
-            >
+            <Button type="submit" disabled={loading || !title.trim()}>
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                  Salvando...
+                  Criando...
                 </>
               ) : (
-                'Salvar Prontuário'
+                'Criar Prontuário'
               )}
             </Button>
           </div>
