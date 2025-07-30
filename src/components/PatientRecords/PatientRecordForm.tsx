@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, FileText, Pill, Calendar } from 'lucide-react';
+import { User, FileText, Pill, Calendar, Upload, X, File } from 'lucide-react';
 
 interface Professional {
   id: string;
@@ -24,6 +25,12 @@ interface PatientRecordFormProps {
   patientId: string;
 }
 
+interface UploadedFile {
+  file: File;
+  description: string;
+  id: string;
+}
+
 export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordFormProps) {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [formData, setFormData] = useState({
@@ -31,6 +38,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     notes: '',
     prescription: '',
   });
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -61,8 +69,75 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         notes: '',
         prescription: '',
       });
+      setUploadedFiles([]);
     }
   }, [isOpen, user]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Validar tamanho (máx 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Erro',
+          description: `Arquivo ${file.name} muito grande. Tamanho máximo: 10MB`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newFile: UploadedFile = {
+        file,
+        description: '',
+        id: Math.random().toString(36).substring(2),
+      };
+
+      setUploadedFiles(prev => [...prev, newFile]);
+    });
+
+    // Limpar input
+    event.target.value = '';
+  };
+
+  const updateFileDescription = (fileId: string, description: string) => {
+    setUploadedFiles(prev =>
+      prev.map(f => f.id === fileId ? { ...f, description } : f)
+    );
+  };
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const uploadFilesToStorage = async () => {
+    const uploadPromises = uploadedFiles.map(async (fileData) => {
+      const fileExt = fileData.file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${patientId}/${fileName}`;
+
+      // Upload para storage
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, fileData.file);
+
+      if (uploadError) throw uploadError;
+
+      // Retornar dados para inserir no banco
+      return {
+        patient_id: patientId,
+        name: fileData.file.name,
+        file_path: filePath,
+        file_size: fileData.file.size,
+        mime_type: fileData.file.type,
+        description: fileData.description || null,
+        user_id: user!.id,
+      };
+    });
+
+    return Promise.all(uploadPromises);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +145,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // 1. Criar o registro da consulta
+      const { data: recordData, error: recordError } = await supabase
         .from('patient_records')
         .insert({
           patient_id: patientId,
@@ -78,9 +154,28 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
           notes: formData.notes,
           prescription: formData.prescription || null,
           user_id: user.id,
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (recordError) throw recordError;
+
+      // 2. Upload dos arquivos se houver
+      if (uploadedFiles.length > 0) {
+        const fileMetadata = await uploadFilesToStorage();
+        
+        // Associar arquivos ao registro criado
+        const documentsToInsert = fileMetadata.map(meta => ({
+          ...meta,
+          record_id: recordData.id,
+        }));
+
+        const { error: documentsError } = await supabase
+          .from('prontuario_documents')
+          .insert(documentsToInsert);
+
+        if (documentsError) throw documentsError;
+      }
 
       toast({
         title: 'Sucesso',
@@ -100,9 +195,17 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[95vh] overflow-y-auto">
         <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Calendar className="h-5 w-5 text-blue-600" />
@@ -201,6 +304,75 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
             </CardContent>
           </Card>
 
+          {/* File Upload Card */}
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-4 w-4" />
+                Arquivos da Consulta
+                <Badge variant="secondary" className="text-xs">Opcional</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="border-2 border-dashed border-purple-200 rounded-lg p-6 text-center hover:border-purple-300 transition-colors">
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-purple-400" />
+                      <p className="text-sm font-medium">Clique para adicionar arquivos</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PDF, DOC, DOCX, JPG, PNG, TXT (máx. 10MB cada)
+                      </p>
+                    </div>
+                  </Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    onChange={handleFileUpload}
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Lista de arquivos selecionados */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Arquivos selecionados:</h4>
+                    {uploadedFiles.map((fileData) => (
+                      <div key={fileData.id} className="border rounded-lg p-3 bg-gray-50">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            <File className="h-4 w-4 text-purple-500" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{fileData.file.name}</p>
+                              <p className="text-xs text-gray-500">{formatFileSize(fileData.file.size)}</p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(fileData.id)}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Descrição do arquivo (opcional)"
+                          value={fileData.description}
+                          onChange={(e) => updateFileDescription(fileData.id, e.target.value)}
+                          className="text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Separator />
 
           {/* Action Buttons */}
@@ -210,6 +382,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
               variant="outline" 
               onClick={onClose}
               className="px-6"
+              disabled={loading}
             >
               Cancelar
             </Button>
