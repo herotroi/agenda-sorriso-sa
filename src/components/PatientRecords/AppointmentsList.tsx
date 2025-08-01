@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,7 +21,7 @@ export function AppointmentsList({
 }: AppointmentsListProps) {
   if (loading) {
     return (
-      <Card className="h-fit">
+      <Card className="h-[600px]">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center text-lg">
             <Calendar className="h-5 w-5 mr-2" />
@@ -37,7 +36,7 @@ export function AppointmentsList({
   }
 
   return (
-    <Card className="h-fit">
+    <Card className="h-[600px]">
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <CardTitle className="flex items-center text-lg">
@@ -70,7 +69,7 @@ export function AppointmentsList({
             <p>Nenhum procedimento encontrado</p>
           </div>
         ) : (
-          <ScrollArea className="h-[calc(100vh-28rem)] max-h-[400px]">
+          <ScrollArea className="h-[480px]">
             <div className="space-y-2 p-6 pt-0">
               {appointments.map((appointment) => (
                 <div
