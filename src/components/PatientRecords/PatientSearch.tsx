@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { User, Phone, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Patient } from '@/types/prontuario';
 
 interface PatientSearchProps {
@@ -18,16 +18,27 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
   const selectedPatientData = patients.find(p => p.id === selectedPatient);
 
   // Filtrar pacientes baseado no termo de busca
-  const filteredPatients = patients.filter(patient => 
-    patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.cpf?.includes(searchTerm) ||
-    patient.phone?.includes(searchTerm) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPatients = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return patients;
+    }
+    
+    return patients.filter(patient => 
+      patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.cpf?.includes(searchTerm) ||
+      patient.phone?.includes(searchTerm) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [patients, searchTerm]);
 
   const handleClearSelection = () => {
     onPatientSelect('');
     setSearchTerm('');
+  };
+
+  const handlePatientSelect = (patientId: string) => {
+    onPatientSelect(patientId);
+    setSearchTerm(''); // Limpar busca após seleção
   };
 
   return (
@@ -36,7 +47,7 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="Buscar por nome, CPF, telefone ou email..."
+          placeholder="Pesquisar paciente por nome, CPF, telefone ou email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 h-12 text-base"
@@ -53,71 +64,8 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
         )}
       </div>
 
-      {/* Patient Selection */}
-      <Select value={selectedPatient} onValueChange={onPatientSelect}>
-        <SelectTrigger className="h-14 text-base">
-          <SelectValue placeholder="Selecione um paciente da lista..." />
-        </SelectTrigger>
-        <SelectContent className="max-h-60">
-          {filteredPatients.length > 0 ? (
-            filteredPatients.map((patient) => (
-              <SelectItem key={patient.id} value={patient.id} className="py-4">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{patient.full_name}</p>
-                      <div className="flex flex-col gap-1 mt-1">
-                        {patient.phone && (
-                          <span className="text-sm text-gray-500 flex items-center gap-1">
-                            <Phone className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{patient.phone}</span>
-                          </span>
-                        )}
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          {patient.cpf && (
-                            <span className="truncate">CPF: {patient.cpf}</span>
-                          )}
-                          {patient.email && (
-                            <span className="truncate">{patient.email}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Badge 
-                    variant={patient.active ? 'default' : 'secondary'} 
-                    className="text-xs flex-shrink-0"
-                  >
-                    {patient.active ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </div>
-              </SelectItem>
-            ))
-          ) : searchTerm ? (
-            <SelectItem value="no-results" disabled>
-              <div className="text-center py-4 text-gray-500">
-                <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p>Nenhum paciente encontrado</p>
-                <p className="text-sm mt-1">Tente buscar com outros termos</p>
-              </div>
-            </SelectItem>
-          ) : (
-            <SelectItem value="no-patients" disabled>
-              <div className="text-center py-4 text-gray-500">
-                <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p>Nenhum paciente cadastrado</p>
-                <p className="text-sm mt-1">Cadastre pacientes primeiro</p>
-              </div>
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
-
       {/* Selected Patient Info */}
-      {selectedPatientData && (
+      {selectedPatientData && !searchTerm && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
@@ -158,15 +106,76 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
         </div>
       )}
 
-      {/* Search Results Info */}
-      {searchTerm && (
-        <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-          <span className="font-medium">
-            {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} encontrado{filteredPatients.length !== 1 ? 's' : ''}
-          </span>
-          {searchTerm && (
-            <span className="ml-2">para "{searchTerm}"</span>
-          )}
+      {/* Patient List - Shown when searching or no patient selected */}
+      {(searchTerm || !selectedPatient) && (
+        <div className="border rounded-lg">
+          <div className="p-3 border-b bg-gray-50">
+            <h4 className="font-medium text-gray-900">
+              {searchTerm ? (
+                <>
+                  {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} encontrado{filteredPatients.length !== 1 ? 's' : ''}
+                  <span className="ml-2 text-gray-600">para "{searchTerm}"</span>
+                </>
+              ) : (
+                'Selecione um paciente'
+              )}
+            </h4>
+          </div>
+          
+          <ScrollArea className="h-64">
+            {filteredPatients.length > 0 ? (
+              <div className="divide-y">
+                {filteredPatients.map((patient) => (
+                  <button
+                    key={patient.id}
+                    onClick={() => handlePatientSelect(patient.id)}
+                    className="w-full p-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:bg-blue-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
+                          <User className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{patient.full_name}</p>
+                          <div className="flex flex-col gap-1 mt-1">
+                            {patient.phone && (
+                              <span className="text-sm text-gray-500 flex items-center gap-1">
+                                <Phone className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{patient.phone}</span>
+                              </span>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              {patient.cpf && (
+                                <span className="truncate">CPF: {patient.cpf}</span>
+                              )}
+                              {patient.email && (
+                                <span className="truncate">{patient.email}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={patient.active ? 'default' : 'secondary'} 
+                        className="text-xs flex-shrink-0 ml-2"
+                      >
+                        {patient.active ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <Search className="h-12 w-12 mb-4 text-gray-300" />
+                <p className="text-lg font-medium">Nenhum paciente encontrado</p>
+                <p className="text-sm mt-1">
+                  {searchTerm ? 'Tente buscar com outros termos' : 'Cadastre pacientes primeiro'}
+                </p>
+              </div>
+            )}
+          </ScrollArea>
         </div>
       )}
     </div>
