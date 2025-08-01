@@ -31,9 +31,9 @@ interface PatientRecordsListProps {
 export function PatientRecordsList({ records, onEditRecord, loading }: PatientRecordsListProps) {
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="h-fit">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <FileText className="h-5 w-5" />
             Registros do Prontuário
           </CardTitle>
@@ -49,9 +49,9 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
 
   if (records.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="h-fit">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <FileText className="h-5 w-5" />
             Registros do Prontuário
           </CardTitle>
@@ -59,8 +59,8 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
         <CardContent>
           <div className="text-center py-8 text-gray-500">
             <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>Nenhum registro encontrado</p>
-            <p className="text-sm">Os registros do prontuário aparecerão aqui</p>
+            <p className="font-medium">Nenhum registro encontrado</p>
+            <p className="text-sm mt-1">Os registros do prontuário aparecerão aqui</p>
           </div>
         </CardContent>
       </Card>
@@ -68,34 +68,34 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="h-fit">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5" />
-          Registros do Prontuário ({records.length})
+          <span className="truncate">Registros do Prontuário ({records.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-96">
-          <div className="space-y-4">
+      <CardContent className="p-0">
+        <ScrollArea className="h-[calc(100vh-24rem)] max-h-[600px]">
+          <div className="space-y-4 p-6 pt-0">
             {records.map((record) => (
-              <div key={record.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
+              <div key={record.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 truncate">
                       {record.title || 'Consulta sem título'}
                     </h4>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>
+                        <Calendar className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">
                           {format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                         </span>
                       </div>
                       {record.professionals && (
-                        <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          <span>Dr(a). {record.professionals.name}</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                          <User className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">Dr(a). {record.professionals.name}</span>
                         </div>
                       )}
                     </div>
@@ -104,7 +104,7 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
                     variant="outline"
                     size="sm"
                     onClick={() => onEditRecord(record)}
-                    className="ml-2"
+                    className="flex-shrink-0 w-full sm:w-auto"
                   >
                     <Edit className="h-3 w-3 mr-1" />
                     Editar
@@ -112,14 +112,14 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
                 </div>
 
                 {record.appointments?.procedures && (
-                  <Badge variant="secondary" className="mb-2">
+                  <Badge variant="secondary" className="mb-2 text-xs">
                     {record.appointments.procedures.name}
                   </Badge>
                 )}
 
                 {(record.content || record.notes) && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-700 line-clamp-3">
+                    <p className="text-sm text-gray-700 line-clamp-3 break-words">
                       {record.content || record.notes}
                     </p>
                   </div>
@@ -127,7 +127,7 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
 
                 {record.prescription && (
                   <div>
-                    <Badge variant="outline" className="text-green-600 border-green-200">
+                    <Badge variant="outline" className="text-green-600 border-green-200 text-xs">
                       Com receita médica
                     </Badge>
                   </div>

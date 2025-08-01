@@ -100,126 +100,136 @@ export default function Prontuario() {
   const canUseEHR = checkLimit('ehr');
 
   return (
-    <div className="space-y-8 p-6 bg-gray-50 min-h-screen">
-      {/* Header Section */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <FileText className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Prontuário Eletrônico</h1>
-            <p className="text-gray-600">Gerencie consultas e documentos dos pacientes</p>
-          </div>
-        </div>
-
-        <ProntuarioHeader
-          selectedPatient={selectedPatient}
-          onNewAppointment={handleNewAppointment}
-          canCreate={canUseEHR}
-        />
-      </div>
-
-      {/* Subscription Status */}
-      {subscriptionData && (
-        <Card className={`border-l-4 ${canUseEHR ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Shield className={`h-5 w-5 ${canUseEHR ? 'text-green-600' : 'text-amber-600'}`} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold">
-                      Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
-                    </p>
-                    <Badge variant={canUseEHR ? 'default' : 'secondary'} className="text-xs">
-                      {canUseEHR ? 'Ativo' : 'Limitado'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {canUseEHR ? 
-                      'Acesso completo ao prontuário eletrônico' : 
-                      'Visualização permitida - Upgrade necessário para criar registros'
-                    }
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-4 sm:p-6 max-w-7xl space-y-6">
+        {/* Header Section */}
+        <Card className="shadow-sm">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg w-fit">
+                <FileText className="h-6 w-6 text-blue-600" />
               </div>
-              {!canUseEHR && (
-                <Badge variant="outline" className="bg-white">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  Somente leitura
-                </Badge>
-              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                  Prontuário Eletrônico
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  Gerencie consultas e documentos dos pacientes
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Patient Search Section */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold">Buscar Paciente</h2>
-          </div>
-          <PatientSearch
-            patients={patients}
-            selectedPatient={selectedPatient}
-            onPatientSelect={setSelectedPatient}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Main Content */}
-      {selectedPatient ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Patient Records */}
-          <PatientRecordsList
-            records={records}
-            onEditRecord={handleEditRecord}
-            loading={recordsLoading}
-          />
-
-          {/* Right Column - Appointments and Documents */}
-          <div className="space-y-6">
-            <ProntuarioContent
-              appointments={appointments}
-              selectedAppointment={selectedAppointment}
-              onAppointmentSelect={setSelectedAppointment}
-              loading={loading}
-              documents={documents}
-              onDocumentUpload={handleDocumentUploadWithCheck}
-              onDocumentDelete={handleDocumentDelete}
-              onClearSelection={handleClearSelection}
+            <ProntuarioHeader
+              selectedPatient={selectedPatient}
+              onNewAppointment={handleNewAppointment}
               canCreate={canUseEHR}
             />
-          </div>
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-12">
-            <div className="text-center text-gray-500">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold mb-2">Selecione um Paciente</h3>
-              <p>Escolha um paciente na busca acima para visualizar seu prontuário</p>
-            </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Modals */}
-      <PatientRecordForm
-        isOpen={isFormOpen}
-        onClose={handleFormClose}
-        patientId={selectedPatient}
-      />
+        {/* Subscription Status */}
+        {subscriptionData && (
+          <Card className={`border-l-4 ${canUseEHR ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                  <Shield className={`h-5 w-5 flex-shrink-0 mt-0.5 sm:mt-0 ${canUseEHR ? 'text-green-600' : 'text-amber-600'}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <p className="font-semibold text-sm sm:text-base">
+                        Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
+                      </p>
+                      <Badge variant={canUseEHR ? 'default' : 'secondary'} className="text-xs w-fit">
+                        {canUseEHR ? 'Ativo' : 'Limitado'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      {canUseEHR ? 
+                        'Acesso completo ao prontuário eletrônico' : 
+                        'Visualização permitida - Upgrade necessário para criar registros'
+                      }
+                    </p>
+                  </div>
+                </div>
+                {!canUseEHR && (
+                  <Badge variant="outline" className="bg-white flex-shrink-0">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Somente leitura
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      <EditRecordDialog
-        record={editingRecord}
-        isOpen={isEditDialogOpen}
-        onClose={handleEditDialogClose}
-        onRecordUpdated={handleRecordUpdated}
-      />
+        {/* Patient Search Section */}
+        <Card>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <h2 className="text-lg font-semibold">Buscar Paciente</h2>
+            </div>
+            <PatientSearch
+              patients={patients}
+              selectedPatient={selectedPatient}
+              onPatientSelect={setSelectedPatient}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Main Content */}
+        {selectedPatient ? (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Left Column - Patient Records */}
+            <div className="order-2 xl:order-1">
+              <PatientRecordsList
+                records={records}
+                onEditRecord={handleEditRecord}
+                loading={recordsLoading}
+              />
+            </div>
+
+            {/* Right Column - Appointments and Documents */}
+            <div className="order-1 xl:order-2">
+              <ProntuarioContent
+                appointments={appointments}
+                selectedAppointment={selectedAppointment}
+                onAppointmentSelect={setSelectedAppointment}
+                loading={loading}
+                documents={documents}
+                onDocumentUpload={handleDocumentUploadWithCheck}
+                onDocumentDelete={handleDocumentDelete}
+                onClearSelection={handleClearSelection}
+                canCreate={canUseEHR}
+              />
+            </div>
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-8 sm:p-12">
+              <div className="text-center text-gray-500">
+                <FileText className="h-12 sm:h-16 w-12 sm:w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-base sm:text-lg font-semibold mb-2">Selecione um Paciente</h3>
+                <p className="text-sm sm:text-base">Escolha um paciente na busca acima para visualizar seu prontuário</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Modals */}
+        <PatientRecordForm
+          isOpen={isFormOpen}
+          onClose={handleFormClose}
+          patientId={selectedPatient}
+        />
+
+        <EditRecordDialog
+          record={editingRecord}
+          isOpen={isEditDialogOpen}
+          onClose={handleEditDialogClose}
+          onRecordUpdated={handleRecordUpdated}
+        />
+      </div>
     </div>
   );
 }

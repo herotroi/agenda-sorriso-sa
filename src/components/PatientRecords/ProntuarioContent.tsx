@@ -27,8 +27,8 @@ export function ProntuarioContent({
   canCreate,
 }: ProntuarioContentProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left Column - Appointments */}
+    <div className="space-y-6">
+      {/* Appointments */}
       <AppointmentsList
         appointments={appointments}
         selectedAppointment={selectedAppointment}
@@ -37,7 +37,7 @@ export function ProntuarioContent({
         onClearSelection={onClearSelection}
       />
 
-      {/* Right Column - Documents */}
+      {/* Documents */}
       <DocumentManager
         appointmentId={selectedAppointment}
         documents={documents}
