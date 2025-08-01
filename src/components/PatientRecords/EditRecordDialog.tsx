@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Stethoscope, Pill, Calendar, User } from 'lucide-react';
+import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -36,13 +35,32 @@ interface EditRecordDialogProps {
   onRecordUpdated: () => void;
 }
 
+interface Document {
+  id: string;
+  name: string;
+  description?: string;
+  file_size: number;
+  mime_type: string;
+  file_path: string;
+  uploaded_at: string;
+}
+
+interface FileUpload {
+  file: File;
+  description: string;
+  preview?: string;
+}
+
 export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: EditRecordDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     prescription: '',
   });
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -53,14 +71,165 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
         content: record.content || record.notes || '',
         prescription: record.prescription || '',
       });
+      fetchDocuments();
     } else {
       setFormData({
         title: '',
         content: '',
         prescription: '',
       });
+      setDocuments([]);
+      setFiles([]);
     }
   }, [record]);
+
+  const fetchDocuments = async () => {
+    if (!record?.id || !user?.id) return;
+    
+    setLoadingDocs(true);
+    try {
+      const { data, error } = await supabase
+        .from('prontuario_documents')
+        .select('*')
+        .eq('record_id', record.id)
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar documentos',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    
+    selectedFiles.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Erro',
+          description: `Arquivo ${file.name} é muito grande. Máximo 10MB.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newFile: FileUpload = {
+        file,
+        description: '',
+      };
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setFiles(prev => prev.map(f => 
+            f.file.name === file.name ? { ...f, preview: result } : f
+          ));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      setFiles(prev => [...prev, newFile]);
+    });
+    
+    // Reset input
+    event.target.value = '';
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileDescription = (index: number, description: string) => {
+    setFiles(prev => prev.map((f, i) => 
+      i === index ? { ...f, description } : f
+    ));
+  };
+
+  const uploadFile = async (fileUpload: FileUpload) => {
+    if (!record?.id || !user?.id) return;
+
+    const { file, description } = fileUpload;
+    const timestamp = new Date().getTime();
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${record.id}/${timestamp}.${fileExtension}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase
+        .from('prontuario_documents')
+        .insert({
+          name: file.name,
+          description: description || null,
+          file_path: fileName,
+          file_size: file.size,
+          mime_type: file.type,
+          record_id: record.id,
+          user_id: user.id,
+          uploaded_by: user.id,
+        });
+
+      if (dbError) throw dbError;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string, filePath: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('prontuario_documents')
+        .delete()
+        .eq('id', documentId)
+        .eq('user_id', user.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Documento excluído com sucesso',
+      });
+
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir documento',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewDocument = (filePath: string) => {
+    const url = `https://qxsaiuojxdnsanyivcxd.supabase.co/storage/v1/object/public/documents/${filePath}`;
+    window.open(url, '_blank');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,10 +243,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
       return;
     }
 
-    if (!formData.content.trim()) {
+    if (!formData.title.trim()) {
       toast({
         title: 'Erro',
-        description: 'As anotações da consulta são obrigatórias',
+        description: 'Título é obrigatório',
         variant: 'destructive',
       });
       return;
@@ -86,10 +255,11 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
     setLoading(true);
 
     try {
+      // Update record
       const updateData = {
-        title: formData.title.trim() || null,
+        title: formData.title.trim(),
         content: formData.content.trim() || null,
-        notes: formData.content.trim() || null, // Manter compatibilidade com campo notes
+        notes: formData.content.trim() || null,
         prescription: formData.prescription.trim() || null,
         updated_at: new Date().toISOString(),
       };
@@ -102,13 +272,30 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
 
       if (error) throw error;
 
+      // Upload new files
+      if (files.length > 0) {
+        const uploadPromises = files.map(fileUpload => uploadFile(fileUpload));
+        
+        try {
+          await Promise.all(uploadPromises);
+        } catch (uploadError) {
+          console.error('Error uploading some files:', uploadError);
+          toast({
+            title: 'Aviso',
+            description: 'Registro atualizado, mas alguns arquivos não puderam ser enviados',
+            variant: 'default',
+          });
+        }
+      }
+
       toast({
         title: 'Sucesso',
         description: 'Registro atualizado com sucesso',
       });
 
       onRecordUpdated();
-      onClose();
+      fetchDocuments();
+      setFiles([]);
     } catch (error) {
       console.error('Error updating record:', error);
       toast({
@@ -125,7 +312,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -178,7 +365,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
           <div className="space-y-2">
             <Label htmlFor="title" className="text-base font-medium flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Título da Consulta
+              Título da Consulta *
             </Label>
             <Input
               id="title"
@@ -186,28 +373,24 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Ex: Consulta de retorno, Primeira consulta, etc."
               className="h-12"
+              required
             />
-            <p className="text-sm text-gray-500">Campo opcional para identificar o tipo de consulta</p>
           </div>
 
           {/* Anotações da Consulta */}
           <div className="space-y-2">
             <Label htmlFor="content" className="text-base font-medium flex items-center gap-2">
               <Stethoscope className="h-4 w-4" />
-              Anotações da Consulta *
+              Anotações da Consulta
             </Label>
             <Textarea
               id="content"
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
-              rows={8}
-              required
+              rows={6}
               className="resize-none"
             />
-            <p className="text-sm text-gray-500">
-              Descreva detalhadamente o que foi observado e discutido na consulta
-            </p>
           </div>
 
           {/* Receita/Prescrição */}
@@ -221,13 +404,131 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
               value={formData.prescription}
               onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
               placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
-              rows={6}
+              rows={4}
               className="resize-none"
             />
             <p className="text-sm text-gray-500">
               Medicamentos, dosagens e instruções de uso (campo opcional)
             </p>
           </div>
+
+          <Separator />
+
+          {/* Documents Section */}
+          <Card className="border-purple-200 bg-purple-50/30">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold">Documentos e Arquivos</h3>
+              </div>
+
+              {/* Existing Documents */}
+              {loadingDocs ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
+                  <span className="ml-2 text-gray-600">Carregando documentos...</span>
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-gray-700">Documentos Existentes:</h4>
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{doc.name}</p>
+                        {doc.description && (
+                          <p className="text-xs text-gray-500 mt-1">{doc.description}</p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">
+                          {(doc.file_size / 1024 / 1024).toFixed(2)} MB • {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDocument(doc.file_path)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">Nenhum documento anexado ainda.</p>
+              )}
+
+              <Separator />
+
+              {/* Add New Files */}
+              <div>
+                <Label htmlFor="files">Adicionar Novos Arquivos</Label>
+                <Input
+                  id="files"
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
+                </p>
+              </div>
+
+              {files.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-gray-700">Novos Arquivos:</h4>
+                  {files.map((fileUpload, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
+                      {fileUpload.preview && (
+                        <img
+                          src={fileUpload.preview}
+                          alt="Preview"
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        
+                        <Input
+                          value={fileUpload.description}
+                          onChange={(e) => updateFileDescription(index, e.target.value)}
+                          placeholder="Descrição do arquivo (opcional)"
+                          className="mt-2 h-8 text-xs"
+                        />
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Actions */}
           <Separator />
@@ -243,7 +544,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || !formData.content.trim()}
+              disabled={loading || !formData.title.trim()}
               className="sm:w-auto"
             >
               {loading ? (

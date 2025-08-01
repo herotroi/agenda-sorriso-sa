@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope } from 'lucide-react';
+import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill } from 'lucide-react';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -37,6 +36,7 @@ interface FileUpload {
 export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordFormProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [prescription, setPrescription] = useState('');
   const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
@@ -46,7 +46,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Fetch appointments with proper dependency management
   const fetchAppointments = async () => {
     if (!user?.id || !patientId) return;
 
@@ -88,19 +87,17 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
-  // Use useEffect with stable dependencies
   useEffect(() => {
     if (isOpen && patientId && user?.id) {
       fetchAppointments();
     }
   }, [isOpen, patientId, user?.id]);
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
-      // Reset form state when dialog closes
       setTitle('');
       setContent('');
+      setPrescription('');
       setSelectedAppointments([]);
       setFiles([]);
       setAppointments([]);
@@ -111,7 +108,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     const selectedFiles = Array.from(event.target.files || []);
     
     selectedFiles.forEach(file => {
-      // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: 'Erro',
@@ -126,7 +122,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         description: '',
       };
 
-      // Create preview for images
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -163,7 +158,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
   const uploadFile = async (fileUpload: FileUpload, recordId: string) => {
     const { file, description } = fileUpload;
     
-    // Create unique filename with timestamp
     const timestamp = new Date().getTime();
     const fileExtension = file.name.split('.').pop();
     const fileName = `${recordId}/${timestamp}.${fileExtension}`;
@@ -175,7 +169,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
       if (uploadError) throw uploadError;
 
-      // Save file metadata in database using prontuario_documents table
       const { error: dbError } = await supabase
         .from('prontuario_documents')
         .insert({
@@ -231,11 +224,11 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     setLoading(true);
 
     try {
-      // Create patient record with title, content, and notes
       const recordData = {
         title: title.trim(),
         content: content.trim() || null,
-        notes: content.trim() || null, // Map content to notes for compatibility
+        notes: content.trim() || null,
+        prescription: prescription.trim() || null,
         patient_id: patientId,
         user_id: user.id,
         created_by: user.id,
@@ -249,7 +242,6 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
       if (recordError) throw recordError;
 
-      // Associate selected appointments with the record using record_appointments table
       if (selectedAppointments.length > 0) {
         const appointmentAssociations = selectedAppointments.map(appointmentId => ({
           record_id: record.id,
@@ -262,11 +254,9 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
         if (associationError) {
           console.error('Error associating appointments:', associationError);
-          // Don't fail the entire operation for this
         }
       }
 
-      // Upload files
       if (files.length > 0) {
         const uploadPromises = files.map(fileUpload => uploadFile(fileUpload, record.id));
         
@@ -304,7 +294,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -334,14 +324,31 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
               </div>
 
               <div>
-                <Label htmlFor="content">Descrição/Observações</Label>
+                <Label htmlFor="content">Anotações da Consulta</Label>
                 <Textarea
                   id="content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Descreva os detalhes da consulta, observações importantes, etc."
+                  placeholder="Descreva os detalhes da consulta, observações importantes, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
+                  rows={6}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="prescription" className="flex items-center gap-2">
+                  <Pill className="h-4 w-4 text-green-600" />
+                  Receita/Prescrição Médica
+                </Label>
+                <Textarea
+                  id="prescription"
+                  value={prescription}
+                  onChange={(e) => setPrescription(e.target.value)}
+                  placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
                   rows={4}
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Medicamentos, dosagens e instruções de uso (campo opcional)
+                </p>
               </div>
             </CardContent>
           </Card>
