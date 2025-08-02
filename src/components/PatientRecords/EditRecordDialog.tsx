@@ -614,6 +614,9 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-sm text-gray-500">
+              Você pode alterar o agendamento vinculado a este prontuário
+            </p>
           </div>
 
           {/* Anotações da Consulta */}
