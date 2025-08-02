@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill } from 'lucide-react';
+import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill, Download } from 'lucide-react';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -40,6 +40,15 @@ interface FileUpload {
   preview?: string;
 }
 
+interface ExistingDocument {
+  id: string;
+  name: string;
+  description?: string;
+  file_size: number;
+  mime_type: string;
+  file_path: string;
+}
+
 export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: PatientRecordFormProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -47,6 +56,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
   const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
+  const [existingDocuments, setExistingDocuments] = useState<ExistingDocument[]>([]);
+  const [documentsToDelete, setDocumentsToDelete] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingAppointments, setFetchingAppointments] = useState(false);
   
@@ -116,6 +127,28 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
     }
   };
 
+  const fetchExistingDocuments = async (recordId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('prontuario_documents')
+        .select('id, name, description, file_size, mime_type, file_path')
+        .eq('record_id', recordId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching existing documents:', error);
+        return;
+      }
+
+      console.log('Existing documents found:', data?.length || 0);
+      setExistingDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading existing documents:', error);
+    }
+  };
+
   useEffect(() => {
     if (isOpen && patientId && user?.id) {
       fetchAppointments();
@@ -129,6 +162,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setPrescription('');
       setSelectedAppointments([]);
       setFiles([]);
+      setExistingDocuments([]);
+      setDocumentsToDelete([]);
       setAppointments([]);
     } else if (recordToEdit) {
       // Preencher campos para edição
@@ -136,9 +171,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setContent(recordToEdit.content || '');
       setPrescription(recordToEdit.prescription || '');
       
-      // Buscar agendamentos vinculados se estiver editando
+      // Buscar agendamentos vinculados e documentos existentes se estiver editando
       if (recordToEdit.id) {
         fetchLinkedAppointments(recordToEdit.id);
+        fetchExistingDocuments(recordToEdit.id);
       }
     } else {
       // Limpar campos para novo registro
@@ -146,6 +182,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setContent('');
       setPrescription('');
       setSelectedAppointments([]);
+      setExistingDocuments([]);
+      setDocumentsToDelete([]);
     }
   }, [isOpen, recordToEdit]);
 
@@ -192,6 +230,43 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
     ));
   };
 
+  const removeExistingDocument = (documentId: string) => {
+    setDocumentsToDelete(prev => [...prev, documentId]);
+    setExistingDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
+  const updateExistingDocumentDescription = (documentId: string, description: string) => {
+    setExistingDocuments(prev => prev.map(doc => 
+      doc.id === documentId ? { ...doc, description } : doc
+    ));
+  };
+
+  const downloadDocument = async (document: ExistingDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(document.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = document.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao baixar documento',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleAppointmentToggle = (appointmentId: string) => {
     setSelectedAppointments(prev => 
       prev.includes(appointmentId)
@@ -232,6 +307,59 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       console.log('File uploaded successfully:', fileName);
     } catch (error) {
       console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const updateExistingDocuments = async () => {
+    try {
+      // Deletar documentos marcados para exclusão
+      for (const documentId of documentsToDelete) {
+        // Buscar o documento para obter o file_path
+        const { data: docData, error: fetchError } = await supabase
+          .from('prontuario_documents')
+          .select('file_path')
+          .eq('id', documentId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching document for deletion:', fetchError);
+          continue;
+        }
+
+        // Deletar do storage
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove([docData.file_path]);
+
+        if (storageError) {
+          console.error('Error deleting from storage:', storageError);
+        }
+
+        // Deletar do banco
+        const { error: dbError } = await supabase
+          .from('prontuario_documents')
+          .delete()
+          .eq('id', documentId);
+
+        if (dbError) {
+          console.error('Error deleting from database:', dbError);
+        }
+      }
+
+      // Atualizar descrições dos documentos existentes
+      for (const document of existingDocuments) {
+        const { error } = await supabase
+          .from('prontuario_documents')
+          .update({ description: document.description || null })
+          .eq('id', document.id);
+
+        if (error) {
+          console.error('Error updating document description:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating existing documents:', error);
       throw error;
     }
   };
@@ -337,6 +465,9 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
         // Atualizar associações de agendamentos
         await updateAppointmentAssociations(recordToEdit.id, selectedAppointments);
 
+        // Atualizar documentos existentes (deletar marcados e atualizar descrições)
+        await updateExistingDocuments();
+
         toast({
           title: 'Sucesso',
           description: 'Prontuário atualizado com sucesso',
@@ -374,7 +505,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
         });
       }
 
-      // Upload de arquivos (apenas para novos registros ou se houver novos arquivos)
+      // Upload de novos arquivos
       if (files.length > 0) {
         const uploadPromises = files.map(fileUpload => uploadFile(fileUpload, record.id));
         
@@ -407,7 +538,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -554,73 +685,119 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
             </CardContent>
           </Card>
 
-          {/* File Upload - apenas para novos registros */}
-          {!recordToEdit?.id && (
-            <Card className="border-purple-200 bg-purple-50/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-purple-600" />
-                  Documentos e Arquivos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* File Upload and Management */}
+          <Card className="border-purple-200 bg-purple-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Upload className="h-5 w-5 text-purple-600" />
+                Documentos e Arquivos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Documentos existentes (apenas na edição) */}
+              {recordToEdit?.id && existingDocuments.length > 0 && (
                 <div>
-                  <Label htmlFor="files">Adicionar Arquivos</Label>
-                  <Input
-                    id="files"
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                    className="cursor-pointer"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
-                  </p>
-                </div>
-
-                {files.length > 0 && (
-                  <div className="space-y-3">
-                    {files.map((fileUpload, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
-                        {fileUpload.preview && (
-                          <img
-                            src={fileUpload.preview}
-                            alt="Preview"
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        )}
-                        
+                  <Label>Documentos Existentes</Label>
+                  <div className="space-y-3 mt-2">
+                    {existingDocuments.map((document) => (
+                      <div key={document.id} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
+                          <p className="font-medium text-sm truncate">{document.name}</p>
                           <p className="text-xs text-gray-500">
-                            {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
+                            {(document.file_size / 1024 / 1024).toFixed(2)} MB
                           </p>
                           
                           <Input
-                            value={fileUpload.description}
-                            onChange={(e) => updateFileDescription(index, e.target.value)}
+                            value={document.description || ''}
+                            onChange={(e) => updateExistingDocumentDescription(document.id, e.target.value)}
                             placeholder="Descrição do arquivo (opcional)"
                             className="mt-2 h-8 text-xs"
                           />
                         </div>
                         
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => downloadDocument(document)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeExistingDocument(document.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              )}
+
+              {/* Upload de novos arquivos */}
+              <div>
+                <Label htmlFor="files">Adicionar Novos Arquivos</Label>
+                <Input
+                  id="files"
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
+                </p>
+              </div>
+
+              {files.length > 0 && (
+                <div className="space-y-3">
+                  {files.map((fileUpload, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
+                      {fileUpload.preview && (
+                        <img
+                          src={fileUpload.preview}
+                          alt="Preview"
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        
+                        <Input
+                          value={fileUpload.description}
+                          onChange={(e) => updateFileDescription(index, e.target.value)}
+                          placeholder="Descrição do arquivo (opcional)"
+                          className="mt-2 h-8 text-xs"
+                        />
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t">
