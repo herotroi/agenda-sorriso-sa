@@ -29,6 +29,7 @@ export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PatientRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [recordToEditInForm, setRecordToEditInForm] = useState<PatientRecord | null>(null);
   
   const { subscriptionData, loading: subscriptionLoading, checkLimit, showLimitWarning } = useSubscriptionLimits();
   const {
@@ -49,6 +50,7 @@ export default function Prontuario() {
 
   const handleFormClose = () => {
     setIsFormOpen(false);
+    setRecordToEditInForm(null);
     if (selectedPatient) {
       fetchAppointments(selectedPatient);
       refetchRecords();
@@ -60,6 +62,7 @@ export default function Prontuario() {
       showLimitWarning('ehr');
       return;
     }
+    setRecordToEditInForm(null);
     setIsFormOpen(true);
   };
 
@@ -76,8 +79,9 @@ export default function Prontuario() {
   };
 
   const handleEditRecord = (record: PatientRecord) => {
-    setEditingRecord(record);
-    setIsEditDialogOpen(true);
+    // Usar o formulário principal para edição
+    setRecordToEditInForm(record);
+    setIsFormOpen(true);
   };
 
   const handleEditDialogClose = () => {
@@ -221,6 +225,7 @@ export default function Prontuario() {
           isOpen={isFormOpen}
           onClose={handleFormClose}
           patientId={selectedPatient}
+          recordToEdit={recordToEditInForm}
         />
 
         <EditRecordDialog

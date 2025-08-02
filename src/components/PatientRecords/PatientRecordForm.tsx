@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,12 @@ interface PatientRecordFormProps {
   isOpen: boolean;
   onClose: () => void;
   patientId?: string;
+  recordToEdit?: {
+    id: string;
+    title?: string;
+    content?: string;
+    prescription?: string;
+  } | null;
 }
 
 interface Appointment {
@@ -33,7 +40,7 @@ interface FileUpload {
   preview?: string;
 }
 
-export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordFormProps) {
+export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: PatientRecordFormProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [prescription, setPrescription] = useState('');
@@ -87,6 +94,28 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
+  const fetchLinkedAppointments = async (recordId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('record_appointments')
+        .select('appointment_id')
+        .eq('record_id', recordId);
+
+      if (error) {
+        console.error('Error fetching linked appointments:', error);
+        return;
+      }
+
+      const appointmentIds = data?.map(item => item.appointment_id) || [];
+      console.log('Linked appointments found:', appointmentIds);
+      setSelectedAppointments(appointmentIds);
+    } catch (error) {
+      console.error('Error loading linked appointments:', error);
+    }
+  };
+
   useEffect(() => {
     if (isOpen && patientId && user?.id) {
       fetchAppointments();
@@ -101,8 +130,24 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
       setSelectedAppointments([]);
       setFiles([]);
       setAppointments([]);
+    } else if (recordToEdit) {
+      // Preencher campos para edição
+      setTitle(recordToEdit.title || '');
+      setContent(recordToEdit.content || '');
+      setPrescription(recordToEdit.prescription || '');
+      
+      // Buscar agendamentos vinculados se estiver editando
+      if (recordToEdit.id) {
+        fetchLinkedAppointments(recordToEdit.id);
+      }
+    } else {
+      // Limpar campos para novo registro
+      setTitle('');
+      setContent('');
+      setPrescription('');
+      setSelectedAppointments([]);
     }
-  }, [isOpen]);
+  }, [isOpen, recordToEdit]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -191,6 +236,43 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
     }
   };
 
+  const updateAppointmentAssociations = async (recordId: string, newAppointmentIds: string[]) => {
+    try {
+      // Primeiro, remove todas as associações existentes
+      const { error: deleteError } = await supabase
+        .from('record_appointments')
+        .delete()
+        .eq('record_id', recordId);
+
+      if (deleteError) {
+        console.error('Error deleting existing associations:', deleteError);
+        throw deleteError;
+      }
+
+      // Depois, adiciona as novas associações
+      if (newAppointmentIds.length > 0) {
+        const appointmentAssociations = newAppointmentIds.map(appointmentId => ({
+          record_id: recordId,
+          appointment_id: appointmentId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('record_appointments')
+          .insert(appointmentAssociations);
+
+        if (insertError) {
+          console.error('Error inserting new associations:', insertError);
+          throw insertError;
+        }
+      }
+
+      console.log('Appointment associations updated successfully');
+    } catch (error) {
+      console.error('Error updating appointment associations:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -234,29 +316,65 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         created_by: user.id,
       };
 
-      const { data: record, error: recordError } = await supabase
-        .from('patient_records')
-        .insert(recordData)
-        .select()
-        .single();
+      let record;
 
-      if (recordError) throw recordError;
+      if (recordToEdit?.id) {
+        // Atualizar registro existente
+        const { data, error: recordError } = await supabase
+          .from('patient_records')
+          .update({
+            ...recordData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', recordToEdit.id)
+          .eq('user_id', user.id)
+          .select()
+          .single();
 
-      if (selectedAppointments.length > 0) {
-        const appointmentAssociations = selectedAppointments.map(appointmentId => ({
-          record_id: record.id,
-          appointment_id: appointmentId,
-        }));
+        if (recordError) throw recordError;
+        record = data;
 
-        const { error: associationError } = await supabase
-          .from('record_appointments')
-          .insert(appointmentAssociations);
+        // Atualizar associações de agendamentos
+        await updateAppointmentAssociations(recordToEdit.id, selectedAppointments);
 
-        if (associationError) {
-          console.error('Error associating appointments:', associationError);
+        toast({
+          title: 'Sucesso',
+          description: 'Prontuário atualizado com sucesso',
+        });
+      } else {
+        // Criar novo registro
+        const { data, error: recordError } = await supabase
+          .from('patient_records')
+          .insert(recordData)
+          .select()
+          .single();
+
+        if (recordError) throw recordError;
+        record = data;
+
+        // Adicionar associações de agendamentos
+        if (selectedAppointments.length > 0) {
+          const appointmentAssociations = selectedAppointments.map(appointmentId => ({
+            record_id: record.id,
+            appointment_id: appointmentId,
+          }));
+
+          const { error: associationError } = await supabase
+            .from('record_appointments')
+            .insert(appointmentAssociations);
+
+          if (associationError) {
+            console.error('Error associating appointments:', associationError);
+          }
         }
+
+        toast({
+          title: 'Sucesso',
+          description: 'Prontuário criado com sucesso',
+        });
       }
 
+      // Upload de arquivos (apenas para novos registros ou se houver novos arquivos)
       if (files.length > 0) {
         const uploadPromises = files.map(fileUpload => uploadFile(fileUpload, record.id));
         
@@ -266,23 +384,18 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
           console.error('Error uploading some files:', uploadError);
           toast({
             title: 'Aviso',
-            description: 'Prontuário criado, mas alguns arquivos não puderam ser enviados',
+            description: 'Prontuário salvo, mas alguns arquivos não puderam ser enviados',
             variant: 'default',
           });
         }
       }
 
-      toast({
-        title: 'Sucesso',
-        description: 'Prontuário criado com sucesso',
-      });
-
       onClose();
     } catch (error) {
-      console.error('Error creating patient record:', error);
+      console.error('Error saving patient record:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao criar prontuário',
+        description: recordToEdit?.id ? 'Erro ao atualizar prontuário' : 'Erro ao criar prontuário',
         variant: 'destructive',
       });
     } finally {
@@ -298,7 +411,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Novo Prontuário
+            {recordToEdit?.id ? 'Editar Prontuário' : 'Novo Prontuário'}
           </DialogTitle>
         </DialogHeader>
 
@@ -441,71 +554,73 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
             </CardContent>
           </Card>
 
-          {/* File Upload */}
-          <Card className="border-purple-200 bg-purple-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Upload className="h-5 w-5 text-purple-600" />
-                Documentos e Arquivos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="files">Adicionar Arquivos</Label>
-                <Input
-                  id="files"
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                  className="cursor-pointer"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
-                </p>
-              </div>
-
-              {files.length > 0 && (
-                <div className="space-y-3">
-                  {files.map((fileUpload, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
-                      {fileUpload.preview && (
-                        <img
-                          src={fileUpload.preview}
-                          alt="Preview"
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                        
-                        <Input
-                          value={fileUpload.description}
-                          onChange={(e) => updateFileDescription(index, e.target.value)}
-                          placeholder="Descrição do arquivo (opcional)"
-                          className="mt-2 h-8 text-xs"
-                        />
-                      </div>
-                      
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+          {/* File Upload - apenas para novos registros */}
+          {!recordToEdit?.id && (
+            <Card className="border-purple-200 bg-purple-50/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-purple-600" />
+                  Documentos e Arquivos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="files">Adicionar Arquivos</Label>
+                  <Input
+                    id="files"
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formatos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT. Máximo 10MB por arquivo.
+                  </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                {files.length > 0 && (
+                  <div className="space-y-3">
+                    {files.map((fileUpload, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border">
+                        {fileUpload.preview && (
+                          <img
+                            src={fileUpload.preview}
+                            alt="Preview"
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        )}
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{fileUpload.file.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          
+                          <Input
+                            value={fileUpload.description}
+                            onChange={(e) => updateFileDescription(index, e.target.value)}
+                            placeholder="Descrição do arquivo (opcional)"
+                            className="mt-2 h-8 text-xs"
+                          />
+                        </div>
+                        
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t">
@@ -516,10 +631,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId }: PatientRecordF
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                  Criando...
+                  {recordToEdit?.id ? 'Atualizando...' : 'Criando...'}
                 </>
               ) : (
-                'Criar Prontuário'
+                recordToEdit?.id ? 'Atualizar Prontuário' : 'Criar Prontuário'
               )}
             </Button>
           </div>
