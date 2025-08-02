@@ -84,7 +84,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
         title: record.title || '',
         content: record.content || record.notes || '',
         prescription: record.prescription || '',
-        appointment_id: record.appointment_id || '',
+        appointment_id: record.appointment_id || 'none',
       });
       fetchDocuments();
       fetchAppointments();
@@ -93,7 +93,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
         title: '',
         content: '',
         prescription: '',
-        appointment_id: '',
+        appointment_id: 'none',
       });
       setDocuments([]);
       setFiles([]);
@@ -465,7 +465,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
         content: formData.content.trim() || null,
         notes: formData.content.trim() || null,
         prescription: formData.prescription.trim() || null,
-        appointment_id: formData.appointment_id || null,
+        appointment_id: formData.appointment_id === 'none' ? null : formData.appointment_id,
         updated_at: new Date().toISOString(),
       };
 
@@ -606,7 +606,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
                 <SelectValue placeholder={loadingAppointments ? "Carregando agendamentos..." : "Selecione um agendamento"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum agendamento</SelectItem>
+                <SelectItem value="none">Nenhum agendamento</SelectItem>
                 {appointments.map((appointment) => (
                   <SelectItem key={appointment.id} value={appointment.id}>
                     {format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })} - {appointment.procedures?.name || 'Sem procedimento'}
