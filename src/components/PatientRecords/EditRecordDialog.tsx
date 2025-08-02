@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye } from 'lucide-react';
+import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -21,6 +22,7 @@ interface PatientRecord {
   prescription?: string;
   created_at: string;
   updated_at: string;
+  appointment_id?: string;
   professionals?: { name: string };
   appointments?: { 
     start_time: string;
@@ -51,16 +53,28 @@ interface FileUpload {
   preview?: string;
 }
 
+interface Appointment {
+  id: string;
+  start_time: string;
+  end_time: string;
+  procedures: { name: string } | null;
+  professionals: { name: string } | null;
+  patients: { full_name: string } | null;
+}
+
 export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: EditRecordDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     prescription: '',
+    appointment_id: '',
   });
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -70,18 +84,66 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
         title: record.title || '',
         content: record.content || record.notes || '',
         prescription: record.prescription || '',
+        appointment_id: record.appointment_id || '',
       });
       fetchDocuments();
+      fetchAppointments();
     } else {
       setFormData({
         title: '',
         content: '',
         prescription: '',
+        appointment_id: '',
       });
       setDocuments([]);
       setFiles([]);
+      setAppointments([]);
     }
   }, [record]);
+
+  const fetchAppointments = async () => {
+    if (!record?.id || !user?.id) return;
+    
+    setLoadingAppointments(true);
+    try {
+      // Buscar primeiro o patient_id do registro
+      const { data: recordData, error: recordError } = await supabase
+        .from('patient_records')
+        .select('patient_id')
+        .eq('id', record.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (recordError) throw recordError;
+
+      // Buscar agendamentos do paciente
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          procedures(name),
+          professionals(name),
+          patients(full_name)
+        `)
+        .eq('patient_id', recordData.patient_id)
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false });
+
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar agendamentos',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
 
   const fetchDocuments = async () => {
     if (!record?.id || !user?.id) return;
@@ -106,6 +168,152 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
       });
     } finally {
       setLoadingDocs(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!record) return;
+
+    try {
+      // Buscar dados completos para impressão
+      const { data: fullRecord, error } = await supabase
+        .from('patient_records')
+        .select(`
+          *,
+          professionals(name, specialty, crm_cro),
+          appointments(
+            start_time,
+            end_time,
+            procedures(name),
+            patients(
+              full_name,
+              cpf,
+              phone,
+              email,
+              birth_date,
+              gender,
+              street,
+              number,
+              neighborhood,
+              city,
+              state
+            )
+          )
+        `)
+        .eq('id', record.id)
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) throw error;
+
+      // Criar conteúdo HTML para impressão
+      const printContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Prontuário Médico</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .section { margin-bottom: 25px; }
+            .section h3 { background: #f0f0f0; padding: 10px; margin: 0 0 15px 0; border-left: 4px solid #007bff; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+            .info-item { margin-bottom: 8px; }
+            .info-item strong { display: inline-block; min-width: 120px; }
+            .prescription { background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>PRONTUÁRIO MÉDICO</h1>
+            <p><strong>Data do Registro:</strong> ${format(new Date(fullRecord.created_at), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</p>
+          </div>
+
+          <div class="section">
+            <h3>DADOS DO PACIENTE</h3>
+            <div class="info-grid">
+              <div>
+                <div class="info-item"><strong>Nome:</strong> ${fullRecord.appointments?.patients?.full_name || 'Não informado'}</div>
+                <div class="info-item"><strong>CPF:</strong> ${fullRecord.appointments?.patients?.cpf || 'Não informado'}</div>
+                <div class="info-item"><strong>Telefone:</strong> ${fullRecord.appointments?.patients?.phone || 'Não informado'}</div>
+                <div class="info-item"><strong>Email:</strong> ${fullRecord.appointments?.patients?.email || 'Não informado'}</div>
+              </div>
+              <div>
+                <div class="info-item"><strong>Data de Nascimento:</strong> ${fullRecord.appointments?.patients?.birth_date ? format(new Date(fullRecord.appointments.patients.birth_date), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado'}</div>
+                <div class="info-item"><strong>Sexo:</strong> ${fullRecord.appointments?.patients?.gender || 'Não informado'}</div>
+              </div>
+            </div>
+            
+            ${fullRecord.appointments?.patients?.street ? `
+            <div class="info-item"><strong>Endereço:</strong> ${fullRecord.appointments.patients.street}, ${fullRecord.appointments.patients.number || 's/n'} - ${fullRecord.appointments.patients.neighborhood || ''} - ${fullRecord.appointments.patients.city || ''} - ${fullRecord.appointments.patients.state || ''}</div>
+            ` : ''}
+          </div>
+
+          <div class="section">
+            <h3>DADOS DO PROFISSIONAL</h3>
+            <div class="info-item"><strong>Nome:</strong> Dr(a). ${fullRecord.professionals?.name || 'Não informado'}</div>
+            ${fullRecord.professionals?.specialty ? `<div class="info-item"><strong>Especialidade:</strong> ${fullRecord.professionals.specialty}</div>` : ''}
+            ${fullRecord.professionals?.crm_cro ? `<div class="info-item"><strong>CRM/CRO:</strong> ${fullRecord.professionals.crm_cro}</div>` : ''}
+          </div>
+
+          <div class="section">
+            <h3>DADOS DA CONSULTA</h3>
+            <div class="info-item"><strong>Título:</strong> ${fullRecord.title || 'Não informado'}</div>
+            ${fullRecord.appointments ? `
+            <div class="info-item"><strong>Data/Hora:</strong> ${format(new Date(fullRecord.appointments.start_time), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</div>
+            <div class="info-item"><strong>Procedimento:</strong> ${fullRecord.appointments.procedures?.name || 'Não informado'}</div>
+            ` : ''}
+          </div>
+
+          ${fullRecord.content || fullRecord.notes ? `
+          <div class="section">
+            <h3>ANOTAÇÕES DA CONSULTA</h3>
+            <div style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px;">
+              ${fullRecord.content || fullRecord.notes}
+            </div>
+          </div>
+          ` : ''}
+
+          ${fullRecord.prescription ? `
+          <div class="section">
+            <h3>RECEITA/PRESCRIÇÃO MÉDICA</h3>
+            <div class="prescription">
+              <div style="white-space: pre-wrap;">${fullRecord.prescription}</div>
+            </div>
+          </div>
+          ` : ''}
+
+          <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+            <p>Documento gerado em ${format(new Date(), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Abrir janela de impressão
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+        };
+      }
+    } catch (error) {
+      console.error('Error printing record:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao gerar impressão do prontuário',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -141,7 +349,6 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
       setFiles(prev => [...prev, newFile]);
     });
     
-    // Reset input
     event.target.value = '';
   };
 
@@ -194,14 +401,12 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
     if (!user?.id) return;
 
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('documents')
         .remove([filePath]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('prontuario_documents')
         .delete()
@@ -255,12 +460,12 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
     setLoading(true);
 
     try {
-      // Update record
       const updateData = {
         title: formData.title.trim(),
         content: formData.content.trim() || null,
         notes: formData.content.trim() || null,
         prescription: formData.prescription.trim() || null,
+        appointment_id: formData.appointment_id || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -272,7 +477,6 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
 
       if (error) throw error;
 
-      // Upload new files
       if (files.length > 0) {
         const uploadPromises = files.map(fileUpload => uploadFile(fileUpload));
         
@@ -314,16 +518,26 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Editar Registro do Prontuário</DialogTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Última atualização: {format(new Date(record.updated_at), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}
+                </p>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="text-xl">Editar Registro do Prontuário</DialogTitle>
-              <p className="text-sm text-gray-500 mt-1">
-                Última atualização: {format(new Date(record.updated_at), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}
-              </p>
-            </div>
+            <Button 
+              onClick={handlePrint}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir Prontuário
+            </Button>
           </div>
         </DialogHeader>
 
@@ -375,6 +589,31 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
               className="h-12"
               required
             />
+          </div>
+
+          {/* Agendamento Vinculado */}
+          <div className="space-y-2">
+            <Label htmlFor="appointment" className="text-base font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Agendamento Vinculado
+            </Label>
+            <Select 
+              value={formData.appointment_id} 
+              onValueChange={(value) => setFormData({ ...formData, appointment_id: value })}
+              disabled={loadingAppointments}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder={loadingAppointments ? "Carregando agendamentos..." : "Selecione um agendamento"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nenhum agendamento</SelectItem>
+                {appointments.map((appointment) => (
+                  <SelectItem key={appointment.id} value={appointment.id}>
+                    {format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })} - {appointment.procedures?.name || 'Sem procedimento'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Anotações da Consulta */}
