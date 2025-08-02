@@ -62,12 +62,12 @@ export function DocumentUploadDialog({ onDocumentUpload }: DocumentUploadDialogP
       <DialogTrigger asChild>
         <Button size="sm" className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Adicionar
+          Adicionar Documento do Cliente
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Documento</DialogTitle>
+          <DialogTitle>Adicionar Documento do Cliente</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">

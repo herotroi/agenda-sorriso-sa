@@ -13,11 +13,11 @@ export function useProntuario() {
   const { documents, fetchDocuments, handleDocumentUpload, handleDocumentDelete } = useDocumentsData();
 
   const handleDocumentUploadWrapper = async (file: File, description: string) => {
-    return handleDocumentUpload(file, description, selectedPatient, selectedAppointment);
+    return handleDocumentUpload(file, description, selectedPatient);
   };
 
   const handleDocumentDeleteWrapper = async (documentId: string) => {
-    return handleDocumentDelete(documentId, selectedPatient, selectedAppointment);
+    return handleDocumentDelete(documentId, selectedPatient);
   };
 
   useEffect(() => {
@@ -29,15 +29,8 @@ export function useProntuario() {
     }
   }, [selectedPatient]);
 
-  useEffect(() => {
-    if (selectedPatient) {
-      if (selectedAppointment) {
-        fetchDocuments(selectedPatient, selectedAppointment);
-      } else {
-        fetchDocuments(selectedPatient);
-      }
-    }
-  }, [selectedAppointment]);
+  // Remove the effect that filters documents by appointment
+  // Now documents are always shown for the selected patient
 
   return {
     patients,

@@ -10,22 +10,16 @@ export function useDocumentsData() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const fetchDocuments = async (patientId: string, appointmentId?: string) => {
+  const fetchDocuments = async (patientId: string) => {
     if (!user) return;
     
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('prontuario_documents')
         .select('*')
         .eq('patient_id', patientId)
         .eq('user_id', user.id)
         .order('uploaded_at', { ascending: false });
-
-      if (appointmentId) {
-        query = query.eq('appointment_id', appointmentId);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -60,8 +54,7 @@ export function useDocumentsData() {
   const handleDocumentUpload = async (
     file: File, 
     description: string,
-    selectedPatient: string,
-    selectedAppointment: string | null
+    selectedPatient: string
   ) => {
     if (!selectedPatient || !user) {
       toast({
@@ -85,12 +78,11 @@ export function useDocumentsData() {
 
       if (uploadError) throw uploadError;
 
-      // Save document metadata to database
+      // Save document metadata to database (without appointment_id)
       const { error: dbError } = await supabase
         .from('prontuario_documents')
         .insert({
           patient_id: selectedPatient,
-          appointment_id: selectedAppointment,
           name: file.name,
           file_path: filePath,
           file_size: file.size,
@@ -102,15 +94,11 @@ export function useDocumentsData() {
       if (dbError) throw dbError;
 
       // Refresh documents list
-      if (selectedAppointment) {
-        await fetchDocuments(selectedPatient, selectedAppointment);
-      } else {
-        await fetchDocuments(selectedPatient);
-      }
+      await fetchDocuments(selectedPatient);
 
       toast({
         title: 'Sucesso',
-        description: 'Documento enviado com sucesso',
+        description: 'Documento do cliente enviado com sucesso',
       });
     } catch (error) {
       console.error('Error uploading document:', error);
@@ -125,8 +113,7 @@ export function useDocumentsData() {
 
   const handleDocumentDelete = async (
     documentId: string,
-    selectedPatient: string,
-    selectedAppointment: string | null
+    selectedPatient: string
   ) => {
     if (!user) return;
     
@@ -158,11 +145,7 @@ export function useDocumentsData() {
       if (dbError) throw dbError;
 
       // Refresh documents list
-      if (selectedAppointment) {
-        await fetchDocuments(selectedPatient, selectedAppointment);
-      } else {
-        await fetchDocuments(selectedPatient);
-      }
+      await fetchDocuments(selectedPatient);
 
       toast({
         title: 'Sucesso',

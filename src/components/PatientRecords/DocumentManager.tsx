@@ -25,7 +25,6 @@ export function DocumentManager({
     <Card>
       <DocumentManagerHeader
         documents={documents}
-        appointmentId={appointmentId}
         onDocumentUpload={onDocumentUpload}
         canUpload={canUpload}
       />
@@ -33,7 +32,6 @@ export function DocumentManager({
       <CardContent>
         <DocumentList
           documents={documents}
-          appointmentId={appointmentId}
           onDocumentDelete={onDocumentDelete}
           appointments={appointments}
           canDelete={canUpload}
