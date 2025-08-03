@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,18 +20,39 @@ interface PatientRecord {
   prescription?: string;
   created_at: string;
   updated_at: string;
-  professionals?: { name: string };
-  appointments?: { 
-    start_time: string;
-    procedures?: { name: string };
-  };
-  patients?: {
-    name: string;
-    email?: string;
-    phone?: string;
-    birth_date?: string;
-    address?: string;
-  };
+  patient_id?: string;
+  professional_id?: string;
+  appointment_id?: string;
+  user_id: string;
+}
+
+interface Patient {
+  id: string;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  address?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  cpf?: string;
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  specialty?: string;
+  crm_cro?: string;
+}
+
+interface Appointment {
+  id: string;
+  start_time: string;
+  end_time?: string;
+  procedures?: { name: string };
 }
 
 interface RecordDocument {
@@ -51,8 +73,62 @@ interface PatientRecordDetailsDialogProps {
 
 export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientRecordDetailsDialogProps) {
   const [documents, setDocuments] = useState<RecordDocument[]>([]);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [professional, setProfessional] = useState<Professional | null>(null);
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [previewDocument, setPreviewDocument] = useState<RecordDocument | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const { toast } = useToast();
+
+  const fetchRecordData = async (recordData: PatientRecord) => {
+    setLoadingData(true);
+    try {
+      // Buscar dados do paciente
+      if (recordData.patient_id) {
+        const { data: patientData, error: patientError } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('id', recordData.patient_id)
+          .single();
+
+        if (patientError) throw patientError;
+        setPatient(patientData);
+      }
+
+      // Buscar dados do profissional
+      if (recordData.professional_id) {
+        const { data: professionalData, error: professionalError } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('id', recordData.professional_id)
+          .single();
+
+        if (professionalError) throw professionalError;
+        setProfessional(professionalData);
+      }
+
+      // Buscar dados do agendamento
+      if (recordData.appointment_id) {
+        const { data: appointmentData, error: appointmentError } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            procedures(name)
+          `)
+          .eq('id', recordData.appointment_id)
+          .single();
+
+        if (appointmentError) throw appointmentError;
+        setAppointment(appointmentData);
+      }
+    } catch (error) {
+      console.error('Error fetching record data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const fetchDocuments = async (recordId: string) => {
     setLoadingDocs(true);
@@ -76,10 +152,33 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     if (!record) return;
 
     const currentDate = new Date();
+    const patientAddress = patient ? [
+      patient.street,
+      patient.number,
+      patient.neighborhood,
+      patient.city,
+      patient.state
+    ].filter(Boolean).join(', ') : '';
+
+    const documentsHtml = selectedDocuments.length > 0 ? `
+      <div class="documents-section">
+        <div class="section-header">Documentos Anexados (${selectedDocuments.length} selecionados)</div>
+        ${documents.filter(doc => selectedDocuments.includes(doc.id)).map(doc => `
+          <div class="document-item">
+            <div class="document-name">${doc.name}</div>
+            ${doc.description ? `<div>Descrição: ${doc.description}</div>` : ''}
+            <div>Tipo: ${doc.mime_type}</div>
+            <div>Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB</div>
+            <div>Data de Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
     const printContent = `
       <html>
         <head>
-          <title>Prontuário Médico - ${record.patients?.name || 'Paciente'}</title>
+          <title>Prontuário Médico - ${patient?.full_name || 'Paciente'}</title>
           <meta charset="UTF-8">
           <style>
             @media print {
@@ -295,41 +394,47 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             <div class="patient-details">
               <div class="patient-field">
                 <span class="field-label">Nome:</span>
-                <span class="field-value">${record.patients?.name || 'Não informado'}</span>
+                <span class="field-value">${patient?.full_name || 'Não informado'}</span>
               </div>
-              ${record.patients?.birth_date ? `
+              ${patient?.cpf ? `
+                <div class="patient-field">
+                  <span class="field-label">CPF:</span>
+                  <span class="field-value">${patient.cpf}</span>
+                </div>
+              ` : ''}
+              ${patient?.birth_date ? `
                 <div class="patient-field">
                   <span class="field-label">Data Nasc.:</span>
-                  <span class="field-value">${format(new Date(record.patients.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                  <span class="field-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
                 </div>
               ` : ''}
-              ${record.patients?.email ? `
+              ${patient?.email ? `
                 <div class="patient-field">
                   <span class="field-label">Email:</span>
-                  <span class="field-value">${record.patients.email}</span>
+                  <span class="field-value">${patient.email}</span>
                 </div>
               ` : ''}
-              ${record.patients?.phone ? `
+              ${patient?.phone ? `
                 <div class="patient-field">
                   <span class="field-label">Telefone:</span>
-                  <span class="field-value">${record.patients.phone}</span>
+                  <span class="field-value">${patient.phone}</span>
                 </div>
               ` : ''}
-              ${record.patients?.address ? `
+              ${patientAddress ? `
                 <div class="patient-field" style="grid-column: 1 / -1;">
                   <span class="field-label">Endereço:</span>
-                  <span class="field-value">${record.patients.address}</span>
+                  <span class="field-value">${patientAddress}</span>
                 </div>
               ` : ''}
             </div>
           </div>
           
-          ${record.appointments ? `
+          ${appointment ? `
             <div class="appointment-info">
               <h3>Informações da Consulta</h3>
-              <div><strong>Data:</strong> ${format(new Date(record.appointments.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
-              ${record.appointments.procedures ? `<div><strong>Procedimento:</strong> ${record.appointments.procedures.name}</div>` : ''}
-              ${record.professionals ? `<div><strong>Profissional:</strong> Dr(a). ${record.professionals.name}</div>` : ''}
+              <div><strong>Data:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
+              ${appointment.procedures ? `<div><strong>Procedimento:</strong> ${appointment.procedures.name}</div>` : ''}
+              ${professional ? `<div><strong>Profissional:</strong> Dr(a). ${professional.name}</div>` : ''}
             </div>
           ` : ''}
           
@@ -347,24 +452,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             </div>
           ` : ''}
           
-          ${documents.length > 0 ? `
-            <div class="documents-section">
-              <div class="section-header">Documentos Anexados</div>
-              ${documents.map(doc => `
-                <div class="document-item">
-                  <div class="document-name">${doc.name}</div>
-                  ${doc.description ? `<div>Descrição: ${doc.description}</div>` : ''}
-                  <div>Data de Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
-                </div>
-              `).join('')}
-            </div>
-          ` : ''}
+          ${documentsHtml}
           
           <div class="signature-section">
             <div class="signature-box">
               <div class="signature-text">
-                ${record.professionals ? `Dr(a). ${record.professionals.name}` : 'Assinatura do Profissional'}<br>
-                CRO: _______________
+                ${professional ? `Dr(a). ${professional.name}` : 'Assinatura do Profissional'}<br>
+                ${professional?.crm_cro ? `${professional.crm_cro}` : 'CRO: _______________'}
               </div>
             </div>
           </div>
@@ -416,10 +510,36 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     }
   };
 
-  // Fetch documents when record changes
+  const previewDoc = async (doc: RecordDocument) => {
+    if (doc.mime_type.startsWith('image/') || doc.mime_type === 'application/pdf') {
+      setPreviewDocument(doc);
+    } else {
+      toast({
+        title: 'Preview não disponível',
+        description: 'Preview disponível apenas para imagens e PDFs',
+        variant: 'default',
+      });
+    }
+  };
+
+  const getDocumentPreviewUrl = (doc: RecordDocument) => {
+    return `https://qxsaiuojxdnsanyivcxd.supabase.co/storage/v1/object/public/documents/${doc.file_path}`;
+  };
+
+  const toggleDocumentSelection = (docId: string) => {
+    setSelectedDocuments(prev => 
+      prev.includes(docId) 
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  // Fetch data when record changes
   useEffect(() => {
     if (record?.id && isOpen) {
       fetchDocuments(record.id);
+      fetchRecordData(record);
+      setSelectedDocuments([]);
     }
   }, [record?.id, isOpen]);
 
@@ -427,17 +547,25 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[1000px] max-h-[95vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-[1200px] max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <FileText className="h-6 w-6 text-blue-600" />
               Prontuário Médico
             </DialogTitle>
-            <Button onClick={handlePrint} variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Printer className="h-4 w-4 mr-2" />
-              Imprimir Prontuário
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handlePrint} 
+                variant="default" 
+                size="sm" 
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={loadingData}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir Prontuário
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -452,46 +580,63 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                     <User className="h-5 w-5" />
                     Dados do Paciente
                   </h3>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-600">Nome:</span>
-                      <p className="mt-1 font-medium">{record.patients?.name || 'Não informado'}</p>
+                  {loadingData ? (
+                    <div className="animate-pulse space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                     </div>
-                    
-                    {record.patients?.birth_date && (
+                  ) : (
+                    <div className="space-y-2 text-sm">
                       <div>
-                        <span className="font-medium text-gray-600">Data de Nascimento:</span>
-                        <p className="mt-1">{format(new Date(record.patients.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                        <span className="font-medium text-gray-600">Nome:</span>
+                        <p className="mt-1 font-medium">{patient?.full_name || 'Não informado'}</p>
                       </div>
-                    )}
-                    
-                    {record.patients?.email && (
-                      <div>
-                        <span className="font-medium text-gray-600">Email:</span>
-                        <p className="mt-1">{record.patients.email}</p>
-                      </div>
-                    )}
-                    
-                    {record.patients?.phone && (
-                      <div className="flex items-start gap-2">
-                        <Phone className="h-4 w-4 mt-0.5 text-gray-600" />
+                      
+                      {patient?.cpf && (
                         <div>
-                          <span className="font-medium text-gray-600">Telefone:</span>
-                          <p className="mt-1">{record.patients.phone}</p>
+                          <span className="font-medium text-gray-600">CPF:</span>
+                          <p className="mt-1">{patient.cpf}</p>
                         </div>
-                      </div>
-                    )}
-                    
-                    {record.patients?.address && (
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-0.5 text-gray-600" />
+                      )}
+                      
+                      {patient?.birth_date && (
                         <div>
-                          <span className="font-medium text-gray-600">Endereço:</span>
-                          <p className="mt-1">{record.patients.address}</p>
+                          <span className="font-medium text-gray-600">Data de Nascimento:</span>
+                          <p className="mt-1">{format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                      
+                      {patient?.email && (
+                        <div>
+                          <span className="font-medium text-gray-600">Email:</span>
+                          <p className="mt-1">{patient.email}</p>
+                        </div>
+                      )}
+                      
+                      {patient?.phone && (
+                        <div className="flex items-start gap-2">
+                          <Phone className="h-4 w-4 mt-0.5 text-gray-600" />
+                          <div>
+                            <span className="font-medium text-gray-600">Telefone:</span>
+                            <p className="mt-1">{patient.phone}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {patient && (patient.street || patient.city) && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 mt-0.5 text-gray-600" />
+                          <div>
+                            <span className="font-medium text-gray-600">Endereço:</span>
+                            <p className="mt-1">
+                              {[patient.street, patient.number, patient.neighborhood, patient.city, patient.state]
+                                .filter(Boolean).join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Informações da Consulta */}
@@ -508,24 +653,27 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                       <span>Registrado em: {format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
                     </div>
 
-                    {record.professionals && (
+                    {professional && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <User className="h-4 w-4" />
-                        <span>Dr(a). {record.professionals.name}</span>
+                        <span>Dr(a). {professional.name}</span>
+                        {professional.crm_cro && <span>- {professional.crm_cro}</span>}
                       </div>
                     )}
 
-                    {record.appointments?.procedures && (
-                      <Badge variant="secondary" className="w-fit">
-                        {record.appointments.procedures.name}
-                      </Badge>
-                    )}
+                    {appointment && (
+                      <>
+                        {appointment.procedures && (
+                          <Badge variant="secondary" className="w-fit">
+                            {appointment.procedures.name}
+                          </Badge>
+                        )}
 
-                    {record.appointments?.start_time && (
-                      <div>
-                        <span className="font-medium text-gray-600">Data da consulta:</span>
-                        <p className="mt-1">{format(new Date(record.appointments.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
-                      </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Data da consulta:</span>
+                          <p className="mt-1">{format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -563,7 +711,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           {/* Coluna Direita - Documentos */}
           <div>
             <div className="px-6 py-4 border-b bg-gray-50">
-              <h3 className="text-lg font-semibold">Documentos Anexados</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Documentos Anexados</h3>
+                {documents.length > 0 && (
+                  <div className="text-sm text-gray-600">
+                    {selectedDocuments.length} de {documents.length} selecionados para impressão
+                  </div>
+                )}
+              </div>
             </div>
             <ScrollArea className="h-[calc(95vh-140px)] px-6 py-4">
               {loadingDocs ? (
@@ -573,7 +728,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               ) : documents.length > 0 ? (
                 <div className="space-y-3">
                   {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-start justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                    <div key={doc.id} className="flex items-start gap-3 p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                      <Checkbox
+                        checked={selectedDocuments.includes(doc.id)}
+                        onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                      />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium truncate text-sm">{doc.name}</h4>
                         {doc.description && (
@@ -586,14 +745,24 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                           Tamanho: {(doc.file_size / 1024).toFixed(1)} KB
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => downloadDocument(doc)}
-                        className="ml-3 flex-shrink-0"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => previewDoc(doc)}
+                          className="flex-shrink-0"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadDocument(doc)}
+                          className="flex-shrink-0"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -606,6 +775,37 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             </ScrollArea>
           </div>
         </div>
+
+        {/* Preview Modal */}
+        {previewDocument && (
+          <Dialog open={!!previewDocument} onOpenChange={() => setPreviewDocument(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+              <DialogHeader>
+                <DialogTitle>{previewDocument.name}</DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 overflow-hidden">
+                {previewDocument.mime_type.startsWith('image/') ? (
+                  <img 
+                    src={getDocumentPreviewUrl(previewDocument)} 
+                    alt={previewDocument.name}
+                    className="max-w-full max-h-full object-contain mx-auto"
+                  />
+                ) : previewDocument.mime_type === 'application/pdf' ? (
+                  <iframe
+                    src={getDocumentPreviewUrl(previewDocument)}
+                    className="w-full h-[70vh]"
+                    title={previewDocument.name}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Preview não disponível para este tipo de arquivo</p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   );
