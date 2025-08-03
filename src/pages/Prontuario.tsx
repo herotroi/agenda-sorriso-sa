@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm';
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
@@ -13,18 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, Shield, Users, Calendar } from 'lucide-react';
-
-interface PatientRecord {
-  id: string;
-  title?: string;
-  content?: string;
-  notes?: string;
-  prescription?: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  professionals?: { name: string };
-}
+import { PatientRecord } from '@/types/prontuario';
 
 export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);

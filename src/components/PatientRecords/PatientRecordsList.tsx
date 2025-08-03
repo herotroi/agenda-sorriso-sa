@@ -7,22 +7,7 @@ import { FileText, Edit, Calendar, User, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PatientRecordDetailsDialog } from './PatientRecordDetailsDialog';
-
-interface PatientRecord {
-  id: string;
-  title?: string;
-  content?: string;
-  notes?: string;
-  prescription?: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  professionals?: { name: string };
-  appointments?: { 
-    start_time: string;
-    procedures?: { name: string };
-  };
-}
+import { PatientRecord } from '@/types/prontuario';
 
 interface PatientRecordsListProps {
   records: PatientRecord[];

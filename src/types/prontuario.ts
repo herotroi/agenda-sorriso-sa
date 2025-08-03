@@ -18,6 +18,23 @@ export interface Appointment {
   professionals: { name: string } | null;
 }
 
+export interface PatientRecord {
+  id: string;
+  title?: string;
+  content?: string;
+  notes?: string;
+  prescription?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  patient_id?: string;
+  professionals?: { name: string };
+  appointments?: { 
+    start_time: string;
+    procedures?: { name: string };
+  };
+}
+
 export interface ProntuarioDocument {
   id: string;
   name: string;

@@ -3,21 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface PatientRecord {
-  id: string;
-  title?: string;
-  content?: string;
-  notes?: string;
-  prescription?: string;
-  created_at: string;
-  updated_at: string;
-  professionals?: { name: string };
-  appointments?: { 
-    start_time: string;
-    procedures?: { name: string };
-  };
-}
+import { PatientRecord } from '@/types/prontuario';
 
 export function usePatientRecords(patientId: string) {
   const [records, setRecords] = useState<PatientRecord[]>([]);
