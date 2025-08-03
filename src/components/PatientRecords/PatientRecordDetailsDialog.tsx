@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye } from 'lucide-react';
+import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye, IdCard, Mail, Users, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +38,13 @@ interface Patient {
   city?: string;
   state?: string;
   cpf?: string;
+  gender?: string;
+  responsible_name?: string;
+  responsible_cpf?: string;
+  profession?: string;
+  marital_status?: string;
+  sus_card?: string;
+  health_insurance?: string;
 }
 
 interface Professional {
@@ -262,22 +268,26 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .patient-details {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 10px;
+              gap: 15px;
             }
             
             .patient-field {
-              margin-bottom: 8px;
+              margin-bottom: 10px;
             }
             
             .field-label {
               font-weight: bold;
               display: inline-block;
-              width: 120px;
+              width: 140px;
               font-size: 11pt;
             }
             
             .field-value {
               font-size: 11pt;
+            }
+            
+            .full-width {
+              grid-column: 1 / -1;
             }
             
             .medical-section {
@@ -385,45 +395,91 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </div>
           
           <div class="document-info">
-            <div class="document-number">Documento Nº: ${record.id.substring(0, 8).toUpperCase()}</div>
+            <div class="document-number">Prontuário Nº: ${record.id.substring(0, 8).toUpperCase()}</div>
             <div class="print-date">Impresso em: ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
           </div>
           
           <div class="patient-info">
-            <h2>Dados do Paciente</h2>
+            <h2>Identificação do Paciente</h2>
             <div class="patient-details">
-              <div class="patient-field">
-                <span class="field-label">Nome:</span>
+              <div class="patient-field full-width">
+                <span class="field-label">Nome Completo:</span>
                 <span class="field-value">${patient?.full_name || 'Não informado'}</span>
               </div>
-              ${patient?.cpf ? `
-                <div class="patient-field">
-                  <span class="field-label">CPF:</span>
-                  <span class="field-value">${patient.cpf}</span>
-                </div>
-              ` : ''}
+              
+              <div class="patient-field">
+                <span class="field-label">CPF:</span>
+                <span class="field-value">${patient?.cpf || 'Não informado'}</span>
+              </div>
+              
               ${patient?.birth_date ? `
                 <div class="patient-field">
-                  <span class="field-label">Data Nasc.:</span>
+                  <span class="field-label">Data de Nascimento:</span>
                   <span class="field-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
                 </div>
               ` : ''}
+              
+              <div class="patient-field">
+                <span class="field-label">Sexo:</span>
+                <span class="field-value">${patient?.gender || 'Não informado'}</span>
+              </div>
+              
+              <div class="patient-field">
+                <span class="field-label">Estado Civil:</span>
+                <span class="field-value">${patient?.marital_status || 'Não informado'}</span>
+              </div>
+              
+              <div class="patient-field">
+                <span class="field-label">Profissão:</span>
+                <span class="field-value">${patient?.profession || 'Não informado'}</span>
+              </div>
+              
+              ${patient?.responsible_name ? `
+                <div class="patient-field">
+                  <span class="field-label">Responsável:</span>
+                  <span class="field-value">${patient.responsible_name}</span>
+                </div>
+              ` : ''}
+              
+              ${patient?.responsible_cpf ? `
+                <div class="patient-field">
+                  <span class="field-label">CPF Responsável:</span>
+                  <span class="field-value">${patient.responsible_cpf}</span>
+                </div>
+              ` : ''}
+              
+              ${patientAddress ? `
+                <div class="patient-field full-width">
+                  <span class="field-label">Endereço Completo:</span>
+                  <span class="field-value">${patientAddress}</span>
+                </div>
+              ` : ''}
+              
               ${patient?.email ? `
                 <div class="patient-field">
                   <span class="field-label">Email:</span>
                   <span class="field-value">${patient.email}</span>
                 </div>
               ` : ''}
+              
               ${patient?.phone ? `
                 <div class="patient-field">
                   <span class="field-label">Telefone:</span>
                   <span class="field-value">${patient.phone}</span>
                 </div>
               ` : ''}
-              ${patientAddress ? `
-                <div class="patient-field" style="grid-column: 1 / -1;">
-                  <span class="field-label">Endereço:</span>
-                  <span class="field-value">${patientAddress}</span>
+              
+              ${patient?.sus_card ? `
+                <div class="patient-field">
+                  <span class="field-label">Cartão SUS:</span>
+                  <span class="field-value">${patient.sus_card}</span>
+                </div>
+              ` : ''}
+              
+              ${patient?.health_insurance ? `
+                <div class="patient-field">
+                  <span class="field-label">Plano de Saúde:</span>
+                  <span class="field-value">${patient.health_insurance}</span>
                 </div>
               ` : ''}
             </div>
@@ -432,9 +488,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           ${appointment ? `
             <div class="appointment-info">
               <h3>Informações da Consulta</h3>
-              <div><strong>Data:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
+              <div><strong>Data da Consulta:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
               ${appointment.procedures ? `<div><strong>Procedimento:</strong> ${appointment.procedures.name}</div>` : ''}
-              ${professional ? `<div><strong>Profissional:</strong> Dr(a). ${professional.name}</div>` : ''}
+              ${professional ? `<div><strong>Profissional Responsável:</strong> Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</div>` : ''}
             </div>
           ` : ''}
           
@@ -470,7 +526,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           
           <div class="medical-footer">
             Sistema de Prontuário Eletrônico - Documento gerado automaticamente<br>
-            Data do registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            Prontuário Nº: ${record.id.substring(0, 8).toUpperCase()} | Data do registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
           </div>
         </body>
       </html>
@@ -578,7 +634,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 <div className="bg-blue-50 rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-800">
                     <User className="h-5 w-5" />
-                    Dados do Paciente
+                    Identificação do Paciente
                   </h3>
                   {loadingData ? (
                     <div className="animate-pulse space-y-2">
@@ -586,53 +642,135 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                       <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                     </div>
                   ) : (
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3 text-sm">
                       <div>
-                        <span className="font-medium text-gray-600">Nome:</span>
+                        <span className="font-medium text-gray-600 flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          Nome Completo:
+                        </span>
                         <p className="mt-1 font-medium">{patient?.full_name || 'Não informado'}</p>
                       </div>
-                      
-                      {patient?.cpf && (
-                        <div>
-                          <span className="font-medium text-gray-600">CPF:</span>
-                          <p className="mt-1">{patient.cpf}</p>
-                        </div>
-                      )}
-                      
-                      {patient?.birth_date && (
-                        <div>
-                          <span className="font-medium text-gray-600">Data de Nascimento:</span>
-                          <p className="mt-1">{format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                        </div>
-                      )}
-                      
-                      {patient?.email && (
-                        <div>
-                          <span className="font-medium text-gray-600">Email:</span>
-                          <p className="mt-1">{patient.email}</p>
-                        </div>
-                      )}
-                      
-                      {patient?.phone && (
-                        <div className="flex items-start gap-2">
-                          <Phone className="h-4 w-4 mt-0.5 text-gray-600" />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        {patient?.cpf && (
                           <div>
-                            <span className="font-medium text-gray-600">Telefone:</span>
-                            <p className="mt-1">{patient.phone}</p>
+                            <span className="font-medium text-gray-600 flex items-center gap-1">
+                              <IdCard className="h-4 w-4" />
+                              CPF:
+                            </span>
+                            <p className="mt-1">{patient.cpf}</p>
                           </div>
+                        )}
+                        
+                        {patient?.birth_date && (
+                          <div>
+                            <span className="font-medium text-gray-600 flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              Data de Nascimento:
+                            </span>
+                            <p className="mt-1">{format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="font-medium text-gray-600">Sexo:</span>
+                          <p className="mt-1">{patient?.gender || 'Não informado'}</p>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium text-gray-600">Estado Civil:</span>
+                          <p className="mt-1">{patient?.marital_status || 'Não informado'}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="font-medium text-gray-600">Profissão:</span>
+                        <p className="mt-1">{patient?.profession || 'Não informado'}</p>
+                      </div>
+
+                      {/* Dados do Responsável */}
+                      {(patient?.responsible_name || patient?.responsible_cpf) && (
+                        <div className="border-t pt-3">
+                          <h4 className="font-medium text-gray-700 flex items-center gap-1 mb-2">
+                            <Users className="h-4 w-4" />
+                            Responsável
+                          </h4>
+                          {patient?.responsible_name && (
+                            <div className="mb-2">
+                              <span className="font-medium text-gray-600">Nome:</span>
+                              <p className="mt-1">{patient.responsible_name}</p>
+                            </div>
+                          )}
+                          {patient?.responsible_cpf && (
+                            <div>
+                              <span className="font-medium text-gray-600">CPF:</span>
+                              <p className="mt-1">{patient.responsible_cpf}</p>
+                            </div>
+                          )}
                         </div>
                       )}
-                      
+
+                      {/* Endereço */}
                       {patient && (patient.street || patient.city) && (
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 mt-0.5 text-gray-600" />
-                          <div>
-                            <span className="font-medium text-gray-600">Endereço:</span>
-                            <p className="mt-1">
-                              {[patient.street, patient.number, patient.neighborhood, patient.city, patient.state]
-                                .filter(Boolean).join(', ')}
-                            </p>
+                        <div className="border-t pt-3">
+                          <span className="font-medium text-gray-600 flex items-center gap-1 mb-2">
+                            <Home className="h-4 w-4" />
+                            Endereço Completo:
+                          </span>
+                          <p className="mt-1 leading-relaxed">
+                            {[
+                              patient.street,
+                              patient.number,
+                              patient.neighborhood,
+                              patient.city,
+                              patient.state
+                            ].filter(Boolean).join(', ')}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Contato */}
+                      <div className="border-t pt-3">
+                        <h4 className="font-medium text-gray-700 mb-2">Informações de Contato</h4>
+                        {patient?.phone && (
+                          <div className="flex items-start gap-2 mb-2">
+                            <Phone className="h-4 w-4 mt-0.5 text-gray-600" />
+                            <div>
+                              <span className="font-medium text-gray-600">Telefone:</span>
+                              <p className="mt-1">{patient.phone}</p>
+                            </div>
                           </div>
+                        )}
+                        
+                        {patient?.email && (
+                          <div className="flex items-start gap-2">
+                            <Mail className="h-4 w-4 mt-0.5 text-gray-600" />
+                            <div>
+                              <span className="font-medium text-gray-600">Email:</span>
+                              <p className="mt-1">{patient.email}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Informações Adicionais */}
+                      {(patient?.sus_card || patient?.health_insurance) && (
+                        <div className="border-t pt-3">
+                          <h4 className="font-medium text-gray-700 mb-2">Informações de Saúde</h4>
+                          {patient?.sus_card && (
+                            <div className="mb-2">
+                              <span className="font-medium text-gray-600">Cartão SUS:</span>
+                              <p className="mt-1">{patient.sus_card}</p>
+                            </div>
+                          )}
+                          {patient?.health_insurance && (
+                            <div>
+                              <span className="font-medium text-gray-600">Plano de Saúde:</span>
+                              <p className="mt-1">{patient.health_insurance}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -643,6 +781,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Informações da Consulta</h3>
                   <div className="space-y-3">
+                    <div>
+                      <span className="font-medium text-gray-600">Número do Prontuário:</span>
+                      <p className="mt-1 font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                        {record.id.substring(0, 8).toUpperCase()}
+                      </p>
+                    </div>
+
                     <div>
                       <span className="font-medium text-gray-600">Título:</span>
                       <p className="mt-1">{record.title || 'Sem título'}</p>
@@ -658,6 +803,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         <User className="h-4 w-4" />
                         <span>Dr(a). {professional.name}</span>
                         {professional.crm_cro && <span>- {professional.crm_cro}</span>}
+                        {professional.specialty && <span>({professional.specialty})</span>}
                       </div>
                     )}
 
