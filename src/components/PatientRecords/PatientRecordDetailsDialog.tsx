@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,7 +26,7 @@ interface PatientRecord {
   };
 }
 
-interface Document {
+interface RecordDocument {
   id: string;
   name: string;
   description?: string;
@@ -43,7 +43,7 @@ interface PatientRecordDetailsDialogProps {
 }
 
 export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientRecordDetailsDialogProps) {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<RecordDocument[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const { toast } = useToast();
 
@@ -51,7 +51,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     setLoadingDocs(true);
     try {
       const { data, error } = await supabase
-        .from('documents')
+        .from('prontuario_documents')
         .select('*')
         .eq('record_id', recordId)
         .order('uploaded_at', { ascending: false });
@@ -127,7 +127,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     }
   };
 
-  const downloadDocument = async (doc: Document) => {
+  const downloadDocument = async (doc: RecordDocument) => {
     try {
       const { data, error } = await supabase.storage
         .from('documents')
@@ -154,7 +154,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   };
 
   // Fetch documents when record changes
-  useState(() => {
+  useEffect(() => {
     if (record?.id && isOpen) {
       fetchDocuments(record.id);
     }
