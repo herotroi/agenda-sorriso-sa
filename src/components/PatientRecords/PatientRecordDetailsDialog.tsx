@@ -166,56 +166,76 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       patient.state
     ].filter(Boolean).join(', ') : '';
 
-    // Buscar URLs dos documentos selecionados para incluir na impressão
+    // Buscar e incorporar documentos selecionados
     const selectedDocs = documents.filter(doc => selectedDocuments.includes(doc.id));
     let documentsEmbedHtml = '';
 
     if (selectedDocs.length > 0) {
+      const documentPromises = selectedDocs.map(async (doc) => {
+        const docUrl = getDocumentPreviewUrl(doc);
+        
+        if (doc.mime_type.startsWith('image/')) {
+          return `
+            <div class="document-embed">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+                <div class="document-meta">
+                  Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
+                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
+                </div>
+              </div>
+              <div class="document-image-container">
+                <img src="${docUrl}" alt="${doc.name}" class="document-image" onload="this.style.opacity=1" />
+              </div>
+            </div>
+          `;
+        } else if (doc.mime_type === 'application/pdf') {
+          return `
+            <div class="document-embed">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+                <div class="document-meta">
+                  Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
+                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
+                </div>
+              </div>
+              <div class="pdf-embed-container">
+                <iframe src="${docUrl}" class="pdf-embed" title="${doc.name}"></iframe>
+                <div class="pdf-fallback">
+                  <p><strong>Documento PDF:</strong> ${doc.name}</p>
+                  <p>Caso não seja possível visualizar, acesse: ${docUrl}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="document-embed">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+                <div class="document-meta">
+                  Tipo: ${doc.mime_type} | Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
+                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
+                </div>
+              </div>
+              <div class="file-info">
+                <p>Arquivo: ${doc.name}</p>
+                <p>Para visualizar: ${docUrl}</p>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      const resolvedDocuments = await Promise.all(documentPromises);
+      
       documentsEmbedHtml = `
         <div class="documents-section">
-          <div class="section-header">Documentos Anexados (${selectedDocs.length} selecionados)</div>
-          ${await Promise.all(selectedDocs.map(async (doc) => {
-            if (doc.mime_type.startsWith('image/')) {
-              return `
-                <div class="document-embed">
-                  <div class="document-title">${doc.name}</div>
-                  ${doc.description ? `<div class="document-description">Descrição: ${doc.description}</div>` : ''}
-                  <div class="document-meta">
-                    Tipo: ${doc.mime_type} | Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB | 
-                    Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </div>
-                  <img src="${getDocumentPreviewUrl(doc)}" alt="${doc.name}" class="document-image" />
-                </div>
-              `;
-            } else if (doc.mime_type === 'application/pdf') {
-              return `
-                <div class="document-embed">
-                  <div class="document-title">${doc.name}</div>
-                  ${doc.description ? `<div class="document-description">Descrição: ${doc.description}</div>` : ''}
-                  <div class="document-meta">
-                    Tipo: ${doc.mime_type} | Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB | 
-                    Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </div>
-                  <div class="pdf-placeholder">
-                    <div class="pdf-icon">📄</div>
-                    <div>Documento PDF: ${doc.name}</div>
-                    <div class="pdf-note">Para visualizar este documento PDF, acesse o link: ${getDocumentPreviewUrl(doc)}</div>
-                  </div>
-                </div>
-              `;
-            } else {
-              return `
-                <div class="document-embed">
-                  <div class="document-title">${doc.name}</div>
-                  ${doc.description ? `<div class="document-description">Descrição: ${doc.description}</div>` : ''}
-                  <div class="document-meta">
-                    Tipo: ${doc.mime_type} | Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB | 
-                    Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </div>
-                </div>
-              `;
-            }
-          })).then(results => results.join(''))}
+          <h3 class="section-title">Documentos Anexados (${selectedDocs.length})</h3>
+          ${resolvedDocuments.join('')}
         </div>
       `;
     }
@@ -228,12 +248,21 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 1.5cm; 
+                margin: 1cm; 
                 size: A4; 
               }
               body { 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
+              }
+              .document-image {
+                max-width: 100% !important;
+                page-break-inside: avoid;
+              }
+              .pdf-embed {
+                width: 100% !important;
+                height: 500px !important;
+                page-break-inside: avoid;
               }
             }
             
@@ -279,18 +308,19 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .patient-info {
               margin-bottom: 20px;
-              border: 1px solid #000;
+              border: 2px solid #000;
               background-color: #fafafa;
             }
             
             .patient-info h2 {
               margin: 0;
-              font-size: 12pt;
+              font-size: 14pt;
               font-weight: bold;
               text-transform: uppercase;
               background-color: #e0e0e0;
-              padding: 8px;
+              padding: 10px;
               border-bottom: 1px solid #000;
+              text-align: center;
             }
             
             .patient-grid {
@@ -301,11 +331,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .patient-field {
-              padding: 4px 8px;
-              border-right: 1px solid #ddd;
-              border-bottom: 1px solid #ddd;
-              display: flex;
+              padding: 6px 12px;
+              border-right: 1px solid #ccc;
+              border-bottom: 1px solid #ccc;
               font-size: 10pt;
+              min-height: 20px;
+              display: flex;
+              align-items: center;
             }
             
             .patient-field:nth-child(even) {
@@ -319,8 +351,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .field-label {
               font-weight: bold;
-              min-width: 120px;
+              min-width: 100px;
               margin-right: 8px;
+              color: #333;
             }
             
             .field-value {
@@ -334,21 +367,21 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .section-header {
               background-color: #e9ecef;
-              padding: 8px;
-              margin-bottom: 8px;
+              padding: 10px;
+              margin-bottom: 10px;
               border-left: 4px solid #007bff;
               font-weight: bold;
-              font-size: 11pt;
+              font-size: 12pt;
               text-transform: uppercase;
             }
             
             .section-content {
-              padding: 12px;
+              padding: 15px;
               border: 1px solid #ddd;
               background-color: #fff;
-              min-height: 60px;
+              min-height: 80px;
               white-space: pre-wrap;
-              font-size: 10pt;
+              font-size: 11pt;
               line-height: 1.6;
             }
             
@@ -359,81 +392,114 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .appointment-info {
               background-color: #fff9e6;
-              border: 1px solid #ffe066;
-              padding: 12px;
-              margin-bottom: 16px;
+              border: 2px solid #ffe066;
+              padding: 15px;
+              margin-bottom: 20px;
               border-radius: 4px;
             }
             
             .appointment-info h3 {
-              margin: 0 0 8px 0;
-              font-size: 11pt;
+              margin: 0 0 10px 0;
+              font-size: 12pt;
               color: #8b6914;
             }
             
             .appointment-info div {
-              margin-bottom: 4px;
-              font-size: 10pt;
-            }
-            
-            .documents-section {
-              margin-top: 20px;
-              page-break-inside: avoid;
-            }
-            
-            .document-embed {
-              margin-bottom: 20px;
-              padding: 10px;
-              border: 1px solid #ddd;
-              background-color: #f9f9f9;
-              page-break-inside: avoid;
-            }
-            
-            .document-title {
-              font-weight: bold;
-              margin-bottom: 4px;
+              margin-bottom: 5px;
               font-size: 11pt;
             }
             
+            .documents-section {
+              margin-top: 30px;
+              page-break-before: auto;
+            }
+            
+            .section-title {
+              background-color: #e9ecef;
+              padding: 10px;
+              margin-bottom: 15px;
+              border-left: 4px solid #007bff;
+              font-weight: bold;
+              font-size: 12pt;
+              text-transform: uppercase;
+            }
+            
+            .document-embed {
+              margin-bottom: 25px;
+              padding: 15px;
+              border: 2px solid #ddd;
+              background-color: #fafafa;
+              page-break-inside: avoid;
+              border-radius: 5px;
+            }
+            
+            .document-header h4 {
+              font-weight: bold;
+              margin: 0 0 5px 0;
+              font-size: 12pt;
+              color: #333;
+            }
+            
             .document-description {
-              margin-bottom: 4px;
+              margin: 5px 0;
               font-style: italic;
               color: #666;
               font-size: 10pt;
             }
             
             .document-meta {
-              margin-bottom: 8px;
+              margin-bottom: 10px;
               font-size: 9pt;
               color: #666;
+              border-bottom: 1px dotted #ccc;
+              padding-bottom: 5px;
+            }
+            
+            .document-image-container {
+              text-align: center;
+              margin: 15px 0;
+              page-break-inside: avoid;
             }
             
             .document-image {
               max-width: 100%;
-              max-height: 400px;
-              margin: 10px 0;
-              border: 1px solid #ddd;
-              display: block;
+              max-height: 600px;
+              border: 2px solid #ddd;
+              border-radius: 5px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              opacity: 0;
+              transition: opacity 0.3s;
             }
             
-            .pdf-placeholder {
+            .pdf-embed-container {
+              margin: 15px 0;
               text-align: center;
-              padding: 20px;
+              page-break-inside: avoid;
+            }
+            
+            .pdf-fallback {
+              margin-top: 10px;
+              padding: 10px;
               background-color: #f0f0f0;
-              border: 2px dashed #ccc;
-              margin: 10px 0;
+              border: 1px dashed #ccc;
+              font-size: 10pt;
             }
             
-            .pdf-icon {
-              font-size: 24pt;
-              margin-bottom: 8px;
+            .pdf-fallback p {
+              margin: 5px 0;
             }
             
-            .pdf-note {
-              font-size: 9pt;
-              color: #666;
-              margin-top: 8px;
-              word-break: break-all;
+            .file-info {
+              margin: 15px 0;
+              padding: 10px;
+              background-color: #f0f0f0;
+              border: 1px solid #ddd;
+              border-radius: 3px;
+              font-size: 10pt;
+            }
+            
+            .file-info p {
+              margin: 5px 0;
             }
             
             .signature-section {
@@ -489,7 +555,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             <h2>Identificação do Paciente</h2>
             <div class="patient-grid">
               <div class="patient-field full-width">
-                <span class="field-label">Nome Completo:</span>
+                <span class="field-label">Nome:</span>
                 <span class="field-value">${patient?.full_name || 'Não informado'}</span>
               </div>
               
@@ -500,12 +566,12 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               ${patient?.birth_date ? `
                 <div class="patient-field">
-                  <span class="field-label">Data de Nascimento:</span>
+                  <span class="field-label">Nascimento:</span>
                   <span class="field-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
                 </div>
               ` : `
                 <div class="patient-field">
-                  <span class="field-label">Data de Nascimento:</span>
+                  <span class="field-label">Nascimento:</span>
                   <span class="field-value">Não informado</span>
                 </div>
               `}
@@ -530,23 +596,17 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 <span class="field-value">${patient?.phone || 'Não informado'}</span>
               </div>
               
-              <div class="patient-field">
-                <span class="field-label">Email:</span>
-                <span class="field-value">${patient?.email || 'Não informado'}</span>
-              </div>
-              
               ${patient?.responsible_name ? `
                 <div class="patient-field">
                   <span class="field-label">Responsável:</span>
                   <span class="field-value">${patient.responsible_name}</span>
                 </div>
-              ` : ''}
-              
-              ${patient?.responsible_cpf ? `
+                ${patient?.responsible_cpf ? `
                 <div class="patient-field">
-                  <span class="field-label">CPF Responsável:</span>
+                  <span class="field-label">CPF Resp.:</span>
                   <span class="field-value">${patient.responsible_cpf}</span>
                 </div>
+                ` : ''}
               ` : ''}
               
               ${patient?.sus_card ? `
@@ -558,14 +618,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               ${patient?.health_insurance ? `
                 <div class="patient-field">
-                  <span class="field-label">Plano de Saúde:</span>
+                  <span class="field-label">Convênio:</span>
                   <span class="field-value">${patient.health_insurance}</span>
                 </div>
               ` : ''}
               
               ${patientAddress ? `
                 <div class="patient-field full-width">
-                  <span class="field-label">Endereço Completo:</span>
+                  <span class="field-label">Endereço:</span>
                   <span class="field-value">${patientAddress}</span>
                 </div>
               ` : ''}
@@ -575,9 +635,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           ${appointment ? `
             <div class="appointment-info">
               <h3>Informações da Consulta</h3>
-              <div><strong>Data da Consulta:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
+              <div><strong>Data:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
               ${appointment.procedures ? `<div><strong>Procedimento:</strong> ${appointment.procedures.name}</div>` : ''}
-              ${professional ? `<div><strong>Profissional Responsável:</strong> Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</div>` : ''}
+              ${professional ? `<div><strong>Profissional:</strong> Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</div>` : ''}
             </div>
           ` : ''}
           
@@ -607,13 +667,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </div>
           
           <div class="validity-note">
-            <strong>VALIDADE MÉDICA:</strong> Este documento tem validade legal e médica conforme estabelecido pelo Conselho Regional de Odontologia. 
-            Documento gerado eletronicamente em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
+            <strong>VALIDADE:</strong> Este documento tem validade legal conforme CFO. 
+            Gerado em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
           </div>
           
           <div class="medical-footer">
-            Sistema de Prontuário Eletrônico - Documento gerado automaticamente<br>
-            Prontuário Nº: ${record.id.substring(0, 8).toUpperCase()} | Data do registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            Sistema de Prontuário Eletrônico<br>
+            Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
           </div>
         </body>
       </html>
@@ -623,7 +683,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
-      printWindow.print();
+      
+      // Aguardar um pouco para as imagens carregarem antes de imprimir
+      setTimeout(() => {
+        printWindow.print();
+      }, 1000);
     }
   };
 
