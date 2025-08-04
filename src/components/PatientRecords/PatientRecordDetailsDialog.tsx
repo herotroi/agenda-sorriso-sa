@@ -202,7 +202,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
               </div>
               <div class="pdf-container">
-                <iframe src="${docUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=100" class="pdf-embed" title="${doc.name}"></iframe>
+                <iframe src="${docUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=FitH" class="pdf-embed" title="${doc.name}"></iframe>
               </div>
             </div>
           `;
@@ -244,55 +244,85 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 1.5cm; 
-                size: A4; 
+                margin: 15mm 10mm; 
+                size: A4 portrait;
               }
               
               body { 
                 -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
               }
               
               .document-image-print {
                 width: 100% !important;
-                max-width: 100% !important;
+                max-width: none !important;
                 height: auto !important;
                 object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
                 page-break-inside: avoid !important;
+                max-height: 90vh !important;
               }
               
               .pdf-embed {
                 width: 100% !important;
-                height: 29.7cm !important;
-                min-height: 29.7cm !important;
+                height: 90vh !important;
+                min-height: 90vh !important;
+                max-height: 90vh !important;
                 border: none !important;
-                page-break-inside: avoid !important;
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
               }
               
               .pdf-container {
                 width: 100% !important;
-                height: 29.7cm !important;
-                min-height: 29.7cm !important;
-                overflow: visible !important;
+                height: auto !important;
+                min-height: 600px !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 page-break-inside: avoid !important;
-                page-break-after: always !important;
               }
               
               .document-embed {
                 page-break-before: always !important;
                 page-break-inside: avoid !important;
+                margin: 0 !important;
+                padding: 10px !important;
               }
               
               .document-embed:first-child {
                 page-break-before: auto !important;
               }
               
-              .pdf-document {
-                page-break-after: always !important;
-              }
-              
               .document-image-container {
                 page-break-inside: avoid !important;
+                margin: 10px 0 !important;
+                width: 100% !important;
+                text-align: center !important;
+              }
+              
+              .document-header {
+                page-break-after: avoid !important;
+                margin-bottom: 15px !important;
+              }
+              
+              .documents-section .section-title {
+                page-break-after: avoid !important;
+              }
+              
+              /* Remove espaços em branco desnecessários */
+              .medical-section,
+              .patient-info,
+              .appointment-info {
+                page-break-inside: avoid !important;
+                margin-bottom: 15px !important;
+              }
+              
+              .signature-section {
+                page-break-before: avoid !important;
               }
             }
             
@@ -441,7 +471,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .documents-section {
               margin-top: 30px;
-              page-break-before: auto;
             }
             
             .section-title {
@@ -455,17 +484,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .document-embed {
-              margin-bottom: 30px;
+              margin: 0;
               padding: 15px;
               border: 2px solid #ddd;
               background-color: #fafafa;
-              page-break-before: always;
               border-radius: 5px;
-              page-break-inside: avoid;
-            }
-            
-            .document-embed:first-child {
-              page-break-before: auto;
             }
             
             .document-header h4 {
@@ -493,7 +516,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .document-image-container {
               text-align: center;
               margin: 15px 0;
-              page-break-inside: avoid;
+              width: 100%;
             }
             
             .document-image-print {
@@ -504,23 +527,24 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               border-radius: 5px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               object-fit: contain;
-              page-break-inside: avoid;
+              display: block;
+              margin: 0 auto;
             }
             
             .pdf-container {
               width: 100%;
-              height: 800px;
+              height: auto;
+              min-height: 600px;
               margin: 15px 0;
               border: 2px solid #ddd;
               border-radius: 5px;
               overflow: hidden;
-              page-break-inside: avoid;
-              page-break-after: always;
             }
             
             .pdf-embed {
               width: 100%;
-              height: 800px;
+              height: 100%;
+              min-height: 600px;
               border: none;
               display: block;
             }
@@ -723,7 +747,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       // Aguardar os documentos carregarem antes de imprimir
       setTimeout(() => {
         printWindow.print();
-      }, 5000);
+      }, 3000);
     }
   };
 
