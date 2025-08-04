@@ -186,7 +186,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
               </div>
               <div class="document-image-container">
-                <img src="${docUrl}" alt="${doc.name}" class="document-image-full" onload="this.style.opacity=1" />
+                <img src="${docUrl}" alt="${doc.name}" class="document-image-print" onload="this.style.opacity=1" />
               </div>
             </div>
           `;
@@ -201,8 +201,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                   Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
                 </div>
               </div>
-              <div class="pdf-embed-container-full">
-                <iframe src="${docUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=100" class="pdf-embed-full" title="${doc.name}"></iframe>
+              <div class="pdf-print-container">
+                <iframe src="${docUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=FitH" class="pdf-print-embed" title="${doc.name}"></iframe>
               </div>
             </div>
           `;
@@ -244,23 +244,38 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 1cm; 
+                margin: 1.5cm; 
                 size: A4; 
               }
               body { 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
               }
-              .document-image-full {
+              .document-image-print {
                 max-width: 100% !important;
                 height: auto !important;
                 page-break-inside: avoid;
+                page-break-after: auto;
               }
-              .pdf-embed-full {
+              .pdf-print-embed {
                 width: 100% !important;
-                height: 800px !important;
+                min-height: 100vh !important;
+                height: auto !important;
                 border: none !important;
                 page-break-inside: avoid;
+              }
+              .pdf-print-container {
+                width: 100% !important;
+                min-height: 100vh !important;
+                page-break-inside: avoid;
+                page-break-after: always;
+              }
+              .document-embed {
+                page-break-before: always;
+                page-break-inside: avoid;
+              }
+              .document-embed:first-child {
+                page-break-before: auto;
               }
             }
             
@@ -429,6 +444,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               background-color: #fafafa;
               page-break-before: always;
               border-radius: 5px;
+              page-break-inside: avoid;
             }
             
             .document-embed:first-child {
@@ -450,11 +466,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .document-meta {
-              margin-bottom: 10px;
+              margin-bottom: 15px;
               font-size: 9pt;
               color: #666;
               border-bottom: 1px dotted #ccc;
-              padding-bottom: 5px;
+              padding-bottom: 8px;
             }
             
             .document-image-container {
@@ -463,31 +479,34 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               page-break-inside: avoid;
             }
             
-            .document-image-full {
+            .document-image-print {
               width: 100%;
               height: auto;
-              min-height: 600px;
+              max-width: 100%;
               border: 2px solid #ddd;
               border-radius: 5px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               opacity: 0;
               transition: opacity 0.3s;
               object-fit: contain;
-            }
-            
-            .pdf-embed-container-full {
-              width: 100%;
-              height: 800px;
-              margin: 15px 0;
-              border: 2px solid #ddd;
-              border-radius: 5px;
-              overflow: hidden;
               page-break-inside: avoid;
             }
             
-            .pdf-embed-full {
+            .pdf-print-container {
               width: 100%;
-              height: 100%;
+              min-height: 100vh;
+              margin: 15px 0;
+              border: 2px solid #ddd;
+              border-radius: 5px;
+              overflow: visible;
+              page-break-inside: avoid;
+              page-break-after: always;
+            }
+            
+            .pdf-print-embed {
+              width: 100%;
+              min-height: 100vh;
+              height: auto;
               border: none;
               display: block;
             }
@@ -687,10 +706,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       printWindow.document.write(printContent);
       printWindow.document.close();
       
-      // Aguardar um pouco mais para os documentos carregarem antes de imprimir
+      // Aguardar mais tempo para garantir que todos os documentos carreguem
       setTimeout(() => {
         printWindow.print();
-      }, 2000);
+      }, 3000);
     }
   };
 
