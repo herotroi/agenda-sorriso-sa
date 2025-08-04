@@ -186,7 +186,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
               </div>
               <div class="document-image-container">
-                <img src="${docUrl}" alt="${doc.name}" class="document-image" onload="this.style.opacity=1" />
+                <img src="${docUrl}" alt="${doc.name}" class="document-image-full" onload="this.style.opacity=1" />
               </div>
             </div>
           `;
@@ -201,12 +201,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                   Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
                 </div>
               </div>
-              <div class="pdf-embed-container">
-                <iframe src="${docUrl}" class="pdf-embed" title="${doc.name}"></iframe>
-                <div class="pdf-fallback">
-                  <p><strong>Documento PDF:</strong> ${doc.name}</p>
-                  <p>Caso não seja possível visualizar, acesse: ${docUrl}</p>
-                </div>
+              <div class="pdf-embed-container-full">
+                <iframe src="${docUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=100" class="pdf-embed-full" title="${doc.name}"></iframe>
               </div>
             </div>
           `;
@@ -255,13 +251,15 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
               }
-              .document-image {
+              .document-image-full {
                 max-width: 100% !important;
+                height: auto !important;
                 page-break-inside: avoid;
               }
-              .pdf-embed {
+              .pdf-embed-full {
                 width: 100% !important;
-                height: 500px !important;
+                height: 800px !important;
+                border: none !important;
                 page-break-inside: avoid;
               }
             }
@@ -425,12 +423,16 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .document-embed {
-              margin-bottom: 25px;
+              margin-bottom: 30px;
               padding: 15px;
               border: 2px solid #ddd;
               background-color: #fafafa;
-              page-break-inside: avoid;
+              page-break-before: always;
               border-radius: 5px;
+            }
+            
+            .document-embed:first-child {
+              page-break-before: auto;
             }
             
             .document-header h4 {
@@ -461,32 +463,33 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               page-break-inside: avoid;
             }
             
-            .document-image {
-              max-width: 100%;
-              max-height: 600px;
+            .document-image-full {
+              width: 100%;
+              height: auto;
+              min-height: 600px;
               border: 2px solid #ddd;
               border-radius: 5px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               opacity: 0;
               transition: opacity 0.3s;
+              object-fit: contain;
             }
             
-            .pdf-embed-container {
+            .pdf-embed-container-full {
+              width: 100%;
+              height: 800px;
               margin: 15px 0;
-              text-align: center;
+              border: 2px solid #ddd;
+              border-radius: 5px;
+              overflow: hidden;
               page-break-inside: avoid;
             }
             
-            .pdf-fallback {
-              margin-top: 10px;
-              padding: 10px;
-              background-color: #f0f0f0;
-              border: 1px dashed #ccc;
-              font-size: 10pt;
-            }
-            
-            .pdf-fallback p {
-              margin: 5px 0;
+            .pdf-embed-full {
+              width: 100%;
+              height: 100%;
+              border: none;
+              display: block;
             }
             
             .file-info {
@@ -684,10 +687,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       printWindow.document.write(printContent);
       printWindow.document.close();
       
-      // Aguardar um pouco para as imagens carregarem antes de imprimir
+      // Aguardar um pouco mais para os documentos carregarem antes de imprimir
       setTimeout(() => {
         printWindow.print();
-      }, 1000);
+      }, 2000);
     }
   };
 
