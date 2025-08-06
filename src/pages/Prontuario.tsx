@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm';
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
@@ -14,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, Shield, Users, Calendar, Stethoscope, FolderOpen, ClipboardList, ArrowRight } from 'lucide-react';
 import { PatientRecord } from '@/types/prontuario';
+import { ProceduresOverview } from '@/components/PatientRecords/Overview/ProceduresOverview';
+import { DocumentsOverview } from '@/components/PatientRecords/Overview/DocumentsOverview';
+import { RecordsOverview } from '@/components/PatientRecords/Overview/RecordsOverview';
 
 export default function Prontuario() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -175,171 +177,25 @@ export default function Prontuario() {
         {/* Main Content */}
         {selectedPatient ? (
           <div className="space-y-8">
-            {/* Três seções principais organizadas em grid responsivo com melhor separação visual */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* 1. Seção de Procedimentos/Agendamentos */}
-              <Card className="border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4 bg-green-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Stethoscope className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-green-800">
-                          Procedimentos
-                        </CardTitle>
-                        <p className="text-sm text-green-600 mt-1">
-                          {appointments.length} procedimento(s)
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
-                      {appointments.length}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {appointments.slice(0, 4).map((appointment) => (
-                      <div 
-                        key={appointment.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
-                          selectedAppointment === appointment.id 
-                            ? 'bg-green-50 border-green-300 shadow-sm' 
-                            : 'hover:bg-gray-50 border-gray-200'
-                        }`}
-                        onClick={() => setSelectedAppointment(appointment.id)}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium text-gray-900 truncate flex-1">
-                            {appointment.procedures?.name || 'Procedimento não especificado'}
-                          </div>
-                          {selectedAppointment === appointment.id && (
-                            <ArrowRight className="h-4 w-4 text-green-600 flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                    ))}
-                    {appointments.length === 0 && (
-                      <div className="text-center py-6 text-gray-500">
-                        <Stethoscope className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">Nenhum procedimento encontrado</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Overview Grid - Redesigned Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              <ProceduresOverview
+                appointments={appointments}
+                selectedAppointment={selectedAppointment}
+                onAppointmentSelect={setSelectedAppointment}
+              />
 
-              {/* 2. Seção de Documentos */}
-              <Card className="border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4 bg-blue-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FolderOpen className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-blue-800">
-                          Documentos
-                        </CardTitle>
-                        <p className="text-sm text-blue-600 mt-1">
-                          {documents.length} documento(s)
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-                      {documents.length}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {documents.slice(0, 4).map((document) => (
-                      <div key={document.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                        <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                          <FileText className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {document.name}
-                          </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(document.uploaded_at).toLocaleDateString('pt-BR')}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {documents.length === 0 && (
-                      <div className="text-center py-6 text-gray-500">
-                        <FolderOpen className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">Nenhum documento encontrado</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <DocumentsOverview
+                documents={documents}
+              />
 
-              {/* 3. Seção de Registros do Prontuário */}
-              <Card className="border-l-4 border-l-orange-500 shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4 bg-orange-50/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-100 rounded-lg">
-                        <ClipboardList className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg font-semibold text-orange-800">
-                          Registros
-                        </CardTitle>
-                        <p className="text-sm text-orange-600 mt-1">
-                          {records.length} registro(s)
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                      {records.length}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {records.slice(0, 4).map((record) => (
-                      <div 
-                        key={record.id} 
-                        className="p-3 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 cursor-pointer transition-colors"
-                        onClick={() => handleEditRecord(record)}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium text-gray-900 truncate flex-1">
-                            {record.title || 'Registro sem título'}
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-orange-600 flex-shrink-0" />
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(record.created_at).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                    ))}
-                    {records.length === 0 && (
-                      <div className="text-center py-6 text-gray-500">
-                        <ClipboardList className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">Nenhum registro encontrado</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <RecordsOverview
+                records={records}
+                onEditRecord={handleEditRecord}
+              />
             </div>
 
-            {/* Seção detalhada expandida */}
+            {/* Detailed Sections */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {/* Lista completa de registros */}
               <div className="order-2 xl:order-1">
