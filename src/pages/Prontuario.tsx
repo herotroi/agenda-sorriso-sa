@@ -97,6 +97,21 @@ export default function Prontuario() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto p-4 sm:p-6 max-w-7xl space-y-8">
+        {/* Main Title */}
+        <div className="text-center py-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-3 bg-blue-100 rounded-xl">
+              <FileText className="h-8 w-8 text-blue-600" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Prontuário Eletrônico
+            </h1>
+          </div>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Sistema completo para gerenciamento de consultas, registros médicos e documentos dos pacientes
+          </p>
+        </div>
+
         {/* Patient Search Section */}
         <Card className="border-l-4 border-l-purple-500">
           <CardContent className="p-4 sm:p-6">
@@ -117,20 +132,6 @@ export default function Prontuario() {
         {/* Header Section */}
         <Card className="shadow-sm border-l-4 border-l-blue-500">
           <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 rounded-xl w-fit">
-                <FileText className="h-7 w-7 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-                  Prontuário Eletrônico
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Gerencie consultas e documentos dos pacientes
-                </p>
-              </div>
-            </div>
-
             <ProntuarioHeader
               selectedPatient={selectedPatient}
               onNewAppointment={handleNewAppointment}
