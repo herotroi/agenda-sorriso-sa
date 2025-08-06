@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm';
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
@@ -8,10 +9,10 @@ import { EditRecordDialog } from '@/components/PatientRecords/EditRecordDialog';
 import { useProntuario } from '@/hooks/useProntuario';
 import { usePatientRecords } from '@/hooks/usePatientRecords';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileText, Shield, Users, Calendar } from 'lucide-react';
+import { FileText, Shield, Users, Calendar, Stethoscope, FolderOpen, ClipboardList } from 'lucide-react';
 import { PatientRecord } from '@/types/prontuario';
 
 export default function Prontuario() {
@@ -68,7 +69,6 @@ export default function Prontuario() {
   };
 
   const handleEditRecord = (record: PatientRecord) => {
-    // Usar o formulário principal para edição
     setRecordToEditInForm(record);
     setIsFormOpen(true);
   };
@@ -172,29 +172,142 @@ export default function Prontuario() {
 
         {/* Main Content */}
         {selectedPatient ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Left Column - Patient Records */}
-            <div className="order-2 xl:order-1">
-              <PatientRecordsList
-                records={records}
-                onEditRecord={handleEditRecord}
-                loading={recordsLoading}
-              />
+          <div className="space-y-6">
+            {/* Três seções principais organizadas em grid responsivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* 1. Seção de Procedimentos/Agendamentos */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-green-100 rounded-lg">
+                      <Stethoscope className="h-4 w-4 text-green-600" />
+                    </div>
+                    <CardTitle className="text-base font-semibold">Procedimentos</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {appointments.slice(0, 3).map((appointment) => (
+                      <div 
+                        key={appointment.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
+                          selectedAppointment === appointment.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedAppointment(appointment.id)}
+                      >
+                        <div className="text-sm font-medium text-gray-900 mb-1">
+                          {appointment.procedures?.name || 'Procedimento não especificado'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(appointment.start_time).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                    ))}
+                    {appointments.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        Nenhum procedimento encontrado
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 2. Seção de Documentos */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-purple-100 rounded-lg">
+                      <FolderOpen className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <CardTitle className="text-base font-semibold">Documentos</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {documents.slice(0, 3).map((document) => (
+                      <div key={document.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                        <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {document.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(document.uploaded_at).toLocaleDateString('pt-BR')}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {documents.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        Nenhum documento encontrado
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 3. Seção de Registros do Prontuário */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-100 rounded-lg">
+                      <ClipboardList className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <CardTitle className="text-base font-semibold">Registros</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {records.slice(0, 3).map((record) => (
+                      <div 
+                        key={record.id} 
+                        className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleEditRecord(record)}
+                      >
+                        <div className="text-sm font-medium text-gray-900 mb-1">
+                          {record.title || 'Registro sem título'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                    ))}
+                    {records.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        Nenhum registro encontrado
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Right Column - Appointments and Documents */}
-            <div className="order-1 xl:order-2">
-              <ProntuarioContent
-                appointments={appointments}
-                selectedAppointment={selectedAppointment}
-                onAppointmentSelect={setSelectedAppointment}
-                loading={loading}
-                documents={documents}
-                onDocumentUpload={handleDocumentUploadWithCheck}
-                onDocumentDelete={handleDocumentDelete}
-                onClearSelection={handleClearSelection}
-                canCreate={canUseEHR}
-              />
+            {/* Seção detalhada expandida */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Lista completa de registros */}
+              <div className="order-2 xl:order-1">
+                <PatientRecordsList
+                  records={records}
+                  onEditRecord={handleEditRecord}
+                  loading={recordsLoading}
+                />
+              </div>
+
+              {/* Procedimentos e documentos detalhados */}
+              <div className="order-1 xl:order-2">
+                <ProntuarioContent
+                  appointments={appointments}
+                  selectedAppointment={selectedAppointment}
+                  onAppointmentSelect={setSelectedAppointment}
+                  loading={loading}
+                  documents={documents}
+                  onDocumentUpload={handleDocumentUploadWithCheck}
+                  onDocumentDelete={handleDocumentDelete}
+                  onClearSelection={handleClearSelection}
+                  canCreate={canUseEHR}
+                />
+              </div>
             </div>
           </div>
         ) : (
