@@ -97,6 +97,23 @@ export default function Prontuario() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto p-4 sm:p-6 max-w-7xl space-y-8">
+        {/* Patient Search Section */}
+        <Card className="border-l-4 border-l-purple-500">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Users className="h-5 w-5 text-purple-600 flex-shrink-0" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Buscar Paciente</h2>
+            </div>
+            <PatientSearch
+              patients={patients}
+              selectedPatient={selectedPatient}
+              onPatientSelect={setSelectedPatient}
+            />
+          </CardContent>
+        </Card>
+
         {/* Header Section */}
         <Card className="shadow-sm border-l-4 border-l-blue-500">
           <CardContent className="p-4 sm:p-6">
@@ -156,23 +173,6 @@ export default function Prontuario() {
             </CardContent>
           </Card>
         )}
-
-        {/* Patient Search Section */}
-        <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-5 w-5 text-purple-600 flex-shrink-0" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Buscar Paciente</h2>
-            </div>
-            <PatientSearch
-              patients={patients}
-              selectedPatient={selectedPatient}
-              onPatientSelect={setSelectedPatient}
-            />
-          </CardContent>
-        </Card>
 
         {/* Main Content */}
         {selectedPatient ? (
