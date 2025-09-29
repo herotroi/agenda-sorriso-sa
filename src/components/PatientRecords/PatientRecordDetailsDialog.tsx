@@ -875,11 +875,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 Detalhes do prontuário médico do paciente
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative z-20">
               <Button 
                 onClick={handlePrint} 
                 variant="default" 
-                size="sm" 
+                size="sm"
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={loadingData}
               >

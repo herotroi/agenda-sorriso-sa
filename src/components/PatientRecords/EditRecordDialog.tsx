@@ -533,7 +533,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
             <Button 
               onClick={handlePrint}
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 relative z-20"
             >
               <Printer className="h-4 w-4" />
               Imprimir Prontuário
