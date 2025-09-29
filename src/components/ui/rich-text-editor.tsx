@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { 
   Bold, 
   Italic, 
-  Underline, 
   List, 
   ListOrdered,
   Image as ImageIcon,
@@ -21,120 +20,12 @@ import {
   Undo,
   Redo,
   Upload,
-  Type,
   Palette,
   Minus,
   Plus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Custom Image extension with resize handles
-const ResizableImage = Image.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      width: {
-        default: null,
-        parseHTML: element => element.getAttribute('width'),
-        renderHTML: attributes => {
-          if (!attributes.width) return {}
-          return { width: attributes.width }
-        },
-      },
-      height: {
-        default: null,
-        parseHTML: element => element.getAttribute('height'),
-        renderHTML: attributes => {
-          if (!attributes.height) return {}
-          return { height: attributes.height }
-        },
-      },
-    }
-  },
-
-  addNodeView() {
-    return ({ node, getPos, editor }) => {
-      const container = document.createElement('div');
-      container.className = 'image-container relative inline-block group cursor-pointer';
-      
-      const img = document.createElement('img');
-      img.src = node.attrs.src;
-      img.alt = node.attrs.alt || '';
-      img.className = 'max-w-full h-auto rounded-lg';
-      
-      if (node.attrs.width) img.width = node.attrs.width;
-      if (node.attrs.height) img.height = node.attrs.height;
-      
-      // Resize controls
-      const resizeHandle = document.createElement('div');
-      resizeHandle.className = 'absolute bottom-0 right-0 w-3 h-3 bg-blue-600 cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity';
-      
-      let isResizing = false;
-      let startWidth = img.width || img.naturalWidth;
-      let startHeight = img.height || img.naturalHeight;
-      let startX = 0;
-      let startY = 0;
-      
-      const handleMouseDown = (e: MouseEvent) => {
-        e.preventDefault();
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = img.width || img.naturalWidth;
-        startHeight = img.height || img.naturalHeight;
-        
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-      };
-      
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isResizing) return;
-        
-        const deltaX = e.clientX - startX;
-        const aspectRatio = startHeight / startWidth;
-        const newWidth = Math.max(50, startWidth + deltaX);
-        const newHeight = newWidth * aspectRatio;
-        
-        img.width = newWidth;
-        img.height = newHeight;
-      };
-      
-      const handleMouseUp = () => {
-        if (!isResizing) return;
-        isResizing = false;
-        
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        
-        // Update the node attributes
-        if (typeof getPos === 'function') {
-          const pos = getPos();
-          editor.commands.updateAttributes('image', {
-            width: img.width,
-            height: img.height,
-          });
-        }
-      };
-      
-      resizeHandle.addEventListener('mousedown', handleMouseDown);
-      
-      container.appendChild(img);
-      container.appendChild(resizeHandle);
-      
-      return {
-        dom: container,
-        update: (updatedNode) => {
-          if (updatedNode.type !== node.type) return false;
-          img.src = updatedNode.attrs.src;
-          if (updatedNode.attrs.width) img.width = updatedNode.attrs.width;
-          if (updatedNode.attrs.height) img.height = updatedNode.attrs.height;
-          return true;
-        }
-      };
-    };
-  }
-});
 
 interface RichTextEditorProps {
   content: string;
@@ -147,16 +38,18 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [currentColor, setCurrentColor] = useState('#000000');
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       TextStyle,
       Color,
-      ResizableImage.configure({
+      Image.configure({
         inline: false,
         allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg my-2',
+        },
       }),
       Table.configure({
         resizable: true,
@@ -167,7 +60,11 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const newContent = editor.getHTML();
+      onChange(newContent);
+    },
+    onCreate: () => {
+      console.log('RichTextEditor: Editor created successfully');
     },
     editorProps: {
       attributes: {
@@ -219,11 +116,14 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
 
   const setTextColor = (color: string) => {
     editor?.chain().focus().setColor(color).run();
-    setCurrentColor(color);
   };
 
   if (!editor) {
-    return null;
+    return (
+      <div className="border border-input rounded-lg bg-background p-4 min-h-[100px] flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Carregando editor...</div>
+      </div>
+    );
   }
 
   return (
@@ -253,28 +153,32 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTextColor('#ff0000')}
+            onClick={() => setTextColor('#dc2626')}
+            title="Vermelho"
           >
-            <Palette className="h-4 w-4" style={{ color: '#ff0000' }} />
+            <Palette className="h-4 w-4" style={{ color: '#dc2626' }} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTextColor('#00ff00')}
+            onClick={() => setTextColor('#059669')}
+            title="Verde"
           >
-            <Palette className="h-4 w-4" style={{ color: '#00ff00' }} />
+            <Palette className="h-4 w-4" style={{ color: '#059669' }} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTextColor('#0000ff')}
+            onClick={() => setTextColor('#2563eb')}
+            title="Azul"
           >
-            <Palette className="h-4 w-4" style={{ color: '#0000ff' }} />
+            <Palette className="h-4 w-4" style={{ color: '#2563eb' }} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setTextColor('#000000')}
+            title="Preto"
           >
             <Palette className="h-4 w-4" style={{ color: '#000000' }} />
           </Button>
@@ -378,22 +282,6 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
       {/* Editor with custom styles */}
       <div className="min-h-[150px]">
         <style>{`
-          .image-container .resize-handle {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 12px;
-            height: 12px;
-            background: #3b82f6;
-            cursor: se-resize;
-            opacity: 0;
-            transition: opacity 0.2s;
-          }
-          
-          .image-container:hover .resize-handle {
-            opacity: 1;
-          }
-          
           .rich-text-content table {
             border-collapse: collapse;
             width: 100%;
@@ -433,6 +321,8 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
           .rich-text-content img {
             border-radius: 8px;
             margin: 8px 0;
+            max-width: 100%;
+            height: auto;
           }
           
           .rich-text-content p {
