@@ -16,8 +16,8 @@ export default function Configuracoes() {
 
       <div className="grid gap-6">
         <UserSettingsSection />
-        <PasswordChangeSection />
         <CompanyLogoSection />
+        <PasswordChangeSection />
         <IntegrationDataSection />
         <AutomationContactSection />
         <CouponSection />
