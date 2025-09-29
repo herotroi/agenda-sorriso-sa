@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm';
+import { SubscriptionFooter } from '@/components/ui/subscription-footer';
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
 import { ProntuarioHeader } from '@/components/PatientRecords/ProntuarioHeader';
 import { ProntuarioContent } from '@/components/PatientRecords/ProntuarioContent';
@@ -140,40 +141,6 @@ export default function Prontuario() {
           </CardContent>
         </Card>
 
-        {/* Subscription Status */}
-        {subscriptionData && (
-          <Card className={`border-l-4 ${canUseEHR ? 'border-l-green-500 bg-green-50' : 'border-l-amber-500 bg-amber-50'}`}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                  <Shield className={`h-5 w-5 flex-shrink-0 mt-0.5 sm:mt-0 ${canUseEHR ? 'text-green-600' : 'text-amber-600'}`} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <p className="font-semibold text-sm sm:text-base">
-                        Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
-                      </p>
-                      <Badge variant={canUseEHR ? 'default' : 'secondary'} className="text-xs w-fit">
-                        {canUseEHR ? 'Ativo' : 'Limitado'}
-                      </Badge>
-                    </div>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                      {canUseEHR ? 
-                        'Acesso completo ao prontuário eletrônico' : 
-                        'Visualização permitida - Upgrade necessário para criar registros'
-                      }
-                    </p>
-                  </div>
-                </div>
-                {!canUseEHR && (
-                  <Badge variant="outline" className="bg-white flex-shrink-0">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    Somente leitura
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Main Content */}
         {selectedPatient && (
@@ -239,6 +206,16 @@ export default function Prontuario() {
           onClose={handleEditDialogClose}
           onRecordUpdated={handleRecordUpdated}
         />
+
+        {/* Subscription Footer */}
+        {subscriptionData && (
+          <SubscriptionFooter
+            subscriptionData={subscriptionData}
+            currentCount={records.length}
+            featureName="Registros"
+            canUseFeature={canUseEHR}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
+import { SubscriptionFooter } from '@/components/ui/subscription-footer';
 import { ProfessionalGrid } from './components/ProfessionalGrid';
 import { ProfessionalHeader } from './components/ProfessionalHeader';
 import { ProfessionalForm } from './ProfessionalForm';
 import { useProfessionalsData } from './hooks/useProfessionalsData';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 
 export function ProfessionalList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -11,6 +13,7 @@ export function ProfessionalList() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { professionals, loading, fetchProfessionals, deleteProfessional } = useProfessionalsData();
+  const { subscriptionData } = useSubscriptionLimits();
 
   const filteredProfessionals = professionals.filter(professional =>
     professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,6 +65,17 @@ export function ProfessionalList() {
         onClose={handleFormClose}
         professional={editingProfessional}
       />
+
+      {/* Subscription Footer */}
+      {subscriptionData && (
+        <SubscriptionFooter
+          subscriptionData={subscriptionData}
+          currentCount={subscriptionData.usage.professionals_count}
+          maxCount={subscriptionData.limits.max_professionals}
+          featureName="Profissionais"
+          canUseFeature={subscriptionData.canCreateProfessional}
+        />
+      )}
     </div>
   );
 }

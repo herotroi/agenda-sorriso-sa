@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { SubscriptionFooter } from '@/components/ui/subscription-footer';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PatientForm } from './PatientForm';
@@ -61,21 +62,6 @@ export function PatientList() {
         </Button>
       </div>
 
-      {subscriptionData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-900">
-                Plano Atual: {subscriptionData.hasAutomacao ? 'Ilimitado' : subscriptionData.plan_type.charAt(0).toUpperCase() + subscriptionData.plan_type.slice(1)}
-              </p>
-              <p className="text-sm text-blue-700">
-                Pacientes: {subscriptionData.usage.patients_count}
-                {!subscriptionData.hasAutomacao && subscriptionData.limits.max_patients !== -1 && ` / ${subscriptionData.limits.max_patients}`}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       <PatientTable
         patients={patients}
@@ -88,6 +74,17 @@ export function PatientList() {
         onClose={handleCloseForm}
         patient={editingPatient}
       />
+
+      {/* Subscription Footer */}
+      {subscriptionData && (
+        <SubscriptionFooter
+          subscriptionData={subscriptionData}
+          currentCount={subscriptionData.usage.patients_count}
+          maxCount={subscriptionData.limits.max_patients}
+          featureName="Pacientes"
+          canUseFeature={subscriptionData.canCreatePatient}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SubscriptionFooter } from '@/components/ui/subscription-footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -293,6 +294,17 @@ export default function Procedimentos() {
         onClose={handleFormClose}
         procedure={editingProcedure}
       />
+
+      {/* Subscription Footer */}
+      {subscriptionData && (
+        <SubscriptionFooter
+          subscriptionData={subscriptionData}
+          currentCount={subscriptionData.usage.procedures_count}
+          maxCount={subscriptionData.limits.max_procedures}
+          featureName="Procedimentos"
+          canUseFeature={subscriptionData.canCreateProcedure}
+        />
+      )}
     </div>
   );
 }
