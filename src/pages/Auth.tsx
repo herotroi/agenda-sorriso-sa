@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { FeaturesSection } from '@/components/auth/FeaturesSection';
@@ -10,6 +10,7 @@ import { AuthTabs } from '@/components/auth/AuthTabs';
 const Auth = () => {
   const { user, signIn, signUp, resetPassword, loading } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +26,7 @@ const Auth = () => {
     if (error) {
       setError(error.message);
     } else {
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     }
     
     setIsLoading(false);

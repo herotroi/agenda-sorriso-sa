@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const PasswordResetForm = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -76,7 +77,7 @@ export const PasswordResetForm = () => {
       } else {
         setSuccessMessage('Senha atualizada com sucesso! Redirecionando...');
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 2000);
       }
     } catch (error: any) {

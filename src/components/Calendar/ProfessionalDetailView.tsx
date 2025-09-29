@@ -60,8 +60,8 @@ export function ProfessionalDetailView({
   };
 
   const handleAppointmentUpdate = () => {
-    // Refresh data after appointment update
-    window.location.reload();
+    // Refresh data after appointment update - just close the dialog and let parent handle refresh
+    handleAppointmentDetailsClose();
   };
 
   return (

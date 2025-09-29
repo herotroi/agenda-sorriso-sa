@@ -13,7 +13,7 @@ interface Appointment {
   status: string;
 }
 
-export const useDragAndDrop = () => {
+export const useDragAndDrop = (onUpdate?: () => void) => {
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
@@ -79,8 +79,10 @@ export const useDragAndDrop = () => {
         description: 'Agendamento movido com sucesso',
       });
 
-      // Refresh the calendar
-      window.location.reload();
+      // Refresh the calendar - use callback instead of reload
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
       console.error('Error moving appointment:', error);
       toast({

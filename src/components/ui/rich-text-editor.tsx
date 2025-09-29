@@ -95,17 +95,25 @@ const ResizableImage = Node.create({
       resizeHandle.className = 'resize-handle'
       resizeHandle.style.cssText = `
         position: absolute;
-        bottom: -5px;
-        right: -5px;
-        width: 12px;
-        height: 12px;
+        bottom: -8px;
+        right: -8px;
+        width: 16px;
+        height: 16px;
         background: #3b82f6;
         border: 2px solid white;
         border-radius: 50%;
         cursor: se-resize;
         opacity: 0;
         transition: opacity 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: white;
+        font-weight: bold;
       `
+      resizeHandle.innerHTML = '⟲'
 
       let isResizing = false
       let startX = 0
@@ -140,8 +148,16 @@ const ResizableImage = Node.create({
           const deltaX = e.clientX - startX
           const deltaY = e.clientY - startY
           
-          const newWidth = Math.max(50, startWidth + deltaX)
-          const newHeight = Math.max(50, startHeight + deltaY)
+          // Maintain aspect ratio by using diagonal movement
+          const delta = Math.max(deltaX, deltaY)
+          const aspectRatio = startWidth / startHeight
+          
+          let newWidth = Math.max(100, startWidth + delta)
+          let newHeight = newWidth / aspectRatio
+          
+          // Limit maximum size
+          newWidth = Math.min(newWidth, 800)
+          newHeight = Math.min(newHeight, 600)
           
           img.style.width = newWidth + 'px'
           img.style.height = newHeight + 'px'
