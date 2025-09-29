@@ -164,24 +164,6 @@ export default function Prontuario() {
         {/* Main Content */}
         {selectedPatient && (
           <div className="space-y-8">
-            {/* Overview Grid - Redesigned Section */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              <ProceduresOverview
-                appointments={appointments}
-                selectedAppointment={selectedAppointment}
-                onAppointmentSelect={setSelectedAppointment}
-              />
-
-              <DocumentsOverview
-                documents={documents}
-              />
-
-              <RecordsOverview
-                records={records}
-                onEditRecord={handleEditRecord}
-              />
-            </div>
-
             {/* Detailed Sections */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {/* Lista completa de registros */}
