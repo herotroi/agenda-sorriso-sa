@@ -362,7 +362,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 15mm 12mm 15mm 12mm; 
+                margin: 12mm 12mm 12mm 12mm; 
                 size: A4 portrait;
               }
               
@@ -373,83 +373,44 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 0;
               }
               
+              /* Table-based print structure for proper header/footer positioning */
+              .print-grid {
+                display: table !important;
+                width: 100% !important;
+                height: 100% !important;
+                table-layout: fixed !important;
+              }
+              
               .print-header {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
+                display: table-header-group !important;
+                position: static !important;
+                height: auto !important;
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 14px !important;
-                padding: 10mm 15mm 0 15mm !important;
-                background: white !important;
-                z-index: 1000 !important;
-                height: 30mm !important;
-                box-sizing: border-box !important;
-              }
-              
-              .print-header h1 {
-                font-size: 11pt !important;
-                color: #666 !important;
-                margin: 0 0 4px 0 !important;
-                font-weight: bold !important;
-              }
-              
-              .print-header .subtitle {
-                font-size: 12px !important;
-                color: #666 !important;
-                margin: 0 0 8px 0 !important;
-              }
-              
-              .print-header .professional-info {
+                padding: 10mm 0 6mm 0 !important;
                 margin: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-                text-align: center !important;
-              }
-              
-              .print-header .prof-line {
-                font-size: 11px !important;
-                color: #666 !important;
-                margin: 2px 0 !important;
+                background: white !important;
+                box-sizing: border-box !important;
               }
               
               .print-footer {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
+                display: table-footer-group !important;
+                position: static !important;
+                height: auto !important;
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 10px !important;
-                padding: 5mm 15mm !important;
+                padding: 6mm 0 0 0 !important;
+                margin: 0 !important;
                 background: white !important;
-                z-index: 1000 !important;
-                height: 22mm !important;
                 box-sizing: border-box !important;
               }
               
-              .print-footer .footer-info {
-                margin: 0 !important;
-              }
-              
-              .print-footer .footer-section {
-                font-size: 10px !important;
-                color: #666 !important;
-                margin: 2px 0 !important;
-              }
-              
-              .print-footer .footer-system {
-                font-size: 8px !important;
-                color: #666 !important;
-                margin: 4px 0 0 0 !important;
-                padding: 0 !important;
-                border: none !important;
-              }
-              
               .print-content {
+                display: table-row-group !important;
                 margin: 0 !important;
-                padding: 34mm 0 24mm 0 !important; /* clear header/footer */
+                padding: 0 !important;
                 min-height: auto !important;
               }
               
@@ -543,14 +504,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               .documents-section,
               .document-content,
               .section-content {
-                page-break-inside: auto !important;
                 break-inside: auto !important;
+                page-break-inside: auto !important;
                 overflow: visible !important;
                 margin-bottom: 15px !important;
                 white-space: pre-wrap !important;
+                overflow-wrap: anywhere !important;
                 word-break: break-word !important;
-                orphans: 3 !important;
-                widows: 3 !important;
+                min-height: 0 !important;
               }
               
               /* Compactar documentos/imagens na impressão */
@@ -576,16 +537,20 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 margin-top: 30px !important;
               }
 
-              /* Keep titles with first lines, avoid breaking right after a title */
+              /* Evitar quebra logo após títulos */
               .section-header,
               .section-title {
                 break-after: avoid-page !important;
                 page-break-after: avoid !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
               }
 
-              /* Ensure paragraphs can break but not be overlapped by footer/header */
-              .section-content, .section-content * {
-                break-inside: auto !important;
+              /* Assinatura sempre na mesma página */
+              .signature-section {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                margin-top: 30px !important;
               }
             }
             
@@ -903,20 +868,21 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </style>
         </head>
         <body>
-          <div class="print-header">
-            <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
-            <div class="subtitle">CNPJ: ${profile?.cnpj || 'Não informado'}</div>
-            
-            <div class="professional-info">
-              <div class="prof-line">
-                <strong>Profissional:</strong> Dr(a). ${professional?.name || 'Não informado'}
+          <div class="print-grid">
+            <div class="print-header">
+              <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
+              <div class="subtitle">CNPJ: ${profile?.cnpj || 'Não informado'}</div>
+              
+              <div class="professional-info">
+                <div class="prof-line">
+                  <strong>Profissional:</strong> Dr(a). ${professional?.name || 'Não informado'}
+                </div>
+                ${professional?.specialty ? `<div class="prof-line"><strong>Especialidade:</strong> ${professional.specialty}</div>` : ''}
+                ${professional?.crm_cro ? `<div class="prof-line"><strong>CRM/CRO:</strong> ${professional.crm_cro}</div>` : ''}
               </div>
-              ${professional?.specialty ? `<div class="prof-line"><strong>Especialidade:</strong> ${professional.specialty}</div>` : ''}
-              ${professional?.crm_cro ? `<div class="prof-line"><strong>CRM/CRO:</strong> ${professional.crm_cro}</div>` : ''}
             </div>
-          </div>
-          
-          <div class="print-content">
+            
+            <div class="print-content">
           
           <div class="document-info">
             <div><strong>Prontuário Nº:</strong> ${record.id.substring(0, 8).toUpperCase()}</div>
@@ -1043,28 +1009,29 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
              Gerado em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
            </div>
            
-          </div>
-          
-          <div class="print-footer">
-            <div class="footer-info">
-              <div class="footer-section">
-                <strong>Endereço:</strong>
-                ${profile ? [
-                  profile.street,
-                  profile.number,
-                  profile.neighborhood,
-                  profile.city,
-                  profile.state,
-                  profile.zip_code
-                ].filter(Boolean).join(', ') || 'Não informado' : 'Não informado'}
+           </div>
+           
+            <div class="print-footer">
+              <div class="footer-info">
+                <div class="footer-section">
+                  <strong>Endereço:</strong>
+                  ${profile ? [
+                    profile.street,
+                    profile.number,
+                    profile.neighborhood,
+                    profile.city,
+                    profile.state,
+                    profile.zip_code
+                  ].filter(Boolean).join(', ') || 'Não informado' : 'Não informado'}
+                </div>
+                <div class="footer-section">
+                  <strong>Contatos:</strong>
+                  ${profile?.email || 'Email não informado'} | ${profile?.phone || 'Telefone não informado'}
+                </div>
               </div>
-              <div class="footer-section">
-                <strong>Contatos:</strong>
-                ${profile?.email || 'Email não informado'} | ${profile?.phone || 'Telefone não informado'}
+              <div class="footer-system">
+                Sistema de Prontuário Eletrônico | Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               </div>
-            </div>
-            <div class="footer-system">
-              Sistema de Prontuário Eletrônico | Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
             </div>
           </div>
         </body>
