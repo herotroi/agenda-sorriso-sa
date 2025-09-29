@@ -774,28 +774,28 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .pdf-placeholder,
             .file-placeholder {
               border: 2px dashed #ccc;
-              padding: 15px;
+              padding: 8px;
               text-align: center;
               background-color: transparent;
-              border-radius: 6px;
-              margin: 10px 0;
+              border-radius: 4px;
+              margin: 5px 0;
             }
             
             .pdf-icon {
-              font-size: 32px;
-              margin-bottom: 8px;
+              font-size: 20px;
+              margin-bottom: 4px;
             }
             
             .pdf-info h5 {
-              font-size: 12pt;
-              margin: 6px 0;
+              font-size: 9pt;
+              margin: 3px 0;
               color: #333;
             }
             
             .pdf-info p {
-              font-size: 9pt;
+              font-size: 7pt;
               color: #666;
-              margin: 4px 0;
+              margin: 2px 0;
             }
             
             .pdf-note {
