@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -530,14 +530,21 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={handlePrint}
-              variant="outline"
-              className="flex items-center gap-2 relative z-20"
-            >
-              <Printer className="h-4 w-4" />
-              Imprimir Prontuário
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handlePrint}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Imprimir Prontuário
+              </Button>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" aria-label="Fechar">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
+            </div>
           </div>
         </DialogHeader>
 

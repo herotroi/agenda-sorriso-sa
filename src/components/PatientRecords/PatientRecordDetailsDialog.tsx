@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye, IdCard, Mail, Users, Home } from 'lucide-react';
+import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye, IdCard, Mail, Users, Home, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -875,7 +875,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 Detalhes do prontuário médico do paciente
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2 relative z-20">
+            <div className="flex items-center gap-2">
               <Button 
                 onClick={handlePrint} 
                 variant="default" 
@@ -886,6 +886,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 <Printer className="h-4 w-4 mr-2" />
                 Imprimir Prontuário
               </Button>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" aria-label="Fechar">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
             </div>
           </div>
         </DialogHeader>
