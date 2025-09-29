@@ -603,7 +603,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               justify-content: space-between;
               margin-bottom: 20px;
               padding: 8px;
-              background-color: #f5f5f5;
+              background-color: transparent;
               border: 1px solid #ccc;
               font-size: 10pt;
             }
@@ -611,7 +611,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .patient-info {
               margin-bottom: 20px;
               border: 2px solid #000;
-              background-color: #fafafa;
+              background-color: transparent;
             }
             
             .patient-info h2 {
@@ -680,7 +680,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .section-content {
               padding: 15px;
               border: 1px solid #ddd;
-              background-color: #fff;
+              background-color: transparent;
               min-height: 80px;
               white-space: pre-wrap;
               font-size: 11pt;
@@ -689,11 +689,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .prescription-section .section-content {
               border-left: 4px solid #28a745;
-              background-color: #f8fff9;
+              background-color: transparent;
             }
             
             .appointment-info {
-              background-color: #fff9e6;
+              background-color: transparent;
               border: 2px solid #ffe066;
               padding: 15px;
               margin-bottom: 20px;
@@ -776,7 +776,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               border: 2px dashed #ccc;
               padding: 30px;
               text-align: center;
-              background-color: #f9f9f9;
+              background-color: transparent;
               border-radius: 8px;
               margin: 20px 0;
             }
@@ -833,7 +833,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .validity-note {
               margin-top: 20px;
               padding: 12px;
-              background-color: #f0f8ff;
+              background-color: transparent;
               border: 1px dashed #007bff;
               font-size: 9pt;
               text-align: center;
