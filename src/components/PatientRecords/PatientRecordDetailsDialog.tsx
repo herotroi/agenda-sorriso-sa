@@ -385,7 +385,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 border-bottom: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 80px !important;
+                height: 100px !important;
                 box-sizing: border-box !important;
               }
               
@@ -426,7 +426,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 border-top: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 60px !important;
+                height: 80px !important;
                 box-sizing: border-box !important;
               }
               
@@ -449,8 +449,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 100px !important;
-                margin-bottom: 80px !important;
+                margin-top: 130px !important;
+                margin-bottom: 100px !important;
               }
               
               .page-break {
