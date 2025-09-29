@@ -299,7 +299,7 @@ export default function Procedimentos() {
       {subscriptionData && (
         <SubscriptionFooter
           subscriptionData={subscriptionData}
-          currentCount={subscriptionData.usage.procedures_count}
+          currentCount={procedures.length}
           maxCount={subscriptionData.limits.max_procedures}
           featureName="Procedimentos"
           canUseFeature={subscriptionData.canCreateProcedure}

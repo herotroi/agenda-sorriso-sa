@@ -79,7 +79,7 @@ export function PatientList() {
       {subscriptionData && (
         <SubscriptionFooter
           subscriptionData={subscriptionData}
-          currentCount={subscriptionData.usage.patients_count}
+          currentCount={patients.length}
           maxCount={subscriptionData.limits.max_patients}
           featureName="Pacientes"
           canUseFeature={subscriptionData.canCreatePatient}

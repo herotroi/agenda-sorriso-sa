@@ -5,6 +5,7 @@ import { AgendaHeader } from '@/components/Agenda/AgendaHeader';
 import { AgendaTabs } from '@/components/Agenda/AgendaTabs';
 import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { useAppointmentsData } from '@/hooks/useAppointmentsData';
 
 export default function Agenda() {
   const [activeTab, setActiveTab] = useState('calendar');
@@ -12,6 +13,7 @@ export default function Agenda() {
   const [activeFilters, setActiveFilters] = useState<{ statusId?: number; procedureId?: string }>({});
   const { handlePrint } = usePrintReport();
   const { subscriptionData } = useSubscriptionLimits();
+  const { appointments } = useAppointmentsData();
 
   const onPrint = () => {
     // Para a aba de tabela, passar os filtros ativos
@@ -42,7 +44,7 @@ export default function Agenda() {
         {subscriptionData && (
           <SubscriptionFooter
             subscriptionData={subscriptionData}
-            currentCount={subscriptionData.usage.appointments_count}
+            currentCount={appointments.length}
             maxCount={subscriptionData.limits.max_appointments}
             featureName="Agendamentos"
             canUseFeature={subscriptionData.canCreateAppointment}

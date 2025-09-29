@@ -70,7 +70,7 @@ export function ProfessionalList() {
       {subscriptionData && (
         <SubscriptionFooter
           subscriptionData={subscriptionData}
-          currentCount={subscriptionData.usage.professionals_count}
+          currentCount={professionals.length}
           maxCount={subscriptionData.limits.max_professionals}
           featureName="Profissionais"
           canUseFeature={subscriptionData.canCreateProfessional}
