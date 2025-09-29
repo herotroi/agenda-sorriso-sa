@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -33,6 +34,12 @@ interface Appointment {
   professionals: { name: string } | null;
 }
 
+interface Professional {
+  id: string;
+  name: string;
+  specialty?: string;
+}
+
 interface FileUpload {
   file: File;
   description: string;
@@ -52,13 +59,16 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [prescription, setPrescription] = useState('');
+  const [selectedProfessional, setSelectedProfessional] = useState('');
   const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [existingDocuments, setExistingDocuments] = useState<ExistingDocument[]>([]);
   const [documentsToDelete, setDocumentsToDelete] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingAppointments, setFetchingAppointments] = useState(false);
+  const [fetchingProfessionals, setFetchingProfessionals] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -101,6 +111,32 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       });
     } finally {
       setFetchingAppointments(false);
+    }
+  };
+
+  const fetchProfessionals = async () => {
+    if (!user?.id) return;
+
+    setFetchingProfessionals(true);
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('id, name, specialty')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      setProfessionals(data || []);
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar profissionais',
+        variant: 'destructive',
+      });
+    } finally {
+      setFetchingProfessionals(false);
     }
   };
 
@@ -151,6 +187,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
   useEffect(() => {
     if (isOpen && patientId && user?.id) {
       fetchAppointments();
+      fetchProfessionals();
     }
   }, [isOpen, patientId, user?.id]);
 
@@ -159,16 +196,24 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setTitle('');
       setContent('');
       setPrescription('');
+      setSelectedProfessional('');
       setSelectedAppointments([]);
       setFiles([]);
       setExistingDocuments([]);
       setDocumentsToDelete([]);
       setAppointments([]);
+      setProfessionals([]);
     } else if (recordToEdit) {
       // Preencher campos para edição
       setTitle(recordToEdit.title || '');
       setContent(recordToEdit.content || '');
       setPrescription(recordToEdit.prescription || '');
+      // Carregar profissional se o registro tiver um professional_id
+      if ('professional_id' in recordToEdit && recordToEdit.professional_id) {
+        setSelectedProfessional(String(recordToEdit.professional_id));
+      } else {
+        setSelectedProfessional('');
+      }
       
       // Buscar agendamentos vinculados e documentos existentes se estiver editando
       if (recordToEdit.id) {
@@ -180,6 +225,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setTitle('');
       setContent('');
       setPrescription('');
+      setSelectedProfessional('');
       setSelectedAppointments([]);
       setExistingDocuments([]);
       setDocumentsToDelete([]);
@@ -439,6 +485,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
         notes: content.trim() || null,
         prescription: prescription.trim() || null,
         patient_id: patientId,
+        professional_id: selectedProfessional || null,
         user_id: user.id,
         created_by: user.id,
       };
@@ -593,6 +640,54 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                   Medicamentos, dosagens e instruções de uso (campo opcional)
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Professional Selection */}
+          <Card className="border-blue-200 bg-blue-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                Profissional Responsável
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {fetchingProfessionals ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-4 border-blue-600 border-t-transparent"></div>
+                  <span className="ml-2 text-gray-600">Carregando profissionais...</span>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="professional">Selecionar Profissional</Label>
+                  <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Escolha um profissional (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {professionals.length === 0 ? (
+                        <SelectItem value="" disabled>
+                          Nenhum profissional cadastrado
+                        </SelectItem>
+                      ) : (
+                        professionals.map((professional) => (
+                          <SelectItem key={professional.id} value={professional.id}>
+                            <div>
+                              <div className="font-medium">{professional.name}</div>
+                              {professional.specialty && (
+                                <div className="text-sm text-gray-500">{professional.specialty}</div>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Profissional que realizou ou é responsável por este atendimento
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
