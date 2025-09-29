@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PatientRecordDetailsDialog } from './PatientRecordDetailsDialog';
 import { PatientRecord } from '@/types/prontuario';
+import { HtmlContent } from '@/components/ui/html-content';
 
 interface PatientRecordsListProps {
   records: PatientRecord[];
@@ -141,9 +142,10 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
 
                   {(record.content || record.notes) && (
                     <div className="mb-2">
-                      <p className="text-sm text-gray-700 line-clamp-3 break-words">
-                        {record.content || record.notes}
-                      </p>
+                      <HtmlContent 
+                        content={record.content || record.notes || ''} 
+                        className="text-sm text-gray-700 line-clamp-3 break-words"
+                      />
                     </div>
                   )}
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ClipboardList, Calendar, ArrowRight, FileText } from 'lucide-react';
 import type { PatientRecord } from '@/types/prontuario';
+import { HtmlContent } from '@/components/ui/html-content';
 
 interface RecordsOverviewProps {
   records: PatientRecord[];
@@ -69,9 +70,10 @@ export function RecordsOverview({ records, onEditRecord }: RecordsOverviewProps)
                 </div>
                 
                 {record.content && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mt-2">
-                    {record.content}
-                  </p>
+                  <HtmlContent 
+                    content={record.content} 
+                    className="text-sm text-gray-600 line-clamp-2 mt-2"
+                  />
                 )}
 
                 {record.appointments?.procedures?.name && (

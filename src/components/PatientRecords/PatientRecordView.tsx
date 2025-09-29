@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, User, Calendar, Pill } from 'lucide-react';
+import { HtmlContent } from '@/components/ui/html-content';
 
 interface PatientRecord {
   id: string;
@@ -56,7 +57,10 @@ export function PatientRecordView({ record }: PatientRecordViewProps) {
         <div>
           <h4 className="font-medium mb-2">Notas da Consulta</h4>
           <ScrollArea className="h-32 w-full border rounded p-3">
-            <p className="text-sm whitespace-pre-wrap">{record.notes}</p>
+            <HtmlContent 
+              content={record.notes || ''} 
+              className="text-sm"
+            />
           </ScrollArea>
         </div>
         
@@ -67,7 +71,10 @@ export function PatientRecordView({ record }: PatientRecordViewProps) {
               Receita/Prescrição
             </h4>
             <ScrollArea className="h-32 w-full border rounded p-3">
-              <p className="text-sm whitespace-pre-wrap">{record.prescription}</p>
+              <HtmlContent 
+                content={record.prescription || ''} 
+                className="text-sm"
+              />
             </ScrollArea>
           </div>
         )}

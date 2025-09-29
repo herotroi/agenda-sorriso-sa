@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { HtmlContent } from '@/components/ui/html-content';
 
 interface PatientRecord {
   id: string;
@@ -1405,9 +1406,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Anamnese e Exame Clínico</h3>
                     <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {record.content || record.notes}
-                      </p>
+                      <HtmlContent 
+                        content={record.content || record.notes || ''} 
+                        className="text-sm leading-relaxed"
+                      />
                     </div>
                   </div>
                 )}
@@ -1420,9 +1422,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                       Prescrição Médica
                     </h3>
                     <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {record.prescription}
-                      </p>
+                      <HtmlContent 
+                        content={record.prescription || ''} 
+                        className="text-sm leading-relaxed"
+                      />
                     </div>
                   </div>
                 )}
