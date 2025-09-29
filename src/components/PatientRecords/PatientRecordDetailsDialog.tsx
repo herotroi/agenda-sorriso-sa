@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PatientRecord {
   id: string;
@@ -71,6 +72,21 @@ interface RecordDocument {
   uploaded_at: string;
 }
 
+interface Profile {
+  id: string;
+  company_name?: string;
+  cnpj?: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+}
+
 interface PatientRecordDetailsDialogProps {
   record: PatientRecord | null;
   isOpen: boolean;
@@ -89,11 +105,25 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   const [documentOrder, setDocumentOrder] = useState<string[]>([]);
   const [showOrderControls, setShowOrderControls] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchRecordData = async (recordData: PatientRecord) => {
     setLoadingData(true);
     try {
+      // Buscar dados do perfil da empresa
+      if (user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+        setProfile(profileData);
+      }
+
       // Buscar dados do paciente
       if (recordData.patient_id) {
         const { data: patientData, error: patientError } = await supabase
@@ -473,9 +503,22 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .medical-header .subtitle {
-              margin: 0;
+              margin: 0 0 15px 0;
               font-size: 12pt;
               color: #555;
+            }
+
+            .professional-info {
+              margin-top: 15px;
+              padding-top: 15px;
+              border-top: 1px solid #ccc;
+              text-align: left;
+            }
+
+            .prof-line {
+              margin: 5px 0;
+              font-size: 11pt;
+              color: #333;
             }
             
             .document-info {
@@ -722,18 +765,44 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .medical-footer {
               margin-top: 30px;
-              text-align: center;
+              padding-top: 15px;
+              border-top: 2px solid #000;
+              font-size: 10pt;
+              color: #333;
+              page-break-inside: avoid;
+            }
+
+            .footer-info {
+              margin-bottom: 10px;
+            }
+
+            .footer-section {
+              margin: 5px 0;
+              line-height: 1.4;
+            }
+
+            .footer-system {
               font-size: 8pt;
               color: #666;
+              text-align: center;
               border-top: 1px solid #ddd;
               padding-top: 10px;
+              margin-top: 10px;
             }
           </style>
         </head>
         <body>
           <div class="medical-header">
-            <h1>Prontuário Médico Odontológico</h1>
-            <div class="subtitle">Registro Clínico do Paciente</div>
+            <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
+            <div class="subtitle">CNPJ: ${profile?.cnpj || 'Não informado'}</div>
+            
+            <div class="professional-info">
+              <div class="prof-line">
+                <strong>Profissional:</strong> Dr(a). ${professional?.name || 'Não informado'}
+              </div>
+              ${professional?.specialty ? `<div class="prof-line"><strong>Especialidade:</strong> ${professional.specialty}</div>` : ''}
+              ${professional?.crm_cro ? `<div class="prof-line"><strong>CRM/CRO:</strong> ${professional.crm_cro}</div>` : ''}
+            </div>
           </div>
           
           <div class="document-info">
@@ -862,8 +931,26 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </div>
           
           <div class="medical-footer">
-            Sistema de Prontuário Eletrônico<br>
-            Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            <div class="footer-info">
+              <div class="footer-section">
+                <strong>Endereço:</strong>
+                ${profile ? [
+                  profile.street,
+                  profile.number,
+                  profile.neighborhood,
+                  profile.city,
+                  profile.state,
+                  profile.zip_code
+                ].filter(Boolean).join(', ') || 'Não informado' : 'Não informado'}
+              </div>
+              <div class="footer-section">
+                <strong>Contatos:</strong>
+                ${profile?.email || 'Email não informado'} | ${profile?.phone || 'Telefone não informado'}
+              </div>
+            </div>
+            <div class="footer-system">
+              Sistema de Prontuário Eletrônico | Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            </div>
           </div>
         </body>
       </html>
