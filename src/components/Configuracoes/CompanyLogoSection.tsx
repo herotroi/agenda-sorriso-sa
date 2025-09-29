@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,13 +6,42 @@ import { Label } from '@/components/ui/label';
 import { Upload, Building2, Save, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 export function CompanyLogoSection() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [companyName, setCompanyName] = useState<string>('');
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('company_logo, company_name')
+        .eq('id', user?.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        setLogoUrl(data.company_logo || '');
+        setCompanyName(data.company_name || '');
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -35,10 +64,17 @@ export function CompanyLogoSection() {
         .getPublicUrl(filePath);
 
       setLogoUrl(data.publicUrl);
-      toast.success('Logo carregado com sucesso!');
+      toast({
+        title: "Sucesso",
+        description: "Logo carregado com sucesso!",
+      });
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
-      toast.error('Erro ao carregar logo');
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar logo",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
@@ -58,10 +94,17 @@ export function CompanyLogoSection() {
         });
 
       if (error) throw error;
-      toast.success('Informações da empresa salvas!');
+      toast({
+        title: "Sucesso",
+        description: "Informações da empresa salvas!",
+      });
     } catch (error) {
       console.error('Erro ao salvar:', error);
-      toast.error('Erro ao salvar informações');
+      toast({
+        title: "Erro", 
+        description: "Erro ao salvar informações",
+        variant: "destructive",
+      });
     }
   };
 
