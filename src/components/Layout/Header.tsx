@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -17,6 +18,33 @@ import {
 export function Header() {
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
+
+  const getPageTitle = () => {
+    const path = location.pathname;
+    switch (path) {
+      case '/':
+        return 'Dashboard';
+      case '/agenda':
+        return 'Agenda';
+      case '/pacientes':
+        return 'Pacientes';
+      case '/profissionais':
+        return 'Profissionais';
+      case '/procedimentos':
+        return 'Procedimentos';
+      case '/prontuario':
+        return 'Prontuário';
+      case '/configuracoes':
+        return 'Configurações';
+      case '/assinatura':
+        return 'Assinatura';
+      case '/notificacoes':
+        return 'Notificações';
+      default:
+        return 'ClinicPro';
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 md:py-4">
@@ -26,7 +54,7 @@ export function Header() {
             "font-semibold text-gray-900",
             isMobile ? "text-lg ml-12" : "text-xl md:text-2xl"
           )}>
-            Painel Principal
+            {getPageTitle()}
           </h1>
         </div>
 
