@@ -701,6 +701,40 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
           .rich-text-content ol {
             padding-left: 24px;
             margin: 8px 0;
+            list-style: none;
+          }
+          
+          .rich-text-content ul li {
+            position: relative;
+            padding-left: 0;
+          }
+          
+          .rich-text-content ul li::before {
+            content: "•";
+            color: #374151;
+            font-weight: bold;
+            position: absolute;
+            left: -16px;
+            top: 0;
+          }
+          
+          .rich-text-content ol {
+            counter-reset: item;
+          }
+          
+          .rich-text-content ol li {
+            position: relative;
+            padding-left: 0;
+            counter-increment: item;
+          }
+          
+          .rich-text-content ol li::before {
+            content: counter(item) ".";
+            color: #374151;
+            font-weight: bold;
+            position: absolute;
+            left: -20px;
+            top: 0;
           }
           
           .rich-text-content h1,
