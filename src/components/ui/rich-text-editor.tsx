@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Extension, Node } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Image } from '@tiptap/extension-image';
 import { Table } from '@tiptap/extension-table';
@@ -22,10 +22,179 @@ import {
   Upload,
   Palette,
   Minus,
-  Plus
+  Plus,
+  Move,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Custom Resizable Image Extension
+const ResizableImage = Node.create({
+  name: 'resizableImage',
+  
+  group: 'block',
+  
+  atom: true,
+  
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      alt: {
+        default: null,
+      },
+      width: {
+        default: null,
+      },
+      height: {
+        default: null,
+      },
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'img[src]',
+      },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['img', HTMLAttributes]
+  },
+
+  addNodeView() {
+    return ({ node, getPos, editor }) => {
+      const container = document.createElement('div')
+      container.className = 'resizable-image-container'
+      container.style.cssText = `
+        position: relative;
+        display: inline-block;
+        margin: 8px 0;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        max-width: 100%;
+      `
+
+      const img = document.createElement('img')
+      img.src = node.attrs.src
+      img.alt = node.attrs.alt || ''
+      img.style.cssText = `
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 6px;
+        ${node.attrs.width ? `width: ${node.attrs.width}px;` : ''}
+        ${node.attrs.height ? `height: ${node.attrs.height}px;` : ''}
+      `
+
+      const resizeHandle = document.createElement('div')
+      resizeHandle.className = 'resize-handle'
+      resizeHandle.style.cssText = `
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        width: 12px;
+        height: 12px;
+        background: #3b82f6;
+        border: 2px solid white;
+        border-radius: 50%;
+        cursor: se-resize;
+        opacity: 0;
+        transition: opacity 0.2s;
+      `
+
+      let isResizing = false
+      let startX = 0
+      let startY = 0
+      let startWidth = 0
+      let startHeight = 0
+
+      const showControls = () => {
+        container.style.borderColor = '#3b82f6'
+        resizeHandle.style.opacity = '1'
+      }
+
+      const hideControls = () => {
+        if (!isResizing) {
+          container.style.borderColor = 'transparent'
+          resizeHandle.style.opacity = '0'
+        }
+      }
+
+      container.addEventListener('mouseenter', showControls)
+      container.addEventListener('mouseleave', hideControls)
+
+      resizeHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        isResizing = true
+        startX = e.clientX
+        startY = e.clientY
+        startWidth = img.offsetWidth
+        startHeight = img.offsetHeight
+        
+        const onMouseMove = (e: MouseEvent) => {
+          const deltaX = e.clientX - startX
+          const deltaY = e.clientY - startY
+          
+          const newWidth = Math.max(50, startWidth + deltaX)
+          const newHeight = Math.max(50, startHeight + deltaY)
+          
+          img.style.width = newWidth + 'px'
+          img.style.height = newHeight + 'px'
+        }
+
+        const onMouseUp = () => {
+          isResizing = false
+          hideControls()
+          
+          // Update the node attributes
+          const pos = getPos()
+          if (typeof pos === 'number') {
+            editor.chain()
+              .setNodeSelection(pos)
+              .updateAttributes('resizableImage', {
+                width: img.offsetWidth,
+                height: img.offsetHeight,
+              })
+              .run()
+          }
+          
+          document.removeEventListener('mousemove', onMouseMove)
+          document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+      })
+
+      container.appendChild(img)
+      container.appendChild(resizeHandle)
+
+      return {
+        dom: container,
+        update: (updatedNode) => {
+          if (updatedNode.type.name !== 'resizableImage') return false
+          
+          img.src = updatedNode.attrs.src
+          img.alt = updatedNode.attrs.alt || ''
+          
+          if (updatedNode.attrs.width) {
+            img.style.width = updatedNode.attrs.width + 'px'
+          }
+          if (updatedNode.attrs.height) {
+            img.style.height = updatedNode.attrs.height + 'px'
+          }
+          
+          return true
+        }
+      }
+    }
+  },
+});
 
 interface RichTextEditorProps {
   content: string;
@@ -41,19 +210,36 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
   const [uploading, setUploading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const editorRef = useRef<any>(null);
 
-  // Debounced onChange para evitar salvamento automático muito frequente
+  // Improved debounced onChange that preserves table state
   const debouncedOnChange = useCallback((newContent: string) => {
-    setHasUnsavedChanges(true);
-    
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    // Don't trigger save immediately when table is active to prevent closing
+    if (editorRef.current?.isActive('table')) {
+      console.log('Table active, delaying save');
+      setHasUnsavedChanges(true);
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      // Longer delay for tables
+      timeoutRef.current = setTimeout(() => {
+        onChange(newContent);
+        setHasUnsavedChanges(false);
+      }, debounceDelay * 2);
+    } else {
+      setHasUnsavedChanges(true);
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        onChange(newContent);
+        setHasUnsavedChanges(false);
+      }, debounceDelay);
     }
-    
-    timeoutRef.current = setTimeout(() => {
-      onChange(newContent);
-      setHasUnsavedChanges(false);
-    }, debounceDelay);
   }, [onChange, debounceDelay]);
 
   useEffect(() => {
@@ -69,31 +255,46 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       StarterKit,
       TextStyle,
       Color,
-      Image.configure({
-        inline: false,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg my-2',
-        },
-      }),
+      ResizableImage,
       Table.configure({
         resizable: true,
+        handleWidth: 5,
+        cellMinWidth: 50,
+        allowTableNodeSelection: true,
       }),
       TableRow,
-      TableHeader,
-      TableCell,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'table-header-cell',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'table-cell',
+        },
+      }),
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
       const newContent = editor.getHTML();
       debouncedOnChange(newContent);
     },
-    onCreate: () => {
-      console.log('RichTextEditor: Editor created successfully');
+    onCreate: ({ editor }) => {
+      console.log('RichTextEditor: Editor created successfully with resizable features');
+      editorRef.current = editor;
     },
     editorProps: {
       attributes: {
         class: 'prose prose-sm focus:outline-none p-4 min-h-[100px] max-w-none rich-text-content',
+      },
+      handleKeyDown: (view, event) => {
+        // Prevent certain shortcuts when table is active to avoid closing
+        if (editorRef.current?.isActive('table')) {
+          if (event.key === 'Escape') {
+            return true; // Prevent default behavior
+          }
+        }
+        return false;
       },
     },
   });
@@ -117,7 +318,14 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
         .from('documents')
         .getPublicUrl(filePath);
 
-      editor?.chain().focus().setImage({ src: publicUrl }).run();
+      // Use resizable image instead of regular image
+      editor?.chain().focus().insertContent({
+        type: 'resizableImage',
+        attrs: {
+          src: publicUrl,
+          alt: `Uploaded image ${fileName}`,
+        },
+      }).run();
       toast.success('Imagem carregada com sucesso!');
     } catch (error) {
       console.error('Erro ao fazer upload da imagem:', error);
@@ -129,7 +337,14 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
 
   const addImageFromUrl = () => {
     if (imageUrl && editor) {
-      editor.chain().focus().setImage({ src: imageUrl }).run();
+      // Use resizable image instead of regular image  
+      editor.chain().focus().insertContent({
+        type: 'resizableImage',
+        attrs: {
+          src: imageUrl,
+          alt: 'Image from URL',
+        },
+      }).run();
       setImageUrl('');
       setShowImageInput(false);
     }
@@ -319,6 +534,13 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             width: 100%;
             margin: 16px 0;
             border: 2px solid #e5e7eb;
+            position: relative;
+            transition: border-color 0.2s ease;
+          }
+          
+          .rich-text-content table:focus-within,
+          .rich-text-content table:hover {
+            border-color: #3b82f6;
           }
           
           .rich-text-content table td,
@@ -327,6 +549,9 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             padding: 8px 12px;
             text-align: left;
             min-width: 100px;
+            position: relative;
+            resize: horizontal;
+            overflow: hidden;
           }
           
           .rich-text-content table th {
@@ -334,12 +559,13 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             font-weight: 600;
           }
           
-          .rich-text-content table:hover {
-            border-color: #3b82f6;
+          .rich-text-content .selectedCell {
+            background: rgba(59, 130, 246, 0.1) !important;
+            position: relative;
           }
           
           .rich-text-content .selectedCell:after {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(59, 130, 246, 0.2);
             content: "";
             left: 0;
             right: 0;
@@ -348,6 +574,61 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             pointer-events: none;
             position: absolute;
             z-index: 2;
+          }
+          
+          /* Resizable image container styles */
+          .resizable-image-container {
+            position: relative;
+            display: inline-block;
+            margin: 8px 0;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            max-width: 100%;
+            transition: border-color 0.2s ease;
+          }
+          
+          .resizable-image-container:hover {
+            border-color: #3b82f6;
+          }
+          
+          .resizable-image-container img {
+            border-radius: 6px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+          }
+          
+          .resize-handle {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: se-resize;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          
+          .resizable-image-container:hover .resize-handle {
+            opacity: 1;
+          }
+          
+          /* Table resize handles */
+          .rich-text-content table th:hover::after,
+          .rich-text-content table td:hover::after {
+            content: "";
+            position: absolute;
+            right: -2px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #3b82f6;
+            cursor: col-resize;
+            opacity: 0.7;
           }
           
           .rich-text-content img {
@@ -373,6 +654,25 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             margin: 16px 0 8px 0;
             line-height: 1.4;
           }
+          
+          /* Enhanced table selection feedback */
+          .rich-text-content table.ProseMirror-selectednode {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+          }
+          
+          /* Better focus styles for editing */
+          .rich-text-content [contenteditable]:focus {
+            outline: none;
+          }
+          
+          /* Prevent text selection during resize */
+          .resizing {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+          }
         `}</style>
         
         <EditorContent 
@@ -383,62 +683,87 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
 
       {/* Table controls when table is active */}
       {editor.isActive('table') && (
-        <div className="p-2 border-t border-border flex flex-wrap gap-1 text-sm bg-muted/30">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().addColumnBefore().run()}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Col. Antes
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().addColumnAfter().run()}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Col. Depois
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().addRowBefore().run()}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Linha Antes
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().addRowAfter().run()}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Linha Depois
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().deleteColumn().run()}
-          >
-            <Minus className="h-3 w-3 mr-1" />
-            Del. Coluna
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().deleteRow().run()}
-          >
-            <Minus className="h-3 w-3 mr-1" />
-            Del. Linha
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => editor.chain().focus().deleteTable().run()}
-          >
-            Deletar Tabela
-          </Button>
+        <div className="p-3 border-t border-border bg-blue-50/50">
+          <div className="flex items-center gap-2 mb-2">
+            <TableIcon className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">Controles da Tabela</span>
+            <div className="text-xs text-blue-600 ml-auto">
+              💡 Arraste as bordas das colunas para redimensionar
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1 text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              className="hover:bg-blue-100"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Col. Antes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              className="hover:bg-blue-100"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Col. Depois
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().addRowBefore().run()}
+              className="hover:bg-blue-100"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Linha Antes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+              className="hover:bg-blue-100"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Linha Depois
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              className="hover:bg-red-100 hover:text-red-700"
+            >
+              <Minus className="h-3 w-3 mr-1" />
+              Del. Coluna
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              className="hover:bg-red-100 hover:text-red-700"
+            >
+              <Minus className="h-3 w-3 mr-1" />
+              Del. Linha
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              className="ml-auto"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Deletar Tabela
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Image resize tip when image is selected */}
+      {editor.isActive('resizableImage') && (
+        <div className="p-2 border-t border-border bg-green-50/50 text-xs text-green-700 flex items-center gap-2">
+          <Move className="h-3 w-3" />
+          <span>💡 Use o botão azul no canto da imagem para redimensionar</span>
         </div>
       )}
     </div>
