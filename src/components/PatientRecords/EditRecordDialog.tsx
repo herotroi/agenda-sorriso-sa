@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { EditableRichTextEditor } from './EditableRichTextEditor';
 
 interface PatientRecord {
   id: string;
@@ -91,13 +91,18 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const { user } = useAuth();
 
   // Garantir que carregamos os dados mais recentes diretamente do banco
-  const fetchRecordDetails = async (recordId: string) => {
+  const fetchRecordDetails = async (recordId: string, retryCount = 0) => {
     if (!user?.id) return;
     
-    console.log('🔍 Fetching record details for ID:', recordId);
+    console.log('🔍 Fetching record details for ID:', recordId, 'attempt:', retryCount + 1);
     setLoading(true);
     
     try {
+      // Wait a bit to avoid race conditions
+      if (retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const { data, error } = await supabase
         .from('patient_records')
         .select('id, title, content, notes, prescription, appointment_id, professional_id')
@@ -112,18 +117,26 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       
       if (!data) {
         console.warn('⚠️ No record found for ID:', recordId);
+        
+        // Retry up to 3 times
+        if (retryCount < 3) {
+          console.log('🔄 Retrying fetchRecordDetails...');
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return fetchRecordDetails(recordId, retryCount + 1);
+        }
+        
         toast({
-          title: 'Aviso',
-          description: 'Registro não encontrado',
-          variant: 'default',
+          title: 'Erro',
+          description: 'Registro não encontrado após múltiplas tentativas',
+          variant: 'destructive',
         });
         return;
       }
 
-      console.log('✅ Record loaded:', {
+      console.log('✅ Record loaded successfully:', {
         title: data.title,
-        content: data.content?.substring(0, 100) + '...',
-        prescription: data.prescription?.substring(0, 100) + '...',
+        contentLength: data.content?.length || 0,
+        prescriptionLength: data.prescription?.length || 0,
         appointment_id: data.appointment_id,
         professional_id: data.professional_id
       });
@@ -136,14 +149,27 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         professional_id: data.professional_id || '',
       };
 
-      console.log('📝 Setting form data:', newFormData);
+      console.log('📝 Setting form data with content length:', newFormData.content.length);
       setFormData(newFormData);
+      
+      // Force re-render to ensure editors sync
+      setTimeout(() => {
+        setFormData(prev => ({ ...prev }));
+      }, 200);
       
     } catch (err) {
       console.error('❌ Error in fetchRecordDetails:', err);
+      
+      // Retry on error up to 3 times
+      if (retryCount < 3) {
+        console.log('🔄 Retrying after error...');
+        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
+        return fetchRecordDetails(recordId, retryCount + 1);
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Erro ao carregar dados do registro',
+        description: 'Erro ao carregar dados do registro após múltiplas tentativas',
         variant: 'destructive',
       });
     } finally {
@@ -594,15 +620,25 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     setLoading(true);
 
     try {
+      console.log('💾 Starting save process with data:', {
+        title: formData.title,
+        contentLength: formData.content?.length || 0,
+        prescriptionLength: formData.prescription?.length || 0,
+        appointment_id: formData.appointment_id,
+        professional_id: formData.professional_id
+      });
+
       const updateData = {
         title: formData.title.trim(),
-        content: formData.content.trim() || null,
-        notes: formData.content.trim() || null,
-        prescription: formData.prescription.trim() || null,
+        content: formData.content?.trim() || null,
+        notes: formData.content?.trim() || null, // Also save in notes for backward compatibility
+        prescription: formData.prescription?.trim() || null,
         appointment_id: formData.appointment_id === 'none' ? null : formData.appointment_id,
         professional_id: formData.professional_id || null,
         updated_at: new Date().toISOString(),
       };
+
+      console.log('💾 Saving to database:', updateData);
 
       const { error } = await supabase
         .from('patient_records')
@@ -610,15 +646,23 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         .eq('id', record.id)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database save error:', error);
+        throw error;
+      }
 
+      console.log('✅ Record saved successfully to database');
+
+      // Handle file uploads
       if (files.length > 0) {
+        console.log('📄 Processing file uploads:', files.length);
         const uploadPromises = files.map(fileUpload => uploadFile(fileUpload));
         
         try {
           await Promise.all(uploadPromises);
+          console.log('✅ All files uploaded successfully');
         } catch (uploadError) {
-          console.error('Error uploading some files:', uploadError);
+          console.error('❌ Error uploading some files:', uploadError);
           toast({
             title: 'Aviso',
             description: 'Registro atualizado, mas alguns arquivos não puderam ser enviados',
@@ -632,14 +676,21 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         description: 'Registro atualizado com sucesso',
       });
 
+      // Refresh data
       onRecordUpdated();
       fetchDocuments();
       setFiles([]);
+      
+      // Verify the save worked by fetching the data again
+      setTimeout(() => {
+        fetchRecordDetails(record.id);
+      }, 500);
+      
     } catch (error) {
-      console.error('Error updating record:', error);
+      console.error('❌ Error updating record:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar registro',
+        description: `Erro ao atualizar registro: ${error.message || 'Erro desconhecido'}`,
         variant: 'destructive',
       });
     } finally {
@@ -851,53 +902,35 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           </div>
 
           {/* Anotações da Consulta */}
-          <div className="space-y-2">
-            <Label htmlFor="content" className="text-base font-medium flex items-center gap-2">
-              <Stethoscope className="h-4 w-4" />
-              Anotações da Consulta
-            </Label>
-            <RichTextEditor
-              content={formData.content || ''}
-              onChange={(content) => {
-                console.log('📝 Content updated via RichTextEditor');
-                setFormData({ ...formData, content });
-              }}
-              placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
-              onManualSave={() => {
-                console.log('💾 Manual save triggered from content editor');
-                toast({
-                  title: 'Alterações salvas',
-                  description: 'Conteúdo das anotações foi salvo',
-                });
-              }}
-            />
-          </div>
+          <EditableRichTextEditor
+            label="Anotações da Consulta"
+            content={formData.content || ''}
+            onChange={(content) => {
+              console.log('📝 Content updated via EditableRichTextEditor, length:', content.length);
+              setFormData(prev => ({ ...prev, content }));
+            }}
+            onSave={() => handleSubmit(new Event('submit') as any)}
+            placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
+            icon={<Stethoscope className="h-4 w-4" />}
+            loading={loading}
+          />
 
           {/* Receita/Prescrição */}
-          <div className="space-y-2">
-            <Label htmlFor="prescription" className="text-base font-medium flex items-center gap-2">
-              <Pill className="h-4 w-4" />
-              Receita/Prescrição Médica
-            </Label>
-            <RichTextEditor
-              content={formData.prescription || ''}
-              onChange={(prescription) => {
-                console.log('💊 Prescription updated via RichTextEditor');
-                setFormData({ ...formData, prescription });
-              }}
-              placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
-              onManualSave={() => {
-                console.log('💾 Manual save triggered from prescription editor');
-                toast({
-                  title: 'Alterações salvas',
-                  description: 'Prescrição médica foi salva',
-                });
-              }}
-            />
-            <p className="text-sm text-gray-500">
-              Medicamentos, dosagens e instruções de uso (campo opcional)
-            </p>
-          </div>
+          <EditableRichTextEditor
+            label="Receita/Prescrição Médica"
+            content={formData.prescription || ''}
+            onChange={(prescription) => {
+              console.log('💊 Prescription updated via EditableRichTextEditor, length:', prescription.length);
+              setFormData(prev => ({ ...prev, prescription }));
+            }}
+            onSave={() => handleSubmit(new Event('submit') as any)}
+            placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
+            icon={<Pill className="h-4 w-4" />}
+            loading={loading}
+          />
+          <p className="text-sm text-gray-500 mt-2">
+            Medicamentos, dosagens e instruções de uso (campo opcional)
+          </p>
 
           <Separator />
 

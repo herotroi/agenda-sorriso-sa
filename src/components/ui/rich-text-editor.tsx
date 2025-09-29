@@ -259,23 +259,30 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
     
     console.log('⏱️ Scheduling auto-save in', debounceDelay, 'ms');
     timeoutRef.current = setTimeout(() => {
-      console.log('💾 Auto-saving content');
+      console.log('💾 Auto-saving content, length:', newContent.length);
       onChange(newContent);
       setHasUnsavedChanges(false);
     }, debounceDelay);
   }, [onChange, debounceDelay]);
 
-  // Manual save function for tables
+  // Manual save function for tables - CRITICAL FIX
   const handleManualSave = useCallback(() => {
-    if (pendingContent && hasUnsavedChanges) {
-      console.log('💾 Manual save triggered');
-      onChange(pendingContent);
+    if (editorRef.current && hasUnsavedChanges) {
+      const currentContent = editorRef.current.getHTML();
+      console.log('💾 Manual save triggered, content length:', currentContent.length);
+      
+      // Force save current editor content
+      onChange(currentContent);
+      setPendingContent(currentContent);
       setHasUnsavedChanges(false);
+      
       if (onManualSave) {
         onManualSave();
       }
+      
+      toast.success('Conteúdo salvo manualmente!');
     }
-  }, [pendingContent, hasUnsavedChanges, onChange, onManualSave]);
+  }, [hasUnsavedChanges, onChange, onManualSave]);
 
   const editor = useEditor({
     extensions: [
@@ -343,14 +350,17 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       const currentContent = editor.getHTML();
       
       // Only update if content is significantly different and we haven't set initial content
-      if (!initialContentSet.current || (content !== currentContent && !hasUnsavedChanges)) {
-        console.log('📝 Setting editor content:', content.substring(0, 100) + '...');
+      if (!initialContentSet.current || (content !== currentContent && !hasUnsavedChanges && !isTableActive)) {
+        console.log('📝 Setting editor content, length:', content.length);
+        console.log('📝 Content preview:', content.substring(0, 200) + '...');
+        
         editor.commands.setContent(content || '', { emitUpdate: false }); // Don't trigger updates
         initialContentSet.current = true;
         setHasUnsavedChanges(false);
+        setPendingContent(content || '');
       }
     }
-  }, [editor, content, hasUnsavedChanges]);
+  }, [editor, content, hasUnsavedChanges, isTableActive]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
