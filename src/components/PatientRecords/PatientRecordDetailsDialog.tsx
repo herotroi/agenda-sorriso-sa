@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye, IdCard, Mail, Users, Home, X } from 'lucide-react';
+import { FileText, User, Calendar, Pill, Printer, Download, MapPin, Phone, Eye, IdCard, Mail, Users, Home, X, GripVertical, ChevronUp, ChevronDown, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -86,6 +86,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   const [previewDocument, setPreviewDocument] = useState<RecordDocument | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [documentOrder, setDocumentOrder] = useState<string[]>([]);
+  const [showOrderControls, setShowOrderControls] = useState(false);
   const { toast } = useToast();
 
   const fetchRecordData = async (recordData: PatientRecord) => {
@@ -162,12 +164,38 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      const docs = data || [];
+      setDocuments(docs);
+      // Initialize document order
+      if (docs.length > 0 && documentOrder.length === 0) {
+        setDocumentOrder(docs.map(doc => doc.id));
+      }
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
       setLoadingDocs(false);
     }
+  };
+
+  const moveDocument = (dragIndex: number, hoverIndex: number) => {
+    const newOrder = [...documentOrder];
+    const draggedItem = newOrder[dragIndex];
+    newOrder.splice(dragIndex, 1);
+    newOrder.splice(hoverIndex, 0, draggedItem);
+    setDocumentOrder(newOrder);
+  };
+
+  const getOrderedDocuments = () => {
+    if (documentOrder.length === 0) return documents;
+    
+    const orderedDocs = documentOrder
+      .map(id => documents.find(doc => doc.id === id))
+      .filter(Boolean) as RecordDocument[];
+    
+    // Add any new documents that aren't in the order yet
+    const unorderedDocs = documents.filter(doc => !documentOrder.includes(doc.id));
+    
+    return [...orderedDocs, ...unorderedDocs];
   };
 
   const handlePrint = async () => {
@@ -182,8 +210,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       patient.state
     ].filter(Boolean).join(', ') : '';
 
-    // Buscar e incorporar documentos selecionados
-    const selectedDocs = documents.filter(doc => selectedDocuments.includes(doc.id));
+    // Buscar e incorporar documentos selecionados usando a ordem personalizada
+    const orderedDocs = getOrderedDocuments();
+    const selectedDocs = orderedDocs.filter(doc => selectedDocuments.includes(doc.id));
     let documentsEmbedHtml = '';
 
     if (selectedDocs.length > 0) {
@@ -196,10 +225,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               <div class="document-header">
                 <h4>${doc.name}</h4>
                 ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
-                <div class="document-meta">
-                  Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
-                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
-                </div>
               </div>
               <div class="document-content">
                 <img src="${docUrl}" alt="${doc.name}" class="document-image-full" />
@@ -213,10 +238,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               <div class="document-header">
                 <h4>${doc.name}</h4>
                 ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
-                <div class="document-meta">
-                  Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
-                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
-                </div>
               </div>
               <div class="document-content pdf-placeholder">
                 <div class="pdf-info">
@@ -234,10 +255,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               <div class="document-header">
                 <h4>${doc.name}</h4>
                 ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
-                <div class="document-meta">
-                  Tipo: ${doc.mime_type} | Upload: ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })} | 
-                  Tamanho: ${(doc.file_size / 1024).toFixed(1)} KB
-                </div>
               </div>
               <div class="document-content file-placeholder">
                 <div class="file-info">
@@ -290,14 +307,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .document-image-full {
-                width: 100% !important;
-                max-width: 100% !important;
+                width: 50% !important;
+                max-width: 50% !important;
                 height: auto !important;
-                max-height: none !important;
+                max-height: 400px !important;
                 object-fit: contain !important;
                 display: block !important;
-                margin: 0 auto !important;
-                border: none !important;
+                margin: 10px auto !important;
+                border: 1px solid #ddd !important;
                 box-shadow: none !important;
               }
               
@@ -856,6 +873,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       fetchDocuments(record.id);
       fetchRecordData(record);
       setSelectedDocuments([]);
+      setDocumentOrder([]);
+      setShowOrderControls(false);
     }
   }, [record?.id, isOpen]);
 
@@ -1129,12 +1148,31 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             <div className="px-6 py-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Documentos Anexados</h3>
-                {documents.length > 0 && (
-                  <div className="text-sm text-gray-600">
-                    {selectedDocuments.length} de {documents.length} selecionados para impressão
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {documents.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowOrderControls(!showOrderControls)}
+                      className="text-xs"
+                    >
+                      {showOrderControls ? 'Ocultar' : 'Ordenar'}
+                    </Button>
+                  )}
+                  {documents.length > 0 && (
+                    <div className="text-sm text-gray-600">
+                      {selectedDocuments.length} de {documents.length} selecionados
+                    </div>
+                  )}
+                </div>
               </div>
+              {showOrderControls && documents.length > 1 && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-800 mb-2">
+                    <strong>Arraste e solte</strong> os documentos para reordená-los na impressão
+                  </p>
+                </div>
+              )}
             </div>
             <ScrollArea className="h-[calc(95vh-140px)] px-6 py-4">
               {loadingDocs ? (
@@ -1143,8 +1181,31 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
               ) : documents.length > 0 ? (
                 <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-start gap-3 p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                  {getOrderedDocuments().map((doc, index) => (
+                    <div key={doc.id} className="flex items-start gap-2 p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                      {showOrderControls && (
+                        <div className="flex flex-col gap-1 items-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveDocument(index, Math.max(0, index - 1))}
+                            disabled={index === 0}
+                            className="p-1 h-6 w-6"
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                          <GripVertical className="h-4 w-4 text-gray-400" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveDocument(index, Math.min(getOrderedDocuments().length - 1, index + 1))}
+                            disabled={index === getOrderedDocuments().length - 1}
+                            className="p-1 h-6 w-6"
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                       <Checkbox
                         checked={selectedDocuments.includes(doc.id)}
                         onCheckedChange={() => toggleDocumentSelection(doc.id)}
@@ -1154,12 +1215,21 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         {doc.description && (
                           <p className="text-sm text-gray-600 mt-1 line-clamp-2">{doc.description}</p>
                         )}
-                        <p className="text-xs text-gray-500 mt-2">
-                          Enviado em {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Tamanho: {(doc.file_size / 1024).toFixed(1)} KB
-                        </p>
+                        {!showOrderControls && (
+                          <>
+                            <p className="text-xs text-gray-500 mt-2">
+                              Enviado em {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Tamanho: {(doc.file_size / 1024).toFixed(1)} KB
+                            </p>
+                          </>
+                        )}
+                        {showOrderControls && (
+                          <p className="text-xs text-blue-600 font-medium mt-1">
+                            Posição: {index + 1}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1">
                         <Button
