@@ -265,10 +265,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       TextStyle,
       Color,
       ResizableImage,
-      Table.configure({
+      ResizableTable.configure({
         resizable: true,
         handleWidth: 5,
-        cellMinWidth: 50,
+        cellMinWidth: 80,
         allowTableNodeSelection: true,
       }),
       TableRow,
@@ -626,60 +626,17 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             opacity: 1;
           }
           
-          /* Table resize handles */
-          .rich-text-content table th:hover::after,
-          .rich-text-content table td:hover::after {
-            content: "";
-            position: absolute;
-            right: -2px;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: #3b82f6;
-            cursor: col-resize;
-            opacity: 0.7;
+          /* Table resize handles - Enhanced visual feedback */
+          .table-wrapper-resizable:hover {
+            border-color: #3b82f6;
           }
           
-          .rich-text-content img {
-            border-radius: 8px;
-            margin: 8px 0;
-            max-width: 100%;
-            height: auto;
+          .table-wrapper-resizable .column-resize-handle:hover {
+            background: rgba(59, 130, 246, 0.1);
           }
           
-          .rich-text-content p {
-            margin: 8px 0;
-          }
-          
-          /* Bold text fixes - ensure proper rendering */
-          .rich-text-content strong,
-          .rich-text-content b {
-            font-weight: 700 !important;
-          }
-          
-          .rich-text-content p strong,
-          .rich-text-content p b,
-          .rich-text-content div strong,
-          .rich-text-content div b {
-            font-weight: 700 !important;
-          }
-          
-          .ProseMirror strong,
-          .ProseMirror b {
-            font-weight: 700 !important;
-          }
-          
-          .rich-text-content ul,
-          .rich-text-content ol {
-            padding-left: 24px;
-            margin: 8px 0;
-          }
-          
-          .rich-text-content h1,
-          .rich-text-content h2,
-          .rich-text-content h3 {
-            margin: 16px 0 8px 0;
-            line-height: 1.4;
+          .table-wrapper-resizable .column-resize-handle:hover div {
+            opacity: 1 !important;
           }
           
           /* Enhanced table selection feedback */
@@ -715,7 +672,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <TableIcon className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">Controles da Tabela</span>
             <div className="text-xs text-blue-600 ml-auto">
-              💡 Posicione o cursor na borda entre colunas até ver ↔ e arraste para redimensionar
+              💡 Passe o mouse sobre as bordas das colunas para ver os handles de redimensionamento
             </div>
           </div>
           <div className="flex flex-wrap gap-1 text-sm">
