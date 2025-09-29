@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { applyCpfMask, applyPhoneMask } from '@/components/Patients/utils/inputMasks';
+import { CompanyLogoSection } from './CompanyLogoSection';
 
 interface UserProfile {
   full_name: string;
@@ -226,6 +227,8 @@ export function UserSettingsSection() {
         </CardContent>
       </Card>
 
+      <CompanyLogoSection />
+      
       {/* Endereço */}
       <Card>
         <CardHeader>
