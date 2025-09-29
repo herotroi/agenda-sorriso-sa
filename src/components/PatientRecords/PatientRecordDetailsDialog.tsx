@@ -362,7 +362,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 0; 
+                margin: 40mm 15mm 28mm 15mm; 
                 size: A4 portrait;
               }
               
@@ -384,7 +384,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 10mm 15mm 0 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 60mm !important;
+                height: 35mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -425,7 +425,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 5mm 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 35mm !important;
+                height: 25mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -448,10 +448,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 70mm !important;
-                margin-bottom: 45mm !important;
-                margin-left: 15mm !important;
-                margin-right: 15mm !important;
+                margin: 0 !important;
                 padding: 0 !important;
                 min-height: auto !important;
               }
@@ -539,12 +536,19 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 color: #2563eb !important;
               }
               
-              /* Remover espaços em branco desnecessários */
+              /* Permitir quebra de página em blocos grandes */
               .medical-section,
               .patient-info,
-              .appointment-info {
-                page-break-inside: avoid !important;
+              .appointment-info,
+              .documents-section,
+              .document-content,
+              .section-content {
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+                overflow: visible !important;
                 margin-bottom: 15px !important;
+                white-space: pre-wrap !important;
+                word-break: break-word !important;
               }
               
               /* Compactar documentos/imagens na impressão */
@@ -566,7 +570,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .signature-section {
-                page-break-before: avoid !important;
+                page-break-inside: avoid !important;
                 margin-top: 30px !important;
               }
             }
@@ -1058,10 +1062,15 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       printWindow.document.write(printContent);
       printWindow.document.close();
       
-      // Aguardar o conteúdo carregar antes de imprimir
-      setTimeout(() => {
-        printWindow.print();
-      }, 2000);
+      // Aguardar carregamento completo antes de imprimir
+      printWindow.onload = () => {
+        const doPrint = () => printWindow.print();
+        if (printWindow.document.fonts && printWindow.document.fonts.ready) {
+          printWindow.document.fonts.ready.then(doPrint).catch(doPrint);
+        } else {
+          doPrint();
+        }
+      };
     }
   };
 
