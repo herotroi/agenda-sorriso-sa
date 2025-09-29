@@ -1,6 +1,9 @@
 
 import { UserSettingsSection } from '@/components/Configuracoes/UserSettingsSection';
 import { PasswordChangeSection } from '@/components/Configuracoes/PasswordChangeSection';
+import { CompanyLogoSection } from '@/components/Configuracoes/CompanyLogoSection';
+import { IntegrationDataSection } from '@/components/Configuracoes/IntegrationDataSection';
+import { AutomationContactSection } from '@/components/Configuracoes/AutomationContactSection';
 import { CouponSection } from '@/components/Configuracoes/CouponSection';
 
 export default function Configuracoes() {
@@ -14,6 +17,9 @@ export default function Configuracoes() {
       <div className="grid gap-6">
         <UserSettingsSection />
         <PasswordChangeSection />
+        <CompanyLogoSection />
+        <IntegrationDataSection />
+        <AutomationContactSection />
         <CouponSection />
       </div>
     </div>
