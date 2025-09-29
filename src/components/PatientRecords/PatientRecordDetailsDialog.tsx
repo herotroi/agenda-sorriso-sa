@@ -867,30 +867,43 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               margin-top: 10px;
             }
 
-            /* Marca d'água da logo */
-            .watermark {
-              position: fixed;
+            /* Marca d'água da logo - aparece em todas as páginas */
+            .print-content {
+              position: relative;
+            }
+
+            .print-content::before {
+              content: '';
+              position: absolute;
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%);
-              opacity: 0.08;
+              width: 600px;
+              height: 600px;
+              background-image: url('${profile?.company_logo || ''}');
+              background-repeat: no-repeat;
+              background-position: center;
+              background-size: contain;
+              opacity: 0.15;
               z-index: -1;
               pointer-events: none;
-              max-width: 400px;
-              max-height: 400px;
-              width: auto;
-              height: auto;
             }
 
-            .watermark img {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
+            @media print {
+              .print-content::before {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 600px;
+                height: 600px;
+                opacity: 0.12;
+                z-index: -1;
+              }
             }
           </style>
         </head>
         <body>
-          ${profile?.company_logo ? '<div class="watermark"><img src="' + profile.company_logo + '" alt="Logo da empresa" /></div>' : ''}
           <div class="print-grid">
             <div class="print-header">
               <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
