@@ -362,8 +362,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 12mm 8mm; 
+                margin: 80px 12mm 60px 12mm; 
                 size: A4 portrait;
+                @top-center {
+                  content: element(print-header);
+                }
+                @bottom-center {
+                  content: element(print-footer);
+                }
               }
               
               body { 
@@ -371,6 +377,76 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 print-color-adjust: exact;
                 margin: 0;
                 padding: 0;
+              }
+              
+              .medical-header {
+                position: running(print-header);
+                text-align: center !important;
+                color: #666 !important;
+                font-size: 14px !important;
+                width: 100%;
+                margin: 0 !important;
+                padding: 10px 0 !important;
+                border-bottom: 1px solid #ccc !important;
+                background: white !important;
+              }
+              
+              .medical-header h1 {
+                font-size: 16px !important;
+                color: #666 !important;
+                margin: 0 0 4px 0 !important;
+              }
+              
+              .medical-header .subtitle {
+                font-size: 12px !important;
+                color: #666 !important;
+                margin: 0 0 8px 0 !important;
+              }
+              
+              .medical-header .professional-info {
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+              }
+              
+              .medical-header .prof-line {
+                font-size: 11px !important;
+                color: #666 !important;
+                margin: 2px 0 !important;
+              }
+              
+              .medical-footer {
+                position: running(print-footer);
+                text-align: center !important;
+                color: #666 !important;
+                font-size: 10px !important;
+                width: 100%;
+                margin: 0 !important;
+                padding: 8px 0 !important;
+                border-top: 1px solid #ccc !important;
+                background: white !important;
+              }
+              
+              .medical-footer .footer-info {
+                margin: 0 !important;
+              }
+              
+              .medical-footer .footer-section {
+                font-size: 10px !important;
+                color: #666 !important;
+                margin: 2px 0 !important;
+              }
+              
+              .medical-footer .footer-system {
+                font-size: 8px !important;
+                color: #666 !important;
+                margin: 4px 0 0 0 !important;
+                padding: 0 !important;
+                border: none !important;
+              }
+              
+              .document-info {
+                margin-top: 0 !important;
               }
               
               .page-break {
