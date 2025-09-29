@@ -106,19 +106,13 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
         </div>
       )}
 
-      {/* Patient List - Shown when searching or no patient selected */}
-      {(searchTerm || !selectedPatient) && (
+      {/* Patient List - Shown when searching */}
+      {searchTerm && (
         <div className="border rounded-lg">
           <div className="p-3 border-b bg-gray-50">
             <h4 className="font-medium text-gray-900">
-              {searchTerm ? (
-                <>
-                  {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} encontrado{filteredPatients.length !== 1 ? 's' : ''}
-                  <span className="ml-2 text-gray-600">para "{searchTerm}"</span>
-                </>
-              ) : (
-                'Selecione um paciente'
-              )}
+              {filteredPatients.length} paciente{filteredPatients.length !== 1 ? 's' : ''} encontrado{filteredPatients.length !== 1 ? 's' : ''}
+              <span className="ml-2 text-gray-600">para "{searchTerm}"</span>
             </h4>
           </div>
           
