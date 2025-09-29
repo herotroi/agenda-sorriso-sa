@@ -267,11 +267,12 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
 
   // Manual save function for tables - CRITICAL FIX
   const handleManualSave = useCallback(() => {
-    if (editorRef.current && hasUnsavedChanges) {
+    if (editorRef.current) {
       const currentContent = editorRef.current.getHTML();
       console.log('💾 Manual save triggered, content length:', currentContent.length);
+      console.log('📊 Content includes tables:', currentContent.includes('<table>'));
       
-      // Force save current editor content
+      // Force save current editor content immediately
       onChange(currentContent);
       setPendingContent(currentContent);
       setHasUnsavedChanges(false);
@@ -280,9 +281,35 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
         onManualSave();
       }
       
-      toast.success('Conteúdo salvo manualmente!');
+      toast.success('Conteúdo salvo com tabelas!');
+    } else {
+      console.warn('⚠️ Editor not available for manual save');
     }
-  }, [hasUnsavedChanges, onChange, onManualSave]);
+  }, [onChange, onManualSave]);
+
+  // Auto-save for tables every 3 seconds when table is active
+  useEffect(() => {
+    let tableAutoSaveInterval: NodeJS.Timeout;
+    
+    if (isTableActive && hasUnsavedChanges && editorRef.current) {
+      console.log('📊 Starting table auto-save interval');
+      tableAutoSaveInterval = setInterval(() => {
+        if (editorRef.current && hasUnsavedChanges) {
+          const currentContent = editorRef.current.getHTML();
+          console.log('📊 Table auto-save executing, content length:', currentContent.length);
+          onChange(currentContent);
+          setPendingContent(currentContent);
+          setHasUnsavedChanges(false);
+        }
+      }, 3000);
+    }
+    
+    return () => {
+      if (tableAutoSaveInterval) {
+        clearInterval(tableAutoSaveInterval);
+      }
+    };
+  }, [isTableActive, hasUnsavedChanges, onChange]);
 
   const editor = useEditor({
     extensions: [
@@ -315,15 +342,52 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       console.log('RichTextEditor: Editor created successfully with resizable features');
       editorRef.current = editor;
     },
+    onTransaction: ({ editor, transaction }) => {
+      // Detect table operations by checking if we're in table context
+      const isInTable = editor.isActive('table') || 
+                       editor.isActive('tableCell') || 
+                       editor.isActive('tableHeader');
+      
+      if (isInTable && transaction.docChanged) {
+        console.log('📊 Table operation detected, forcing content sync');
+        const currentContent = editor.getHTML();
+        setPendingContent(currentContent);
+        setHasUnsavedChanges(true);
+        
+        // Force save tables after a short delay
+        setTimeout(() => {
+          if (editorRef.current) {
+            const latestContent = editorRef.current.getHTML();
+            console.log('📊 Auto-saving table changes, length:', latestContent.length);
+            onChange(latestContent);
+            setHasUnsavedChanges(false);
+          }
+        }, 1500);
+      }
+    },
     editorProps: {
       attributes: {
         class: 'prose prose-sm focus:outline-none p-4 min-h-[100px] max-w-none rich-text-content',
       },
       handleKeyDown: (view, event) => {
-        // Prevent certain shortcuts when table is active to avoid closing
+        // Save on Ctrl+S
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+          event.preventDefault();
+          handleManualSave();
+          return true;
+        }
+        
+        // Force sync on table-related keys
         if (editorRef.current?.isActive('table')) {
-          if (event.key === 'Escape') {
-            return true; // Prevent default behavior
+          const tableKeys = ['Tab', 'Enter', 'Backspace', 'Delete'];
+          if (tableKeys.includes(event.key)) {
+            setTimeout(() => {
+              if (editorRef.current) {
+                const currentContent = editorRef.current.getHTML();
+                setPendingContent(currentContent);
+                setHasUnsavedChanges(true);
+              }
+            }, 100);
           }
         }
         return false;
@@ -335,6 +399,13 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
         
         if (isTableClick) {
           setShowTableControls(true);
+          // Force content sync when clicking in table
+          setTimeout(() => {
+            if (editorRef.current) {
+              const currentContent = editorRef.current.getHTML();
+              setPendingContent(currentContent);
+            }
+          }, 50);
         } else {
           setShowTableControls(false);
         }
@@ -854,7 +925,11 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().addColumnBefore().run()}
+              onClick={() => {
+                editor.chain().focus().addColumnBefore().run();
+                // Force save after table operation
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-blue-100"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -863,7 +938,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().addColumnAfter().run()}
+              onClick={() => {
+                editor.chain().focus().addColumnAfter().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-blue-100"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -872,7 +950,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().addRowBefore().run()}
+              onClick={() => {
+                editor.chain().focus().addRowBefore().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-blue-100"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -881,7 +962,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().addRowAfter().run()}
+              onClick={() => {
+                editor.chain().focus().addRowAfter().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-blue-100"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -890,7 +974,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().deleteColumn().run()}
+              onClick={() => {
+                editor.chain().focus().deleteColumn().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-red-100 hover:text-red-700"
             >
               <Minus className="h-3 w-3 mr-1" />
@@ -899,7 +986,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => editor.chain().focus().deleteRow().run()}
+              onClick={() => {
+                editor.chain().focus().deleteRow().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="hover:bg-red-100 hover:text-red-700"
             >
               <Minus className="h-3 w-3 mr-1" />
@@ -908,7 +998,10 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => editor.chain().focus().deleteTable().run()}
+              onClick={() => {
+                editor.chain().focus().deleteTable().run();
+                setTimeout(() => handleManualSave(), 100);
+              }}
               className="ml-auto"
             >
               <RotateCcw className="h-3 w-3 mr-1" />

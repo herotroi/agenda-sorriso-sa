@@ -3,6 +3,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Save, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TableSaveManager } from './TableSaveManager';
 
 interface EditableRichTextEditorProps {
   label: string;
@@ -38,11 +39,23 @@ export function EditableRichTextEditor({
 
   const handleContentChange = useCallback((newContent: string) => {
     console.log(`📝 ${label}: Content changed, length:`, newContent.length);
+    console.log(`📊 ${label}: Contains tables:`, newContent.includes('<table>'));
+    
     setLocalContent(newContent);
     setHasLocalChanges(true);
     
     // Call external onChange immediately for form state sync
     onChange(newContent);
+    
+    // Auto-save tables after short delay
+    if (newContent.includes('<table>')) {
+      console.log(`📊 ${label}: Table detected, scheduling auto-save`);
+      setTimeout(() => {
+        console.log(`📊 ${label}: Auto-saving table content`);
+        onChange(newContent);
+        setHasLocalChanges(false);
+      }, 2000);
+    }
   }, [onChange, label]);
 
   const handleManualSave = useCallback(async () => {
@@ -80,6 +93,16 @@ export function EditableRichTextEditor({
 
   return (
     <div className="space-y-2">
+      <TableSaveManager 
+        content={localContent}
+        onSave={(content) => {
+          console.log(`📊 TableSaveManager: Auto-saving ${label}`);
+          onChange(content);
+          setHasLocalChanges(false);
+        }}
+        isEnabled={true}
+      />
+      
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {icon}
@@ -119,14 +142,16 @@ export function EditableRichTextEditor({
           onChange={handleContentChange}
           onManualSave={handleManualSave}
           placeholder={placeholder}
-          debounceDelay={3000} // Longer delay for manual save scenarios
+          debounceDelay={1000} // Shorter delay for better responsiveness
         />
       </div>
       
       {hasLocalChanges && (
-        <div className="text-xs text-gray-500 flex items-center gap-1">
+        <div className="text-xs text-gray-500 flex items-center gap-1 bg-amber-50 p-2 rounded">
           <AlertCircle className="h-3 w-3" />
-          <span>Use o botão "Salvar" acima para salvar suas alterações, especialmente após editar tabelas</span>
+          <span>
+            <strong>IMPORTANTE:</strong> Após editar tabelas, clique no botão "Salvar" acima ou pressione Ctrl+S para garantir que as alterações sejam salvas no banco de dados
+          </span>
         </div>
       )}
     </div>

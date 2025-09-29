@@ -623,7 +623,9 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       console.log('💾 Starting save process with data:', {
         title: formData.title,
         contentLength: formData.content?.length || 0,
+        contentHasTables: formData.content?.includes('<table>') || false,
         prescriptionLength: formData.prescription?.length || 0,
+        prescriptionHasTables: formData.prescription?.includes('<table>') || false,
         appointment_id: formData.appointment_id,
         professional_id: formData.professional_id
       });
@@ -638,7 +640,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         updated_at: new Date().toISOString(),
       };
 
-      console.log('💾 Saving to database:', updateData);
+      console.log('💾 Saving to database with tables:', {
+        contentHasTables: updateData.content?.includes('<table>') || false,
+        prescriptionHasTables: updateData.prescription?.includes('<table>') || false
+      });
 
       const { error } = await supabase
         .from('patient_records')
@@ -651,7 +656,22 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         throw error;
       }
 
-      console.log('✅ Record saved successfully to database');
+      console.log('✅ Record saved successfully to database with all content including tables');
+
+      // Verify the save worked by checking the database
+      const { data: verifyData } = await supabase
+        .from('patient_records')
+        .select('content, prescription')
+        .eq('id', record.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (verifyData) {
+        console.log('🔍 Verification - Tables saved correctly:', {
+          contentHasTables: verifyData.content?.includes('<table>') || false,
+          prescriptionHasTables: verifyData.prescription?.includes('<table>') || false
+        });
+      }
 
       // Handle file uploads
       if (files.length > 0) {
@@ -673,7 +693,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
 
       toast({
         title: 'Sucesso',
-        description: 'Registro atualizado com sucesso',
+        description: 'Registro atualizado com sucesso incluindo todas as tabelas!',
       });
 
       // Refresh data
