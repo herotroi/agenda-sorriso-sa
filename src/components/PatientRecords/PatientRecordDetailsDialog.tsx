@@ -424,6 +424,24 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 margin-bottom: 15px !important;
               }
               
+              /* Compactar documentos/imagens na impressão */
+              .documents-section { margin-top: 0 !important; }
+              .document-header { display: none !important; }
+              .document-embed { 
+                page-break-before: auto !important; 
+                page-break-inside: avoid !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+              }
+              .document-content { margin: 0 !important; padding: 0 !important; }
+              .document-image-full { 
+                margin: 0 auto 4px !important; 
+                border: none !important; 
+                max-height: 400px !important;
+                width: 50% !important; 
+                max-width: 50% !important;
+              }
+              
               .signature-section {
                 page-break-before: avoid !important;
                 margin-top: 30px !important;
