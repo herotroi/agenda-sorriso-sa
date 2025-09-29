@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PatientRecordForm } from '@/components/PatientRecords/PatientRecordForm';
 import { SubscriptionFooter } from '@/components/ui/subscription-footer';
 import { PatientSearch } from '@/components/PatientRecords/PatientSearch';
@@ -8,6 +8,8 @@ import { PatientRecordsList } from '@/components/PatientRecords/PatientRecordsLi
 import { EditRecordDialog } from '@/components/PatientRecords/EditRecordDialog';
 import { useProntuario } from '@/hooks/useProntuario';
 import { usePatientRecords } from '@/hooks/usePatientRecords';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,10 +21,12 @@ import { DocumentsOverview } from '@/components/PatientRecords/Overview/Document
 import { RecordsOverview } from '@/components/PatientRecords/Overview/RecordsOverview';
 
 export default function Prontuario() {
+  const { user } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PatientRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [recordToEditInForm, setRecordToEditInForm] = useState<PatientRecord | null>(null);
+  const [totalRecords, setTotalRecords] = useState(0);
   
   const { subscriptionData, loading: subscriptionLoading, checkLimit, showLimitWarning } = useSubscriptionLimits();
   const {
@@ -40,6 +44,21 @@ export default function Prontuario() {
   } = useProntuario();
 
   const { records, loading: recordsLoading, refetchRecords } = usePatientRecords(selectedPatient);
+
+  useEffect(() => {
+    const fetchTotalRecords = async () => {
+      if (!user) return;
+      
+      const { count } = await supabase
+        .from('patient_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      setTotalRecords(count || 0);
+    };
+
+    fetchTotalRecords();
+  }, [user]);
 
   const handleFormClose = () => {
     setIsFormOpen(false);
@@ -211,7 +230,7 @@ export default function Prontuario() {
         {subscriptionData && (
           <SubscriptionFooter
             subscriptionData={subscriptionData}
-            currentCount={records.length}
+            currentCount={totalRecords}
             featureName="Registros"
             canUseFeature={canUseEHR}
           />
