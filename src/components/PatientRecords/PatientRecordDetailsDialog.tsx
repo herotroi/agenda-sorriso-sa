@@ -382,7 +382,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 color: #666 !important;
                 font-size: 14px !important;
                 padding: 15px 20px !important;
-                border-bottom: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
                 height: 140px !important;
@@ -424,7 +423,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 color: #666 !important;
                 font-size: 10px !important;
                 padding: 10px 20px !important;
-                border-top: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
                 height: 100px !important;
