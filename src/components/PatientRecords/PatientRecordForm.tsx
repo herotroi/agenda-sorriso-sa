@@ -478,6 +478,24 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       return;
     }
 
+    if (!selectedProfessional) {
+      toast({
+        title: 'Erro',
+        description: 'Profissional responsável é obrigatório',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (selectedAppointments.length === 0) {
+      toast({
+        title: 'Erro',
+        description: 'Pelo menos um agendamento deve ser selecionado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -646,7 +664,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
-                Profissional Responsável
+                Profissional Responsável *
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -657,10 +675,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                 </div>
               ) : (
                 <div>
-                  <Label htmlFor="professional">Selecionar Profissional</Label>
+                  <Label htmlFor="professional">Selecionar Profissional *</Label>
                   <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Escolha um profissional (opcional)" />
+                    <SelectTrigger className={`w-full ${!selectedProfessional ? 'border-red-300' : ''}`}>
+                      <SelectValue placeholder="Escolha um profissional" />
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
                       {professionals.length === 0 ? (
@@ -682,7 +700,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Profissional que realizou ou é responsável por este atendimento
+                    Profissional que realizou ou é responsável por este atendimento <span className="text-red-500">*</span>
                   </p>
                 </div>
               )}
@@ -694,7 +712,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-green-600" />
-                Agendamentos Relacionados
+                Agendamentos Relacionados *
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -704,9 +722,12 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                   <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
                 </div>
               ) : appointments.length === 0 ? (
-                <p className="text-gray-500 py-4">Nenhum agendamento encontrado para este paciente.</p>
+                <p className="text-gray-500 py-4">Nenhum agendamento encontrado para este paciente. <span className="text-red-500">É necessário ter pelo menos um agendamento para criar um prontuário.</span></p>
               ) : (
                 <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {selectedAppointments.length === 0 && (
+                    <p className="text-red-500 text-sm mb-2">* Selecione pelo menos um agendamento</p>
+                  )}
                   {appointments.map((appointment) => (
                     <div
                       key={appointment.id}

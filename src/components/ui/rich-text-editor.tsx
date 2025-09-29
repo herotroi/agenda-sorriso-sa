@@ -212,34 +212,27 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
   const timeoutRef = useRef<NodeJS.Timeout>();
   const editorRef = useRef<any>(null);
 
-  // Improved debounced onChange that preserves table state
+  // Improved debounced onChange that prevents autosave for tables
   const debouncedOnChange = useCallback((newContent: string) => {
-    // Don't trigger save immediately when table is active to prevent closing
-    if (editorRef.current?.isActive('table')) {
-      console.log('Table active, delaying save');
+    // Completely disable autosave when table operations are happening
+    if (editorRef.current?.isActive('table') || 
+        editorRef.current?.isActive('tableCell') || 
+        editorRef.current?.isActive('tableHeader')) {
+      console.log('Table element active, skipping autosave');
       setHasUnsavedChanges(true);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
-      // Longer delay for tables
-      timeoutRef.current = setTimeout(() => {
-        onChange(newContent);
-        setHasUnsavedChanges(false);
-      }, debounceDelay * 2);
-    } else {
-      setHasUnsavedChanges(true);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
-      timeoutRef.current = setTimeout(() => {
-        onChange(newContent);
-        setHasUnsavedChanges(false);
-      }, debounceDelay);
+      return; // Don't save at all during table operations
     }
+    
+    setHasUnsavedChanges(true);
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      onChange(newContent);
+      setHasUnsavedChanges(false);
+    }, debounceDelay);
   }, [onChange, debounceDelay]);
 
   useEffect(() => {
@@ -642,6 +635,24 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             margin: 8px 0;
           }
           
+          /* Bold text fixes - ensure proper rendering */
+          .rich-text-content strong,
+          .rich-text-content b {
+            font-weight: 700 !important;
+          }
+          
+          .rich-text-content p strong,
+          .rich-text-content p b,
+          .rich-text-content div strong,
+          .rich-text-content div b {
+            font-weight: 700 !important;
+          }
+          
+          .ProseMirror strong,
+          .ProseMirror b {
+            font-weight: 700 !important;
+          }
+          
           .rich-text-content ul,
           .rich-text-content ol {
             padding-left: 24px;
@@ -688,7 +699,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <TableIcon className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">Controles da Tabela</span>
             <div className="text-xs text-blue-600 ml-auto">
-              💡 Arraste as bordas das colunas para redimensionar
+              💡 Posicione o cursor na borda entre colunas até ver ↔ e arraste para redimensionar
             </div>
           </div>
           <div className="flex flex-wrap gap-1 text-sm">
