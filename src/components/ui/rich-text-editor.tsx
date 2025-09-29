@@ -267,8 +267,8 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       ResizableImage,
       Table.configure({
         resizable: true,
-        handleWidth: 5,
-        cellMinWidth: 80,
+        handleWidth: 8,
+        cellMinWidth: 60,
         allowTableNodeSelection: true,
       }),
       TableRow,
@@ -626,21 +626,17 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             opacity: 1;
           }
           
-          /* Enhanced table styling with visual resize feedback */
+          /* Simplified Excel-style table resizing */
           .rich-text-content table {
             border-collapse: collapse;
             width: 100%;
             margin: 16px 0;
-            border: 2px solid #e5e7eb;
+            border: 1px solid #e5e7eb;
             position: relative;
-            transition: border-color 0.2s ease;
-            border-radius: 6px;
-            overflow: hidden;
           }
           
           .rich-text-content table:hover {
             border-color: #3b82f6;
-            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
           }
           
           .rich-text-content table td,
@@ -648,10 +644,8 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             border: 1px solid #d1d5db;
             padding: 8px 12px;
             text-align: left;
-            min-width: 100px;
+            min-width: 60px;
             position: relative;
-            resize: horizontal;
-            overflow: hidden;
           }
           
           .rich-text-content table th {
@@ -663,47 +657,29 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             background: #ffffff;
           }
           
-          /* Visual resize handles for table columns */
-          .rich-text-content table th:not(:last-child):hover::after,
-          .rich-text-content table td:not(:last-child):hover::after {
-            content: "||";
-            position: absolute;
-            right: -2px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 20px;
-            background: #3b82f6;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            font-weight: bold;
-            cursor: col-resize;
-            border-radius: 2px;
-            z-index: 10;
-            border: 1px solid white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          /* Excel-style column borders - hover makes them more prominent */
+          .rich-text-content table th,
+          .rich-text-content table td {
+            border-right: 2px solid #d1d5db;
+            cursor: default;
           }
           
-          /* Hover effect for table cells with resize capability */
-          .rich-text-content table th:not(:last-child):hover,
-          .rich-text-content table td:not(:last-child):hover {
-            background: rgba(59, 130, 246, 0.05);
+          .rich-text-content table th:hover,
+          .rich-text-content table td:hover {
+            border-right-color: #3b82f6;
           }
           
-          /* Column resize handle area */
-          .rich-text-content table .column-resize-handle {
+          /* Column resize cursor appears when hovering near right border */
+          .rich-text-content table th::after,
+          .rich-text-content table td::after {
+            content: '';
             position: absolute;
-            right: -2px;
+            right: -4px;
             top: 0;
-            bottom: -2px;
-            width: 4px;
-            background-color: #3b82f6;
+            bottom: 0;
+            width: 8px;
             cursor: col-resize;
-            pointer-events: none;
-            opacity: 0.8;
+            z-index: 10;
           }
           
           .rich-text-content img {
@@ -775,7 +751,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <TableIcon className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">Controles da Tabela</span>
             <div className="text-xs text-blue-600 ml-auto">
-              💡 Passe o mouse sobre as bordas das colunas para ver os handles de redimensionamento (||)
+              💡 Arraste as bordas das colunas para redimensionar (como no Excel)
             </div>
           </div>
           <div className="flex flex-wrap gap-1 text-sm">
