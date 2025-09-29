@@ -21,6 +21,7 @@ interface PatientRecordFormProps {
     title?: string;
     content?: string;
     prescription?: string;
+    professional_id?: string;
   } | null;
 }
 
