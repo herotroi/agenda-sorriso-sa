@@ -5,6 +5,7 @@ import { NotificationDropdown } from './NotificationDropdown';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLocation } from 'react-router-dom';
+import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ export function Header() {
   const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { profile } = useProfile();
 
   const getPageTitle = () => {
     const path = location.pathname;
@@ -42,7 +44,7 @@ export function Header() {
       case '/notificacoes':
         return 'Notificações';
       default:
-        return 'ClinicPro';
+        return profile?.company_name || 'ClinicPro';
     }
   };
 
