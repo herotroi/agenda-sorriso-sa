@@ -225,6 +225,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
   const [showImageInput, setShowImageInput] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showTableControls, setShowTableControls] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const editorRef = useRef<any>(null);
 
@@ -302,6 +303,19 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
           }
         }
         return false;
+      },
+      handleClick: (view, pos, event) => {
+        // Check if clicked element is part of a table
+        const clickedElement = event.target as HTMLElement;
+        const isTableClick = clickedElement.closest('table') !== null;
+        
+        if (isTableClick) {
+          setShowTableControls(true);
+        } else {
+          setShowTableControls(false);
+        }
+        
+        return false; // Allow default behavior
       },
     },
   });
@@ -544,11 +558,12 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             position: relative;
             table-layout: fixed;
             transition: border-color 0.2s ease;
+            cursor: pointer;
           }
           
-          .rich-text-content table:focus-within,
           .rich-text-content table:hover {
             border-color: #3b82f6;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
           }
           
           .rich-text-content table td,
@@ -715,8 +730,8 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
         />
       </div>
 
-      {/* Table controls when table is active */}
-      {editor.isActive('table') && (
+      {/* Table controls when table is clicked or active */}
+      {(showTableControls || editor.isActive('table')) && (
         <div className="p-3 border-t border-border bg-blue-50/50">
           <div className="flex items-center gap-2 mb-2">
             <TableIcon className="h-4 w-4 text-blue-600" />
