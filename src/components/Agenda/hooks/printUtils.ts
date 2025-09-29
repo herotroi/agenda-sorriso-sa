@@ -83,29 +83,30 @@ export const openPrintWindow = (
         
         .print-header {
           text-align: center;
-          margin-bottom: 30px;
+          margin-bottom: 15px;
           border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 20px;
+          padding-bottom: 10px;
         }
         
         .print-header h1 {
-          margin: 0 0 10px 0;
-          font-size: 24px;
+          margin: 0 0 5px 0;
+          font-size: 20px;
           font-weight: 600;
           color: #1f2937;
         }
         
         .print-header .date-info {
-          font-size: 16px;
+          font-size: 14px;
           color: #6b7280;
-          margin: 5px 0;
+          margin: 2px 0;
         }
         
         .print-header .report-type {
-          font-size: 14px;
+          font-size: 12px;
           color: #9ca3af;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          margin-top: 2px;
         }
         
         /* Calendar specific styles */
