@@ -469,28 +469,34 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               .pdf-placeholder,
               .file-placeholder {
                 border: 2px dashed #ccc !important;
-                padding: 30px !important;
+                padding: 6px !important;
                 text-align: center !important;
-                background-color: #f9f9f9 !important;
-                border-radius: 8px !important;
-                margin: 20px 0 !important;
+                background-color: transparent !important;
+                border-radius: 4px !important;
+                margin: 6px 0 !important;
+                height: 25vh !important;
+                max-height: 25vh !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
               }
               
               .pdf-icon {
-                font-size: 48px !important;
-                margin-bottom: 15px !important;
+                font-size: 20px !important;
+                margin-bottom: 4px !important;
               }
               
               .pdf-info h5 {
-                font-size: 16pt !important;
-                margin: 10px 0 !important;
+                font-size: 9pt !important;
+                margin: 3px 0 !important;
                 color: #333 !important;
               }
               
               .pdf-info p {
-                font-size: 11pt !important;
+                font-size: 7pt !important;
                 color: #666 !important;
-                margin: 8px 0 !important;
+                margin: 2px 0 !important;
               }
               
               .pdf-note {
@@ -779,6 +785,12 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               background-color: transparent;
               border-radius: 4px;
               margin: 5px 0;
+              height: 25vh;
+              max-height: 25vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
             }
             
             .pdf-icon {
