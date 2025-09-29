@@ -890,7 +890,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </style>
         </head>
         <body>
-          ${profile?.company_logo ? `<div class="watermark"><img src="${profile.company_logo}" alt="Logo da empresa" /></div>` : ''}
+          ${profile?.company_logo ? '<div class="watermark"><img src="' + profile.company_logo + '" alt="Logo da empresa" /></div>' : ''}
           <div class="print-grid">
             <div class="print-header">
               <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
