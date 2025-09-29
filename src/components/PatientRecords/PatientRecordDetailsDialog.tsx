@@ -362,7 +362,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 3.5cm 1.5cm 3cm 1.5cm; 
+                margin: 0; 
                 size: A4 portrait;
               }
               
@@ -381,10 +381,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 14px !important;
-                padding: 15px 20px !important;
+                padding: 10mm 15mm 0 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 180px !important;
+                height: 45mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -422,10 +422,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 10px !important;
-                padding: 10px 20px !important;
+                padding: 5mm 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 130px !important;
+                height: 30mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -448,10 +448,12 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 280px !important;
-                margin-bottom: 200px !important;
-                padding: 20px !important;
-                min-height: 400px !important;
+                margin-top: 50mm !important;
+                margin-bottom: 35mm !important;
+                margin-left: 15mm !important;
+                margin-right: 15mm !important;
+                padding: 0 !important;
+                min-height: auto !important;
               }
               
               /* Remover divisórias visuais na impressão */
