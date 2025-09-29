@@ -384,7 +384,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 15px 20px !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 140px !important;
+                height: 160px !important;
                 box-sizing: border-box !important;
               }
               
@@ -425,7 +425,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 10px 20px !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 100px !important;
+                height: 110px !important;
                 box-sizing: border-box !important;
               }
               
@@ -448,8 +448,18 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 170px !important;
-                margin-bottom: 120px !important;
+                margin-top: 200px !important;
+                margin-bottom: 140px !important;
+              }
+              
+              /* Remover divisórias visuais na impressão */
+              .print-content, .print-content * {
+                border: none !important;
+                box-shadow: none !important;
+              }
+              
+              .signature-box {
+                border-top: 1px solid #000 !important;
               }
               
               .page-break {
