@@ -21,8 +21,8 @@ export function CompanyLogoSection() {
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-logo.${fileExt}`;
-      const filePath = `logos/${fileName}`;
+      const fileName = `logo.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('company-assets')
