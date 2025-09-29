@@ -266,9 +266,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       Color,
       ResizableImage,
       Table.configure({
-        resizable: true,
-        handleWidth: 8,
-        cellMinWidth: 60,
+        resizable: false,
         allowTableNodeSelection: true,
       }),
       TableRow,
@@ -626,17 +624,13 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             opacity: 1;
           }
           
-          /* Simplified Excel-style table resizing */
+          /* Fixed-size table styling */
           .rich-text-content table {
             border-collapse: collapse;
             width: 100%;
             margin: 16px 0;
             border: 1px solid #e5e7eb;
-            position: relative;
-          }
-          
-          .rich-text-content table:hover {
-            border-color: #3b82f6;
+            table-layout: fixed;
           }
           
           .rich-text-content table td,
@@ -644,8 +638,9 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             border: 1px solid #d1d5db;
             padding: 8px 12px;
             text-align: left;
-            min-width: 60px;
-            position: relative;
+            width: auto;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
           
           .rich-text-content table th {
@@ -655,31 +650,6 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
           
           .rich-text-content table td {
             background: #ffffff;
-          }
-          
-          /* Excel-style column borders - hover makes them more prominent */
-          .rich-text-content table th,
-          .rich-text-content table td {
-            border-right: 2px solid #d1d5db;
-            cursor: default;
-          }
-          
-          .rich-text-content table th:hover,
-          .rich-text-content table td:hover {
-            border-right-color: #3b82f6;
-          }
-          
-          /* Column resize cursor appears when hovering near right border */
-          .rich-text-content table th::after,
-          .rich-text-content table td::after {
-            content: '';
-            position: absolute;
-            right: -4px;
-            top: 0;
-            bottom: 0;
-            width: 8px;
-            cursor: col-resize;
-            z-index: 10;
           }
           
           .rich-text-content img {
@@ -751,7 +721,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             <TableIcon className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">Controles da Tabela</span>
             <div className="text-xs text-blue-600 ml-auto">
-              💡 Arraste as bordas das colunas para redimensionar (como no Excel)
+              💡 Tabela com tamanho fixo - use os controles para adicionar/remover colunas e linhas
             </div>
           </div>
           <div className="flex flex-wrap gap-1 text-sm">
