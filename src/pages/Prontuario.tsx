@@ -91,8 +91,8 @@ export default function Prontuario() {
   };
 
   const handleEditRecord = (record: PatientRecord) => {
-    setRecordToEditInForm(record);
-    setIsFormOpen(true);
+    setEditingRecord(record);
+    setIsEditDialogOpen(true);
   };
 
   const handleEditDialogClose = () => {

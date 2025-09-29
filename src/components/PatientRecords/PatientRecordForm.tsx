@@ -664,7 +664,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
                       {professionals.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="none" disabled>
                           Nenhum profissional cadastrado
                         </SelectItem>
                       ) : (

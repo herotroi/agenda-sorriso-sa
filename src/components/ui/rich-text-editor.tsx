@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Image } from '@tiptap/extension-image';
@@ -32,12 +32,37 @@ interface RichTextEditorProps {
   onChange: (content: string) => void;
   placeholder?: string;
   className?: string;
+  debounceDelay?: number; // Delay para evitar auto-save
 }
 
-export function RichTextEditor({ content, onChange, placeholder, className }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange, placeholder, className, debounceDelay = 2000 }: RichTextEditorProps) {
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // Debounced onChange para evitar salvamento automático muito frequente
+  const debouncedOnChange = useCallback((newContent: string) => {
+    setHasUnsavedChanges(true);
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      onChange(newContent);
+      setHasUnsavedChanges(false);
+    }, debounceDelay);
+  }, [onChange, debounceDelay]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -61,7 +86,7 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
     content: content || '',
     onUpdate: ({ editor }) => {
       const newContent = editor.getHTML();
-      onChange(newContent);
+      debouncedOnChange(newContent);
     },
     onCreate: () => {
       console.log('RichTextEditor: Editor created successfully');
@@ -127,7 +152,14 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
   }
 
   return (
-    <div className={`border border-input rounded-lg bg-background ${className || ''}`}>
+    <div className={`border border-input rounded-lg bg-background ${className || ''} ${hasUnsavedChanges ? 'border-amber-400' : ''}`}>
+      {/* Status indicator */}
+      {hasUnsavedChanges && (
+        <div className="px-3 py-1 bg-amber-50 border-b border-amber-200 text-xs text-amber-700 flex items-center gap-1">
+          <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+          Alterações serão salvas automaticamente...
+        </div>
+      )}
       {/* Toolbar */}
       <div className="border-b border-border p-2 flex flex-wrap gap-1 bg-muted/50">
         {/* Text formatting */}

@@ -840,7 +840,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           {/* Actions */}
           <Separator />
           
-          <div className="flex flex-col sm:flex-row justify-between gap-3">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <Button 
               type="button" 
               variant="destructive"
@@ -857,6 +857,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                 type="button" 
                 variant="outline" 
                 onClick={onClose}
+                disabled={loading}
                 className="sm:w-auto"
               >
                 Cancelar
@@ -869,7 +870,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                    Salvando...
+                    Processando...
                   </>
                 ) : (
                   'Salvar Alterações'
