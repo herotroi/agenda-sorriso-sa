@@ -385,12 +385,12 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 border-bottom: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 100px !important;
+                height: 140px !important;
                 box-sizing: border-box !important;
               }
               
               .print-header h1 {
-                font-size: 16px !important;
+                font-size: 11pt !important;
                 color: #666 !important;
                 margin: 0 0 4px 0 !important;
                 font-weight: bold !important;
@@ -406,6 +406,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 margin: 0 !important;
                 padding: 0 !important;
                 border: none !important;
+                text-align: center !important;
               }
               
               .print-header .prof-line {
@@ -426,7 +427,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 border-top: 1px solid #ccc !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 80px !important;
+                height: 100px !important;
                 box-sizing: border-box !important;
               }
               
@@ -449,8 +450,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 130px !important;
-                margin-bottom: 100px !important;
+                margin-top: 170px !important;
+                margin-bottom: 120px !important;
               }
               
               .page-break {
