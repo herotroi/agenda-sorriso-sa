@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -121,13 +121,29 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           .from('appointments')
           .select(`
             *,
-            procedures(name)
+            procedures(name),
+            professionals(id, name, specialty, crm_cro)
           `)
           .eq('id', recordData.appointment_id)
           .single();
 
         if (appointmentError) throw appointmentError;
-        setAppointment(appointmentData);
+        setAppointment(appointmentData as any);
+
+        // Fallback: se o registro não tiver profissional, usar o da consulta
+        if (!recordData.professional_id) {
+          const joinedProf = (appointmentData as any)?.professionals;
+          if (joinedProf) {
+            setProfessional(joinedProf as unknown as Professional);
+          } else if ((appointmentData as any)?.professional_id) {
+            const { data: professionalFromAppt } = await supabase
+              .from('professionals')
+              .select('*')
+              .eq('id', (appointmentData as any).professional_id)
+              .single();
+            if (professionalFromAppt) setProfessional(professionalFromAppt as Professional);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching record data:', error);
@@ -850,10 +866,15 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       <DialogContent className="sm:max-w-[1200px] max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <FileText className="h-6 w-6 text-blue-600" />
-              Prontuário Médico
-            </DialogTitle>
+            <div>
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <FileText className="h-6 w-6 text-blue-600" />
+                Prontuário Médico
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Detalhes do prontuário médico do paciente
+              </DialogDescription>
+            </div>
             <div className="flex items-center gap-2">
               <Button 
                 onClick={handlePrint} 
