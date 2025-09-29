@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer } from 'lucide-react';
+import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -36,6 +36,7 @@ interface EditRecordDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onRecordUpdated: () => void;
+  onRecordDeleted?: () => void;
 }
 
 interface Document {
@@ -63,7 +64,7 @@ interface Appointment {
   patients: { full_name: string } | null;
 }
 
-export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: EditRecordDialogProps) {
+export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onRecordDeleted }: EditRecordDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -513,6 +514,68 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
     }
   };
 
+  const handleDeleteRecord = async () => {
+    if (!record || !user) return;
+    
+    const confirmed = window.confirm('Tem certeza que deseja excluir este prontuário? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      // Primeiro, excluir todos os documentos relacionados
+      const { data: docsToDelete } = await supabase
+        .from('prontuario_documents')
+        .select('file_path')
+        .eq('record_id', record.id);
+
+      if (docsToDelete && docsToDelete.length > 0) {
+        // Excluir arquivos do storage
+        const filePaths = docsToDelete.map(doc => doc.file_path);
+        await supabase.storage
+          .from('documents')
+          .remove(filePaths);
+      }
+
+      // Excluir registros de documentos
+      await supabase
+        .from('prontuario_documents')
+        .delete()
+        .eq('record_id', record.id);
+
+      // Excluir vínculos com agendamentos
+      await supabase
+        .from('record_appointments')
+        .delete()
+        .eq('record_id', record.id);
+
+      // Excluir o prontuário
+      const { error } = await supabase
+        .from('patient_records')
+        .delete()
+        .eq('id', record.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Prontuário excluído com sucesso.',
+      });
+
+      onRecordDeleted?.();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir o prontuário. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!record) return null;
 
   return (
@@ -777,29 +840,42 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
           {/* Actions */}
           <Separator />
           
-          <div className="flex flex-col sm:flex-row justify-end gap-3">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button 
               type="button" 
-              variant="outline" 
-              onClick={onClose}
+              variant="destructive"
+              onClick={handleDeleteRecord}
+              disabled={loading}
               className="sm:w-auto"
             >
-              Cancelar
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir Prontuário
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.title.trim()}
-              className="sm:w-auto"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                  Salvando...
-                </>
-              ) : (
-                'Salvar Alterações'
-              )}
-            </Button>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={loading || !formData.title.trim()}
+                className="sm:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Alterações'
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

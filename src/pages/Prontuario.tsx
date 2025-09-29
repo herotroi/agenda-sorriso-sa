@@ -104,6 +104,11 @@ export default function Prontuario() {
     refetchRecords();
   };
 
+  const handleRecordDeleted = () => {
+    refetchRecords();
+    setSelectedPatient(selectedPatient); // Refresh patient data
+  };
+
   if (subscriptionLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -206,6 +211,7 @@ export default function Prontuario() {
           isOpen={isEditDialogOpen}
           onClose={handleEditDialogClose}
           onRecordUpdated={handleRecordUpdated}
+          onRecordDeleted={handleRecordDeleted}
         />
 
         {/* Subscription Footer */}
