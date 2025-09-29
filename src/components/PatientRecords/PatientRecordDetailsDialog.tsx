@@ -266,27 +266,17 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         const docUrl = getDocumentPreviewUrl(doc);
         
         if (doc.mime_type.startsWith('image/')) {
-          // Verificar se a imagem carrega corretamente antes de incluir na impressão
-          try {
-            const response = await fetch(docUrl);
-            if (!response.ok) throw new Error('Imagem não encontrada');
-            
-            return `
-              <div class="document-embed page-break">
-                ${doc.description ? `
-                  <div class="document-header">
-                    <h4>${doc.description}</h4>
-                  </div>
-                ` : ''}
-                <div class="document-content">
-                  <img src="${docUrl}" alt="${doc.description || 'Documento'}" class="document-image-full" onerror="this.style.display='none'" />
-                </div>
+          return `
+            <div class="document-embed page-break">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
               </div>
-            `;
-          } catch (error) {
-            console.error('Erro ao carregar imagem:', error);
-            return ''; // Não incluir imagens que falham ao carregar
-          }
+              <div class="document-content">
+                <img src="${docUrl}" alt="${doc.name}" class="document-image-full" />
+              </div>
+            </div>
+          `;
         } else if (doc.mime_type === 'application/pdf') {
           // Para PDFs, vamos tentar incorporar como imagem ou mostrar aviso
           return `
@@ -325,17 +315,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       });
 
       const resolvedDocuments = await Promise.all(documentPromises);
-      // Filtrar documentos vazios (que falharam ao carregar)
-      const validDocuments = resolvedDocuments.filter(doc => doc.trim() !== '');
       
-      if (validDocuments.length > 0) {
-        documentsEmbedHtml = `
-          <div class="documents-section">
-            <h3 class="section-title">Documentos Anexados (${validDocuments.length})</h3>
-            ${validDocuments.join('')}
-          </div>
-        `;
-      }
+      documentsEmbedHtml = `
+        <div class="documents-section">
+          <h3 class="section-title">Documentos Anexados (${selectedDocs.length})</h3>
+          ${resolvedDocuments.join('')}
+        </div>
+      `;
     }
 
     const printContent = `
@@ -374,42 +360,28 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 object-fit: contain !important;
                 display: block !important;
                 margin: 10px auto !important;
-                border: none !important;
+                border: 1px solid #ddd !important;
                 box-shadow: none !important;
-                background: transparent !important;
               }
               
               .document-content {
                 width: 100% !important;
                 overflow: visible !important;
                 page-break-inside: avoid !important;
-                text-align: center !important;
-                background: transparent !important;
               }
               
               .document-embed {
-                margin: 20px 0 !important;
+                margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
                 overflow: visible !important;
-                background: transparent !important;
-                border: none !important;
               }
               
               .document-header {
-                margin-bottom: 10px !important;
-                padding: 8px 0 !important;
+                margin-bottom: 15px !important;
+                padding: 10px 0 !important;
                 border-bottom: 1px solid #ccc !important;
                 page-break-after: avoid !important;
-                text-align: center !important;
-                background: transparent !important;
-              }
-              
-              .document-header h4 {
-                margin: 0 !important;
-                font-size: 14pt !important;
-                font-weight: bold !important;
-                color: #333 !important;
               }
               
               .pdf-placeholder,
