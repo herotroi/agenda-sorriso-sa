@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -616,12 +617,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
 
               <div>
                 <Label htmlFor="content">Anotações da Consulta</Label>
-                <Textarea
-                  id="content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
                   placeholder="Descreva os detalhes da consulta, observações importantes, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
-                  rows={6}
                 />
               </div>
 
@@ -630,12 +629,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                   <Pill className="h-4 w-4 text-green-600" />
                   Receita/Prescrição Médica
                 </Label>
-                <Textarea
-                  id="prescription"
-                  value={prescription}
-                  onChange={(e) => setPrescription(e.target.value)}
+                <RichTextEditor
+                  content={prescription}
+                  onChange={setPrescription}
                   placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
-                  rows={4}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Medicamentos, dosagens e instruções de uso (campo opcional)

@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 interface PatientRecord {
   id: string;
@@ -632,13 +633,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
               <Stethoscope className="h-4 w-4" />
               Anotações da Consulta
             </Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            <RichTextEditor
+              content={formData.content || ''}
+              onChange={(content) => setFormData({ ...formData, content })}
               placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
-              rows={6}
-              className="resize-none"
             />
           </div>
 
@@ -648,13 +646,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated }: E
               <Pill className="h-4 w-4" />
               Receita/Prescrição Médica
             </Label>
-            <Textarea
-              id="prescription"
-              value={formData.prescription}
-              onChange={(e) => setFormData({ ...formData, prescription: e.target.value })}
+            <RichTextEditor
+              content={formData.prescription || ''}
+              onChange={(prescription) => setFormData({ ...formData, prescription })}
               placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
-              rows={4}
-              className="resize-none"
             />
             <p className="text-sm text-gray-500">
               Medicamentos, dosagens e instruções de uso (campo opcional)
