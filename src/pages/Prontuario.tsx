@@ -182,32 +182,6 @@ export default function Prontuario() {
               />
             </div>
 
-            {/* Detailed Sections */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {/* Lista completa de registros */}
-              <div className="order-2 xl:order-1">
-                <PatientRecordsList
-                  records={records}
-                  onEditRecord={handleEditRecord}
-                  loading={recordsLoading}
-                />
-              </div>
-
-              {/* Procedimentos e documentos detalhados */}
-              <div className="order-1 xl:order-2">
-                <ProntuarioContent
-                  appointments={appointments}
-                  selectedAppointment={selectedAppointment}
-                  onAppointmentSelect={setSelectedAppointment}
-                  loading={loading}
-                  documents={documents}
-                  onDocumentUpload={handleDocumentUploadWithCheck}
-                  onDocumentDelete={handleDocumentDelete}
-                  onClearSelection={handleClearSelection}
-                  canCreate={canUseEHR}
-                />
-              </div>
-            </div>
           </div>
         )}
 
