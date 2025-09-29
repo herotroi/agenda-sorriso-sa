@@ -176,7 +176,7 @@ export default function Prontuario() {
         )}
 
         {/* Main Content */}
-        {selectedPatient ? (
+        {selectedPatient && (
           <div className="space-y-8">
             {/* Overview Grid - Redesigned Section */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -223,18 +223,6 @@ export default function Prontuario() {
               </div>
             </div>
           </div>
-        ) : (
-          <Card className="border-2 border-dashed border-gray-300">
-            <CardContent className="p-8 sm:p-12">
-              <div className="text-center text-gray-500">
-                <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-                  <FileText className="h-16 w-16 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-700">Selecione um Paciente</h3>
-                <p className="text-base text-gray-500">Escolha um paciente na busca acima para visualizar seu prontuário</p>
-              </div>
-            </CardContent>
-          </Card>
         )}
 
         {/* Modals */}
