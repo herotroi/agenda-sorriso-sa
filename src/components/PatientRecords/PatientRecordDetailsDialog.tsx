@@ -362,7 +362,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 40mm 15mm 28mm 15mm; 
+                margin: 45mm 15mm 35mm 15mm; 
                 size: A4 portrait;
               }
               
@@ -549,6 +549,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 margin-bottom: 15px !important;
                 white-space: pre-wrap !important;
                 word-break: break-word !important;
+                orphans: 3 !important;
+                widows: 3 !important;
               }
               
               /* Compactar documentos/imagens na impressão */
