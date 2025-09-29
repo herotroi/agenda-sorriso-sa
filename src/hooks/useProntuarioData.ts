@@ -189,9 +189,16 @@ export function useProntuarioData() {
         .select('file_path')
         .eq('id', documentId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching document:', fetchError);
+        throw fetchError;
+      }
+
+      if (!docData) {
+        throw new Error('Documento não encontrado');
+      }
 
       // Delete from storage
       const { error: storageError } = await supabase.storage

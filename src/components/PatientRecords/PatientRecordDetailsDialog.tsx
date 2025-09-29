@@ -120,10 +120,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           .from('profiles')
           .select('*, company_logo')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (profileError) throw profileError;
-        setProfile(profileData);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData) {
+          setProfile(profileData);
+        }
       }
 
       // Buscar dados do paciente
@@ -132,10 +135,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           .from('patients')
           .select('*')
           .eq('id', recordData.patient_id)
-          .single();
+          .maybeSingle();
 
-        if (patientError) throw patientError;
-        setPatient(patientData);
+        if (patientError) {
+          console.error('Error fetching patient:', patientError);
+        } else if (patientData) {
+          setPatient(patientData);
+        }
       }
 
       // Buscar dados do profissional
@@ -144,10 +150,13 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           .from('professionals')
           .select('*')
           .eq('id', recordData.professional_id)
-          .single();
+          .maybeSingle();
 
-        if (professionalError) throw professionalError;
-        setProfessional(professionalData);
+        if (professionalError) {
+          console.error('Error fetching professional:', professionalError);
+        } else if (professionalData) {
+          setProfessional(professionalData);
+        }
       }
 
       // Buscar dados do agendamento
@@ -160,23 +169,26 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             professionals(id, name, specialty, crm_cro)
           `)
           .eq('id', recordData.appointment_id)
-          .single();
+          .maybeSingle();
 
-        if (appointmentError) throw appointmentError;
-        setAppointment(appointmentData as any);
+        if (appointmentError) {
+          console.error('Error fetching appointment:', appointmentError);
+        } else if (appointmentData) {
+          setAppointment(appointmentData as any);
 
-        // Fallback: se o registro não tiver profissional, usar o da consulta
-        if (!recordData.professional_id) {
-          const joinedProf = (appointmentData as any)?.professionals;
-          if (joinedProf) {
-            setProfessional(joinedProf as unknown as Professional);
-          } else if ((appointmentData as any)?.professional_id) {
-            const { data: professionalFromAppt } = await supabase
-              .from('professionals')
-              .select('*')
-              .eq('id', (appointmentData as any).professional_id)
-              .single();
-            if (professionalFromAppt) setProfessional(professionalFromAppt as Professional);
+          // Fallback: se o registro não tiver profissional, usar o da consulta
+          if (!recordData.professional_id) {
+            const joinedProf = (appointmentData as any)?.professionals;
+            if (joinedProf) {
+              setProfessional(joinedProf as unknown as Professional);
+            } else if ((appointmentData as any)?.professional_id) {
+              const { data: professionalFromAppt } = await supabase
+                .from('professionals')
+                .select('*')
+                .eq('id', (appointmentData as any).professional_id)
+                .maybeSingle();
+              if (professionalFromAppt) setProfessional(professionalFromAppt as Professional);
+            }
           }
         }
       }
