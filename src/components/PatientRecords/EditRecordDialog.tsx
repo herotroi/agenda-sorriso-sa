@@ -24,11 +24,18 @@ interface PatientRecord {
   created_at: string;
   updated_at: string;
   appointment_id?: string;
+  professional_id?: string;
   professionals?: { name: string };
   appointments?: { 
     start_time: string;
     procedures?: { name: string };
   };
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  specialty?: string;
 }
 
 interface EditRecordDialogProps {
@@ -70,13 +77,16 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     content: '',
     prescription: '',
     appointment_id: '',
+    professional_id: '',
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [loadingProfessionals, setLoadingProfessionals] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -87,19 +97,23 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         content: record.content || record.notes || '',
         prescription: record.prescription || '',
         appointment_id: record.appointment_id || 'none',
+        professional_id: record.professional_id || '',
       });
       fetchDocuments();
       fetchAppointments();
+      fetchProfessionals();
     } else {
       setFormData({
         title: '',
         content: '',
         prescription: '',
         appointment_id: 'none',
+        professional_id: '',
       });
       setDocuments([]);
       setFiles([]);
       setAppointments([]);
+      setProfessionals([]);
     }
   }, [record]);
 
@@ -156,6 +170,32 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       });
     } finally {
       setLoadingAppointments(false);
+    }
+  };
+
+  const fetchProfessionals = async () => {
+    if (!user?.id) return;
+    
+    setLoadingProfessionals(true);
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('id, name, specialty')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      setProfessionals(data || []);
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar profissionais',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingProfessionals(false);
     }
   };
 
@@ -492,6 +532,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         notes: formData.content.trim() || null,
         prescription: formData.prescription.trim() || null,
         appointment_id: formData.appointment_id === 'none' ? null : formData.appointment_id,
+        professional_id: formData.professional_id || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -686,7 +727,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             />
           </div>
 
-          {/* Agendamento Vinculado */}
+           {/* Agendamento Vinculado */}
           <div className="space-y-2">
             <Label htmlFor="appointment" className="text-base font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -711,6 +752,33 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             </Select>
             <p className="text-sm text-gray-500">
               Você pode alterar o agendamento vinculado a este prontuário
+            </p>
+          </div>
+
+          {/* Profissional Responsável */}
+          <div className="space-y-2">
+            <Label htmlFor="professional" className="text-base font-medium flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profissional Responsável
+            </Label>
+            <Select 
+              value={formData.professional_id} 
+              onValueChange={(value) => setFormData({ ...formData, professional_id: value })}
+              disabled={loadingProfessionals}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder={loadingProfessionals ? "Carregando profissionais..." : "Selecione o profissional responsável"} />
+              </SelectTrigger>
+              <SelectContent>
+                {professionals.map((professional) => (
+                  <SelectItem key={professional.id} value={professional.id}>
+                    Dr(a). {professional.name} {professional.specialty && `- ${professional.specialty}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-500">
+              Selecione o profissional responsável por este registro
             </p>
           </div>
 
