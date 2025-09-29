@@ -1,9 +1,10 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Calendar, Eye } from 'lucide-react';
+import { Calendar, Eye, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { Professional, Appointment } from '@/types';
 import { ProfessionalDetailViewHeader } from './ProfessionalDetailView/ProfessionalDetailViewHeader';
 import { DayView } from './ProfessionalDetailView/DayView';
@@ -75,11 +76,18 @@ export function ProfessionalDetailView({
                   <Eye className="h-5 w-5" />
                   Detalhes do Profissional - {professional.name}
                 </div>
-                <PrintButton 
-                  professional={professionalWithDefaults} 
-                  currentDate={currentDate} 
-                  view={view} 
-                />
+                <div className="flex items-center gap-2">
+                  <PrintButton 
+                    professional={professionalWithDefaults} 
+                    currentDate={currentDate} 
+                    view={view} 
+                  />
+                  <DialogClose asChild>
+                    <Button variant="ghost" size="icon" aria-label="Fechar">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DialogClose>
+                </div>
               </DialogTitle>
             </DialogHeader>
           </div>

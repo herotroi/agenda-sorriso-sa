@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Printer, Calendar, Filter, FileText } from 'lucide-react';
+import { Printer, Calendar, Filter, FileText, X } from 'lucide-react';
 import { usePrintReport } from '@/components/Agenda/hooks/usePrintReport';
 import { Appointment } from '@/types';
 
@@ -58,9 +58,16 @@ export function AppointmentsPrintOptions({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Printer className="h-5 w-5" />
-            Opções de Impressão
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Printer className="h-5 w-5" />
+              Opções de Impressão
+            </div>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" aria-label="Fechar">
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogClose>
           </DialogTitle>
         </DialogHeader>
 

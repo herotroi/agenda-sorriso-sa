@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, FileText, Edit } from 'lucide-react';
+import { Clock, User, FileText, Edit, X } from 'lucide-react';
 import { Appointment } from '@/types';
 import { AppointmentForm } from '@/components/Appointments/AppointmentForm';
 
@@ -47,12 +47,19 @@ export function DayProceduresDialog({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: professionalColor }}
-              />
-              Procedimentos de {professionalName}
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: professionalColor }}
+                />
+                Procedimentos de {professionalName}
+              </div>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" aria-label="Fechar">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
             </DialogTitle>
             <div className="text-sm text-gray-600">
               {date.toLocaleDateString('pt-BR', { 

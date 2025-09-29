@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { PatientBasicInfo } from './form/PatientBasicInfo';
 import { PatientContactInfo } from './form/PatientContactInfo';
 import { PatientAddressInfo } from './form/PatientAddressInfo';
@@ -13,6 +13,8 @@ import { usePatientForm } from './hooks/usePatientForm';
 import { applyCpfMask, applyPhoneMask } from './utils/inputMasks';
 import { Patient } from '@/types/patient';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface PatientFormProps {
   isOpen: boolean;
@@ -48,8 +50,15 @@ export function PatientForm({ isOpen, onClose, patient }: PatientFormProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[900px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            {patient ? 'Editar Paciente' : 'Novo Paciente'}
+          <DialogTitle className="flex items-center justify-between">
+            <span className="text-xl">
+              {patient ? 'Editar Paciente' : 'Novo Paciente'}
+            </span>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" aria-label="Fechar">
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogClose>
           </DialogTitle>
         </DialogHeader>
         
