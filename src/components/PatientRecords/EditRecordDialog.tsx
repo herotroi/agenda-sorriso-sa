@@ -87,6 +87,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [loadingProfessionals, setLoadingProfessionals] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false); // Track if initial data is loaded
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -96,11 +97,12 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     
     console.log('🔍 Fetching record details for ID:', recordId, 'attempt:', retryCount + 1);
     setLoading(true);
+    setDataLoaded(false); // Mark data as not loaded while fetching
     
     try {
       // Wait a bit to avoid race conditions
       if (retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       
       const { data, error } = await supabase
@@ -130,6 +132,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           description: 'Registro não encontrado após múltiplas tentativas',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
@@ -150,12 +153,14 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       };
 
       console.log('📝 Setting form data with content length:', newFormData.content.length);
+      
+      // Set form data first
       setFormData(newFormData);
       
-      // Force re-render to ensure editors sync
-      setTimeout(() => {
-        setFormData(prev => ({ ...prev }));
-      }, 200);
+      // Wait for state to settle, then mark as loaded
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setDataLoaded(true);
+      console.log('✅ Data marked as loaded, editors can now render');
       
     } catch (err) {
       console.error('❌ Error in fetchRecordDetails:', err);
@@ -178,10 +183,11 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   };
 
   useEffect(() => {
-    console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id);
+    console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id, 'isOpen:', isOpen);
     
     if (record && isOpen) {
-      // Reset form first to clear any stale data
+      // Reset states
+      setDataLoaded(false);
       setFormData({
         title: '',
         content: '',
@@ -190,13 +196,19 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         professional_id: '',
       });
       
-      // Then fetch fresh data
-      fetchRecordDetails(record.id);
-      fetchDocuments();
-      fetchAppointments();
-      fetchProfessionals();
+      // Fetch all data in sequence to ensure proper loading
+      const loadAllData = async () => {
+        await fetchRecordDetails(record.id);
+        // Only fetch other data after record details are loaded
+        fetchDocuments();
+        fetchAppointments();
+        fetchProfessionals();
+      };
+      
+      loadAllData();
     } else if (!record) {
       console.log('🔄 Clearing form data - no record');
+      setDataLoaded(false);
       setFormData({
         title: '',
         content: '',
@@ -922,35 +934,69 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           </div>
 
           {/* Anotações da Consulta */}
-          <EditableRichTextEditor
-            label="Anotações da Consulta"
-            content={formData.content || ''}
-            onChange={(content) => {
-              console.log('📝 Content updated via EditableRichTextEditor, length:', content.length);
-              setFormData(prev => ({ ...prev, content }));
-            }}
-            onSave={() => handleSubmit(new Event('submit') as any)}
-            placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
-            icon={<Stethoscope className="h-4 w-4" />}
-            loading={loading}
-          />
+          {!dataLoaded ? (
+            <div className="space-y-2">
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Stethoscope className="h-4 w-4" />
+                Anotações da Consulta
+              </Label>
+              <div className="border border-input rounded-lg p-8 bg-gray-50">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                  <p className="text-sm text-gray-600">Carregando dados do prontuário...</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <EditableRichTextEditor
+              key={`content-${record?.id}-${dataLoaded}`} // Force remount when data loads
+              label="Anotações da Consulta"
+              content={formData.content || ''}
+              onChange={(content) => {
+                console.log('📝 Content updated via EditableRichTextEditor, length:', content.length);
+                setFormData(prev => ({ ...prev, content }));
+              }}
+              onSave={() => handleSubmit(new Event('submit') as any)}
+              placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
+              icon={<Stethoscope className="h-4 w-4" />}
+              loading={loading}
+            />
+          )}
 
           {/* Receita/Prescrição */}
-          <EditableRichTextEditor
-            label="Receita/Prescrição Médica"
-            content={formData.prescription || ''}
-            onChange={(prescription) => {
-              console.log('💊 Prescription updated via EditableRichTextEditor, length:', prescription.length);
-              setFormData(prev => ({ ...prev, prescription }));
-            }}
-            onSave={() => handleSubmit(new Event('submit') as any)}
-            placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
-            icon={<Pill className="h-4 w-4" />}
-            loading={loading}
-          />
-          <p className="text-sm text-gray-500 mt-2">
-            Medicamentos, dosagens e instruções de uso (campo opcional)
-          </p>
+          {!dataLoaded ? (
+            <div className="space-y-2">
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Pill className="h-4 w-4" />
+                Receita/Prescrição Médica
+              </Label>
+              <div className="border border-input rounded-lg p-8 bg-gray-50">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                  <p className="text-sm text-gray-600">Carregando dados da prescrição...</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <EditableRichTextEditor
+                key={`prescription-${record?.id}-${dataLoaded}`} // Force remount when data loads
+                label="Receita/Prescrição Médica"
+                content={formData.prescription || ''}
+                onChange={(prescription) => {
+                  console.log('💊 Prescription updated via EditableRichTextEditor, length:', prescription.length);
+                  setFormData(prev => ({ ...prev, prescription }));
+                }}
+                onSave={() => handleSubmit(new Event('submit') as any)}
+                placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
+                icon={<Pill className="h-4 w-4" />}
+                loading={loading}
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Medicamentos, dosagens e instruções de uso (campo opcional)
+              </p>
+            </>
+          )}
 
           <Separator />
 
