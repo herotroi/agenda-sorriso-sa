@@ -362,7 +362,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 45mm 15mm 35mm 15mm; 
+                margin: 15mm 12mm 15mm 12mm; 
                 size: A4 portrait;
               }
               
@@ -384,7 +384,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 10mm 15mm 0 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 35mm !important;
+                height: 30mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -425,7 +425,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 5mm 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 25mm !important;
+                height: 22mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -449,7 +449,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               .print-content {
                 margin: 0 !important;
-                padding: 0 !important;
+                padding: 34mm 0 24mm 0 !important; /* clear header/footer */
                 min-height: auto !important;
               }
               
@@ -574,6 +574,18 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               .signature-section {
                 page-break-inside: avoid !important;
                 margin-top: 30px !important;
+              }
+
+              /* Keep titles with first lines, avoid breaking right after a title */
+              .section-header,
+              .section-title {
+                break-after: avoid-page !important;
+                page-break-after: avoid !important;
+              }
+
+              /* Ensure paragraphs can break but not be overlapped by footer/header */
+              .section-content, .section-content * {
+                break-inside: auto !important;
               }
             }
             
