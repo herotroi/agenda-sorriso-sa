@@ -88,6 +88,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   const [loadingData, setLoadingData] = useState(false);
   const [documentOrder, setDocumentOrder] = useState<string[]>([]);
   const [showOrderControls, setShowOrderControls] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   const fetchRecordData = async (recordData: PatientRecord) => {
@@ -177,16 +178,61 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     }
   };
 
-  const moveDocument = (dragIndex: number, hoverIndex: number) => {
-    const newOrder = [...documentOrder];
-    const draggedItem = newOrder[dragIndex];
-    newOrder.splice(dragIndex, 1);
-    newOrder.splice(hoverIndex, 0, draggedItem);
+  const moveDocumentUp = (index: number) => {
+    if (index === 0) return;
+    const orderedDocs = getOrderedDocuments();
+    const newOrder = orderedDocs.map(doc => doc.id);
+    [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
     setDocumentOrder(newOrder);
   };
 
+  const moveDocumentDown = (index: number) => {
+    const orderedDocs = getOrderedDocuments();
+    if (index === orderedDocs.length - 1) return;
+    const newOrder = orderedDocs.map(doc => doc.id);
+    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+    setDocumentOrder(newOrder);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    if (dragIndex === dropIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+    
+    const orderedDocs = getOrderedDocuments();
+    const newOrder = orderedDocs.map(doc => doc.id);
+    const draggedItem = newOrder[dragIndex];
+    newOrder.splice(dragIndex, 1);
+    newOrder.splice(dropIndex, 0, draggedItem);
+    setDocumentOrder(newOrder);
+    setDraggedIndex(null);
+  };
+
   const getOrderedDocuments = () => {
-    if (documentOrder.length === 0) return documents;
+    if (documentOrder.length === 0) {
+      // Initialize with current documents order
+      const initialOrder = documents.map(doc => doc.id);
+      setDocumentOrder(initialOrder);
+      return documents;
+    }
     
     const orderedDocs = documentOrder
       .map(id => documents.find(doc => doc.id === id))
@@ -875,6 +921,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       setSelectedDocuments([]);
       setDocumentOrder([]);
       setShowOrderControls(false);
+      setDraggedIndex(null);
     }
   }, [record?.id, isOpen]);
 
@@ -1167,10 +1214,22 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
               </div>
               {showOrderControls && documents.length > 1 && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-xs text-blue-800 mb-2">
-                    <strong>Arraste e solte</strong> os documentos para reordená-los na impressão
-                  </p>
+                <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <GripVertical className="h-5 w-5 text-blue-600 mt-0.5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-800 mb-1">
+                        Como reordenar os documentos:
+                      </p>
+                      <ul className="text-xs text-blue-700 space-y-1">
+                        <li>• <strong>Arrastar e soltar:</strong> Clique e arraste os documentos para nova posição</li>
+                        <li>• <strong>Botões de seta:</strong> Use ↑ ↓ para mover um de cada vez</li>
+                        <li>• <strong>Posição:</strong> A numeração mostra a ordem de impressão</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1182,13 +1241,27 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               ) : documents.length > 0 ? (
                 <div className="space-y-3">
                   {getOrderedDocuments().map((doc, index) => (
-                    <div key={doc.id} className="flex items-start gap-2 p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+                    <div 
+                      key={doc.id} 
+                      className={`flex items-start gap-2 p-4 border rounded-lg bg-white transition-all ${
+                        showOrderControls 
+                          ? draggedIndex === index 
+                            ? 'cursor-grabbing opacity-50 scale-105 border-blue-300 bg-blue-50' 
+                            : 'cursor-grab hover:bg-blue-50 hover:border-blue-200'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      draggable={showOrderControls}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
                       {showOrderControls && (
                         <div className="flex flex-col gap-1 items-center">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => moveDocument(index, Math.max(0, index - 1))}
+                            onClick={() => moveDocumentUp(index)}
                             disabled={index === 0}
                             className="p-1 h-6 w-6"
                           >
@@ -1198,7 +1271,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => moveDocument(index, Math.min(getOrderedDocuments().length - 1, index + 1))}
+                            onClick={() => moveDocumentDown(index)}
                             disabled={index === getOrderedDocuments().length - 1}
                             className="p-1 h-6 w-6"
                           >
