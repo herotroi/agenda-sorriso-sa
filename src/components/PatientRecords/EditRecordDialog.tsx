@@ -90,15 +90,35 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Garantir que carregamos os dados mais recentes diretamente do banco
+  const fetchRecordDetails = async (recordId: string) => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('patient_records')
+        .select('id, title, content, notes, prescription, appointment_id, professional_id')
+        .eq('id', recordId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return;
+
+      setFormData({
+        title: data.title || '',
+        content: (data.content || data.notes) || '',
+        prescription: data.prescription || '',
+        appointment_id: data.appointment_id || 'none',
+        professional_id: data.professional_id || '',
+      });
+    } catch (err) {
+      console.error('Error fetching record details:', err);
+    }
+  };
+
   useEffect(() => {
     if (record) {
-      setFormData({
-        title: record.title || '',
-        content: record.content || record.notes || '',
-        prescription: record.prescription || '',
-        appointment_id: record.appointment_id || 'none',
-        professional_id: record.professional_id || '',
-      });
+      fetchRecordDetails(record.id);
       fetchDocuments();
       fetchAppointments();
       fetchProfessionals();
