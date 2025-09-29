@@ -540,8 +540,9 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             border-collapse: collapse;
             width: 100%;
             margin: 16px 0;
-            border: 2px solid #e5e7eb;
+            border: 1px solid #e5e7eb;
             position: relative;
+            table-layout: fixed;
             transition: border-color 0.2s ease;
           }
           
@@ -557,7 +558,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
             text-align: left;
             min-width: 100px;
             position: relative;
-            resize: horizontal;
+            /* resize disabled */
             overflow: hidden;
           }
           
