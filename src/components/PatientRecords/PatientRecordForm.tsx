@@ -367,10 +367,15 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
           .from('prontuario_documents')
           .select('file_path')
           .eq('id', documentId)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           console.error('Error fetching document for deletion:', fetchError);
+          continue;
+        }
+        
+        if (!docData) {
+          console.error('Document not found for deletion:', documentId);
           continue;
         }
 
@@ -523,9 +528,17 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
           .eq('id', recordToEdit.id)
           .eq('user_id', user.id)
           .select()
-          .single();
+          .maybeSingle();
 
-        if (recordError) throw recordError;
+        if (recordError) {
+          console.error('Error updating record:', recordError);
+          throw recordError;
+        }
+        
+        if (!data) {
+          throw new Error('Registro não encontrado para atualização');
+        }
+        
         record = data;
 
         // Atualizar associações de agendamentos
@@ -544,9 +557,17 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
           .from('patient_records')
           .insert(recordData)
           .select()
-          .single();
+          .maybeSingle();
 
-        if (recordError) throw recordError;
+        if (recordError) {
+          console.error('Error creating record:', recordError);
+          throw recordError;
+        }
+        
+        if (!data) {
+          throw new Error('Falha ao criar registro');
+        }
+        
         record = data;
 
         // Adicionar associações de agendamentos

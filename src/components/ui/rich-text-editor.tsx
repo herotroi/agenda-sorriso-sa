@@ -252,14 +252,6 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
     }, debounceDelay);
   }, [onChange, debounceDelay]);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -319,6 +311,31 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       },
     },
   });
+
+  // Sync content when prop changes
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content || '');
+    }
+  }, [editor, content]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!file) return;

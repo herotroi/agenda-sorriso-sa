@@ -114,9 +114,21 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         .select('patient_id')
         .eq('id', record.id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (recordError) throw recordError;
+      if (recordError) {
+        console.error('Error fetching record data:', recordError);
+        throw recordError;
+      }
+      
+      if (!recordData) {
+        toast({
+          title: 'Erro',
+          description: 'Registro não encontrado',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Buscar agendamentos do paciente
       const { data, error } = await supabase
@@ -204,9 +216,21 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         `)
         .eq('id', record.id)
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching record for print:', error);
+        throw error;
+      }
+      
+      if (!fullRecord) {
+        toast({
+          title: 'Erro',
+          description: 'Registro não encontrado para impressão',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Criar conteúdo HTML para impressão
       const printContent = `
