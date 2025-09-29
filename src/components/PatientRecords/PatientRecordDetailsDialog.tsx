@@ -362,14 +362,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           <style>
             @media print {
               @page { 
-                margin: 80px 12mm 60px 12mm; 
+                margin: 2.5cm 1.5cm; 
                 size: A4 portrait;
-                @top-center {
-                  content: element(print-header);
-                }
-                @bottom-center {
-                  content: element(print-footer);
-                }
               }
               
               body { 
@@ -379,65 +373,74 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 0;
               }
               
-              .medical-header {
-                position: running(print-header);
+              .print-header {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 14px !important;
-                width: 100%;
-                margin: 0 !important;
-                padding: 10px 0 !important;
+                padding: 15px 20px !important;
                 border-bottom: 1px solid #ccc !important;
                 background: white !important;
+                z-index: 1000 !important;
+                height: 80px !important;
+                box-sizing: border-box !important;
               }
               
-              .medical-header h1 {
+              .print-header h1 {
                 font-size: 16px !important;
                 color: #666 !important;
                 margin: 0 0 4px 0 !important;
+                font-weight: bold !important;
               }
               
-              .medical-header .subtitle {
+              .print-header .subtitle {
                 font-size: 12px !important;
                 color: #666 !important;
                 margin: 0 0 8px 0 !important;
               }
               
-              .medical-header .professional-info {
+              .print-header .professional-info {
                 margin: 0 !important;
                 padding: 0 !important;
                 border: none !important;
               }
               
-              .medical-header .prof-line {
+              .print-header .prof-line {
                 font-size: 11px !important;
                 color: #666 !important;
                 margin: 2px 0 !important;
               }
               
-              .medical-footer {
-                position: running(print-footer);
+              .print-footer {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
                 text-align: center !important;
                 color: #666 !important;
                 font-size: 10px !important;
-                width: 100%;
-                margin: 0 !important;
-                padding: 8px 0 !important;
+                padding: 10px 20px !important;
                 border-top: 1px solid #ccc !important;
                 background: white !important;
+                z-index: 1000 !important;
+                height: 60px !important;
+                box-sizing: border-box !important;
               }
               
-              .medical-footer .footer-info {
+              .print-footer .footer-info {
                 margin: 0 !important;
               }
               
-              .medical-footer .footer-section {
+              .print-footer .footer-section {
                 font-size: 10px !important;
                 color: #666 !important;
                 margin: 2px 0 !important;
               }
               
-              .medical-footer .footer-system {
+              .print-footer .footer-system {
                 font-size: 8px !important;
                 color: #666 !important;
                 margin: 4px 0 0 0 !important;
@@ -445,8 +448,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 border: none !important;
               }
               
-              .document-info {
-                margin-top: 0 !important;
+              .print-content {
+                margin-top: 100px !important;
+                margin-bottom: 80px !important;
               }
               
               .page-break {
@@ -868,7 +872,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </style>
         </head>
         <body>
-          <div class="medical-header">
+          <div class="print-header">
             <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
             <div class="subtitle">CNPJ: ${profile?.cnpj || 'Não informado'}</div>
             
@@ -880,6 +884,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               ${professional?.crm_cro ? `<div class="prof-line"><strong>CRM/CRO:</strong> ${professional.crm_cro}</div>` : ''}
             </div>
           </div>
+          
+          <div class="print-content">
           
           <div class="document-info">
             <div><strong>Prontuário Nº:</strong> ${record.id.substring(0, 8).toUpperCase()}</div>
@@ -1001,12 +1007,14 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             </div>
           </div>
           
-          <div class="validity-note">
-            <strong>VALIDADE:</strong> Este documento tem validade legal conforme CFO. 
-            Gerado em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
+           <div class="validity-note">
+             <strong>VALIDADE:</strong> Este documento tem validade legal conforme CFO. 
+             Gerado em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
+           </div>
+           
           </div>
           
-          <div class="medical-footer">
+          <div class="print-footer">
             <div class="footer-info">
               <div class="footer-section">
                 <strong>Endereço:</strong>
