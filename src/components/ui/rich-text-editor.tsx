@@ -218,26 +218,37 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   debounceDelay?: number; // Delay para evitar auto-save
+  onManualSave?: () => void; // For manual save when auto-save is disabled
 }
 
-export function RichTextEditor({ content, onChange, placeholder, className, debounceDelay = 2000 }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange, placeholder, className, debounceDelay = 2000, onManualSave }: RichTextEditorProps) {
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showTableControls, setShowTableControls] = useState(false);
+  const [isTableActive, setIsTableActive] = useState(false);
+  const [pendingContent, setPendingContent] = useState('');
   const timeoutRef = useRef<NodeJS.Timeout>();
   const editorRef = useRef<any>(null);
+  const initialContentSet = useRef(false);
 
   // Improved debounced onChange that prevents autosave for tables
   const debouncedOnChange = useCallback((newContent: string) => {
-    // Completely disable autosave when table operations are happening
-    if (editorRef.current?.isActive('table') || 
-        editorRef.current?.isActive('tableCell') || 
-        editorRef.current?.isActive('tableHeader')) {
-      console.log('Table element active, skipping autosave');
+    console.log('🔄 RichTextEditor: Content changed, length:', newContent.length);
+    
+    // Check if table is active
+    const tableIsActive = editorRef.current?.isActive('table') || 
+                         editorRef.current?.isActive('tableCell') || 
+                         editorRef.current?.isActive('tableHeader');
+    
+    setIsTableActive(tableIsActive);
+    setPendingContent(newContent);
+    
+    if (tableIsActive) {
+      console.log('📊 Table active - auto-save suspended, changes pending');
       setHasUnsavedChanges(true);
-      return; // Don't save at all during table operations
+      return; // Don't save during table operations
     }
     
     setHasUnsavedChanges(true);
@@ -246,11 +257,25 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
       clearTimeout(timeoutRef.current);
     }
     
+    console.log('⏱️ Scheduling auto-save in', debounceDelay, 'ms');
     timeoutRef.current = setTimeout(() => {
+      console.log('💾 Auto-saving content');
       onChange(newContent);
       setHasUnsavedChanges(false);
     }, debounceDelay);
   }, [onChange, debounceDelay]);
+
+  // Manual save function for tables
+  const handleManualSave = useCallback(() => {
+    if (pendingContent && hasUnsavedChanges) {
+      console.log('💾 Manual save triggered');
+      onChange(pendingContent);
+      setHasUnsavedChanges(false);
+      if (onManualSave) {
+        onManualSave();
+      }
+    }
+  }, [pendingContent, hasUnsavedChanges, onChange, onManualSave]);
 
   const editor = useEditor({
     extensions: [
@@ -312,12 +337,20 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
     },
   });
 
-  // Sync content when prop changes
+  // Improved content sync to prevent overwriting user changes
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content || '');
+    if (editor && content !== undefined) {
+      const currentContent = editor.getHTML();
+      
+      // Only update if content is significantly different and we haven't set initial content
+      if (!initialContentSet.current || (content !== currentContent && !hasUnsavedChanges)) {
+        console.log('📝 Setting editor content:', content.substring(0, 100) + '...');
+        editor.commands.setContent(content || '', { emitUpdate: false }); // Don't trigger updates
+        initialContentSet.current = true;
+        setHasUnsavedChanges(false);
+      }
     }
-  }, [editor, content]);
+  }, [editor, content, hasUnsavedChanges]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -408,9 +441,25 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
     <div className={`border border-input rounded-lg bg-background ${className || ''} ${hasUnsavedChanges ? 'border-amber-400' : ''}`}>
       {/* Status indicator */}
       {hasUnsavedChanges && (
-        <div className="px-3 py-1 bg-amber-50 border-b border-amber-200 text-xs text-amber-700 flex items-center gap-1">
-          <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-          Alterações serão salvas automaticamente...
+        <div className="px-3 py-1 border-b flex items-center justify-between text-xs">
+          {isTableActive ? (
+            <div className="flex items-center gap-2 text-blue-700 bg-blue-50 px-2 py-1 rounded">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+              Salvamento automático suspenso durante edição de tabela
+              <Button 
+                size="sm" 
+                onClick={handleManualSave}
+                className="ml-2 h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700"
+              >
+                Salvar Agora
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 px-2 py-1 rounded">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+              Salvando automaticamente...
+            </div>
+          )}
         </div>
       )}
       {/* Toolbar */}

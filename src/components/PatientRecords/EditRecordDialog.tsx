@@ -93,6 +93,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   // Garantir que carregamos os dados mais recentes diretamente do banco
   const fetchRecordDetails = async (recordId: string) => {
     if (!user?.id) return;
+    
+    console.log('🔍 Fetching record details for ID:', recordId);
+    setLoading(true);
+    
     try {
       const { data, error } = await supabase
         .from('patient_records')
@@ -101,28 +105,72 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-      if (!data) return;
+      if (error) {
+        console.error('❌ Error fetching record:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn('⚠️ No record found for ID:', recordId);
+        toast({
+          title: 'Aviso',
+          description: 'Registro não encontrado',
+          variant: 'default',
+        });
+        return;
+      }
 
-      setFormData({
+      console.log('✅ Record loaded:', {
+        title: data.title,
+        content: data.content?.substring(0, 100) + '...',
+        prescription: data.prescription?.substring(0, 100) + '...',
+        appointment_id: data.appointment_id,
+        professional_id: data.professional_id
+      });
+
+      const newFormData = {
         title: data.title || '',
         content: (data.content || data.notes) || '',
         prescription: data.prescription || '',
         appointment_id: data.appointment_id || 'none',
         professional_id: data.professional_id || '',
-      });
+      };
+
+      console.log('📝 Setting form data:', newFormData);
+      setFormData(newFormData);
+      
     } catch (err) {
-      console.error('Error fetching record details:', err);
+      console.error('❌ Error in fetchRecordDetails:', err);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar dados do registro',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (record) {
+    console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id);
+    
+    if (record && isOpen) {
+      // Reset form first to clear any stale data
+      setFormData({
+        title: '',
+        content: '',
+        prescription: '',
+        appointment_id: 'none',
+        professional_id: '',
+      });
+      
+      // Then fetch fresh data
       fetchRecordDetails(record.id);
       fetchDocuments();
       fetchAppointments();
       fetchProfessionals();
-    } else {
+    } else if (!record) {
+      console.log('🔄 Clearing form data - no record');
       setFormData({
         title: '',
         content: '',
@@ -135,7 +183,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       setAppointments([]);
       setProfessionals([]);
     }
-  }, [record]);
+  }, [record, isOpen]);
 
   const fetchAppointments = async () => {
     if (!record?.id || !user?.id) return;
@@ -810,8 +858,18 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             </Label>
             <RichTextEditor
               content={formData.content || ''}
-              onChange={(content) => setFormData({ ...formData, content })}
+              onChange={(content) => {
+                console.log('📝 Content updated via RichTextEditor');
+                setFormData({ ...formData, content });
+              }}
               placeholder="Descreva as observações da consulta, sintomas relatados, exame físico, diagnóstico, tratamento recomendado, orientações..."
+              onManualSave={() => {
+                console.log('💾 Manual save triggered from content editor');
+                toast({
+                  title: 'Alterações salvas',
+                  description: 'Conteúdo das anotações foi salvo',
+                });
+              }}
             />
           </div>
 
@@ -823,8 +881,18 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             </Label>
             <RichTextEditor
               content={formData.prescription || ''}
-              onChange={(prescription) => setFormData({ ...formData, prescription })}
+              onChange={(prescription) => {
+                console.log('💊 Prescription updated via RichTextEditor');
+                setFormData({ ...formData, prescription });
+              }}
               placeholder="Liste os medicamentos prescritos, dosagens, frequência, duração do tratamento, instruções especiais..."
+              onManualSave={() => {
+                console.log('💾 Manual save triggered from prescription editor');
+                toast({
+                  title: 'Alterações salvas',
+                  description: 'Prescrição médica foi salva',
+                });
+              }}
             />
             <p className="text-sm text-gray-500">
               Medicamentos, dosagens e instruções de uso (campo opcional)
