@@ -384,7 +384,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 10mm 15mm 0 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 45mm !important;
+                height: 60mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -425,7 +425,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 padding: 5mm 15mm !important;
                 background: white !important;
                 z-index: 1000 !important;
-                height: 30mm !important;
+                height: 35mm !important;
                 box-sizing: border-box !important;
               }
               
@@ -448,8 +448,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               }
               
               .print-content {
-                margin-top: 50mm !important;
-                margin-bottom: 35mm !important;
+                margin-top: 70mm !important;
+                margin-bottom: 45mm !important;
                 margin-left: 15mm !important;
                 margin-right: 15mm !important;
                 padding: 0 !important;
