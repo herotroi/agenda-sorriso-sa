@@ -186,15 +186,8 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id, 'isOpen:', isOpen);
     
     if (record && isOpen) {
-      // Reset states
+      // Reset states only flag; keep previous formData to avoid flashing empty content
       setDataLoaded(false);
-      setFormData({
-        title: '',
-        content: '',
-        prescription: '',
-        appointment_id: 'none',
-        professional_id: '',
-      });
       
       // Fetch all data in sequence to ensure proper loading
       const loadAllData = async () => {
@@ -795,7 +788,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   if (!record) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader className="space-y-4">
           <div className="flex items-center justify-between">

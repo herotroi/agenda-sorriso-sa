@@ -419,6 +419,11 @@ export function RichTextEditor({ content, onChange, placeholder, className, debo
   useEffect(() => {
     if (editor && content !== undefined) {
       const currentContent = editor.getHTML();
+
+      // Avoid initializing with empty content to prevent first-open blank state
+      if (!initialContentSet.current && (!content || content.length === 0)) {
+        return; // wait for actual content from parent
+      }
       
       // Only update if content is significantly different and we haven't set initial content
       if (!initialContentSet.current || (content !== currentContent && !hasUnsavedChanges && !isTableActive)) {
