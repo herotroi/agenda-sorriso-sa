@@ -29,13 +29,14 @@ export function EditableRichTextEditor({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Sync with external content changes
+  // Sync with external content changes - ALWAYS sync when content changes
   useEffect(() => {
-    if (content !== localContent && !hasLocalChanges) {
-      console.log(`📝 ${label}: Syncing external content change`);
+    if (content !== localContent) {
+      console.log(`📝 ${label}: Syncing content change, length:`, content.length);
       setLocalContent(content);
+      setHasLocalChanges(false);
     }
-  }, [content, localContent, hasLocalChanges, label]);
+  }, [content, label]);
 
   const handleContentChange = useCallback((newContent: string) => {
     console.log(`📝 ${label}: Content changed, length:`, newContent.length);

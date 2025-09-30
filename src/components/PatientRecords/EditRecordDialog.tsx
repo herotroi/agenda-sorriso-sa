@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +72,7 @@ interface Appointment {
 }
 
 export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onRecordDeleted }: EditRecordDialogProps) {
+  const [recordData, setRecordData] = useState<PatientRecord | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -87,27 +88,20 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [loadingProfessionals, setLoadingProfessionals] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false); // Track if initial data is loaded
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const requestIdRef = React.useRef(0);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Garantir que carregamos os dados mais recentes diretamente do banco
-  const fetchRecordDetails = async (recordId: string, retryCount = 0) => {
+  const fetchRecordDetails = async (recordId: string, currentRequestId: number) => {
     if (!user?.id) return;
     
-    console.log('🔍 Fetching record details for ID:', recordId, 'attempt:', retryCount + 1);
-    setLoading(true);
-    setDataLoaded(false); // Mark data as not loaded while fetching
+    console.log('🔍 Fetching record details for ID:', recordId, 'requestId:', currentRequestId);
     
     try {
-      // Wait a bit to avoid race conditions
-      if (retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      
       const { data, error } = await supabase
         .from('patient_records')
-        .select('id, title, content, notes, prescription, appointment_id, professional_id')
+        .select('id, title, content, notes, prescription, appointment_id, professional_id, created_at, updated_at')
         .eq('id', recordId)
         .eq('user_id', user.id)
         .maybeSingle();
@@ -117,26 +111,24 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         throw error;
       }
       
+      // Check if this request is still valid
+      if (requestIdRef.current !== currentRequestId) {
+        console.log('⚠️ Request outdated, ignoring results');
+        return;
+      }
+      
       if (!data) {
         console.warn('⚠️ No record found for ID:', recordId);
-        
-        // Retry up to 3 times
-        if (retryCount < 3) {
-          console.log('🔄 Retrying fetchRecordDetails...');
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-          return fetchRecordDetails(recordId, retryCount + 1);
-        }
-        
         toast({
           title: 'Erro',
-          description: 'Registro não encontrado após múltiplas tentativas',
+          description: 'Registro não encontrado',
           variant: 'destructive',
         });
-        setLoading(false);
         return;
       }
 
       console.log('✅ Record loaded successfully:', {
+        id: data.id,
         title: data.title,
         contentLength: data.content?.length || 0,
         prescriptionLength: data.prescription?.length || 0,
@@ -144,6 +136,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         professional_id: data.professional_id
       });
 
+      // Set record data first
+      setRecordData(data);
+      
+      // Then populate form data
       const newFormData = {
         title: data.title || '',
         content: (data.content || data.notes) || '',
@@ -152,33 +148,25 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         professional_id: data.professional_id || '',
       };
 
-      console.log('📝 Setting form data with content length:', newFormData.content.length);
+      console.log('📝 Setting form data:', {
+        titleLength: newFormData.title.length,
+        contentLength: newFormData.content.length,
+        prescriptionLength: newFormData.prescription.length,
+        appointment_id: newFormData.appointment_id,
+        professional_id: newFormData.professional_id
+      });
       
-      // Set form data first
       setFormData(newFormData);
-      
-      // Wait for state to settle, then mark as loaded
-      await new Promise(resolve => setTimeout(resolve, 300));
       setDataLoaded(true);
-      console.log('✅ Data marked as loaded, editors can now render');
+      console.log('✅ Data marked as loaded');
       
     } catch (err) {
       console.error('❌ Error in fetchRecordDetails:', err);
-      
-      // Retry on error up to 3 times
-      if (retryCount < 3) {
-        console.log('🔄 Retrying after error...');
-        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1)));
-        return fetchRecordDetails(recordId, retryCount + 1);
-      }
-      
       toast({
         title: 'Erro',
-        description: 'Erro ao carregar dados do registro após múltiplas tentativas',
+        description: 'Erro ao carregar dados do registro',
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -186,21 +174,42 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id, 'isOpen:', isOpen);
     
     if (record && isOpen) {
-      // Reset states only flag; keep previous formData to avoid flashing empty content
-      setDataLoaded(false);
+      // Increment request ID to invalidate previous requests
+      requestIdRef.current += 1;
+      const currentRequestId = requestIdRef.current;
       
-      // Fetch all data in sequence to ensure proper loading
+      // Reset states
+      setRecordData(null);
+      setDataLoaded(false);
+      setLoading(true);
+      setFormData({
+        title: '',
+        content: '',
+        prescription: '',
+        appointment_id: 'none',
+        professional_id: '',
+      });
+      
+      console.log('🚀 Starting data fetch with requestId:', currentRequestId);
+      
+      // Fetch all data in parallel
       const loadAllData = async () => {
-        await fetchRecordDetails(record.id);
-        // Only fetch other data after record details are loaded
-        fetchDocuments();
-        fetchAppointments();
-        fetchProfessionals();
+        try {
+          await Promise.all([
+            fetchRecordDetails(record.id, currentRequestId),
+            fetchAppointments(),
+            fetchProfessionals(),
+            fetchDocuments()
+          ]);
+        } finally {
+          setLoading(false);
+        }
       };
       
       loadAllData();
-    } else if (!record) {
-      console.log('🔄 Clearing form data - no record');
+    } else if (!isOpen) {
+      console.log('🔄 Dialog closed, resetting state');
+      setRecordData(null);
       setDataLoaded(false);
       setFormData({
         title: '',
@@ -214,7 +223,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       setAppointments([]);
       setProfessionals([]);
     }
-  }, [record, isOpen]);
+  }, [record?.id, isOpen]);
 
   const fetchAppointments = async () => {
     if (!record?.id || !user?.id) return;
@@ -708,7 +717,8 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       
       // Verify the save worked by fetching the data again
       setTimeout(() => {
-        fetchRecordDetails(record.id);
+        requestIdRef.current += 1;
+        fetchRecordDetails(record.id, requestIdRef.current);
       }, 500);
       
     } catch (error) {
