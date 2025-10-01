@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer, Trash2 } from 'lucide-react';
+import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, Printer, Trash2, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EditableRichTextEditor } from './EditableRichTextEditor';
@@ -80,6 +81,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     appointment_id: '',
     professional_id: '',
   });
+  const [selectedAppointments, setSelectedAppointments] = useState<string[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -199,7 +201,8 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             fetchRecordDetails(record.id, currentRequestId),
             fetchAppointments(),
             fetchProfessionals(),
-            fetchDocuments()
+            fetchDocuments(),
+            fetchLinkedAppointments()
           ]);
         } finally {
           setLoading(false);
@@ -222,8 +225,31 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       setFiles([]);
       setAppointments([]);
       setProfessionals([]);
+      setSelectedAppointments([]);
     }
   }, [record?.id, isOpen]);
+
+  const fetchLinkedAppointments = async () => {
+    if (!record?.id || !user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('record_appointments')
+        .select('appointment_id')
+        .eq('record_id', record.id);
+
+      if (error) {
+        console.error('Error fetching linked appointments:', error);
+        return;
+      }
+
+      const appointmentIds = data?.map(item => item.appointment_id) || [];
+      console.log('Linked appointments found:', appointmentIds);
+      setSelectedAppointments(appointmentIds);
+    } catch (error) {
+      console.error('Error loading linked appointments:', error);
+    }
+  };
 
   const fetchAppointments = async () => {
     if (!record?.id || !user?.id) return;
@@ -279,6 +305,14 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     } finally {
       setLoadingAppointments(false);
     }
+  };
+
+  const handleAppointmentToggle = (appointmentId: string) => {
+    setSelectedAppointments(prev => 
+      prev.includes(appointmentId)
+        ? prev.filter(id => id !== appointmentId)
+        : [...prev, appointmentId]
+    );
   };
 
   const fetchProfessionals = async () => {
@@ -610,6 +644,43 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     window.open(url, '_blank');
   };
 
+  const updateAppointmentAssociations = async (recordId: string, newAppointmentIds: string[]) => {
+    try {
+      // Primeiro, remove todas as associações existentes
+      const { error: deleteError } = await supabase
+        .from('record_appointments')
+        .delete()
+        .eq('record_id', recordId);
+
+      if (deleteError) {
+        console.error('Error deleting existing associations:', deleteError);
+        throw deleteError;
+      }
+
+      // Depois, adiciona as novas associações
+      if (newAppointmentIds.length > 0) {
+        const appointmentAssociations = newAppointmentIds.map(appointmentId => ({
+          record_id: recordId,
+          appointment_id: appointmentId,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('record_appointments')
+          .insert(appointmentAssociations);
+
+        if (insertError) {
+          console.error('Error inserting new associations:', insertError);
+          throw insertError;
+        }
+      }
+
+      console.log('Appointment associations updated successfully');
+    } catch (error) {
+      console.error('Error updating appointment associations:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -641,15 +712,16 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         prescriptionLength: formData.prescription?.length || 0,
         prescriptionHasTables: formData.prescription?.includes('<table>') || false,
         appointment_id: formData.appointment_id,
-        professional_id: formData.professional_id
+        professional_id: formData.professional_id,
+        selectedAppointments: selectedAppointments
       });
 
       const updateData = {
         title: formData.title.trim(),
         content: formData.content?.trim() || null,
-        notes: formData.content?.trim() || null, // Also save in notes for backward compatibility
+        notes: formData.content?.trim() || null,
         prescription: formData.prescription?.trim() || null,
-        appointment_id: formData.appointment_id === 'none' ? null : formData.appointment_id,
+        appointment_id: selectedAppointments.length > 0 ? selectedAppointments[0] : null,
         professional_id: formData.professional_id || null,
         updated_at: new Date().toISOString(),
       };
@@ -670,7 +742,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         throw error;
       }
 
-      console.log('✅ Record saved successfully to database with all content including tables');
+      console.log('✅ Record saved successfully to database');
+
+      // Atualizar associações de agendamentos
+      await updateAppointmentAssociations(record.id, selectedAppointments);
 
       // Verify the save worked by checking the database
       const { data: verifyData } = await supabase
@@ -707,7 +782,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
 
       toast({
         title: 'Sucesso',
-        description: 'Registro atualizado com sucesso incluindo todas as tabelas!',
+        description: 'Registro e agendamentos atualizados com sucesso!',
       });
 
       // Refresh data
@@ -719,6 +794,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       setTimeout(() => {
         requestIdRef.current += 1;
         fetchRecordDetails(record.id, requestIdRef.current);
+        fetchLinkedAppointments();
       }, 500);
       
     } catch (error) {
@@ -881,33 +957,87 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             />
           </div>
 
-           {/* Agendamento Vinculado */}
-          <div className="space-y-2">
-            <Label htmlFor="appointment" className="text-base font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Agendamento Vinculado
-            </Label>
-            <Select 
-              value={formData.appointment_id} 
-              onValueChange={(value) => setFormData({ ...formData, appointment_id: value })}
-              disabled={loadingAppointments}
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder={loadingAppointments ? "Carregando agendamentos..." : "Selecione um agendamento"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum agendamento</SelectItem>
-                {appointments.map((appointment) => (
-                  <SelectItem key={appointment.id} value={appointment.id}>
-                    {format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })} - {appointment.procedures?.name || 'Sem procedimento'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-gray-500">
-              Você pode alterar o agendamento vinculado a este prontuário
-            </p>
-          </div>
+          {/* Agendamentos Vinculados */}
+          <Card className="border-blue-200 bg-blue-50/30">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">Agendamentos Vinculados</h3>
+              </div>
+              
+              {loadingAppointments ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                  <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
+                </div>
+              ) : appointments.length > 0 ? (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
+                        selectedAppointments.includes(appointment.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-blue-300'
+                      }`}
+                      onClick={() => handleAppointmentToggle(appointment.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedAppointments.includes(appointment.id)}
+                          onCheckedChange={() => handleAppointmentToggle(appointment.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <span className="font-semibold text-gray-900">
+                              {format(new Date(appointment.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3 text-gray-500" />
+                              <span className="text-gray-600">
+                                {format(new Date(appointment.start_time), 'HH:mm', { locale: ptBR })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: ptBR })}
+                              </span>
+                            </div>
+                            
+                            {appointment.procedures && (
+                              <div className="flex items-center gap-2">
+                                <Stethoscope className="h-3 w-3 text-gray-500" />
+                                <span className="text-gray-600">{appointment.procedures.name}</span>
+                              </div>
+                            )}
+                            
+                            {appointment.professionals && (
+                              <div className="flex items-center gap-2">
+                                <User className="h-3 w-3 text-gray-500" />
+                                <span className="text-gray-600">Dr(a). {appointment.professionals.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm py-4 text-center">
+                  Nenhum agendamento encontrado para este paciente.
+                </p>
+              )}
+              
+              {selectedAppointments.length > 0 && (
+                <div className="pt-3 border-t border-blue-200">
+                  <p className="text-sm text-blue-700 font-medium">
+                    {selectedAppointments.length} agendamento{selectedAppointments.length > 1 ? 's' : ''} selecionado{selectedAppointments.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Profissional Responsável */}
           <div className="space-y-2">
