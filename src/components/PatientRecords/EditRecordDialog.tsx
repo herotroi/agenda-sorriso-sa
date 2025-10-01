@@ -956,88 +956,6 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             />
           </div>
 
-          {/* Agendamentos Vinculados */}
-          <Card className="border-blue-200 bg-blue-50/30">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-semibold">Agendamentos Vinculados</h3>
-              </div>
-              
-              {loadingAppointments ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                  <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
-                </div>
-              ) : appointments.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                  {appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
-                        selectedAppointments.includes(appointment.id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-blue-300'
-                      }`}
-                      onClick={() => handleAppointmentToggle(appointment.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={selectedAppointments.includes(appointment.id)}
-                          onCheckedChange={() => handleAppointmentToggle(appointment.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="h-4 w-4 text-blue-600" />
-                            <span className="font-semibold text-gray-900">
-                              {format(new Date(appointment.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-3 w-3 text-gray-500" />
-                              <span className="text-gray-600">
-                                {format(new Date(appointment.start_time), 'HH:mm', { locale: ptBR })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: ptBR })}
-                              </span>
-                            </div>
-                            
-                            {appointment.procedures && (
-                              <div className="flex items-center gap-2">
-                                <Stethoscope className="h-3 w-3 text-gray-500" />
-                                <span className="text-gray-600">{appointment.procedures.name}</span>
-                              </div>
-                            )}
-                            
-                            {appointment.professionals && (
-                              <div className="flex items-center gap-2">
-                                <User className="h-3 w-3 text-gray-500" />
-                                <span className="text-gray-600">Dr(a). {appointment.professionals.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm py-4 text-center">
-                  Nenhum agendamento encontrado para este paciente.
-                </p>
-              )}
-              
-              {selectedAppointments.length > 0 && (
-                <div className="pt-3 border-t border-blue-200">
-                  <p className="text-sm text-blue-700 font-medium">
-                    {selectedAppointments.length} agendamento{selectedAppointments.length > 1 ? 's' : ''} selecionado{selectedAppointments.length > 1 ? 's' : ''}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Profissional Responsável */}
           <div className="space-y-2">
             <Label htmlFor="professional" className="text-base font-medium flex items-center gap-2">
@@ -1129,6 +1047,90 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
               </p>
             </>
           )}
+
+          <Separator />
+
+          {/* Agendamentos Vinculados */}
+          <Card className="border-blue-200 bg-blue-50/30">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">Agendamentos Vinculados</h3>
+              </div>
+              
+              {loadingAppointments ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                  <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
+                </div>
+              ) : appointments.length > 0 ? (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
+                        selectedAppointments.includes(appointment.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-blue-300'
+                      }`}
+                      onClick={() => handleAppointmentToggle(appointment.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedAppointments.includes(appointment.id)}
+                          onCheckedChange={() => handleAppointmentToggle(appointment.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <span className="font-semibold text-gray-900">
+                              {format(new Date(appointment.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3 text-gray-500" />
+                              <span className="text-gray-600">
+                                {format(new Date(appointment.start_time), 'HH:mm', { locale: ptBR })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: ptBR })}
+                              </span>
+                            </div>
+                            
+                            {appointment.procedures && (
+                              <div className="flex items-center gap-2">
+                                <Stethoscope className="h-3 w-3 text-gray-500" />
+                                <span className="text-gray-600">{appointment.procedures.name}</span>
+                              </div>
+                            )}
+                            
+                            {appointment.professionals && (
+                              <div className="flex items-center gap-2">
+                                <User className="h-3 w-3 text-gray-500" />
+                                <span className="text-gray-600">Dr(a). {appointment.professionals.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm py-4 text-center">
+                  Nenhum agendamento encontrado para este paciente.
+                </p>
+              )}
+              
+              {selectedAppointments.length > 0 && (
+                <div className="pt-3 border-t border-blue-200">
+                  <p className="text-sm text-blue-700 font-medium">
+                    {selectedAppointments.length} agendamento{selectedAppointments.length > 1 ? 's' : ''} selecionado{selectedAppointments.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Separator />
 
