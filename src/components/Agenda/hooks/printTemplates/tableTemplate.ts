@@ -112,16 +112,16 @@ export const generateTablePrintTemplate = (
       
       return `
         <tr>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${patientName}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${professionalName}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${procedureName}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${patientName}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${professionalName}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${procedureName}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${startTime}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">
             <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: ${statusColor}20; color: ${statusColor};">
               ${statusLabel}
             </span>
           </td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${displayNotes}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${displayNotes}</td>
         </tr>
       `;
     }
@@ -130,16 +130,16 @@ export const generateTablePrintTemplate = (
     if (item.type === 'vacation') {
       return `
         <tr style="background-color: #fef3c7;">
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left; font-weight: 600;">🏖️ FÉRIAS</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.professional_name}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">-</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startDate.toLocaleDateString('pt-BR')}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left; font-weight: 600;">🏖️ FÉRIAS</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${item.professional_name}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">-</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${startDate.toLocaleDateString('pt-BR')}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">
             <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: #fbbf2420; color: #f59e0b;">
               Férias
             </span>
           </td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.notes}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${item.notes}</td>
         </tr>
       `;
     }
@@ -148,16 +148,16 @@ export const generateTablePrintTemplate = (
     if (item.type === 'break') {
       return `
         <tr style="background-color: #f3f4f6;">
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left; font-weight: 600;">☕ PAUSA</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.professional_name}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">-</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${startTime} - ${endTime}</td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left; font-weight: 600;">☕ PAUSA</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${item.professional_name}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">-</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${startTime} - ${endTime}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">
             <span style="display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; background-color: #6b728020; color: #6b7280;">
               Pausa
             </span>
           </td>
-          <td style="padding: 8px; border: 1px solid #d1d5db; text-align: left;">${item.notes}</td>
+          <td style="padding: 8px; border: 1px solid #000 !important; text-align: left;">${item.notes}</td>
         </tr>
       `;
     }
@@ -173,15 +173,15 @@ export const generateTablePrintTemplate = (
       </div>
       
       <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; border: 1px solid #000;">
           <thead>
             <tr>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Paciente/Tipo</th>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Profissional</th>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Procedimento</th>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Data/Hora</th>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Status</th>
-              <th style="border: 1px solid #d1d5db; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Observações</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Paciente/Tipo</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Profissional</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Procedimento</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Data/Hora</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Status</th>
+              <th style="border: 1px solid #000 !important; padding: 12px 16px; background-color: #f9fafb; text-align: left; font-weight: 500; color: #374151;">Observações</th>
             </tr>
           </thead>
           <tbody>
