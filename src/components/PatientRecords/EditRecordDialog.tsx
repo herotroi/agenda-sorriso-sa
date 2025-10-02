@@ -430,9 +430,40 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             .info-item { margin-bottom: 8px; }
             .info-item strong { display: inline-block; min-width: 120px; }
             .prescription { background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; }
+            
+            /* Estilos para tabelas */
+            table {
+              border-collapse: collapse !important;
+              width: 100% !important;
+              border: 1px solid #000 !important;
+              margin: 10px 0 !important;
+            }
+            
+            th, td {
+              border: 1px solid #000 !important;
+              padding: 6px 8px !important;
+              text-align: left !important;
+            }
+            
+            th {
+              background-color: #f0f0f0 !important;
+              font-weight: bold !important;
+            }
+            
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
+              
+              table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #000 !important;
+              }
+              
+              th, td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px !important;
+              }
             }
           </style>
         </head>

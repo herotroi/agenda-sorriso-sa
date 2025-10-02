@@ -428,10 +428,23 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 min-height: auto !important;
               }
               
-              /* Remover divisórias visuais na impressão */
-              .print-content, .print-content * {
+              /* Remover divisórias visuais na impressão, exceto tabelas */
+              .print-content, .print-content *:not(table):not(thead):not(tbody):not(tr):not(th):not(td) {
                 border: none !important;
                 box-shadow: none !important;
+              }
+              
+              /* Forçar bordas em tabelas */
+              .print-content table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #000 !important;
+              }
+              
+              .print-content th,
+              .print-content td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px !important;
               }
               
               .signature-box {
