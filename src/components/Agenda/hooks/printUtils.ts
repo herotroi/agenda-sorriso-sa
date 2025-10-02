@@ -351,6 +351,19 @@ export const openPrintWindow = (
           
           table {
             page-break-inside: auto;
+            border-collapse: collapse !important;
+          }
+          
+          table th,
+          table td {
+            border: 1px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          .calendar-grid-table th,
+          .calendar-grid-table td {
+            border: 1px solid #000 !important;
           }
           
           tr {
