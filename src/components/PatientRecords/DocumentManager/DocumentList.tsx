@@ -17,8 +17,8 @@ export function DocumentList({
 }: DocumentListProps) {
   if (documents.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <p>Nenhum documento encontrado para este cliente</p>
+      <div className="text-center py-6 sm:py-8 text-gray-500">
+        <p className="text-sm sm:text-base">Nenhum documento encontrado para este cliente</p>
         {!canDelete && (
           <p className="text-xs mt-2">Upgrade necessário para adicionar documentos</p>
         )}
@@ -27,7 +27,7 @@ export function DocumentList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 sm:space-y-3">
       {documents.map((document) => (
         <DocumentListItem
           key={document.id}

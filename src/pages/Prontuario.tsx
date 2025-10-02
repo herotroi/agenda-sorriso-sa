@@ -121,30 +121,30 @@ export default function Prontuario() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-4 sm:p-6 max-w-7xl space-y-8">
+      <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl space-y-4 sm:space-y-6 md:space-y-8">
         {/* Main Title */}
-        <div className="text-center py-6">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <FileText className="h-8 w-8 text-blue-600" />
+        <div className="text-center py-3 sm:py-4 md:py-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="p-2 sm:p-3 bg-blue-100 rounded-xl">
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
               Prontuário Eletrônico
             </h1>
           </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">
             Sistema completo para gerenciamento de consultas, registros médicos e documentos dos pacientes
           </p>
         </div>
 
         {/* Patient Search Section */}
         <Card className="border-l-4 border-l-purple-500">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-5 w-5 text-purple-600 flex-shrink-0" />
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 flex-shrink-0" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">Buscar Paciente</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Buscar Paciente</h2>
             </div>
             <PatientSearch
               patients={patients}
@@ -156,7 +156,7 @@ export default function Prontuario() {
 
         {/* Header Section */}
         <Card className="shadow-sm border-l-4 border-l-blue-500">
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
             <ProntuarioHeader
               selectedPatient={selectedPatient}
               onNewAppointment={handleNewAppointment}
@@ -168,11 +168,11 @@ export default function Prontuario() {
 
         {/* Main Content */}
         {selectedPatient && (
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {/* Detailed Sections */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               {/* Lista completa de registros */}
-              <div className="order-2 xl:order-1">
+              <div className="order-2 lg:order-1">
                 <PatientRecordsList
                   records={records}
                   onEditRecord={handleEditRecord}
@@ -181,7 +181,7 @@ export default function Prontuario() {
               </div>
 
               {/* Procedimentos e documentos detalhados */}
-              <div className="order-1 xl:order-2">
+              <div className="order-1 lg:order-2">
                 <ProntuarioContent
                   appointments={appointments}
                   selectedAppointment={selectedAppointment}

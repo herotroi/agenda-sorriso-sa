@@ -29,7 +29,7 @@ export function DocumentManager({
         canUpload={canUpload}
       />
       
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         <DocumentList
           documents={documents}
           onDocumentDelete={onDocumentDelete}

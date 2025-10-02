@@ -16,10 +16,10 @@ export function DocumentManagerHeader({
   canUpload 
 }: DocumentManagerHeaderProps) {
   return (
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="flex items-center text-sm font-medium">
-        <FileText className="h-4 w-4 mr-2" />
-        Documentos do Cliente ({documents.length})
+    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 pb-2 sm:pb-3 px-3 sm:px-6">
+      <CardTitle className="flex items-center text-sm sm:text-base font-medium">
+        <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+        <span className="truncate">Documentos ({documents.length})</span>
       </CardTitle>
       {canUpload && (
         <DocumentUploadDialog onDocumentUpload={onDocumentUpload} />

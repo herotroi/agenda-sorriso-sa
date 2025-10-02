@@ -56,46 +56,52 @@ export function DocumentListItem({
   const appointmentDate = getAppointmentInfo();
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-      <div className="flex items-center space-x-3 flex-1 min-w-0">
-        {getFileIcon(document.mime_type)}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 p-2.5 sm:p-3 border rounded-lg hover:bg-gray-50">
+      <div className="flex items-start sm:items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+        <div className="flex-shrink-0 mt-0.5 sm:mt-0">
+          {getFileIcon(document.mime_type)}
+        </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 truncate">
+          <p className="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2 break-words">
             {document.name}
           </p>
-          <div className="flex items-center space-x-2 mt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
             <p className="text-xs text-gray-500">
               {formatFileSize(document.file_size)}
             </p>
             {appointmentDate && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs w-fit">
                 {appointmentDate}
               </Badge>
             )}
           </div>
           {document.description && (
-            <p className="text-xs text-gray-500 mt-1 truncate">
+            <p className="text-xs text-gray-500 mt-1 line-clamp-2 break-words">
               {document.description}
             </p>
           )}
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2 self-end sm:self-auto">
         <Button
           variant="outline"
           size="sm"
           onClick={handleDownload}
+          className="flex-1 sm:flex-initial"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="ml-1 sm:hidden text-xs">Download</span>
         </Button>
         {canDelete && (
           <Button
             variant="outline"
             size="sm"
             onClick={handleDelete}
+            className="flex-1 sm:flex-initial"
           >
-            <Trash2 className="h-4 w-4 text-red-500" />
+            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+            <span className="ml-1 sm:hidden text-xs">Excluir</span>
           </Button>
         )}
       </div>

@@ -66,37 +66,41 @@ export function PatientSearch({ patients, selectedPatient, onPatientSelect }: Pa
 
       {/* Selected Patient Info */}
       {selectedPatientData && !searchTerm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
-              <User className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-blue-900 truncate">{selectedPatientData.full_name}</h3>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm text-blue-700">
-                {selectedPatientData.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{selectedPatientData.phone}</span>
-                  </span>
-                )}
-                {selectedPatientData.cpf && (
-                  <span className="truncate">CPF: {selectedPatientData.cpf}</span>
-                )}
-                {selectedPatientData.email && (
-                  <span className="truncate">{selectedPatientData.email}</span>
-                )}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm sm:text-base text-blue-900 break-words line-clamp-2">
+                  {selectedPatientData.full_name}
+                </h3>
+                <div className="flex flex-col gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs sm:text-sm text-blue-700">
+                  {selectedPatientData.phone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{selectedPatientData.phone}</span>
+                    </span>
+                  )}
+                  {selectedPatientData.cpf && (
+                    <span className="truncate">CPF: {selectedPatientData.cpf}</span>
+                  )}
+                  {selectedPatientData.email && (
+                    <span className="truncate break-all">{selectedPatientData.email}</span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant="default" className="bg-blue-600">
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-col sm:flex-shrink-0">
+              <Badge variant="default" className="bg-blue-600 text-xs sm:text-sm flex-1 sm:flex-initial justify-center">
                 Selecionado
               </Badge>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClearSelection}
-                className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                className="text-blue-700 border-blue-300 hover:bg-blue-100 flex-1 sm:flex-initial text-xs sm:text-sm"
               >
                 <X className="h-3 w-3 mr-1" />
                 Limpar
