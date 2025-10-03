@@ -85,7 +85,7 @@ export function useDashboardData() {
         .eq('user_id', user.id)
         .eq('active', true);
 
-      // Query para receita do período
+      // Query para receita do período - DEVE incluir user_id
       let revenueQuery = supabase
         .from('appointments')
         .select('price, status')

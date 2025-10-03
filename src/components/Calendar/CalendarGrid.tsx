@@ -56,24 +56,25 @@ export function CalendarGrid({
 
   return (
     <div className="flex-1 bg-white rounded-lg shadow overflow-hidden">
-      <div className="flex border-b border-gray-200">
-        <div className="w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
-          <div className="h-12 flex items-center justify-center text-sm font-medium text-gray-500">
-            Horário
+      <div className="flex border-b border-gray-200 overflow-x-auto">
+        <div className="w-12 sm:w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
+          <div className="h-10 sm:h-12 flex items-center justify-center text-xs sm:text-sm font-medium text-gray-500">
+            <span className="hidden sm:inline">Horário</span>
+            <span className="sm:hidden">Hrs</span>
           </div>
         </div>
-        <div className="flex-1 grid grid-flow-col auto-cols-fr">
+        <div className="flex min-w-fit">
           {professionals.map((professional) => (
             <div
               key={professional.id}
-              className="border-r border-gray-200 last:border-r-0"
+              className="min-w-[140px] sm:min-w-[180px] border-r border-gray-200 last:border-r-0"
             >
-              <div className="h-12 px-4 flex items-center justify-center bg-gray-50 border-b border-gray-200">
-                <div className="text-center">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+              <div className="h-10 sm:h-12 px-2 sm:px-4 flex items-center justify-center bg-gray-50 border-b border-gray-200">
+                <div className="text-center w-full">
+                  <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                     {professional.name}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
+                  <div className="text-[10px] sm:text-xs text-gray-500 truncate">
                     {professional.specialty}
                   </div>
                 </div>
@@ -85,39 +86,40 @@ export function CalendarGrid({
 
       <div 
         ref={scrollContainerRef}
-        className="overflow-y-auto"
+        className="overflow-y-auto overflow-x-auto"
         style={{ height: containerHeight }}
       >
-        <div className="flex relative">
-          <div className="w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
+        <div className="flex relative min-w-fit">
+          <div className="w-12 sm:w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
             {timeSlots.map((slot) => (
               <div
                 key={slot.time}
-                className="h-20 flex items-start justify-center pt-2 border-b border-gray-100 last:border-b-0 relative"
+                className="h-16 sm:h-20 flex items-start justify-center pt-1 sm:pt-2 border-b border-gray-100 last:border-b-0 relative"
               >
-                <span className="text-xs text-gray-500 font-medium">
+                <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
                   {slot.time}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="flex-1 grid grid-flow-col auto-cols-fr relative">
+          <div className="flex min-w-fit relative">
             {professionals.map((professional) => (
-              <ProfessionalColumn
-                key={professional.id}
-                professional={professional}
-                selectedDate={currentDate}
-                appointments={appointments.filter(
-                  (apt) => apt.professional_id === professional.id
-                )}
-                timeSlots={timeSlots}
-                timeBlocks={timeBlocks.filter(block => 
-                  block.professional_id === professional.id
-                )}
-                onAppointmentClick={onAppointmentClick}
-                onTimeSlotClick={onTimeSlotClick}
-              />
+              <div key={professional.id} className="min-w-[140px] sm:min-w-[180px]">
+                <ProfessionalColumn
+                  professional={professional}
+                  selectedDate={currentDate}
+                  appointments={appointments.filter(
+                    (apt) => apt.professional_id === professional.id
+                  )}
+                  timeSlots={timeSlots}
+                  timeBlocks={timeBlocks.filter(block => 
+                    block.professional_id === professional.id
+                  )}
+                  onAppointmentClick={onAppointmentClick}
+                  onTimeSlotClick={onTimeSlotClick}
+                />
+              </div>
             ))}
           </div>
         </div>

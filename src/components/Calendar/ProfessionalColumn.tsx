@@ -40,9 +40,10 @@ export function ProfessionalColumn({
     const startMinutes = start.getMinutes();
     const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
     
-    // Calcular posição precisa baseada no horário
-    const topPosition = startHour * 80 + (startMinutes / 60) * 80; // 80px por hora
-    const height = Math.max(duration * 80, 32); // altura mínima de 32px
+    // Altura responsiva: 64px (16*4) no mobile, 80px no desktop
+    const hourHeight = window.innerWidth < 640 ? 64 : 80;
+    const topPosition = startHour * hourHeight + (startMinutes / 60) * hourHeight;
+    const height = Math.max(duration * hourHeight, 28);
     
     return {
       top: `${topPosition}px`,
@@ -56,7 +57,7 @@ export function ProfessionalColumn({
   ) : [];
 
   return (
-    <div className="border-r border-gray-100 last:border-r-0 relative">
+    <div className="border-r border-gray-100 last:border-r-0 relative w-full">
       <div className="relative min-h-full">
         {timeSlots.map((slot) => {
           const hasAppointment = appointments.some(apt => {
@@ -67,7 +68,7 @@ export function ProfessionalColumn({
           return (
             <div
               key={slot.hour}
-              className="h-20 border-b border-gray-100 hover:bg-gray-50 transition-colors relative"
+              className="h-16 sm:h-20 border-b border-gray-100 hover:bg-gray-50 transition-colors relative cursor-pointer"
               onClick={() => {
                 if (!hasAppointment) {
                   const startTime = new Date(selectedDate);
