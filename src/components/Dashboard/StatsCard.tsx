@@ -16,14 +16,14 @@ interface StatsCardProps {
 export function StatsCard({ title, value, icon: Icon, change, className = '' }: StatsCardProps) {
   return (
     <Card className={`h-full ${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 leading-tight">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4 md:p-6">
+        <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 leading-tight">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-gray-900 leading-tight break-words">
+      <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight break-words">
           {value}
         </div>
         {change && (

@@ -52,13 +52,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Visão geral da sua clínica</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">Visão geral da sua clínica</p>
         </div>
-        <Button onClick={refetch} variant="outline" size="sm">
+        <Button onClick={refetch} variant="outline" size="sm" className="w-full sm:w-auto">
           <RefreshCw className="h-4 w-4 mr-2" />
           Atualizar
         </Button>
@@ -71,7 +71,7 @@ export default function Dashboard() {
       />
 
       {/* Stats Grid - Ajustado para melhor responsividade */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
         <StatsCard
           title="Agendamentos Hoje"
           value={stats.todayAppointments}
@@ -101,33 +101,33 @@ export default function Dashboard() {
       </div>
 
       {/* Revenue Chart and Upcoming Appointments */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <RevenueChart data={monthlyRevenueData} selectedPeriod={selectedPeriod} />
         </div>
 
         {/* Upcoming Appointments */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Próximos Agendamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {upcomingAppointments.length === 0 ? (
                 <p className="text-gray-500 text-sm">Nenhum agendamento próximo</p>
               ) : (
                 upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={appointment.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{appointment.patient}</p>
+                      <p className="font-medium text-xs sm:text-sm truncate">{appointment.patient}</p>
                       <p className="text-xs text-gray-600 truncate">{appointment.professional}</p>
                       <p className="text-xs text-gray-500 truncate">{appointment.type}</p>
                     </div>
                     <div className="text-right flex-shrink-0 ml-2">
-                      <p className="font-medium text-sm">{appointment.time}</p>
+                      <p className="font-medium text-xs sm:text-sm">{appointment.time}</p>
                       <div className="w-2 h-2 bg-green-500 rounded-full ml-auto mt-1"></div>
                     </div>
                   </div>
@@ -139,51 +139,51 @@ export default function Dashboard() {
       </div>
 
       {/* Status Overview - Ajustado para melhor responsividade */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-600">Confirmados</p>
-                <p className="text-2xl font-bold text-green-600">{stats.confirmedCount}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Confirmados</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">{stats.confirmedCount}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600 flex-shrink-0" />
+              <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-green-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-600">Cancelados</p>
-                <p className="text-2xl font-bold text-red-600">{stats.cancelledCount}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Cancelados</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-600">{stats.cancelledCount}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600 flex-shrink-0" />
+              <XCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-red-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-600">Faltaram</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.noShowCount}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Faltaram</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-orange-600">{stats.noShowCount}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-orange-600 flex-shrink-0" />
+              <AlertCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-orange-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-600">Concluídos</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.completedCount}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Concluídos</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600">{stats.completedCount}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-blue-600 flex-shrink-0" />
+              <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-blue-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>

@@ -66,12 +66,17 @@ export function useDashboardData() {
       const today = new Date().toISOString().split('T')[0];
       
       // Agendamentos de hoje
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
       const { count: todayCount } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gte('start_time', today)
-        .lt('start_time', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        .gte('start_time', todayStart.toISOString())
+        .lte('start_time', todayEnd.toISOString());
 
       // Pacientes ativos
       const { count: activePatients } = await supabase
