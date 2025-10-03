@@ -666,8 +666,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .patient-field {
               padding: 6px 12px;
-              border-right: 1px solid #ccc;
-              border-bottom: 1px solid #ccc;
+              border-right: 1px solid #666;
+              border-bottom: 1px solid #666;
               font-size: 10pt;
               min-height: 20px;
               display: flex;
@@ -725,22 +725,40 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .appointment-info {
-              background-color: transparent;
-              border: 2px solid #ffe066;
-              padding: 15px;
               margin-bottom: 20px;
-              border-radius: 4px;
+              border: 2px solid #000;
+              background-color: transparent;
             }
             
             .appointment-info h3 {
-              margin: 0 0 10px 0;
-              font-size: 12pt;
-              color: #8b6914;
+              margin: 0;
+              font-size: 14pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              background-color: #e0e0e0;
+              padding: 10px;
+              border-bottom: 1px solid #000;
+              text-align: center;
             }
             
-            .appointment-info div {
-              margin-bottom: 5px;
-              font-size: 11pt;
+            .appointment-grid {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 0;
+              padding: 0;
+            }
+            
+            .appointment-field {
+              padding: 6px 12px;
+              border-bottom: 1px solid #666;
+              font-size: 10pt;
+              min-height: 20px;
+              display: flex;
+              align-items: center;
+            }
+            
+            .appointment-field:last-child {
+              border-bottom: none;
             }
             
             .documents-section {
@@ -1047,9 +1065,24 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           ${appointment ? `
             <div class="appointment-info">
               <h3>Informações da Consulta</h3>
-              <div><strong>Data:</strong> ${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
-              ${appointment.procedures ? `<div><strong>Procedimento:</strong> ${appointment.procedures.name}</div>` : ''}
-              ${professional ? `<div><strong>Profissional:</strong> Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</div>` : ''}
+              <div class="appointment-grid">
+                <div class="appointment-field">
+                  <span class="field-label">Data:</span>
+                  <span class="field-value">${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+                </div>
+                ${appointment.procedures ? `
+                  <div class="appointment-field">
+                    <span class="field-label">Procedimento:</span>
+                    <span class="field-value">${appointment.procedures.name}</span>
+                  </div>
+                ` : ''}
+                ${professional ? `
+                  <div class="appointment-field">
+                    <span class="field-label">Profissional:</span>
+                    <span class="field-value">Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</span>
+                  </div>
+                ` : ''}
+              </div>
             </div>
           ` : ''}
           
