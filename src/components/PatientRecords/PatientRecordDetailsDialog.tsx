@@ -666,8 +666,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .patient-field {
               padding: 6px 12px;
-              border-right: 1px solid #666;
-              border-bottom: 1px solid #666;
+              border-right: 1px solid #000;
+              border-bottom: 1px solid #000;
               font-size: 10pt;
               min-height: 20px;
               display: flex;
@@ -750,7 +750,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             
             .appointment-field {
               padding: 6px 12px;
-              border-bottom: 1px solid #666;
+              border-bottom: 1px solid #000;
               font-size: 10pt;
               min-height: 20px;
               display: flex;
@@ -1080,6 +1080,12 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                   <div class="appointment-field">
                     <span class="field-label">Profissional:</span>
                     <span class="field-value">Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</span>
+                  </div>
+                ` : ''}
+                ${record.notes ? `
+                  <div class="appointment-field">
+                    <span class="field-label">Descrição:</span>
+                    <span class="field-value">${record.notes}</span>
                   </div>
                 ` : ''}
               </div>
