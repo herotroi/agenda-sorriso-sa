@@ -178,6 +178,12 @@ function generatePrintHTML(
 ): string {
   const now = new Date();
   
+  // Gerar IDs de prontuário curtos para cada registro
+  const recordsWithShortId = records.map(rec => ({
+    ...rec,
+    shortId: rec.id.substring(0, 8).toUpperCase()
+  }));
+  
   return `
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -193,211 +199,16 @@ function generatePrintHTML(
         }
         
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-family: 'Arial', sans-serif;
           font-size: 11pt;
           line-height: 1.4;
-          color: #333;
-          padding: 20px;
-        }
-        
-        .header {
-          text-align: center;
-          margin-bottom: 30px;
-          padding-bottom: 15px;
-          border-bottom: 3px solid #2563eb;
-        }
-        
-        .header h1 {
-          color: #1e40af;
-          font-size: 24pt;
-          margin-bottom: 5px;
-        }
-        
-        .header .company-info {
-          font-size: 10pt;
-          color: #666;
-          margin-top: 5px;
-        }
-        
-        .patient-info {
-          background-color: #f8fafc;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-          border-left: 4px solid #2563eb;
-        }
-        
-        .patient-info h2 {
-          color: #1e40af;
-          font-size: 14pt;
-          margin-bottom: 10px;
-        }
-        
-        .info-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-          font-size: 10pt;
-        }
-        
-        .info-item {
-          display: flex;
-        }
-        
-        .info-label {
-          font-weight: 600;
-          margin-right: 5px;
-          color: #475569;
-        }
-        
-        .section {
-          margin-bottom: 25px;
-          page-break-inside: avoid;
-        }
-        
-        .section-title {
-          color: #1e40af;
-          font-size: 13pt;
-          font-weight: 700;
-          margin-bottom: 12px;
-          padding-bottom: 5px;
-          border-bottom: 2px solid #e2e8f0;
-        }
-        
-        .summary-stats {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        
-        .stat-card {
-          background: #f1f5f9;
-          padding: 10px;
-          border-radius: 6px;
-          text-align: center;
-        }
-        
-        .stat-value {
-          font-size: 18pt;
-          font-weight: 700;
-          color: #2563eb;
-        }
-        
-        .stat-label {
-          font-size: 9pt;
-          color: #64748b;
-          margin-top: 3px;
-        }
-        
-        .record-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 15px;
-          page-break-inside: avoid;
-        }
-        
-        .record-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: start;
-          margin-bottom: 10px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .record-title {
-          font-size: 12pt;
-          font-weight: 700;
-          color: #1e3a8a;
-        }
-        
-        .record-date {
-          font-size: 9pt;
-          color: #64748b;
-        }
-        
-        .record-content {
-          margin-top: 10px;
-          font-size: 10pt;
-          line-height: 1.5;
-        }
-        
-        .subsection {
-          margin-top: 10px;
-        }
-        
-        .subsection-title {
-          font-size: 10pt;
-          font-weight: 600;
-          color: #475569;
-          margin-bottom: 5px;
-        }
-        
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 10px;
-          font-size: 9pt;
-        }
-        
-        th {
-          background-color: #f1f5f9;
-          color: #1e40af;
-          font-weight: 600;
-          text-align: left;
-          padding: 8px;
-          border: 1px solid #cbd5e1;
-        }
-        
-        td {
-          padding: 6px 8px;
-          border: 1px solid #e2e8f0;
-        }
-        
-        tr:nth-child(even) {
-          background-color: #f8fafc;
-        }
-        
-        .badge {
-          display: inline-block;
-          padding: 3px 8px;
-          border-radius: 4px;
-          font-size: 8pt;
-          font-weight: 600;
-          margin-right: 5px;
-          margin-bottom: 3px;
-        }
-        
-        .badge-blue {
-          background-color: #dbeafe;
-          color: #1e40af;
-        }
-        
-        .badge-purple {
-          background-color: #e9d5ff;
-          color: #6b21a8;
-        }
-        
-        .badge-green {
-          background-color: #dcfce7;
-          color: #15803d;
-        }
-        
-        .footer {
-          margin-top: 30px;
-          padding-top: 15px;
-          border-top: 2px solid #e2e8f0;
-          text-align: center;
-          font-size: 8pt;
-          color: #94a3b8;
+          color: #000;
         }
         
         @media print {
-          body {
-            padding: 15px;
+          @page {
+            size: A4;
+            margin: 15mm;
           }
           
           .page-break {
@@ -408,221 +219,368 @@ function generatePrintHTML(
             page-break-inside: avoid;
           }
         }
+        
+        /* Cabeçalho do documento */
+        .document-header {
+          text-align: center;
+          padding-bottom: 10px;
+          margin-bottom: 15px;
+          border-bottom: 2px solid #333;
+        }
+        
+        .company-name {
+          font-size: 18pt;
+          font-weight: bold;
+          color: #1a4d8f;
+          margin-bottom: 3px;
+        }
+        
+        .company-cnpj {
+          font-size: 9pt;
+          color: #666;
+          margin-bottom: 8px;
+        }
+        
+        .professional-info {
+          font-size: 10pt;
+          color: #333;
+          line-height: 1.3;
+        }
+        
+        .record-number {
+          font-size: 10pt;
+          margin-top: 8px;
+          font-weight: bold;
+        }
+        
+        .print-date {
+          font-size: 9pt;
+          color: #666;
+        }
+        
+        /* Seções */
+        .section {
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        
+        .section-title {
+          font-size: 13pt;
+          font-weight: bold;
+          color: #000;
+          text-transform: uppercase;
+          margin-bottom: 10px;
+          padding-bottom: 5px;
+          border-bottom: 2px solid #333;
+        }
+        
+        /* Grade de informações */
+        .info-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        
+        .info-item {
+          font-size: 10pt;
+          line-height: 1.5;
+        }
+        
+        .info-label {
+          font-weight: bold;
+          display: inline;
+          margin-right: 5px;
+        }
+        
+        .info-value {
+          display: inline;
+        }
+        
+        /* Informações de consulta */
+        .consultation-box {
+          background: #f8f9fa;
+          padding: 10px;
+          border-radius: 5px;
+          margin-bottom: 15px;
+          border: 1px solid #ddd;
+        }
+        
+        .consultation-item {
+          font-size: 10pt;
+          margin-bottom: 5px;
+        }
+        
+        /* Conteúdo clínico */
+        .clinical-content {
+          background: #fff;
+          padding: 15px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          margin-bottom: 15px;
+          min-height: 100px;
+          font-size: 10pt;
+          line-height: 1.6;
+        }
+        
+        .clinical-title {
+          font-size: 11pt;
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #333;
+        }
+        
+        /* Tabelas */
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 10px 0;
+          font-size: 9pt;
+        }
+        
+        th {
+          background: #f0f0f0;
+          font-weight: bold;
+          padding: 8px;
+          border: 1px solid #000;
+          text-align: left;
+        }
+        
+        td {
+          padding: 6px 8px;
+          border: 1px solid #000;
+        }
+        
+        /* Assinatura */
+        .signature-section {
+          margin-top: 40px;
+          text-align: center;
+        }
+        
+        .signature-line {
+          width: 300px;
+          border-top: 1px solid #000;
+          margin: 0 auto 5px;
+        }
+        
+        .signature-name {
+          font-weight: bold;
+          font-size: 10pt;
+        }
+        
+        .signature-crm {
+          font-size: 9pt;
+          color: #666;
+        }
+        
+        /* Rodapé */
+        .document-footer {
+          margin-top: 30px;
+          padding-top: 15px;
+          border-top: 1px solid #ddd;
+          font-size: 8pt;
+          color: #666;
+          text-align: center;
+          line-height: 1.4;
+        }
+        
+        .footer-validity {
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        
+        .footer-address {
+          margin-bottom: 5px;
+        }
+        
+        .footer-system {
+          font-style: italic;
+          color: #999;
+        }
       </style>
     </head>
     <body>
-      <!-- Cabeçalho -->
-      <div class="header">
-        <h1>Prontuário Médico Completo</h1>
-        ${profile?.company_name ? `<div class="company-info">${profile.company_name}</div>` : ''}
-        ${profile?.phone ? `<div class="company-info">Tel: ${profile.phone}</div>` : ''}
-        <div class="company-info">Gerado em: ${format(now, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
-      </div>
-
-      <!-- Dados do Paciente -->
-      <div class="patient-info">
-        <h2>Dados do Paciente</h2>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Nome:</span>
-            <span>${patient.full_name}</span>
+      ${recordsWithShortId.map((record, index) => {
+        // Encontrar consulta relacionada
+        const relatedAppointment = appointments.find(apt => 
+          record.appointments?.id === apt.id || record.appointment_id === apt.id
+        );
+        
+        // Pegar códigos CID deste registro
+        let recordIcds: any[] = [];
+        if (record.icd_codes) {
+          try {
+            recordIcds = typeof record.icd_codes === 'string' 
+              ? JSON.parse(record.icd_codes) 
+              : record.icd_codes;
+          } catch (e) {
+            console.error('Error parsing ICD codes');
+          }
+        }
+        
+        return `
+          ${index > 0 ? '<div class="page-break"></div>' : ''}
+          
+          <!-- Cabeçalho do Documento -->
+          <div class="document-header">
+            <div class="company-name">${profile?.company_name || 'Clínica Médica'}</div>
+            ${profile?.cnpj ? `<div class="company-cnpj">CNPJ: ${profile.cnpj}</div>` : ''}
+            
+            ${record.professionals ? `
+              <div class="professional-info">
+                Profissional: Dr(a). ${record.professionals.name}<br>
+                ${record.professionals.specialty ? `Especialidade: ${record.professionals.specialty}<br>` : ''}
+                ${record.professionals.crm_cro ? `CRM/CRO: ${record.professionals.crm_cro}` : ''}
+              </div>
+            ` : ''}
+            
+            <div class="record-number">Prontuário Nº: ${record.shortId}</div>
+            <div class="print-date">Impresso em: ${format(now, "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
           </div>
-          ${patient.cpf ? `
-            <div class="info-item">
-              <span class="info-label">CPF:</span>
-              <span>${patient.cpf}</span>
-            </div>
-          ` : ''}
-          ${patient.birth_date ? `
-            <div class="info-item">
-              <span class="info-label">Data Nasc:</span>
-              <span>${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
-            </div>
-          ` : ''}
-          ${patient.phone ? `
-            <div class="info-item">
-              <span class="info-label">Telefone:</span>
-              <span>${patient.phone}</span>
-            </div>
-          ` : ''}
-          ${patient.email ? `
-            <div class="info-item">
-              <span class="info-label">Email:</span>
-              <span>${patient.email}</span>
-            </div>
-          ` : ''}
-          ${patient.gender ? `
-            <div class="info-item">
-              <span class="info-label">Gênero:</span>
-              <span>${patient.gender}</span>
-            </div>
-          ` : ''}
-        </div>
-      </div>
-
-      <!-- Resumo Geral -->
-      <div class="section">
-        <h2 class="section-title">📊 Resumo Geral</h2>
-        <div class="summary-stats">
-          <div class="stat-card">
-            <div class="stat-value">${records.length}</div>
-            <div class="stat-label">Registros Médicos</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${appointments.length}</div>
-            <div class="stat-label">Consultas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${documents.length}</div>
-            <div class="stat-label">Documentos</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${icdCodes.length}</div>
-            <div class="stat-label">Códigos CID</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Histórico de Consultas -->
-      ${appointments.length > 0 ? `
-        <div class="section">
-          <h2 class="section-title">📅 Histórico de Consultas</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Data/Hora</th>
-                <th>Profissional</th>
-                <th>Procedimento</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${appointments.map(apt => `
-                <tr>
-                  <td>${format(new Date(apt.start_time), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</td>
-                  <td>${apt.professionals?.name || '-'}</td>
-                  <td>${apt.procedures?.name || '-'}</td>
-                  <td>${apt.appointment_statuses?.label || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : ''}
-
-      <!-- Códigos CID Consolidados -->
-      ${icdCodes.length > 0 ? `
-        <div class="section">
-          <h2 class="section-title">🏥 Códigos CID Consolidados</h2>
-          <div style="margin-top: 10px;">
-            ${icdCodes.map(icd => `
-              <span class="badge ${icd.version === 'CID-10' ? 'badge-purple' : 'badge-blue'}">
-                ${icd.code} - ${icd.version}${icd.title ? ': ' + icd.title : ''}
-              </span>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Registros Médicos Detalhados -->
-      ${records.length > 0 ? `
-        <div class="section page-break">
-          <h2 class="section-title">📋 Registros Médicos Detalhados</h2>
-          ${records.map((record, index) => {
-            // Buscar consultas vinculadas a este registro
-            const recordAppointments = appointments.filter(apt => 
-              record.appointments?.id === apt.id
-            );
-
-            // Buscar CIDs deste registro
-            let recordIcds: any[] = [];
-            if (record.icd_codes) {
-              try {
-                recordIcds = typeof record.icd_codes === 'string' 
-                  ? JSON.parse(record.icd_codes) 
-                  : record.icd_codes;
-              } catch (e) {}
-            }
-
-            return `
-              <div class="record-card ${index > 0 ? 'page-break' : ''}">
-                <div class="record-header">
-                  <div>
-                    <div class="record-title">${record.title || 'Registro sem título'}</div>
-                    ${record.professionals ? `<div style="font-size: 9pt; color: #64748b; margin-top: 3px;">Dr(a). ${record.professionals.name}${record.professionals.specialty ? ' - ' + record.professionals.specialty : ''}</div>` : ''}
-                  </div>
-                  <div class="record-date">${format(new Date(record.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</div>
+          
+          <!-- Identificação do Paciente -->
+          <div class="section">
+            <h2 class="section-title">Identificação do Paciente</h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Nome:</span>
+                <span class="info-value">${patient.full_name}</span>
+              </div>
+              ${patient.cpf ? `
+                <div class="info-item">
+                  <span class="info-label">CPF:</span>
+                  <span class="info-value">${patient.cpf}</span>
                 </div>
-
-                ${recordIcds.length > 0 ? `
-                  <div class="subsection">
-                    <div class="subsection-title">Diagnósticos (CID):</div>
-                    ${recordIcds.map(icd => `
-                      <span class="badge ${icd.version === 'CID-10' ? 'badge-purple' : 'badge-blue'}">
-                        ${icd.code}${icd.title ? ' - ' + icd.title : ''}
-                      </span>
-                    `).join('')}
+              ` : ''}
+              ${patient.birth_date ? `
+                <div class="info-item">
+                  <span class="info-label">Nascimento:</span>
+                  <span class="info-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                </div>
+              ` : ''}
+              ${patient.gender ? `
+                <div class="info-item">
+                  <span class="info-label">Sexo:</span>
+                  <span class="info-value">${patient.gender}</span>
+                </div>
+              ` : ''}
+              ${patient.marital_status ? `
+                <div class="info-item">
+                  <span class="info-label">Estado Civil:</span>
+                  <span class="info-value">${patient.marital_status}</span>
+                </div>
+              ` : ''}
+              ${patient.profession ? `
+                <div class="info-item">
+                  <span class="info-label">Profissão:</span>
+                  <span class="info-value">${patient.profession}</span>
+                </div>
+              ` : ''}
+              ${patient.phone ? `
+                <div class="info-item">
+                  <span class="info-label">Telefone:</span>
+                  <span class="info-value">${patient.phone}</span>
+                </div>
+              ` : ''}
+              ${patient.sus_card ? `
+                <div class="info-item">
+                  <span class="info-label">Cartão SUS:</span>
+                  <span class="info-value">${patient.sus_card}</span>
+                </div>
+              ` : ''}
+              ${patient.health_insurance ? `
+                <div class="info-item">
+                  <span class="info-label">Convênio:</span>
+                  <span class="info-value">${patient.health_insurance}</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${patient.street ? `
+              <div class="info-item" style="margin-top: 8px;">
+                <span class="info-label">Endereço:</span>
+                <span class="info-value">
+                  ${[patient.street, patient.number, patient.neighborhood, patient.city, patient.state].filter(Boolean).join(', ')}
+                </span>
+              </div>
+            ` : ''}
+          </div>
+          
+          <!-- Informações da Consulta -->
+          ${relatedAppointment ? `
+            <div class="section">
+              <h2 class="section-title">Informações da Consulta</h2>
+              <div class="consultation-box">
+                <div class="consultation-item">
+                  <span class="info-label">Data:</span>
+                  ${format(new Date(relatedAppointment.start_time), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </div>
+                ${relatedAppointment.procedures ? `
+                  <div class="consultation-item">
+                    <span class="info-label">Procedimento:</span>
+                    ${relatedAppointment.procedures.name}
                   </div>
                 ` : ''}
-
-                ${record.content ? `
-                  <div class="subsection">
-                    <div class="subsection-title">Anamnese/Evolução:</div>
-                    <div class="record-content">${record.content}</div>
-                  </div>
-                ` : ''}
-
-                ${record.notes ? `
-                  <div class="subsection">
-                    <div class="subsection-title">Observações:</div>
-                    <div class="record-content">${record.notes}</div>
-                  </div>
-                ` : ''}
-
-                ${record.prescription ? `
-                  <div class="subsection">
-                    <div class="subsection-title">Prescrição Médica:</div>
-                    <div class="record-content">${record.prescription}</div>
+                ${relatedAppointment.professionals ? `
+                  <div class="consultation-item">
+                    <span class="info-label">Profissional:</span>
+                    Dr(a). ${relatedAppointment.professionals.name}${relatedAppointment.professionals.crm_cro ? ' - ' + relatedAppointment.professionals.crm_cro : ''}
                   </div>
                 ` : ''}
               </div>
-            `;
-          }).join('')}
-        </div>
-      ` : ''}
-
-      <!-- Documentos -->
-      ${documents.length > 0 ? `
-        <div class="section">
-          <h2 class="section-title">📎 Documentos Anexados</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Nome do Documento</th>
-                <th>Descrição</th>
-                <th>Tamanho</th>
-                <th>Data de Upload</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${documents.map(doc => `
-                <tr>
-                  <td>${doc.name}</td>
-                  <td>${doc.description || '-'}</td>
-                  <td>${(doc.file_size / 1024).toFixed(1)} KB</td>
-                  <td>${format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : ''}
-
-      <!-- Rodapé -->
-      <div class="footer">
-        <p>Este é um documento médico confidencial. Deve ser tratado com sigilo e conforme a legislação vigente.</p>
-        <p>Gerado automaticamente pelo sistema em ${format(now, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-      </div>
+            </div>
+          ` : ''}
+          
+          <!-- Anamnese e Exame Clínico -->
+          ${record.content || record.notes ? `
+            <div class="section">
+              <h2 class="section-title">Anamnese e Exame Clínico</h2>
+              <div class="clinical-content">
+                ${record.content || record.notes || ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Prescrição Médica -->
+          ${record.prescription ? `
+            <div class="section">
+              <h2 class="section-title">Prescrição Médica</h2>
+              <div class="clinical-content">
+                ${record.prescription}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Assinatura -->
+          ${record.professionals ? `
+            <div class="signature-section">
+              <div class="signature-line"></div>
+              <div class="signature-name">Dr(a). ${record.professionals.name}</div>
+              ${record.professionals.crm_cro ? `<div class="signature-crm">CRM: ${record.professionals.crm_cro}</div>` : ''}
+            </div>
+          ` : ''}
+          
+          <!-- Rodapé -->
+          <div class="document-footer">
+            <div class="footer-validity">
+              VALIDADE: Este documento tem validade legal conforme CFO. Gerado em ${format(now, "dd/MM/yyyy HH:mm", { locale: ptBR })}.
+            </div>
+            ${profile?.street ? `
+              <div class="footer-address">
+                Endereço: ${[profile.street, profile.number, profile.neighborhood, profile.city, profile.state, profile.zip_code].filter(Boolean).join(', ')}
+              </div>
+            ` : ''}
+            ${profile?.email || profile?.phone ? `
+              <div class="footer-address">
+                Contatos: ${[profile.email, profile.phone].filter(Boolean).join(' | ')}
+              </div>
+            ` : ''}
+            <div class="footer-system">
+              Sistema de Prontuário Eletrônico | Prontuário: ${record.shortId} | Registro: ${format(new Date(record.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            </div>
+          </div>
+        `;
+      }).join('')}
     </body>
     </html>
   `;
