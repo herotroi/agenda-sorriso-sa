@@ -102,11 +102,15 @@ export function DayView({
         </p>
       </div>
 
-      <div className="grid grid-cols-[64px,1fr] gap-4">
+      <div className="grid grid-cols-[80px,1fr] gap-2">
         {/* Coluna de horários (esquerda) */}
-        <div>
+        <div className="relative" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
           {timeSlots.map((slot) => (
-            <div key={slot.time} className="h-[90px] text-sm text-gray-500 font-medium">
+            <div 
+              key={slot.time} 
+              className="absolute text-sm text-gray-500 font-medium -translate-y-2"
+              style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
+            >
               {slot.time}
             </div>
           ))}
