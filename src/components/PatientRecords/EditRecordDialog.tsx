@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,6 +96,11 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const requestIdRef = React.useRef(0);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [open, setOpen] = useState(isOpen);
+
+  useEffect(() => {
+    setOpen(isOpen);
+  }, [isOpen]);
 
   const fetchRecordDetails = async (recordId: string, currentRequestId: number) => {
     if (!user?.id) return;
@@ -748,8 +753,9 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   if (!record) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) onClose(); }}>
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogDescription className="sr-only">Editar registro do prontuário</DialogDescription>
         <DialogHeader className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
