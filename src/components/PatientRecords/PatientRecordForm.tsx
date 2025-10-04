@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { ICDSearchInput } from './ICDSearchInput';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -71,6 +72,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
   const [loading, setLoading] = useState(false);
   const [fetchingAppointments, setFetchingAppointments] = useState(false);
   const [fetchingProfessionals, setFetchingProfessionals] = useState(false);
+  const [icdCode, setIcdCode] = useState('');
+  const [icdVersion, setIcdVersion] = useState('');
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -205,11 +208,15 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setDocumentsToDelete([]);
       setAppointments([]);
       setProfessionals([]);
+      setIcdCode('');
+      setIcdVersion('');
     } else if (recordToEdit) {
       // Preencher campos para edição
       setTitle(recordToEdit.title || '');
       setContent(recordToEdit.content || '');
       setPrescription(recordToEdit.prescription || '');
+      setIcdCode((recordToEdit as any).icd_code || '');
+      setIcdVersion((recordToEdit as any).icd_version || '');
       // Carregar profissional se o registro tiver um professional_id
       if ('professional_id' in recordToEdit && recordToEdit.professional_id) {
         setSelectedProfessional(String(recordToEdit.professional_id));
@@ -231,6 +238,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setSelectedAppointments([]);
       setExistingDocuments([]);
       setDocumentsToDelete([]);
+      setIcdCode('');
+      setIcdVersion('');
     }
   }, [isOpen, recordToEdit]);
 
@@ -513,6 +522,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
         professional_id: selectedProfessional || null,
         user_id: user.id,
         created_by: user.id,
+        icd_code: icdCode || null,
+        icd_version: icdVersion || null,
       };
 
       let record;
@@ -653,6 +664,15 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                   required
                 />
               </div>
+
+              <ICDSearchInput
+                onSelect={(code, version) => {
+                  setIcdCode(code);
+                  setIcdVersion(version);
+                }}
+                initialCode={icdCode}
+                initialVersion={icdVersion}
+              />
 
               <div>
                 <Label htmlFor="content">Anotações da Consulta</Label>

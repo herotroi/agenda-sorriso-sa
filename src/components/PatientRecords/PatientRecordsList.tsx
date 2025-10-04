@@ -134,11 +134,25 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
                     </div>
                   </div>
 
-                  {record.appointments?.procedures && (
-                    <Badge variant="secondary" className="mb-2 text-xs">
-                      {record.appointments.procedures.name}
-                    </Badge>
-                  )}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {record.appointments?.procedures && (
+                      <Badge variant="secondary" className="text-xs">
+                        {record.appointments.procedures.name}
+                      </Badge>
+                    )}
+                    {(record as any).icd_code && (
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          (record as any).icd_version === 'CID-10' 
+                            ? 'border-purple-300 text-purple-700 bg-purple-50' 
+                            : 'border-blue-300 text-blue-700 bg-blue-50'
+                        }`}
+                      >
+                        {(record as any).icd_code} - {(record as any).icd_version}
+                      </Badge>
+                    )}
+                  </div>
 
                   {(record.content || record.notes) && (
                     <div className="mb-2">

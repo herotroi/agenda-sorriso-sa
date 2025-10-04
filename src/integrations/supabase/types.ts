@@ -197,6 +197,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           files: Json | null
+          icd_code: string | null
+          icd_version: string | null
           id: string
           notes: string | null
           patient_id: string | null
@@ -212,6 +214,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           files?: Json | null
+          icd_code?: string | null
+          icd_version?: string | null
           id?: string
           notes?: string | null
           patient_id?: string | null
@@ -227,6 +231,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           files?: Json | null
+          icd_code?: string | null
+          icd_version?: string | null
           id?: string
           notes?: string | null
           patient_id?: string | null
