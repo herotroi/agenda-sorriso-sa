@@ -163,6 +163,44 @@ export const generateCalendarPrintTemplate = (
       // Add appointments
       if (hourAppointments.length > 0) {
         const appointmentContent = hourAppointments.map(apt => {
+          // Verificar se é horário bloqueado
+          if ((apt as any).is_blocked) {
+            const startDate = convertToLocalTime(apt.start_time);
+            const endDate = convertToLocalTime(apt.end_time);
+            
+            const startTime = startDate.toLocaleTimeString('pt-BR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+            
+            const endTime = endDate.toLocaleTimeString('pt-BR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+
+            return `
+              <div class="appointment-block blocked-time" style="
+                background-color: #fee2e2; 
+                color: #991b1b; 
+                border-left: 4px solid #dc2626; 
+                padding: 8px 10px; 
+                margin-bottom: 4px; 
+                border-radius: 6px; 
+                font-size: 11px;
+                font-weight: 500;
+              ">
+                <div class="block-icon" style="font-size: 16px; margin-bottom: 4px;">🔒</div>
+                <div class="block-title" style="font-weight: 600; line-height: 1.3;">
+                  HORÁRIO BLOQUEADO
+                </div>
+                <div class="appointment-time" style="font-size: 10px; margin-top: 4px;">
+                  ${startTime} - ${endTime}
+                </div>
+                ${apt.notes ? `<div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">${apt.notes}</div>` : ''}
+              </div>
+            `;
+          }
+
           const displayType = getAppointmentDisplayType(apt, hour);
           const startDate = convertToLocalTime(apt.start_time);
           const endDate = convertToLocalTime(apt.end_time);
