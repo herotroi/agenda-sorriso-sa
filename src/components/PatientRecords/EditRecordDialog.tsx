@@ -748,7 +748,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   if (!record || !isOpen) return null;
 
   return (
-    <Dialog defaultOpen onOpenChange={(next) => { if (!next) onClose(); }}>
+    <Dialog open={isOpen} onOpenChange={(next) => { if (!next) setTimeout(() => onClose(), 0); }}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogDescription className="sr-only">Editar registro do prontuário</DialogDescription>
         <DialogHeader className="space-y-4">
@@ -953,8 +953,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={selectedAppointments.includes(appointment.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-1 pointer-events-none"
+                          className="mt-1"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
