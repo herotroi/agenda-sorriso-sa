@@ -28,10 +28,11 @@ interface ProfessionalAppointmentData {
 interface AppointmentDetail {
   datetime: string;
   patient_name: string;
-  procedure_name: string | null;
   professional_name: string;
   status_name: string;
   price: number | null;
+  payment_method: string | null;
+  payment_status: string | null;
 }
 
 const formatCurrency = (value: number) => {
@@ -198,10 +199,11 @@ export function generateReportHTML(
           <tr>
             <th>Data/Hora</th>
             <th>Paciente</th>
-            <th>Procedimento</th>
             <th>Profissional</th>
-            <th>Status</th>
             <th style="text-align: right;">Valor</th>
+            <th>Forma Pgto</th>
+            <th>Status Pgto</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -209,10 +211,11 @@ export function generateReportHTML(
             <tr>
               <td>${formatDateTime(apt.datetime)}</td>
               <td>${apt.patient_name}</td>
-              <td>${apt.procedure_name || '-'}</td>
               <td>${apt.professional_name}</td>
-              <td>${apt.status_name}</td>
               <td style="text-align: right;">${apt.price ? formatCurrency(apt.price) : '-'}</td>
+              <td>${getPaymentMethodLabel(apt.payment_method)}</td>
+              <td>${getPaymentStatusLabel(apt.payment_status)}</td>
+              <td>${apt.status_name}</td>
             </tr>
           `).join('')}
         </tbody>

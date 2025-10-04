@@ -91,10 +91,11 @@ export default function Dashboard() {
     const reportAppointmentDetails = appointmentDetails.map(ad => ({
       datetime: ad.start_time,
       patient_name: ad.patient_name,
-      procedure_name: ad.procedure_name,
       professional_name: ad.professional_name,
       status_name: ad.status_name,
-      price: ad.price
+      price: ad.price,
+      payment_method: ad.payment_method,
+      payment_status: ad.payment_status
     }));
     
     // Gerar HTML do relatório
