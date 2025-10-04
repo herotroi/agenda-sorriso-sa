@@ -98,6 +98,7 @@ const Auth = () => {
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
         onResetPassword={handleResetPassword}
+        onRecoverySuccess={() => navigate('/dashboard')}
         error={error}
         successMessage={successMessage}
         isLoading={isLoading}

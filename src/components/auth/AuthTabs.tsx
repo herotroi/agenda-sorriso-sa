@@ -1,6 +1,4 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,6 +11,7 @@ interface AuthTabsProps {
   onSignIn: (email: string, password: string) => Promise<void>;
   onSignUp: (email: string, password: string, fullName: string) => Promise<void>;
   onResetPassword: (email: string) => Promise<void>;
+  onRecoverySuccess?: () => void;
   error: string;
   successMessage: string;
   isLoading: boolean;
@@ -22,11 +21,11 @@ export const AuthTabs = ({
   onSignIn,
   onSignUp,
   onResetPassword,
+  onRecoverySuccess,
   error,
   successMessage,
   isLoading
 }: AuthTabsProps) => {
-  const navigate = useNavigate();
   return (
     <div className="max-w-md mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
       <Card className="shadow-2xl border-border/50 backdrop-blur-sm bg-card/95 overflow-hidden">
@@ -87,7 +86,7 @@ export const AuthTabs = ({
             </TabsContent>
 
             <TabsContent value="reset" className="mt-6">
-              <PasswordRecoveryFlow onSuccess={() => navigate('/dashboard')} />
+              <PasswordRecoveryFlow onSuccess={onRecoverySuccess} />
             </TabsContent>
           </Tabs>
         </CardContent>
