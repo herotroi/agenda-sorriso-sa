@@ -365,7 +365,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 1cm;
   }
 
   body {
@@ -374,22 +374,36 @@
   }
 
   /* Hide everything except the report */
-  body > div:not(:has(.max-w-5xl)) {
+  body > div:not(:has([data-print-report])) {
+    display: none !important;
+  }
+
+  /* Hide dialog overlays and navigation */
+  [data-radix-portal],
+  nav,
+  aside,
+  header,
+  .print\\:hidden,
+  button:not([data-print-keep]) {
     display: none !important;
   }
 
   /* Show only report content */
-  .max-w-5xl {
+  [data-print-report] {
+    display: block !important;
     max-width: 100% !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Hide dialog overlay and chrome */
+  /* Remove dialog styles for print */
   [role="dialog"] {
     position: static !important;
     max-width: 100% !important;
     max-height: 100% !important;
     overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* Ensure cards print properly */
@@ -407,6 +421,11 @@
     page-break-after: avoid;
   }
 
+  /* Avoid breaking inside cards */
+  .grid > div {
+    page-break-inside: avoid;
+  }
+
   /* Make text darker for print */
   .text-gray-600 {
     color: #374151 !important;
@@ -414,5 +433,23 @@
 
   .text-gray-500 {
     color: #6b7280 !important;
+  }
+
+  /* Ensure tables don't break */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
   }
 }
