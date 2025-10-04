@@ -29,7 +29,7 @@ export function CouponSection() {
 
   if (subscriptionData?.hasAutomacao) {
     return (
-      <Card>
+      <Card className="max-w-full overflow-x-hidden">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Gift className="h-5 w-5 mr-2" />
@@ -59,7 +59,7 @@ export function CouponSection() {
   }
 
   return (
-    <Card>
+    <Card className="max-w-full overflow-x-hidden">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Gift className="h-5 w-5 mr-2" />

@@ -14,7 +14,7 @@ export function IntegrationDataSection() {
   };
 
   return (
-    <Card>
+    <Card className="max-w-full overflow-x-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="h-5 w-5" />
@@ -31,7 +31,7 @@ export function IntegrationDataSection() {
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm bg-white px-3 py-2 rounded border font-mono text-gray-800">
+            <code className="flex-1 text-sm bg-white px-3 py-2 rounded border font-mono text-gray-800 break-all">
               {user?.id || 'Não disponível'}
             </code>
             <Button

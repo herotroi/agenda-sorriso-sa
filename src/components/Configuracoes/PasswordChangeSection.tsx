@@ -109,7 +109,7 @@ export function PasswordChangeSection() {
                      validatePassword(passwords.newPassword).length === 0;
 
   return (
-    <Card>
+    <Card className="max-w-full overflow-x-hidden">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Lock className="h-5 w-5 mr-2" />

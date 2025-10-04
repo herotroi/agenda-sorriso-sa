@@ -12,7 +12,7 @@ export function AutomationContactSection() {
   };
 
   return (
-    <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50">
+    <Card className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50 max-w-full overflow-x-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-green-800">
           <Bot className="h-5 w-5" />
@@ -32,21 +32,21 @@ export function AutomationContactSection() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={openWhatsApp}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp: (55) 9 9680-6688
-              <ExternalLink className="h-4 w-4 ml-2" />
+              <MessageCircle className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">WhatsApp: (55) 9 9680-6688</span>
+              <ExternalLink className="h-4 w-4 ml-1 sm:ml-2 flex-shrink-0" />
             </Button>
             
             <Button 
               onClick={openInstagram}
               variant="outline"
-              className="flex-1 border-pink-300 text-pink-700 hover:bg-pink-50"
+              className="flex-1 border-pink-300 text-pink-700 hover:bg-pink-50 text-xs sm:text-sm"
             >
-              <Instagram className="h-4 w-4 mr-2" />
-              @herotroiautomacoes
-              <ExternalLink className="h-4 w-4 ml-2" />
+              <Instagram className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">@herotroiautomacoes</span>
+              <ExternalLink className="h-4 w-4 ml-1 sm:ml-2 flex-shrink-0" />
             </Button>
           </div>
         </div>

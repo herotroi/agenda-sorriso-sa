@@ -144,9 +144,9 @@ export function CompanyDataSection() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Informações da Empresa */}
-      <Card>
+      <Card className="max-w-full overflow-x-hidden">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building2 className="h-5 w-5 mr-2" />
@@ -180,7 +180,7 @@ export function CompanyDataSection() {
       </Card>
 
       {/* Endereço */}
-      <Card>
+      <Card className="max-w-full overflow-x-hidden">
         <CardHeader>
           <CardTitle className="flex items-center">
             <MapPin className="h-5 w-5 mr-2" />
@@ -249,7 +249,7 @@ export function CompanyDataSection() {
       </Card>
 
       {/* Horário de Atendimento */}
-      <Card>
+      <Card className="max-w-full overflow-x-hidden">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Clock className="h-5 w-5 mr-2" />

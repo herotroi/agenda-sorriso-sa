@@ -17,7 +17,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Sidebar isCollapsed={isCollapsed || isMobile} onToggle={toggleSidebar} />
       <div className={`transition-all duration-300 ${
         isMobile 
@@ -27,7 +27,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             : 'ml-64'
       }`}>
         <Header />
-        <main className="p-3 sm:p-4 md:p-6">
+        <main className="p-3 sm:p-4 md:p-6 max-w-full overflow-x-hidden">
           {children}
         </main>
       </div>
