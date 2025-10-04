@@ -1702,10 +1702,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 </div>
                 
                 {documents.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-start gap-2 mb-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row items-start gap-2 mb-3">
                       <Printer className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-blue-800 mb-1">
                           Selecione para Impressão
                         </p>
@@ -1714,16 +1714,16 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-700 font-medium">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                      <span className="text-blue-700 font-medium text-xs sm:text-sm">
                         {selectedDocuments.length} de {documents.length} selecionados
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedDocuments(documents.map(d => d.id))}
-                          className="text-xs h-7 text-blue-600 hover:text-blue-700"
+                          className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
                         >
                           Selecionar Todos
                         </Button>
@@ -1731,7 +1731,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedDocuments([])}
-                          className="text-xs h-7 text-blue-600 hover:text-blue-700"
+                          className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
                         >
                           Limpar
                         </Button>
