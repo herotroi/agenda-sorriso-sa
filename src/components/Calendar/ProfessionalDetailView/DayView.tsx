@@ -135,11 +135,11 @@ export function DayView({
             return (
               <Card
                 key={appointment.id}
-                className={`absolute inset-x-1 sm:inset-x-2 cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
+                className={`absolute left-2 right-2 cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
                 style={{ top: `${top}px`, height: `${height}px`, zIndex: getZIndex(itemType) }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
-                <CardContent className="p-3 h-full">
+                <CardContent className="p-2 sm:p-3 h-full">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3 flex-wrap min-w-0">
                       <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
