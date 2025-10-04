@@ -53,7 +53,6 @@ export type Database = {
           procedure_id: string | null
           professional_id: string | null
           start_time: string
-          status: string | null
           status_id: number
           updated_at: string
           user_id: string
@@ -69,7 +68,6 @@ export type Database = {
           procedure_id?: string | null
           professional_id?: string | null
           start_time: string
-          status?: string | null
           status_id?: number
           updated_at?: string
           user_id: string
@@ -85,7 +83,6 @@ export type Database = {
           procedure_id?: string | null
           professional_id?: string | null
           start_time?: string
-          status?: string | null
           status_id?: number
           updated_at?: string
           user_id?: string
