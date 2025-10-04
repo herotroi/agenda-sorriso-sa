@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TableSaveManagerProps {
@@ -9,6 +9,7 @@ interface TableSaveManagerProps {
 
 export function TableSaveManager({ content, onSave, isEnabled = true }: TableSaveManagerProps) {
   const { toast } = useToast();
+  const lastSavedRef = useRef<string | null>(null);
 
   const detectAndSaveTables = useCallback(() => {
     if (!isEnabled || !content) return;
@@ -16,8 +17,12 @@ export function TableSaveManager({ content, onSave, isEnabled = true }: TableSav
     const hasTable = content.includes('<table>') || content.includes('<td>') || content.includes('<th>');
     
     if (hasTable) {
+      if (lastSavedRef.current === content) {
+        return; // avoid repeated saves with identical content
+      }
       console.log('🔍 TableSaveManager: Table detected, forcing save');
       onSave(content);
+      lastSavedRef.current = content;
       
       // Verify table was saved by checking content again after a delay
       setTimeout(() => {

@@ -879,7 +879,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             </div>
           ) : (
             <EditableRichTextEditor
-              key={`content-${record?.id}-${dataLoaded}`} // Force remount when data loads
+              key={`content-${record?.id}`}
               label="Anotações da Consulta"
               content={formData.content || ''}
               onChange={(content) => {
@@ -910,7 +910,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           ) : (
             <>
               <EditableRichTextEditor
-                key={`prescription-${record?.id}-${dataLoaded}`} // Force remount when data loads
+                key={`prescription-${record?.id}`}
                 label="Receita/Prescrição Médica"
                 content={formData.prescription || ''}
                 onChange={(prescription) => {
