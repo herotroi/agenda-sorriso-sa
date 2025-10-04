@@ -46,21 +46,19 @@ export default function Agenda() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-40">
+    <div className="min-h-screen bg-gray-50/50">
       <div className="space-y-3 sm:space-y-4 md:space-y-6 px-3 py-4 sm:px-4 sm:py-6 md:px-6">
         <AgendaHeader onPrint={onPrint} />
         <AgendaTabs
-          activeTab={activeTab} 
+          activeTab={activeTab}
           onTabChange={setActiveTab}
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           onFiltersChange={handleFiltersChange}
         />
-      </div>
 
-      {/* Subscription Footer - fixo no final da página */}
-      {subscriptionData && (
-        <div className="fixed bottom-0 left-0 right-0 z-20">
+        {/* Subscription Footer */}
+        {subscriptionData && (
           <SubscriptionFooter
             subscriptionData={subscriptionData}
             currentCount={totalAppointments}
@@ -68,8 +66,8 @@ export default function Agenda() {
             featureName="Agendamentos"
             canUseFeature={subscriptionData.canCreateAppointment}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
