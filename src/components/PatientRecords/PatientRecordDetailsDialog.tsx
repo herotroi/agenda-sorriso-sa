@@ -849,28 +849,28 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .medical-section {
-              margin-bottom: 20px;
+              margin-bottom: 12px;
               page-break-inside: avoid;
             }
             
             .section-header {
               background-color: #e9ecef;
-              padding: 10px;
-              margin-bottom: 8px;
+              padding: 6px 10px;
+              margin-bottom: 4px;
               border-left: 4px solid #007bff;
               font-weight: bold;
-              font-size: 12pt;
+              font-size: 11pt;
               text-transform: uppercase;
             }
             
             .section-content {
-              padding: 10px;
+              padding: 8px;
               border: 1px solid #ddd;
               background-color: transparent;
-              min-height: 80px;
+              min-height: 60px;
               white-space: pre-wrap;
-              font-size: 11pt;
-              line-height: 1.6;
+              font-size: 10pt;
+              line-height: 1.5;
             }
             
             .prescription-section .section-content {
