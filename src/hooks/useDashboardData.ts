@@ -88,7 +88,7 @@ export function useDashboardData() {
       // Query para receita do período - DEVE incluir user_id
       let revenueQuery = supabase
         .from('appointments')
-        .select('price, status')
+        .select('price, status_id')
         .eq('user_id', user.id)
         .not('price', 'is', null);
 
@@ -100,15 +100,16 @@ export function useDashboardData() {
 
       const { data: revenueData } = await revenueQuery;
 
+      // Status IDs: 1=Confirmado, 2=Cancelado, 3=Não Compareceu, 4=Em atendimento, 5=Finalizado
       const monthlyRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.status !== 'cancelled') {
+        if (appointment.status_id !== 2) { // Não cancelado
           return sum + (appointment.price || 0);
         }
         return sum;
       }, 0) || 0;
 
       const cancelledRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.status === 'cancelled') {
+        if (appointment.status_id === 2) { // Cancelado
           return sum + (appointment.price || 0);
         }
         return sum;
@@ -117,7 +118,7 @@ export function useDashboardData() {
       // Contadores por status
       let statusQuery = supabase
         .from('appointments')
-        .select('status')
+        .select('status_id')
         .eq('user_id', user.id);
 
       if (startDate && endDate) {
@@ -128,10 +129,11 @@ export function useDashboardData() {
 
       const { data: statusData } = await statusQuery;
 
-      const confirmedCount = statusData?.filter(a => a.status === 'confirmed').length || 0;
-      const cancelledCount = statusData?.filter(a => a.status === 'cancelled').length || 0;
-      const noShowCount = statusData?.filter(a => a.status === 'no_show').length || 0;
-      const completedCount = statusData?.filter(a => a.status === 'completed').length || 0;
+      // Status IDs: 1=Confirmado, 2=Cancelado, 3=Não Compareceu, 4=Em atendimento, 5=Finalizado
+      const confirmedCount = statusData?.filter(a => a.status_id === 1).length || 0;
+      const cancelledCount = statusData?.filter(a => a.status_id === 2).length || 0;
+      const noShowCount = statusData?.filter(a => a.status_id === 3).length || 0;
+      const completedCount = statusData?.filter(a => a.status_id === 5).length || 0;
 
       // Taxa de ocupação (simplificada)
       const totalSlots = 100; // Exemplo
@@ -199,7 +201,7 @@ export function useDashboardData() {
         .select('start_time, price')
         .eq('user_id', user.id)
         .not('price', 'is', null)
-        .neq('status', 'cancelled')
+        .neq('status_id', 2) // 2 = Cancelado
         .order('start_time');
 
       if (startDate && endDate) {

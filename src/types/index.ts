@@ -55,8 +55,7 @@ export interface Appointment {
   end_time: string;
   notes?: string;
   price?: number;
-  status?: AppointmentStatus;
-  status_id?: number;
+  status_id: number;
   created_at: string;
   updated_at: string;
   date: string;

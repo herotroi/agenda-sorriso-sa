@@ -114,7 +114,7 @@ export function DayProceduresDialog({
                           className="text-white font-semibold"
                           style={{ backgroundColor: statusColor }}
                         >
-                          {appointment.appointment_statuses?.label || appointment.status}
+                          {appointment.appointment_statuses?.label || 'Status não definido'}
                         </Badge>
                       </div>
                     </div>

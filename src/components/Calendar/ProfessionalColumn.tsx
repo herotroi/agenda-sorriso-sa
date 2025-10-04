@@ -107,7 +107,7 @@ export function ProfessionalColumn({
               professional_id: appointment.professional_id,
               start_time: appointment.start_time,
               end_time: appointment.end_time,
-              status: appointment.status,
+              status_id: appointment.status_id,
               patients: appointment.patients,
               procedures: appointment.procedures,
               appointment_statuses: appointment.appointment_statuses

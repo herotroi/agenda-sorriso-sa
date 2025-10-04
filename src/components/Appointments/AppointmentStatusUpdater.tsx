@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Appointment {
   id: string;
-  status: string;
   status_id: number;
 }
 

@@ -131,10 +131,7 @@ export function MonthView({
                     <Badge variant="secondary">
                       {itemType === 'vacation' ? 'Férias' :
                        itemType === 'break' ? 'Pausa' :
-                       appointment.status === 'confirmado' ? 'Confirmado' :
-                       appointment.status === 'cancelado' ? 'Cancelado' :
-                       appointment.status === 'em-andamento' ? 'Em andamento' :
-                       appointment.status === 'concluido' ? 'Concluído' : 'Confirmado'}
+                       appointment.appointment_statuses?.label || 'Status não definido'}
                     </Badge>
                   </div>
                 </div>

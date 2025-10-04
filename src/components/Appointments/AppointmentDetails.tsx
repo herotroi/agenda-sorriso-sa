@@ -45,10 +45,10 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
     handleClose();
   };
 
-  // Garantir que o appointment tem status definido
+  // Garantir que o appointment tem status_id definido (1 = Confirmado por padrão)
   const appointmentWithStatus = {
     ...appointment,
-    status: appointment.status || 'confirmado'
+    status_id: appointment.status_id || 1
   };
 
   return (
@@ -84,10 +84,7 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
               <Separator />
 
               <AppointmentStatusUpdater 
-                appointment={{
-                  ...appointmentWithStatus,
-                  status_id: appointment.status_id || 1
-                }} 
+                appointment={appointmentWithStatus} 
                 onClose={handleClose}
                 onUpdate={handleStatusUpdate}
               />

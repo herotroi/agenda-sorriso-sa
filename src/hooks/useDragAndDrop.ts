@@ -10,7 +10,7 @@ interface Appointment {
   professional_id: string;
   start_time: string;
   end_time: string;
-  status: string;
+  status_id: number;
 }
 
 export const useDragAndDrop = (onUpdate?: () => void) => {

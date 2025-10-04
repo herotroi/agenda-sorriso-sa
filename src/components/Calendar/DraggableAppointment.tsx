@@ -9,7 +9,7 @@ interface DraggableAppointmentProps {
     professional_id: string;
     start_time: string;
     end_time: string;
-    status: string;
+    status_id: number;
     is_blocked?: boolean;
     patients?: { full_name: string } | null;
     procedures?: { name: string } | null;

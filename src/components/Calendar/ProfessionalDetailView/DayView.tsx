@@ -47,17 +47,19 @@ export function DayView({
     });
   };
 
-  const getStatusColor = (status?: string, type?: string) => {
+  const getStatusColor = (statusId?: number, type?: string) => {
     // Cores especiais para férias e pausas
     if (type === 'vacation') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     if (type === 'break') return 'bg-gray-100 text-gray-800 border-gray-300';
     
-    // Cores normais para agendamentos
-    switch (status) {
-      case 'confirmado': return 'bg-green-100 text-green-800';
-      case 'cancelado': return 'bg-red-100 text-red-800';
-      case 'em-andamento': return 'bg-blue-100 text-blue-800';
-      case 'concluido': return 'bg-gray-100 text-gray-800';
+    // Cores normais para agendamentos baseadas no status_id
+    // 1=Confirmado, 2=Cancelado, 3=Não Compareceu, 4=Em atendimento, 5=Finalizado
+    switch (statusId) {
+      case 1: return 'bg-green-100 text-green-800';
+      case 2: return 'bg-red-100 text-red-800';
+      case 3: return 'bg-orange-100 text-orange-800';
+      case 4: return 'bg-blue-100 text-blue-800';
+      case 5: return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -133,12 +135,8 @@ export function DayView({
                                   </div>
                                 )}
                               </div>
-                              <Badge className={`${getStatusColor(appointment.status, itemType)} flex-shrink-0`}>
-                                {appointment.appointment_statuses?.label || 
-                                 (appointment.status === 'confirmado' ? 'Confirmado' :
-                                  appointment.status === 'cancelado' ? 'Cancelado' :
-                                  appointment.status === 'em-andamento' ? 'Em andamento' :
-                                  appointment.status === 'concluido' ? 'Concluído' : 'Confirmado')}
+                              <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
+                                {appointment.appointment_statuses?.label || 'Status não definido'}
                               </Badge>
                             </div>
                             {appointment.procedures && !isSpecialItem && (

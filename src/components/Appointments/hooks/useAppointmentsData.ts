@@ -50,11 +50,10 @@ export function useAppointmentsData() {
 
       const fetchedAppointments = appointmentsRes.data || [];
       
-      // Mapear dados para garantir consistência, sem duplicar propriedades
+      // Mapear dados para garantir consistência
       const mappedAppointments = fetchedAppointments.map(apt => ({
         ...apt,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        status: apt.status || 'confirmado'
+        date: new Date(apt.start_time).toISOString().split('T')[0]
       })) as Appointment[];
       
       setAllAppointments(mappedAppointments);
