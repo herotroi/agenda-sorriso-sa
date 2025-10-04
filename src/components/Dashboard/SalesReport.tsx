@@ -1,0 +1,232 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Calendar, 
+  DollarSign, 
+  Clock, 
+  TrendingDown,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  CreditCard
+} from 'lucide-react';
+
+interface SalesReportProps {
+  stats: {
+    todayAppointments: number;
+    monthlyRevenue: number;
+    receivableRevenue: number;
+    cancelledRevenue: number;
+    confirmedCount: number;
+    cancelledCount: number;
+    noShowCount: number;
+    completedCount: number;
+  };
+  paymentMethodsData: Array<{
+    method: string;
+    count: number;
+    total: number;
+  }>;
+  dateRange: {
+    start: Date;
+    end: Date;
+  };
+}
+
+export function SalesReport({ stats, paymentMethodsData, dateRange }: SalesReportProps) {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  return (
+    <div className="space-y-6 p-8 bg-white">
+      {/* Header */}
+      <div className="text-center border-b pb-4">
+        <h1 className="text-3xl font-bold text-gray-900">Relatório de Vendas e Serviços</h1>
+        <p className="text-gray-600 mt-2">
+          Período: {formatDate(dateRange.start)} - {formatDate(dateRange.end)}
+        </p>
+        <p className="text-sm text-gray-500 mt-1">
+          Gerado em: {formatDate(new Date())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      </div>
+
+      {/* Resumo Financeiro */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <DollarSign className="h-5 w-5 mr-2" />
+          Resumo Financeiro
+        </h2>
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-600">Receita do Período</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(stats.monthlyRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1">Pagamento Realizado</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-600">A Receber</p>
+                <p className="text-2xl font-bold text-blue-600 mt-2">{formatCurrency(stats.receivableRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1">Aguardando Pagamento</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-600">Valores Cancelados</p>
+                <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(stats.cancelledRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1">Cancelados/Sem Pagamento</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Formas de Pagamento */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <CreditCard className="h-5 w-5 mr-2" />
+          Formas de Pagamento
+        </h2>
+        <Card>
+          <CardContent className="pt-6">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4 font-semibold text-gray-700">Forma de Pagamento</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">Quantidade</th>
+                  <th className="text-right py-2 px-4 font-semibold text-gray-700">Valor Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentMethodsData.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4 text-gray-500">
+                      Nenhuma forma de pagamento registrada
+                    </td>
+                  </tr>
+                ) : (
+                  paymentMethodsData.map((payment, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 capitalize">{payment.method}</td>
+                      <td className="py-3 px-4 text-center">{payment.count}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-green-600">
+                        {formatCurrency(payment.total)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+                {paymentMethodsData.length > 0 && (
+                  <tr className="bg-gray-50 font-bold">
+                    <td className="py-3 px-4">Total</td>
+                    <td className="py-3 px-4 text-center">
+                      {paymentMethodsData.reduce((sum, p) => sum + p.count, 0)}
+                    </td>
+                    <td className="py-3 px-4 text-right text-green-600">
+                      {formatCurrency(paymentMethodsData.reduce((sum, p) => sum + p.total, 0))}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Status de Agendamentos */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <Calendar className="h-5 w-5 mr-2" />
+          Status de Agendamentos
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Confirmados</p>
+                  <p className="text-3xl font-bold text-green-600 mt-2">{stats.confirmedCount}</p>
+                </div>
+                <CheckCircle className="h-12 w-12 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Concluídos</p>
+                  <p className="text-3xl font-bold text-blue-600 mt-2">{stats.completedCount}</p>
+                </div>
+                <CheckCircle className="h-12 w-12 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Cancelados</p>
+                  <p className="text-3xl font-bold text-red-600 mt-2">{stats.cancelledCount}</p>
+                </div>
+                <XCircle className="h-12 w-12 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Não Compareceram</p>
+                  <p className="text-3xl font-bold text-orange-600 mt-2">{stats.noShowCount}</p>
+                </div>
+                <AlertCircle className="h-12 w-12 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Totais */}
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Agendamentos</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats.confirmedCount + stats.completedCount + stats.cancelledCount + stats.noShowCount}
+                </p>
+              </div>
+              <Calendar className="h-12 w-12 text-gray-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t pt-4 text-center text-sm text-gray-500">
+        <p>Este relatório é confidencial e destinado apenas para uso interno.</p>
+      </div>
+    </div>
+  );
+}

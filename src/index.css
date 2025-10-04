@@ -373,16 +373,23 @@
     -webkit-print-color-adjust: exact;
   }
 
-  /* Hide navigation and unnecessary elements */
-  nav,
-  aside,
-  .print\:hidden {
+  /* Hide everything except the report */
+  body > div:not(:has(.max-w-5xl)) {
     display: none !important;
   }
 
-  /* Adjust layout for print */
-  .grid {
-    break-inside: avoid;
+  /* Show only report content */
+  .max-w-5xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Hide dialog overlay and chrome */
+  [role="dialog"] {
+    position: static !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    overflow: visible !important;
   }
 
   /* Ensure cards print properly */

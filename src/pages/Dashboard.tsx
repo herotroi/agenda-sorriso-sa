@@ -1,7 +1,9 @@
 
 import { StatsCard } from '@/components/Dashboard/StatsCard';
 import { RevenueChart } from '@/components/Dashboard/RevenueChart';
+import { SalesReport } from '@/components/Dashboard/SalesReport';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Calendar, 
   Users, 
@@ -14,13 +16,16 @@ import {
   RefreshCw,
   TrendingDown,
   CreditCard,
-  Printer
+  FileText
 } from 'lucide-react';
+import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
 import { DateRangeSelector } from '@/components/Dashboard/DateRangeSelector';
 
+
 export default function Dashboard() {
+  const [showReport, setShowReport] = useState(false);
   const { 
     stats, 
     upcomingAppointments, 
@@ -40,8 +45,12 @@ export default function Dashboard() {
     }).format(value);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrintReport = () => {
+    setShowReport(true);
+    // Aguarda o dialog abrir antes de imprimir
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   if (loading) {
@@ -70,12 +79,37 @@ export default function Dashboard() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
-          <Button onClick={handlePrint} variant="outline" size="sm" className="flex-1 sm:flex-initial print:hidden">
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir
+          <Button onClick={() => setShowReport(true)} variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <FileText className="h-4 w-4 mr-2" />
+            Relatório
           </Button>
         </div>
       </div>
+
+      {/* Dialog do Relatório */}
+      <Dialog open={showReport} onOpenChange={setShowReport}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:max-w-full">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>Relatório de Vendas e Serviços</DialogTitle>
+          </DialogHeader>
+          <div className="print:p-0">
+            <SalesReport 
+              stats={stats}
+              paymentMethodsData={paymentMethodsData}
+              dateRange={currentDateRange}
+            />
+            <div className="flex justify-end gap-2 mt-4 print:hidden">
+              <Button onClick={() => setShowReport(false)} variant="outline">
+                Fechar
+              </Button>
+              <Button onClick={handlePrintReport}>
+                <FileText className="h-4 w-4 mr-2" />
+                Imprimir Relatório
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Date Range Selector */}
       <DateRangeSelector 
