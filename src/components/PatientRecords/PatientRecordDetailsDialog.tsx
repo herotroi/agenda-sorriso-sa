@@ -667,16 +667,16 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               /* Estilos para documentos na impressão */
               .document-item {
-                margin: 8px 0 !important;
-                padding: 6px !important;
+                margin: 3px 0 !important;
+                padding: 4px !important;
                 border: 1px solid #e5e7eb !important;
                 border-radius: 4px !important;
                 page-break-inside: avoid !important;
               }
               
               .document-info-bar {
-                margin-bottom: 4px !important;
-                padding-bottom: 4px !important;
+                margin-bottom: 2px !important;
+                padding-bottom: 2px !important;
                 border-bottom: 1px solid #e5e7eb !important;
               }
               
@@ -684,7 +684,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 font-size: 10pt !important;
                 color: #000 !important;
                 display: block !important;
-                margin-bottom: 2px !important;
+                margin-bottom: 1px !important;
               }
               
               .document-info-bar p {
@@ -693,11 +693,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               .document-image-container {
                 text-align: center !important;
-                margin: 4px 0 0 !important;
+                margin: 2px 0 0 !important;
               }
               
               .document-image-full { 
-                margin: 4px auto !important; 
+                margin: 2px auto !important; 
                 border: 1px solid #ddd !important; 
                 max-height: 400px !important;
                 width: 60% !important; 
@@ -708,15 +708,15 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               .pdf-icon {
                 font-size: 16px !important;
-                margin-right: 6px !important;
+                margin-right: 4px !important;
               }
               
               .pdf-info-box,
               .file-info-box {
-                padding: 6px !important;
+                padding: 4px !important;
                 background-color: #f9fafb !important;
                 border-radius: 4px !important;
-                margin-top: 4px !important;
+                margin-top: 2px !important;
               }
               
               .signature-section {
@@ -856,7 +856,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             .section-header {
               background-color: #e9ecef;
               padding: 10px;
-              margin-bottom: 10px;
+              margin-bottom: 8px;
               border-left: 4px solid #007bff;
               font-weight: bold;
               font-size: 12pt;
@@ -864,7 +864,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             }
             
             .section-content {
-              padding: 15px;
+              padding: 10px;
               border: 1px solid #ddd;
               background-color: transparent;
               min-height: 80px;
