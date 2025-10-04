@@ -97,7 +97,7 @@ async function searchICD(query: string, version: string, language: string = 'pt'
   const searchData = await searchResponse.json();
   
   // Formatar resultados
-  const results = (searchData.destinationEntities || []).map((entity: any) => {
+  let results = (searchData.destinationEntities || []).map((entity: any) => {
     // Extrair código do theCode ou ID
     let code = entity.theCode || '';
     if (!code && entity.id) {
@@ -106,13 +106,41 @@ async function searchICD(query: string, version: string, language: string = 'pt'
       code = match ? match[1] : '';
     }
 
+    // Remover tags HTML do título
+    const title = (entity.title || 'Sem título')
+      .replace(/<em class='found'>/g, '')
+      .replace(/<\/em>/g, '');
+
     return {
       code,
-      title: entity.title || 'Sem título',
+      title,
       version: `CID-${version}`,
       id: entity.id,
+      score: entity.score || 0,
     };
   }).filter((result: any) => result.code); // Filtrar apenas resultados com código
+
+  // Se a query parece ser um código (começa com letra ou número), priorizar códigos que começam com a query
+  const isCodeSearch = /^[A-Z0-9]/i.test(query);
+  
+  if (isCodeSearch) {
+    const queryUpper = query.toUpperCase();
+    
+    // Separar em resultados exatos e outros
+    const exactMatches = results.filter((r: any) => 
+      r.code.toUpperCase().startsWith(queryUpper)
+    );
+    
+    const otherMatches = results.filter((r: any) => 
+      !r.code.toUpperCase().startsWith(queryUpper)
+    );
+    
+    // Priorizar matches exatos
+    results = [...exactMatches, ...otherMatches];
+  }
+  
+  // Limitar a 20 resultados mais relevantes
+  results = results.slice(0, 20);
 
   console.log(`Found ${results.length} results for ICD-${version}`);
   return results;
