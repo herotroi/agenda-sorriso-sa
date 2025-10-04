@@ -289,11 +289,17 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   };
 
   const handlePrint = async () => {
-    if (!record || !patient) return;
+    if (!record) return;
 
     const currentDate = new Date();
-    const shortId = record.id.substring(0, 8).toUpperCase();
-    
+    const patientAddress = patient ? [
+      patient.street,
+      patient.number,
+      patient.neighborhood,
+      patient.city,
+      patient.state
+    ].filter(Boolean).join(', ') : '';
+
     // Buscar e incorporar documentos selecionados usando a ordem personalizada
     const orderedDocs = getOrderedDocuments();
     const selectedDocs = orderedDocs.filter(doc => selectedDocuments.includes(doc.id));
@@ -305,395 +311,836 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         
         if (doc.mime_type.startsWith('image/')) {
           return `
-            <div class="page-break">
-              <div class="document-section">
-                <h3>${doc.name}</h3>
+            <div class="document-embed page-break">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
                 ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
-                <img src="${docUrl}" alt="${doc.name}" class="document-image" />
+              </div>
+              <div class="document-content">
+                <img src="${docUrl}" alt="${doc.name}" class="document-image-full" />
+              </div>
+            </div>
+          `;
+        } else if (doc.mime_type === 'application/pdf') {
+          // Para PDFs, vamos tentar incorporar como imagem ou mostrar aviso
+          return `
+            <div class="document-embed page-break">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+              </div>
+              <div class="document-content pdf-placeholder">
+                <div class="pdf-info">
+                  <div class="pdf-icon">📄</div>
+                  <h5>Documento PDF: ${doc.name}</h5>
+                  <p>Para visualizar o PDF completo, acesse: ${docUrl}</p>
+                  <p class="pdf-note">Este documento será impresso em página separada.</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="document-embed">
+              <div class="document-header">
+                <h4>${doc.name}</h4>
+                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+              </div>
+              <div class="document-content file-placeholder">
+                <div class="file-info">
+                  <p><strong>Arquivo:</strong> ${doc.name}</p>
+                  <p><strong>Tipo:</strong> ${doc.mime_type}</p>
+                  <p><strong>Acesso:</strong> ${docUrl}</p>
+                </div>
               </div>
             </div>
           `;
         }
-        return '';
       });
 
       const resolvedDocuments = await Promise.all(documentPromises);
-      documentsEmbedHtml = resolvedDocuments.filter(Boolean).join('');
+      
+      documentsEmbedHtml = `
+        <div class="documents-section">
+          <h3 class="section-title">Documentos Anexados (${selectedDocs.length})</h3>
+          ${resolvedDocuments.join('')}
+        </div>
+      `;
     }
 
     const printContent = `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
+      <html>
         <head>
-          <title>Prontuário Médico - ${patient.full_name}</title>
+          <title>Prontuário Médico - ${patient?.full_name || 'Paciente'}</title>
           <meta charset="UTF-8">
           <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: 'Arial', sans-serif;
-              font-size: 11pt;
-              line-height: 1.4;
-              color: #000;
-            }
-            
             @media print {
-              @page {
-                size: A4;
-                margin: 15mm;
+              @page { 
+                margin: 12mm 12mm 12mm 12mm; 
+                size: A4 portrait;
+              }
+              
+              body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
+              }
+              
+              /* Table-based print structure for proper header/footer positioning */
+              .print-grid {
+                display: table !important;
+                width: 100% !important;
+                height: 100% !important;
+                table-layout: fixed !important;
+              }
+              
+              .print-header {
+                display: table-header-group !important;
+                position: static !important;
+                height: auto !important;
+                text-align: center !important;
+                color: #666 !important;
+                font-size: 14px !important;
+                padding: 10mm 0 6mm 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                box-sizing: border-box !important;
+              }
+              
+              .print-footer {
+                display: table-footer-group !important;
+                position: static !important;
+                height: auto !important;
+                text-align: center !important;
+                color: #666 !important;
+                font-size: 10px !important;
+                padding: 6mm 0 0 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                box-sizing: border-box !important;
+              }
+              
+              .print-content {
+                display: table-row-group !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                min-height: auto !important;
+              }
+              
+              /* Remover divisórias visuais na impressão, exceto tabelas */
+              .print-content, .print-content *:not(table):not(thead):not(tbody):not(tr):not(th):not(td) {
+                border: none !important;
+                box-shadow: none !important;
+              }
+              
+              /* Forçar bordas em tabelas */
+              .print-content table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #000 !important;
+              }
+              
+              .print-content th,
+              .print-content td {
+                border: 1px solid #000 !important;
+                padding: 6px 8px !important;
+              }
+              
+              .signature-box {
+                border-top: 1px solid #000 !important;
               }
               
               .page-break {
-                page-break-before: always;
+                page-break-before: always !important;
+                page-break-inside: avoid !important;
               }
               
-              .no-break {
-                page-break-inside: avoid;
+              .page-break:first-child {
+                page-break-before: auto !important;
+              }
+              
+              .document-image-full {
+                width: 50% !important;
+                max-width: 50% !important;
+                height: auto !important;
+                max-height: 400px !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 10px auto !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+              }
+              
+              .document-content {
+                width: 100% !important;
+                overflow: visible !important;
+                page-break-inside: avoid !important;
+              }
+              
+              .document-embed {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                overflow: visible !important;
+              }
+              
+              .document-header {
+                margin-bottom: 15px !important;
+                padding: 10px 0 !important;
+                border-bottom: 1px solid #ccc !important;
+                page-break-after: avoid !important;
+              }
+              
+              .pdf-placeholder,
+              .file-placeholder {
+                border: 2px dashed #ccc !important;
+                padding: 6px !important;
+                text-align: center !important;
+                background-color: transparent !important;
+                border-radius: 4px !important;
+                margin: 6px 0 !important;
+                height: 25vh !important;
+                max-height: 25vh !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+              }
+              
+              .pdf-icon {
+                font-size: 20px !important;
+                margin-bottom: 4px !important;
+              }
+              
+              .pdf-info h5 {
+                font-size: 9pt !important;
+                margin: 3px 0 !important;
+                color: #333 !important;
+              }
+              
+              .pdf-info p {
+                font-size: 7pt !important;
+                color: #666 !important;
+                margin: 2px 0 !important;
+              }
+              
+              .pdf-note {
+                font-weight: bold !important;
+                color: #2563eb !important;
+              }
+              
+              /* Permitir quebra de página em blocos grandes */
+              .medical-section,
+              .patient-info,
+              .appointment-info,
+              .documents-section,
+              .document-content,
+              .section-content {
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+                overflow: visible !important;
+                margin-bottom: 15px !important;
+                white-space: pre-wrap !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+                min-height: 0 !important;
+              }
+              
+              /* Compactar documentos/imagens na impressão */
+              .documents-section { margin-top: 0 !important; }
+              .document-header { display: none !important; }
+              .document-embed { 
+                page-break-before: auto !important; 
+                page-break-inside: avoid !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+              }
+              .document-content { margin: 0 !important; padding: 0 !important; }
+              .document-image-full { 
+                margin: 0 auto 4px !important; 
+                border: none !important; 
+                max-height: 400px !important;
+                width: 50% !important; 
+                max-width: 50% !important;
+              }
+              
+              .signature-section {
+                page-break-inside: avoid !important;
+                margin-top: 30px !important;
+              }
+
+              /* Evitar quebra logo após títulos */
+              .section-header,
+              .section-title {
+                break-after: avoid-page !important;
+                page-break-after: avoid !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+              }
+
+              /* Assinatura sempre na mesma página */
+              .signature-section {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                margin-top: 30px !important;
               }
             }
             
-            /* Cabeçalho do documento */
-            .document-header {
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              color: #000;
+              line-height: 1.4;
+              font-size: 11pt;
+            }
+            
+            .medical-header {
               text-align: center;
-              padding-bottom: 10px;
-              margin-bottom: 15px;
-              border-bottom: 2px solid #333;
+              margin-bottom: 20px;
+              padding: 15px 0;
+              border-bottom: 2px solid #000;
             }
             
-            .company-name {
-              font-size: 18pt;
+            .medical-header h1 {
+              margin: 0 0 8px 0;
+              font-size: 20pt;
               font-weight: bold;
-              color: #1a4d8f;
-              margin-bottom: 3px;
+              color: #000;
+              text-transform: uppercase;
             }
             
-            .company-cnpj {
-              font-size: 9pt;
-              color: #666;
-              margin-bottom: 8px;
+            .medical-header .subtitle {
+              margin: 0 0 15px 0;
+              font-size: 12pt;
+              color: #555;
             }
-            
+
             .professional-info {
-              font-size: 10pt;
+              margin-top: 15px;
+              padding-top: 15px;
+              border-top: 1px solid #ccc;
+              text-align: left;
+            }
+
+            .prof-line {
+              margin: 5px 0;
+              font-size: 11pt;
               color: #333;
-              line-height: 1.3;
             }
             
-            .record-number {
+            .document-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 20px;
+              padding: 8px;
+              background-color: transparent;
+              border: 1px solid #ccc;
               font-size: 10pt;
-              margin-top: 8px;
+            }
+            
+            .patient-info {
+              margin-bottom: 20px;
+              border: 2px solid #000;
+              background-color: transparent;
+            }
+            
+            .patient-info h2 {
+              margin: 0;
+              font-size: 14pt;
               font-weight: bold;
+              text-transform: uppercase;
+              background-color: #e0e0e0;
+              padding: 10px;
+              border-bottom: 1px solid #000;
+              text-align: center;
             }
             
-            .print-date {
-              font-size: 9pt;
-              color: #666;
+            .patient-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 0;
+              padding: 0;
             }
             
-            /* Seções */
-            .section {
+            .patient-field {
+              padding: 6px 12px;
+              border-right: 1px solid #666;
+              border-bottom: 1px solid #666;
+              font-size: 10pt;
+              min-height: 20px;
+              display: flex;
+              align-items: center;
+            }
+            
+            .patient-field:nth-child(even) {
+              border-right: none;
+            }
+            
+            .patient-field.full-width {
+              grid-column: 1 / -1;
+              border-right: none;
+            }
+            
+            .field-label {
+              font-weight: bold;
+              min-width: 100px;
+              margin-right: 8px;
+              color: #333;
+            }
+            
+            .field-value {
+              flex: 1;
+            }
+            
+            .medical-section {
               margin-bottom: 20px;
               page-break-inside: avoid;
             }
             
-            .section-title {
-              font-size: 13pt;
-              font-weight: bold;
-              color: #000;
-              text-transform: uppercase;
-              margin-bottom: 10px;
-              padding-bottom: 5px;
-              border-bottom: 2px solid #333;
-            }
-            
-            /* Grade de informações */
-            .info-grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 8px;
-              margin-bottom: 10px;
-            }
-            
-            .info-item {
-              font-size: 10pt;
-              line-height: 1.5;
-            }
-            
-            .info-label {
-              font-weight: bold;
-              display: inline;
-              margin-right: 5px;
-            }
-            
-            .info-value {
-              display: inline;
-            }
-            
-            /* Informações de consulta */
-            .consultation-box {
-              background: #f8f9fa;
+            .section-header {
+              background-color: #e9ecef;
               padding: 10px;
-              border-radius: 5px;
-              margin-bottom: 15px;
-              border: 1px solid #ddd;
+              margin-bottom: 10px;
+              border-left: 4px solid #007bff;
+              font-weight: bold;
+              font-size: 12pt;
+              text-transform: uppercase;
             }
             
-            .consultation-item {
-              font-size: 10pt;
-              margin-bottom: 5px;
-            }
-            
-            /* Conteúdo clínico */
-            .clinical-content {
-              background: #fff;
+            .section-content {
               padding: 15px;
               border: 1px solid #ddd;
-              border-radius: 5px;
-              margin-bottom: 15px;
-              min-height: 100px;
-              font-size: 10pt;
+              background-color: transparent;
+              min-height: 80px;
+              white-space: pre-wrap;
+              font-size: 11pt;
               line-height: 1.6;
             }
             
-            /* Assinatura */
-            .signature-section {
-              margin-top: 40px;
+            .prescription-section .section-content {
+              border-left: 4px solid #28a745;
+              background-color: transparent;
+            }
+            
+            .appointment-info {
+              margin-bottom: 20px;
+              border: 2px solid #000;
+              background-color: transparent;
+            }
+            
+            .appointment-info h3 {
+              margin: 0;
+              font-size: 14pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              background-color: #e0e0e0;
+              padding: 10px;
+              border-bottom: 1px solid #000;
               text-align: center;
             }
             
-            .signature-line {
-              width: 300px;
-              border-top: 1px solid #000;
-              margin: 0 auto 5px;
+            .appointment-grid {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 0;
+              padding: 0;
             }
             
-            .signature-name {
-              font-weight: bold;
+            .appointment-field {
+              padding: 6px 12px;
+              border-bottom: 1px solid #666;
               font-size: 10pt;
+              min-height: 20px;
+              display: flex;
+              align-items: center;
             }
             
-            .signature-crm {
-              font-size: 9pt;
-              color: #666;
+            .appointment-field:last-child {
+              border-bottom: none;
             }
             
-            /* Rodapé */
-            .document-footer {
+            .documents-section {
               margin-top: 30px;
-              padding-top: 15px;
-              border-top: 1px solid #ddd;
-              font-size: 8pt;
-              color: #666;
-              text-align: center;
-              line-height: 1.4;
             }
             
-            .footer-validity {
+            .section-title {
+              background-color: #e9ecef;
+              padding: 10px;
+              margin-bottom: 15px;
+              border-left: 4px solid #007bff;
               font-weight: bold;
-              margin-bottom: 5px;
-            }
-            
-            .footer-address {
-              margin-bottom: 5px;
-            }
-            
-            .footer-system {
-              font-style: italic;
-              color: #999;
-            }
-            
-            /* Documentos */
-            .document-section {
-              margin-top: 20px;
-              text-align: center;
-            }
-            
-            .document-section h3 {
               font-size: 12pt;
-              margin-bottom: 10px;
+              text-transform: uppercase;
+            }
+            
+            .document-embed {
+              margin: 0;
+              padding: 0;
+              border: none;
+              background-color: transparent;
+              border-radius: 0;
+              width: 100%;
+            }
+            
+            .document-header h4 {
+              font-weight: bold;
+              margin: 0 0 5px 0;
+              font-size: 12pt;
+              color: #333;
             }
             
             .document-description {
-              font-size: 9pt;
-              color: #666;
-              margin-bottom: 10px;
+              margin: 5px 0;
               font-style: italic;
+              color: #666;
+              font-size: 10pt;
             }
             
-            .document-image {
-              max-width: 80%;
+            .document-meta {
+              margin-bottom: 15px;
+              font-size: 9pt;
+              color: #666;
+              padding-bottom: 8px;
+            }
+            
+            .document-content {
+              width: 100%;
+              overflow: visible;
+            }
+            
+            .document-image-full {
+              width: 100%;
               height: auto;
-              max-height: 600px;
-              object-fit: contain;
+              max-width: 100%;
               border: 1px solid #ddd;
+              border-radius: 3px;
+              display: block;
+              margin: 10px auto;
+              object-fit: contain;
+            }
+            
+            .pdf-placeholder,
+            .file-placeholder {
+              border: 2px dashed #ccc;
+              padding: 8px;
+              text-align: center;
+              background-color: transparent;
+              border-radius: 4px;
+              margin: 5px 0;
+              height: 25vh;
+              max-height: 25vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+            }
+            
+            .pdf-icon {
+              font-size: 20px;
+              margin-bottom: 4px;
+            }
+            
+            .pdf-info h5 {
+              font-size: 9pt;
+              margin: 3px 0;
+              color: #333;
+            }
+            
+            .pdf-info p {
+              font-size: 7pt;
+              color: #666;
+              margin: 2px 0;
+            }
+            
+            .pdf-note {
+              font-weight: bold;
+              color: #2563eb;
+            }
+            
+            .file-info {
+              font-size: 11pt;
+            }
+            
+            .file-info p {
+              margin: 8px 0;
+              color: #555;
+            }
+            
+            .signature-section {
+              margin-top: 40px;
+              page-break-inside: avoid;
+            }
+            
+            .signature-box {
+              border-top: 1px solid #000;
+              width: 300px;
+              margin: 30px auto 0;
+              text-align: center;
+              padding-top: 8px;
+            }
+            
+            .signature-text {
+              font-size: 10pt;
+              color: #666;
+            }
+            
+            .validity-note {
+              margin-top: 20px;
+              padding: 12px;
+              background-color: transparent;
+              border: 1px dashed #007bff;
+              font-size: 9pt;
+              text-align: center;
+              color: #004085;
+            }
+            
+            .medical-footer {
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 2px solid #000;
+              font-size: 10pt;
+              color: #333;
+              page-break-inside: avoid;
+            }
+
+            .footer-info {
+              margin-bottom: 10px;
+            }
+
+            .footer-section {
+              margin: 5px 0;
+              line-height: 1.4;
+            }
+
+            .footer-system {
+              font-size: 8pt;
+              color: #666;
+              text-align: center;
+              border-top: 1px solid #ddd;
+              padding-top: 10px;
+              margin-top: 10px;
+            }
+
+            /* Marca d'água da logo - aparece em todas as páginas */
+            .print-content {
+              position: relative;
+            }
+
+            .print-content::before {
+              content: '';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 600px;
+              height: 600px;
+              background-image: url('${profile?.company_logo || ''}');
+              background-repeat: no-repeat;
+              background-position: center;
+              background-size: contain;
+              opacity: 0.15;
+              z-index: -1;
+              pointer-events: none;
+            }
+
+            @media print {
+              .print-content::before {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 600px;
+                height: 600px;
+                opacity: 0.12;
+                z-index: -1;
+              }
             }
           </style>
         </head>
         <body>
-          <!-- Cabeçalho do Documento -->
-          <div class="document-header">
-            <div class="company-name">${profile?.company_name || 'Clínica Médica'}</div>
-            ${profile?.cnpj ? `<div class="company-cnpj">CNPJ: ${profile.cnpj}</div>` : ''}
-            
-            ${professional ? `
+          <div class="print-grid">
+            <div class="print-header">
+              <h1>${profile?.company_name || 'Clínica Odontológica'}</h1>
+              <div class="subtitle">CNPJ: ${profile?.cnpj || 'Não informado'}</div>
+              
               <div class="professional-info">
-                Profissional: Dr(a). ${professional.name}<br>
-                ${professional.specialty ? `Especialidade: ${professional.specialty}<br>` : ''}
-                ${professional.crm_cro ? `CRM/CRO: ${professional.crm_cro}` : ''}
+                <div class="prof-line">
+                  <strong>Profissional:</strong> Dr(a). ${professional?.name || 'Não informado'}
+                </div>
+                ${professional?.specialty ? `<div class="prof-line"><strong>Especialidade:</strong> ${professional.specialty}</div>` : ''}
+                ${professional?.crm_cro ? `<div class="prof-line"><strong>CRM/CRO:</strong> ${professional.crm_cro}</div>` : ''}
               </div>
-            ` : ''}
+            </div>
             
-            <div class="record-number">Prontuário Nº: ${shortId}</div>
-            <div class="print-date">Impresso em: ${format(currentDate, "dd/MM/yyyy HH:mm", { locale: ptBR })}</div>
+            <div class="print-content">
+          
+          <div class="document-info">
+            <div><strong>Prontuário Nº:</strong> ${record.id.substring(0, 8).toUpperCase()}</div>
+            <div><strong>Impresso em:</strong> ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
           </div>
           
-          <!-- Identificação do Paciente -->
-          <div class="section">
-            <h2 class="section-title">Identificação do Paciente</h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="info-label">Nome:</span>
-                <span class="info-value">${patient.full_name}</span>
+          <div class="patient-info">
+            <h2>Identificação do Paciente</h2>
+            <div class="patient-grid">
+              <div class="patient-field full-width">
+                <span class="field-label">Nome:</span>
+                <span class="field-value">${patient?.full_name || 'Não informado'}</span>
               </div>
-              ${patient.cpf ? `
-                <div class="info-item">
-                  <span class="info-label">CPF:</span>
-                  <span class="info-value">${patient.cpf}</span>
+              
+              <div class="patient-field">
+                <span class="field-label">CPF:</span>
+                <span class="field-value">${patient?.cpf || 'Não informado'}</span>
+              </div>
+              
+              ${patient?.birth_date ? `
+                <div class="patient-field">
+                  <span class="field-label">Nascimento:</span>
+                  <span class="field-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                </div>
+              ` : `
+                <div class="patient-field">
+                  <span class="field-label">Nascimento:</span>
+                  <span class="field-value">Não informado</span>
+                </div>
+              `}
+              
+              <div class="patient-field">
+                <span class="field-label">Sexo:</span>
+                <span class="field-value">${patient?.gender || 'Não informado'}</span>
+              </div>
+              
+              <div class="patient-field">
+                <span class="field-label">Estado Civil:</span>
+                <span class="field-value">${patient?.marital_status || 'Não informado'}</span>
+              </div>
+              
+              <div class="patient-field">
+                <span class="field-label">Profissão:</span>
+                <span class="field-value">${patient?.profession || 'Não informado'}</span>
+              </div>
+              
+              <div class="patient-field">
+                <span class="field-label">Telefone:</span>
+                <span class="field-value">${patient?.phone || 'Não informado'}</span>
+              </div>
+              
+              ${patient?.responsible_name ? `
+                <div class="patient-field">
+                  <span class="field-label">Responsável:</span>
+                  <span class="field-value">${patient.responsible_name}</span>
+                </div>
+                ${patient?.responsible_cpf ? `
+                <div class="patient-field">
+                  <span class="field-label">CPF Resp.:</span>
+                  <span class="field-value">${patient.responsible_cpf}</span>
+                </div>
+                ` : ''}
+              ` : ''}
+              
+              ${patient?.sus_card ? `
+                <div class="patient-field">
+                  <span class="field-label">Cartão SUS:</span>
+                  <span class="field-value">${patient.sus_card}</span>
                 </div>
               ` : ''}
-              ${patient.birth_date ? `
-                <div class="info-item">
-                  <span class="info-label">Nascimento:</span>
-                  <span class="info-value">${format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+              
+              ${patient?.health_insurance ? `
+                <div class="patient-field">
+                  <span class="field-label">Convênio:</span>
+                  <span class="field-value">${patient.health_insurance}</span>
                 </div>
               ` : ''}
-              ${patient.gender ? `
-                <div class="info-item">
-                  <span class="info-label">Sexo:</span>
-                  <span class="info-value">${patient.gender}</span>
-                </div>
-              ` : ''}
-              ${patient.marital_status ? `
-                <div class="info-item">
-                  <span class="info-label">Estado Civil:</span>
-                  <span class="info-value">${patient.marital_status}</span>
-                </div>
-              ` : ''}
-              ${patient.profession ? `
-                <div class="info-item">
-                  <span class="info-label">Profissão:</span>
-                  <span class="info-value">${patient.profession}</span>
-                </div>
-              ` : ''}
-              ${patient.phone ? `
-                <div class="info-item">
-                  <span class="info-label">Telefone:</span>
-                  <span class="info-value">${patient.phone}</span>
-                </div>
-              ` : ''}
-              ${patient.sus_card ? `
-                <div class="info-item">
-                  <span class="info-label">Cartão SUS:</span>
-                  <span class="info-value">${patient.sus_card}</span>
-                </div>
-              ` : ''}
-              ${patient.health_insurance ? `
-                <div class="info-item">
-                  <span class="info-label">Convênio:</span>
-                  <span class="info-value">${patient.health_insurance}</span>
+              
+              ${patientAddress ? `
+                <div class="patient-field full-width">
+                  <span class="field-label">Endereço:</span>
+                  <span class="field-value">${patientAddress}</span>
                 </div>
               ` : ''}
             </div>
-            
-            ${patient.street ? `
-              <div class="info-item" style="margin-top: 8px;">
-                <span class="info-label">Endereço:</span>
-                <span class="info-value">
-                  ${[patient.street, patient.number, patient.neighborhood, patient.city, patient.state].filter(Boolean).join(', ')}
-                </span>
-              </div>
-            ` : ''}
           </div>
           
-          <!-- Informações da Consulta -->
           ${appointment ? `
-            <div class="section">
-              <h2 class="section-title">Informações da Consulta</h2>
-              <div class="consultation-box">
-                <div class="consultation-item">
-                  <span class="info-label">Data:</span>
-                  ${format(new Date(appointment.start_time), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            <div class="appointment-info">
+              <h3>Informações da Consulta</h3>
+              <div class="appointment-grid">
+                <div class="appointment-field">
+                  <span class="field-label">Data:</span>
+                  <span class="field-value">${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
                 </div>
                 ${appointment.procedures ? `
-                  <div class="consultation-item">
-                    <span class="info-label">Procedimento:</span>
-                    ${appointment.procedures.name}
+                  <div class="appointment-field">
+                    <span class="field-label">Procedimento:</span>
+                    <span class="field-value">${appointment.procedures.name}</span>
                   </div>
                 ` : ''}
                 ${professional ? `
-                  <div class="consultation-item">
-                    <span class="info-label">Profissional:</span>
-                    Dr(a). ${professional.name}${professional.crm_cro ? ' - ' + professional.crm_cro : ''}
+                  <div class="appointment-field">
+                    <span class="field-label">Profissional:</span>
+                    <span class="field-value">Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</span>
                   </div>
                 ` : ''}
               </div>
             </div>
           ` : ''}
           
-          <!-- Anamnese e Exame Clínico -->
           ${record.content || record.notes ? `
-            <div class="section">
-              <h2 class="section-title">Anamnese e Exame Clínico</h2>
-              <div class="clinical-content">
-                ${record.content || record.notes || ''}
-              </div>
+            <div class="medical-section">
+              <div class="section-header">Anamnese e Exame Clínico</div>
+              <div class="section-content">${(record.content || record.notes || '').replace(/\n/g, '\n')}</div>
             </div>
           ` : ''}
           
-          <!-- Prescrição Médica -->
           ${record.prescription ? `
-            <div class="section">
-              <h2 class="section-title">Prescrição Médica</h2>
-              <div class="clinical-content">
-                ${record.prescription}
-              </div>
+            <div class="medical-section prescription-section">
+              <div class="section-header">Prescrição Médica</div>
+              <div class="section-content">${record.prescription.replace(/\n/g, '\n')}</div>
             </div>
           ` : ''}
           
-          <!-- Assinatura -->
-          ${professional ? `
-            <div class="signature-section">
-              <div class="signature-line"></div>
-              <div class="signature-name">Dr(a). ${professional.name}</div>
-              ${professional.crm_cro ? `<div class="signature-crm">CRM: ${professional.crm_cro}</div>` : ''}
-            </div>
-          ` : ''}
+          ${documentsEmbedHtml}
           
-          <!-- Rodapé -->
-          <div class="document-footer">
-            <div class="footer-validity">
-              VALIDADE: Este documento tem validade legal conforme CFO. Gerado em ${format(currentDate, "dd/MM/yyyy HH:mm", { locale: ptBR })}.
-            </div>
-            ${profile?.street ? `
-              <div class="footer-address">
-                Endereço: ${[profile.street, profile.number, profile.neighborhood, profile.city, profile.state, profile.zip_code].filter(Boolean).join(', ')}
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-text">
+                ${professional ? `Dr(a). ${professional.name}` : 'Assinatura do Profissional'}<br>
+                ${professional?.crm_cro ? `${professional.crm_cro}` : 'CRO: _______________'}
               </div>
-            ` : ''}
-            ${profile?.email || profile?.phone ? `
-              <div class="footer-address">
-                Contatos: ${[profile.email, profile.phone].filter(Boolean).join(' | ')}
-              </div>
-            ` : ''}
-            <div class="footer-system">
-              Sistema de Prontuário Eletrônico | Prontuário: ${shortId} | Registro: ${format(new Date(record.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
             </div>
           </div>
           
-          ${documentsEmbedHtml}
+           <div class="validity-note">
+             <strong>VALIDADE:</strong> Este documento tem validade legal conforme CFO. 
+             Gerado em ${format(currentDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })}.
+           </div>
+           
+           </div>
+           
+            <div class="print-footer">
+              <div class="footer-info">
+                <div class="footer-section">
+                  <strong>Endereço:</strong>
+                  ${profile ? [
+                    profile.street,
+                    profile.number,
+                    profile.neighborhood,
+                    profile.city,
+                    profile.state,
+                    profile.zip_code
+                  ].filter(Boolean).join(', ') || 'Não informado' : 'Não informado'}
+                </div>
+                <div class="footer-section">
+                  <strong>Contatos:</strong>
+                  ${profile?.email || 'Email não informado'} | ${profile?.phone || 'Telefone não informado'}
+                </div>
+              </div>
+              <div class="footer-system">
+                Sistema de Prontuário Eletrônico | Prontuário: ${record.id.substring(0, 8).toUpperCase()} | Registro: ${format(new Date(record.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              </div>
+            </div>
+          </div>
         </body>
       </html>
     `;
@@ -709,7 +1156,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         if (printWindow.document.fonts && printWindow.document.fonts.ready) {
           printWindow.document.fonts.ready.then(doPrint).catch(doPrint);
         } else {
-          setTimeout(doPrint, 500);
+          doPrint();
         }
       };
     }
