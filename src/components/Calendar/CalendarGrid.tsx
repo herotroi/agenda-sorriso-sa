@@ -22,6 +22,7 @@ export function CalendarGrid({
   onTimeSlotClick,
 }: CalendarGridProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
   const { timeBlocks } = useTimeBlocks(professionals, currentDate);
 
@@ -54,9 +55,40 @@ export function CalendarGrid({
     }
   }, [currentDate]);
 
+  // Sincronizar scroll horizontal entre header e conteúdo
+  useEffect(() => {
+    const headerScroll = headerScrollRef.current;
+    const contentScroll = scrollContainerRef.current;
+
+    if (!headerScroll || !contentScroll) return;
+
+    const syncHeaderToContent = () => {
+      if (contentScroll) {
+        headerScroll.scrollLeft = contentScroll.scrollLeft;
+      }
+    };
+
+    const syncContentToHeader = () => {
+      if (headerScroll) {
+        contentScroll.scrollLeft = headerScroll.scrollLeft;
+      }
+    };
+
+    contentScroll.addEventListener('scroll', syncHeaderToContent);
+    headerScroll.addEventListener('scroll', syncContentToHeader);
+
+    return () => {
+      contentScroll.removeEventListener('scroll', syncHeaderToContent);
+      headerScroll.removeEventListener('scroll', syncContentToHeader);
+    };
+  }, []);
+
   return (
     <div className="flex-1 bg-white rounded-lg shadow overflow-hidden">
-      <div className="flex border-b border-gray-200 overflow-x-auto">
+      <div 
+        ref={headerScrollRef}
+        className="flex border-b border-gray-200 overflow-x-auto"
+      >
         <div className="w-12 sm:w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
           <div className="h-10 sm:h-12 flex items-center justify-center text-xs sm:text-sm font-medium text-gray-500">
             <span className="hidden sm:inline">Horário</span>
