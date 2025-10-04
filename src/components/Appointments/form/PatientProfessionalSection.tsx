@@ -51,7 +51,7 @@ export function PatientProfessionalSection({
           <ProfessionalSelector
             professionals={professionals}
             procedures={procedures}
-            value={formData.professional_id}
+            value={formData.professional_id || appointmentToEdit?.professional_id || ''}
             onChange={(value) => onFieldChange('professional_id', value)}
             currentProfessionalName={currentProfessionalName}
             isBlocked={true}
@@ -68,29 +68,29 @@ export function PatientProfessionalSection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <PatientSelector
           patients={patients}
-          value={formData.patient_id}
+          value={formData.patient_id || appointmentToEdit?.patient_id || ''}
           onChange={(value) => onFieldChange('patient_id', value)}
           currentPatientName={currentPatientName}
         />
         
         <ProcedureSelector
           procedures={procedures.filter(p => p.active !== false)}
-          value={formData.procedure_id}
+          value={formData.procedure_id || appointmentToEdit?.procedure_id || ''}
           onChange={onProcedureChange}
           currentProcedureName={currentProcedureName}
         />
       </div>
 
       {/* Segunda linha: Profissional (só aparece após selecionar procedimento) */}
-      {formData.procedure_id && (
+      {(formData.procedure_id || appointmentToEdit?.procedure_id) && (
         <div className="grid grid-cols-1 gap-6">
           <ProfessionalSelector
             professionals={professionals}
             procedures={procedures}
-            value={formData.professional_id}
+            value={formData.professional_id || appointmentToEdit?.professional_id || ''}
             onChange={(value) => onFieldChange('professional_id', value)}
             currentProfessionalName={currentProfessionalName}
-            selectedProcedureId={formData.procedure_id}
+            selectedProcedureId={formData.procedure_id || appointmentToEdit?.procedure_id}
             isBlocked={false}
           />
         </div>

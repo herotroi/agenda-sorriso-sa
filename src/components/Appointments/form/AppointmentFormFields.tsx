@@ -1,4 +1,4 @@
-
+import { useEffect } from 'react';
 import { AppointmentFormData, Patient, Professional, Procedure } from '@/types/appointment-form';
 import { PatientProfessionalSection } from './PatientProfessionalSection';
 import { DateTimeDurationSection } from './DateTimeDurationSection';
@@ -48,6 +48,23 @@ export function AppointmentFormFields({
     handleFieldChange(field, value);
   };
 
+  // Prefill safety: ensure fields are populated when editing
+  useEffect(() => {
+    if (!appointmentToEdit) return;
+    const patch: Partial<AppointmentFormData> = {};
+    if (!formData.patient_id && appointmentToEdit.patient_id) patch.patient_id = appointmentToEdit.patient_id;
+    if (!formData.procedure_id && appointmentToEdit.procedure_id) patch.procedure_id = appointmentToEdit.procedure_id;
+    if (!formData.professional_id && appointmentToEdit.professional_id) patch.professional_id = appointmentToEdit.professional_id;
+    if (!formData.payment_method && appointmentToEdit.payment_method) patch.payment_method = appointmentToEdit.payment_method;
+    if (!formData.payment_status && appointmentToEdit.payment_status) patch.payment_status = appointmentToEdit.payment_status;
+    if (!formData.notes && appointmentToEdit.notes) patch.notes = appointmentToEdit.notes;
+    if (!formData.is_blocked && appointmentToEdit.is_blocked) patch.is_blocked = appointmentToEdit.is_blocked;
+    if ((!formData.status_id || formData.status_id === 0) && appointmentToEdit.status_id) patch.status_id = appointmentToEdit.status_id;
+    if (Object.keys(patch).length) {
+      setFormData({ ...formData, ...patch } as AppointmentFormData);
+    }
+  }, [appointmentToEdit, formData, setFormData]);
+
   return (
     <div className="space-y-6">
       <BlockedAppointmentToggle 
@@ -78,7 +95,7 @@ export function AppointmentFormFields({
         <>
           <StatusSelector
             statuses={statuses}
-            value={formData.status_id.toString()}
+            value={formData.status_id ? String(formData.status_id) : ''}
             onChange={(value) => handleFieldUpdate('status_id', parseInt(value))}
             currentStatusName={originalData && !fieldModified.status_id 
               ? statuses.find(s => s.id === originalData.status_id)?.label 
