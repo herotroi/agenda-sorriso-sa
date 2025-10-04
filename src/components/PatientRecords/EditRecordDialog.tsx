@@ -199,44 +199,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   };
 
   useEffect(() => {
-    console.log('🔄 EditRecordDialog useEffect triggered, record:', record?.id, 'isOpen:', isOpen);
-    
-    if (record && isOpen) {
-      // Increment request ID to invalidate previous requests
-      requestIdRef.current += 1;
-      const currentRequestId = requestIdRef.current;
-      
-      // Reset states
-      setRecordData(null);
-      setDataLoaded(false);
-      setLoading(true);
-      setFormData({
-        title: '',
-        content: '',
-        prescription: '',
-        appointment_id: 'none',
-        professional_id: '',
-      });
-      
-      console.log('🚀 Starting data fetch with requestId:', currentRequestId);
-      
-      // Fetch all data in parallel
-      const loadAllData = async () => {
-        try {
-          await Promise.all([
-            fetchRecordDetails(record.id, currentRequestId),
-            fetchAppointments(),
-            fetchProfessionals(),
-            fetchDocuments(),
-            fetchLinkedAppointments()
-          ]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      loadAllData();
-    } else if (!isOpen) {
+    if (!isOpen) {
       console.log('🔄 Dialog closed, resetting state');
       setRecordData(null);
       setDataLoaded(false);
@@ -252,8 +215,49 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       setAppointments([]);
       setProfessionals([]);
       setSelectedAppointments([]);
+      setSelectedIcds([]);
+      return;
     }
-  }, [record?.id, isOpen]);
+    
+    if (!record?.id || !user?.id) return;
+    
+    console.log('🔄 EditRecordDialog useEffect triggered, record:', record.id, 'isOpen:', isOpen);
+    
+    // Increment request ID to invalidate previous requests
+    requestIdRef.current += 1;
+    const currentRequestId = requestIdRef.current;
+    
+    // Reset states
+    setRecordData(null);
+    setDataLoaded(false);
+    setLoading(true);
+    setFormData({
+      title: '',
+      content: '',
+      prescription: '',
+      appointment_id: 'none',
+      professional_id: '',
+    });
+    
+    console.log('🚀 Starting data fetch with requestId:', currentRequestId);
+    
+    // Fetch all data in parallel
+    const loadAllData = async () => {
+      try {
+        await Promise.all([
+          fetchRecordDetails(record.id, currentRequestId),
+          fetchAppointments(),
+          fetchProfessionals(),
+          fetchDocuments(),
+          fetchLinkedAppointments()
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAllData();
+  }, [record?.id, isOpen, user?.id]);
 
   const fetchLinkedAppointments = async () => {
     if (!record?.id || !user?.id) return;
