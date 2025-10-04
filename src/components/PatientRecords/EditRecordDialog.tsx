@@ -96,11 +96,6 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const requestIdRef = React.useRef(0);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [open, setOpen] = useState(isOpen);
-
-  useEffect(() => {
-    setOpen(isOpen);
-  }, [isOpen]);
 
   const fetchRecordDetails = async (recordId: string, currentRequestId: number) => {
     if (!user?.id) return;
@@ -753,7 +748,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   if (!record) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) onClose(); }}>
+    <Dialog open={isOpen} onOpenChange={(next) => { if (!next) onClose(); }}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogDescription className="sr-only">Editar registro do prontuário</DialogDescription>
         <DialogHeader className="space-y-4">
