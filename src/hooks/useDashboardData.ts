@@ -284,14 +284,17 @@ export function useDashboardData() {
     if (!user) return;
     
     try {
-      // Definir todas as formas de pagamento possíveis
+      // Definir todas as formas de pagamento possíveis (conforme cadastradas no sistema)
       const allPaymentMethods = [
+        'debito',
+        'credito',
+        'credito_parcelado',
         'dinheiro',
         'pix',
-        'credito',
-        'debito',
         'boleto',
         'transferencia',
+        'nao_informado',
+        'gratis',
         'outros'
       ];
 
