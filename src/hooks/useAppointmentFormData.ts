@@ -157,40 +157,27 @@ export function useAppointmentFormData(
   }, [isOpen, user]);
 
   useEffect(() => {
-    // Prevenir re-inicialização durante edições
-    const currentId = appointmentToEdit?.id || null;
-    const shouldInitialize = !initializedRef.current || lastIdRef.current !== currentId || !isOpen;
-    console.log('useAppointmentFormData init check', { isOpen, currentId, shouldInitialize, initialized: initializedRef.current, lastId: lastIdRef.current });
-    
-    if (!isOpen) {
-      initializedRef.current = false;
-      lastIdRef.current = null;
-      return;
-    }
-    
-    if (!shouldInitialize) {
-      return;
-    }
-    
+    if (!isOpen) return;
+
     if (appointmentToEdit) {
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)).toString();
-      
-      const editData = {
+
+      const editData: AppointmentFormData = {
         patient_id: appointmentToEdit.patient_id || '',
         professional_id: appointmentToEdit.professional_id || '',
         procedure_id: appointmentToEdit.procedure_id || '',
         start_time: startTime.toISOString().slice(0, 16),
         end_time: endTime.toISOString().slice(0, 16),
-        duration: duration,
+        duration,
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
         is_blocked: appointmentToEdit.is_blocked || false,
         payment_method: appointmentToEdit.payment_method || '',
         payment_status: appointmentToEdit.payment_status || ''
-      } as AppointmentFormData;
-      console.log('Initializing edit formData:', editData);
+      };
+
       setFormData(editData);
       setOriginalData(editData);
     } else {
@@ -198,8 +185,8 @@ export function useAppointmentFormData(
       const endDate = new Date(selectedDate);
       endDate.setMinutes(endDate.getMinutes() + 60);
       const endTime = endDate.toISOString().slice(0, 16);
-      
-      const newData = {
+
+      const newData: AppointmentFormData = {
         patient_id: '',
         professional_id: selectedProfessionalId || '',
         procedure_id: '',
@@ -212,14 +199,13 @@ export function useAppointmentFormData(
         payment_method: '',
         payment_status: ''
       };
+
       setFormData(newData);
       setOriginalData(null);
     }
-    
+
     setFieldModified({});
-    initializedRef.current = true;
-    lastIdRef.current = currentId;
-  }, [isOpen, appointmentToEdit?.id, selectedDate, selectedProfessionalId]);
+  }, [isOpen, appointmentToEdit?.id]);
 
   return {
     patients,
