@@ -61,8 +61,7 @@ export const fetchDateAppointments = async (selectedDate?: Date, professionalId?
       appointment_statuses(label, color)
     `)
     .gte('start_time', startOfDay.toISOString())
-    .lte('start_time', endOfDay.toISOString())
-    .eq('is_blocked', false); // Excluir pausas e férias
+    .lte('start_time', endOfDay.toISOString());
 
   // Add professional filter if specified
   if (professionalId) {
@@ -78,9 +77,9 @@ export const fetchDateAppointments = async (selectedDate?: Date, professionalId?
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.patients || { full_name: 'Paciente não informado' },
+    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.procedures || { name: 'Sem procedimento' },
+    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
@@ -116,8 +115,7 @@ export const fetchAllAppointments = async (professionalId?: string) => {
       professionals!inner(name),
       procedures(name),
       appointment_statuses!inner(label, color)
-    `)
-    .eq('is_blocked', false); // Excluir pausas e férias
+    `);
 
   // Add professional filter if specified
   if (professionalId) {
@@ -133,9 +131,9 @@ export const fetchAllAppointments = async (professionalId?: string) => {
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.patients || { full_name: 'Paciente não informado' },
+    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.procedures || { name: 'Sem procedimento' },
+    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
@@ -169,8 +167,7 @@ export const fetchFilteredAppointments = async (
       professionals!inner(name),
       procedures(name),
       appointment_statuses!inner(label, color)
-    `)
-    .eq('is_blocked', false); // Excluir pausas e férias
+    `);
 
   // Apply filters
   if (filters.statusId) {
@@ -195,9 +192,9 @@ export const fetchFilteredAppointments = async (
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.patients || { full_name: 'Paciente não informado' },
+    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.procedures || { name: 'Sem procedimento' },
+    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
