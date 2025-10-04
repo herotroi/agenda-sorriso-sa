@@ -102,7 +102,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     try {
       const { data, error } = await supabase
         .from('patient_records')
-        .select('id, title, content, notes, prescription, appointment_id, professional_id, created_at, updated_at')
+        .select('id, title, content, notes, prescription, appointment_id, professional_id, created_at, updated_at, icd_codes, icd_code, icd_version')
         .eq('id', recordId)
         .eq('user_id', user.id)
         .maybeSingle();
