@@ -65,19 +65,19 @@ export function AppointmentsFilters({ onFiltersChange }: AppointmentsFiltersProp
   const hasActiveFilters = selectedStatus || selectedProcedure;
 
   return (
-    <Card className="mb-4">
-      <CardContent className="pt-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filtros:</span>
+    <Card>
+      <CardContent className="p-3 sm:p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+            <span className="text-sm sm:text-base font-medium">Filtros:</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 flex-1">
             {/* Status Filter */}
-            <div className="min-w-[180px]">
+            <div className="flex-1 sm:flex-initial sm:min-w-[200px]">
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -98,9 +98,9 @@ export function AppointmentsFilters({ onFiltersChange }: AppointmentsFiltersProp
             </div>
 
             {/* Procedure Filter */}
-            <div className="min-w-[180px]">
+            <div className="flex-1 sm:flex-initial sm:min-w-[200px]">
               <Select value={selectedProcedure} onValueChange={setSelectedProcedure}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue placeholder="Todos os procedimentos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -118,12 +118,12 @@ export function AppointmentsFilters({ onFiltersChange }: AppointmentsFiltersProp
             {hasActiveFilters && (
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={clearFilters}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[40px] w-full sm:w-auto"
               >
                 <X className="h-4 w-4" />
-                Limpar Filtros
+                <span>Limpar Filtros</span>
               </Button>
             )}
           </div>

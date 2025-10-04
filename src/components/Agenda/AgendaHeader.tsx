@@ -11,12 +11,12 @@ export function AgendaHeader({ onPrint }: AgendaHeaderProps) {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+    <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
       <div>
-        <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           Agenda
         </h1>
-        <p className={`text-gray-600 ${isMobile ? 'text-sm' : 'text-base'}`}>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
           Gerencie os agendamentos da clínica
         </p>
       </div>

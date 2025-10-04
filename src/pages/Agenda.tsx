@@ -47,9 +47,9 @@ export default function Agenda() {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 lg:p-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6 px-3 py-4 sm:px-4 sm:py-6 md:px-6">
         <AgendaHeader onPrint={onPrint} />
-        <AgendaTabs 
+        <AgendaTabs
           activeTab={activeTab} 
           onTabChange={setActiveTab}
           selectedDate={selectedDate}

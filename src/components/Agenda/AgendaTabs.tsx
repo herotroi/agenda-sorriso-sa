@@ -25,22 +25,22 @@ export function AgendaTabs({
   return (
     <div className="w-full">
       <Tabs defaultValue="calendar" value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className={`grid w-full grid-cols-2 ${isMobile ? 'mb-4 h-12' : 'mb-6 h-12'}`}>
-          <TabsTrigger value="calendar" className="flex items-center justify-center gap-2 text-sm font-medium">
-            <Calendar className="h-5 w-5" />
-            <span>Calendário</span>
+        <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-12 sm:h-11">
+          <TabsTrigger value="calendar" className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-2">
+            <Calendar className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Calendário</span>
           </TabsTrigger>
-          <TabsTrigger value="table" className="flex items-center justify-center gap-2 text-sm font-medium">
-            <Table className="h-5 w-5" />
-            <span>Tabela</span>
+          <TabsTrigger value="table" className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-2">
+            <Table className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Tabela</span>
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="calendar" className={`${isMobile ? 'mt-2' : 'mt-6'}`}>
+        <TabsContent value="calendar" className="mt-0">
           <CalendarView selectedDate={selectedDate} onDateChange={onDateChange} />
         </TabsContent>
         
-        <TabsContent value="table" className={`${isMobile ? 'mt-2' : 'mt-6'}`}>
+        <TabsContent value="table" className="mt-0">
           <AppointmentsTable onFiltersChange={onFiltersChange} />
         </TabsContent>
       </Tabs>

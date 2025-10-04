@@ -61,7 +61,7 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <AppointmentsFilters 
         onFiltersChange={handleFiltersChangeInternal}
       />
@@ -89,15 +89,15 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                   {appointments.map((appointment) => (
                     <div 
                       key={appointment.id}
-                      className="p-4 space-y-2 cursor-pointer hover:bg-gray-50"
+                      className="p-4 space-y-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
                       onClick={() => setSelectedAppointment(appointment)}
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm">{appointment.patients?.full_name}</p>
-                          <p className="text-xs text-gray-600">{appointment.procedures?.name}</p>
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-base text-gray-900 truncate">{appointment.patients?.full_name}</p>
+                          <p className="text-sm text-gray-600 mt-1 truncate">{appointment.procedures?.name}</p>
                         </div>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
                           appointment.status_id === 1 ? 'bg-green-100 text-green-800' :
                           appointment.status_id === 2 ? 'bg-red-100 text-red-800' :
                           appointment.status_id === 3 ? 'bg-blue-100 text-blue-800' :
@@ -107,9 +107,9 @@ export function AppointmentsTable({ onFiltersChange }: AppointmentsTableProps) {
                           {appointment.appointment_statuses?.label}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>{appointment.professionals?.name}</span>
-                        <span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm text-gray-600">
+                        <span className="truncate">{appointment.professionals?.name}</span>
+                        <span className="text-sm font-medium whitespace-nowrap">
                           {new Date(appointment.start_time).toLocaleDateString('pt-BR')} às{' '}
                           {new Date(appointment.start_time).toLocaleTimeString('pt-BR', { 
                             hour: '2-digit', 
