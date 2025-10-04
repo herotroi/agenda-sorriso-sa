@@ -478,6 +478,16 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         }
       }
 
+      // Buscar documentos vinculados
+      const { data: documentsData } = await supabase
+        .from('prontuario_documents')
+        .select('name, description, file_size, uploaded_at')
+        .eq('record_id', record.id)
+        .eq('user_id', user.id)
+        .order('uploaded_at', { ascending: false });
+
+      console.log('📎 Documents data:', documentsData);
+
       // Criar conteúdo HTML para impressão
       const printContent = `
         <!DOCTYPE html>
@@ -611,6 +621,20 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             <div class="prescription">
               <div style="white-space: pre-wrap;">${fullRecord.prescription}</div>
             </div>
+          </div>
+          ` : ''}
+
+          ${documentsData && documentsData.length > 0 ? `
+          <div class="section">
+            <h3>DOCUMENTOS ANEXADOS (${documentsData.length})</h3>
+            ${documentsData.map((doc, index) => `
+              <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #6c757d;">
+                <div class="info-item"><strong>Documento ${index + 1}:</strong> ${doc.name}</div>
+                ${doc.description ? `<div class="info-item"><strong>Descrição:</strong> ${doc.description}</div>` : ''}
+                <div class="info-item"><strong>Tamanho:</strong> ${(doc.file_size / 1024 / 1024).toFixed(2)} MB</div>
+                <div class="info-item"><strong>Data:</strong> ${format(new Date(doc.uploaded_at), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</div>
+              </div>
+            `).join('')}
           </div>
           ` : ''}
 
