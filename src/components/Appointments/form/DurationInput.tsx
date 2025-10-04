@@ -23,8 +23,7 @@ export function DurationInput({ value, onChange, currentValue }: DurationInputPr
           type="number"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          min="15"
-          step="15"
+          min="1"
           className="pl-10"
           placeholder="60"
         />
