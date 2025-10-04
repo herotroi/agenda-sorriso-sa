@@ -8,6 +8,7 @@ interface DashboardStats {
   activePatients: number;
   monthlyRevenue: number;
   cancelledRevenue: number;
+  receivableRevenue: number;
   occupancyRate: number;
   confirmedCount: number;
   cancelledCount: number;
@@ -39,6 +40,7 @@ export function useDashboardData() {
     activePatients: 0,
     monthlyRevenue: 0,
     cancelledRevenue: 0,
+    receivableRevenue: 0,
     occupancyRate: 0,
     confirmedCount: 0,
     cancelledCount: 0,
@@ -88,7 +90,7 @@ export function useDashboardData() {
       // Query para receita do período - DEVE incluir user_id
       let revenueQuery = supabase
         .from('appointments')
-        .select('price, status_id')
+        .select('price, status_id, payment_status')
         .eq('user_id', user.id)
         .not('price', 'is', null);
 
@@ -100,16 +102,25 @@ export function useDashboardData() {
 
       const { data: revenueData } = await revenueQuery;
 
-      // Status IDs: 1=Confirmado, 2=Cancelado, 3=Não Compareceu, 4=Em atendimento, 5=Finalizado
+      // Receita do Período: apenas "pagamento realizado"
       const monthlyRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.status_id !== 2) { // Não cancelado
+        if (appointment.payment_status === 'pagamento realizado') {
           return sum + (appointment.price || 0);
         }
         return sum;
       }, 0) || 0;
 
+      // A Receber: "aguardando pagamento" ou "não pagou"
+      const receivableRevenue = revenueData?.reduce((sum, appointment) => {
+        if (appointment.payment_status === 'aguardando pagamento' || appointment.payment_status === 'não pagou') {
+          return sum + (appointment.price || 0);
+        }
+        return sum;
+      }, 0) || 0;
+
+      // Valores Cancelados: "pagamento cancelado" ou "sem pagamento"
       const cancelledRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.status_id === 2) { // Cancelado
+        if (appointment.payment_status === 'pagamento cancelado' || appointment.payment_status === 'sem pagamento') {
           return sum + (appointment.price || 0);
         }
         return sum;
@@ -145,6 +156,7 @@ export function useDashboardData() {
         activePatients: activePatients || 0,
         monthlyRevenue,
         cancelledRevenue,
+        receivableRevenue,
         occupancyRate,
         confirmedCount,
         cancelledCount,
@@ -198,10 +210,10 @@ export function useDashboardData() {
     try {
       let query = supabase
         .from('appointments')
-        .select('start_time, price')
+        .select('start_time, price, payment_status')
         .eq('user_id', user.id)
         .not('price', 'is', null)
-        .neq('status_id', 2) // 2 = Cancelado
+        .eq('payment_status', 'pagamento realizado') // Apenas pagamento realizado no gráfico
         .order('start_time');
 
       if (startDate && endDate) {

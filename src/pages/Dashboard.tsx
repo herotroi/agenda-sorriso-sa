@@ -71,7 +71,7 @@ export default function Dashboard() {
       />
 
       {/* Stats Grid - Ajustado para melhor responsividade */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-6">
         <StatsCard
           title="Agendamentos Hoje"
           value={stats.todayAppointments}
@@ -86,6 +86,12 @@ export default function Dashboard() {
           title="Receita do Período"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={DollarSign}
+        />
+        <StatsCard
+          title="A Receber"
+          value={formatCurrency(stats.receivableRevenue)}
+          icon={Clock}
+          className="border-blue-200"
         />
         <StatsCard
           title="Valores Cancelados"
