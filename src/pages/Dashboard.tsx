@@ -32,7 +32,8 @@ export default function Dashboard() {
     monthlyRevenueData,
     paymentMethodsData,
     paymentStatusData,
-    professionalAppointmentsData, 
+    professionalAppointmentsData,
+    appointmentDetails, 
     loading, 
     refetch,
     onDateRangeChange,
@@ -100,6 +101,7 @@ export default function Dashboard() {
               paymentMethodsData={paymentMethodsData}
               paymentStatusData={paymentStatusData}
               professionalAppointmentsData={professionalAppointmentsData}
+              appointmentDetails={appointmentDetails}
               dateRange={currentDateRange}
             />
             <div className="flex justify-end gap-2 mt-4 print:hidden">

@@ -34,6 +34,18 @@ interface ProfessionalAppointmentData {
   appointmentCount: number;
 }
 
+interface AppointmentDetail {
+  id: string;
+  patient_name: string;
+  professional_name: string;
+  start_time: string;
+  price: number | null;
+  payment_method: string | null;
+  payment_status: string | null;
+  status_name: string;
+  is_blocked: boolean;
+}
+
 interface RevenueData {
   name: string;
   value: number;
@@ -70,6 +82,7 @@ export function useDashboardData() {
   const [paymentMethodsData, setPaymentMethodsData] = useState<PaymentMethodData[]>([]);
   const [paymentStatusData, setPaymentStatusData] = useState<PaymentStatusData[]>([]);
   const [professionalAppointmentsData, setProfessionalAppointmentsData] = useState<ProfessionalAppointmentData[]>([]);
+  const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDateRange, setCurrentDateRange] = useState<DateRange>({
     start: new Date(new Date().getFullYear(), 0, 1),
@@ -453,6 +466,54 @@ export function useDashboardData() {
     }
   };
 
+  const fetchAppointmentDetails = async (startDate?: string, endDate?: string) => {
+    if (!user) return;
+    
+    try {
+      let query = supabase
+        .from('appointments')
+        .select(`
+          id,
+          start_time,
+          price,
+          payment_method,
+          payment_status,
+          is_blocked,
+          patients(full_name),
+          professionals(name),
+          appointment_statuses(label)
+        `)
+        .eq('user_id', user.id)
+        .order('start_time');
+
+      if (startDate && endDate) {
+        query = query
+          .gte('start_time', startDate)
+          .lte('start_time', endDate);
+      }
+
+      const { data } = await query;
+
+      if (data) {
+        const details: AppointmentDetail[] = data.map((apt: any) => ({
+          id: apt.id,
+          patient_name: apt.is_blocked ? 'Horário Bloqueado' : (apt.patients?.full_name || 'Paciente não informado'),
+          professional_name: apt.professionals?.name || 'Profissional não informado',
+          start_time: apt.start_time,
+          price: apt.price,
+          payment_method: apt.payment_method,
+          payment_status: apt.payment_status,
+          status_name: apt.appointment_statuses?.label || 'Status não informado',
+          is_blocked: apt.is_blocked || false,
+        }));
+
+        setAppointmentDetails(details);
+      }
+    } catch (error) {
+      console.error('Error fetching appointment details:', error);
+    }
+  };
+
   const fetchData = async (startDate?: string, endDate?: string) => {
     setLoading(true);
     await Promise.all([
@@ -462,6 +523,7 @@ export function useDashboardData() {
       fetchPaymentMethods(startDate, endDate),
       fetchPaymentStatus(startDate, endDate),
       fetchProfessionalAppointments(startDate, endDate),
+      fetchAppointmentDetails(startDate, endDate),
     ]);
     setLoading(false);
   };
@@ -491,6 +553,7 @@ export function useDashboardData() {
     paymentMethodsData,
     paymentStatusData,
     professionalAppointmentsData,
+    appointmentDetails,
     loading,
     refetch,
     onDateRangeChange,

@@ -9,7 +9,8 @@ import {
   AlertCircle,
   CreditCard,
   FileCheck,
-  Users
+  Users,
+  List
 } from 'lucide-react';
 
 interface SalesReportProps {
@@ -38,13 +39,24 @@ interface SalesReportProps {
     professionalName: string;
     appointmentCount: number;
   }>;
+  appointmentDetails: Array<{
+    id: string;
+    patient_name: string;
+    professional_name: string;
+    start_time: string;
+    price: number | null;
+    payment_method: string | null;
+    payment_status: string | null;
+    status_name: string;
+    is_blocked: boolean;
+  }>;
   dateRange: {
     start: Date;
     end: Date;
   };
 }
 
-export function SalesReport({ stats, paymentMethodsData, paymentStatusData, professionalAppointmentsData, dateRange }: SalesReportProps) {
+export function SalesReport({ stats, paymentMethodsData, paymentStatusData, professionalAppointmentsData, appointmentDetails, dateRange }: SalesReportProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -58,6 +70,44 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
       month: '2-digit',
       year: 'numeric',
     }).format(date);
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  const getPaymentMethodLabel = (method: string | null) => {
+    const methods: Record<string, string> = {
+      'debito': 'Débito',
+      'credito': 'Crédito',
+      'credito_parcelado': 'Crédito Parcelado',
+      'dinheiro': 'Dinheiro',
+      'pix': 'PIX',
+      'boleto': 'Boleto',
+      'transferencia': 'Transferência',
+      'nao_informado': 'Não Informado',
+      'gratis': 'Grátis',
+      'outros': 'Outros',
+    };
+    return methods[method || ''] || 'Não informado';
+  };
+
+  const getPaymentStatusLabel = (status: string | null) => {
+    const statuses: Record<string, string> = {
+      'pagamento_realizado': 'Pagamento Realizado',
+      'aguardando_pagamento': 'Aguardando Pagamento',
+      'nao_pagou': 'Não Pagou',
+      'pagamento_cancelado': 'Pagamento Cancelado',
+      'sem_pagamento': 'Sem Pagamento',
+    };
+    return statuses[status || ''] || 'Não informado';
   };
 
   return (
@@ -291,7 +341,57 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
                   <p className="text-3xl font-bold text-red-600 mt-2">{stats.cancelledCount}</p>
                 </div>
                 <XCircle className="h-12 w-12 text-red-600" />
-              </div>
+      </div>
+
+      {/* Lista de Agendamentos */}
+      <div className="break-before-page">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <List className="h-5 w-5 mr-2" />
+          Lista de Agendamentos do Período
+        </h2>
+        <Card>
+          <CardContent className="pt-6">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Data/Hora</th>
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Paciente</th>
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Profissional</th>
+                  <th className="text-right py-2 px-2 font-semibold text-gray-700">Valor</th>
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Forma Pgto</th>
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Status Pgto</th>
+                  <th className="text-left py-2 px-2 font-semibold text-gray-700">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointmentDetails.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                      Nenhum agendamento encontrado no período
+                    </td>
+                  </tr>
+                ) : (
+                  appointmentDetails.map((apt, index) => (
+                    <tr key={index} className={`border-b hover:bg-gray-50 ${apt.is_blocked ? 'bg-yellow-50' : ''}`}>
+                      <td className="py-2 px-2 text-xs">{formatDateTime(apt.start_time)}</td>
+                      <td className="py-2 px-2 text-xs">{apt.patient_name}</td>
+                      <td className="py-2 px-2 text-xs">{apt.professional_name}</td>
+                      <td className="py-2 px-2 text-xs text-right">
+                        {apt.price ? formatCurrency(apt.price) : '-'}
+                      </td>
+                      <td className="py-2 px-2 text-xs">{getPaymentMethodLabel(apt.payment_method)}</td>
+                      <td className="py-2 px-2 text-xs">{getPaymentStatusLabel(apt.payment_status)}</td>
+                      <td className="py-2 px-2 text-xs">
+                        {apt.is_blocked ? 'Bloqueado' : apt.status_name}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
             </CardContent>
           </Card>
 
