@@ -24,11 +24,11 @@ export function AgendaHeader({ onPrint }: AgendaHeaderProps) {
       <Button 
         onClick={onPrint}
         variant="outline"
-        className="flex items-center gap-2 w-full sm:w-auto"
-        size={isMobile ? "sm" : "default"}
+        className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-6"
+        size="default"
       >
-        <Printer className="h-4 w-4" />
-        {isMobile ? 'Imprimir' : 'Imprimir Relatório'}
+        <Printer className="h-5 w-5" />
+        <span className="font-medium">Imprimir</span>
       </Button>
     </div>
   );
