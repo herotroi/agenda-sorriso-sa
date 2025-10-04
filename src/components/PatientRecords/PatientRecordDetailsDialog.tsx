@@ -252,10 +252,6 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       if (docs.length > 0 && documentOrder.length === 0) {
         setDocumentOrder(docs.map(doc => doc.id));
       }
-      // Select all by default so eles entrem na impressão
-      if (docs.length > 0) {
-        setSelectedDocuments(docs.map(doc => doc.id));
-      }
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
@@ -343,9 +339,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
 
     // Buscar e incorporar documentos selecionados usando a ordem personalizada
     const orderedDocs = getOrderedDocuments();
-    const selectedDocs = selectedDocuments.length > 0
-      ? orderedDocs.filter(doc => selectedDocuments.includes(doc.id))
-      : orderedDocs;
+    const selectedDocs = orderedDocs.filter(doc => selectedDocuments.includes(doc.id));
     let documentsEmbedHtml = '';
 
     if (selectedDocs.length > 0) {
@@ -673,31 +667,37 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               /* Estilos para documentos na impressão */
               .document-item {
-                margin: 12px 0 !important;
-                padding: 8px !important;
+                margin: 8px 0 !important;
+                padding: 6px !important;
                 border: 1px solid #e5e7eb !important;
                 border-radius: 4px !important;
                 page-break-inside: avoid !important;
               }
               
               .document-info-bar {
-                margin-bottom: 8px !important;
-                padding-bottom: 6px !important;
+                margin-bottom: 4px !important;
+                padding-bottom: 4px !important;
                 border-bottom: 1px solid #e5e7eb !important;
               }
               
               .document-info-bar strong {
                 font-size: 10pt !important;
                 color: #000 !important;
+                display: block !important;
+                margin-bottom: 2px !important;
+              }
+              
+              .document-info-bar p {
+                margin: 0 !important;
               }
               
               .document-image-container {
                 text-align: center !important;
-                margin: 8px 0 !important;
+                margin: 4px 0 0 !important;
               }
               
               .document-image-full { 
-                margin: 8px auto !important; 
+                margin: 4px auto !important; 
                 border: 1px solid #ddd !important; 
                 max-height: 400px !important;
                 width: 60% !important; 
@@ -713,9 +713,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               .pdf-info-box,
               .file-info-box {
-                padding: 8px !important;
+                padding: 6px !important;
                 background-color: #f9fafb !important;
                 border-radius: 4px !important;
+                margin-top: 4px !important;
               }
               
               .signature-section {
@@ -1350,7 +1351,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     if (record?.id && isOpen) {
       fetchDocuments(record.id);
       fetchRecordData(record);
-      // Mantém seleção atual; fetchDocuments já seleciona todos por padrão
+      setSelectedDocuments([]);
       setDocumentOrder([]);
       setShowOrderControls(false);
       setDraggedIndex(null);
