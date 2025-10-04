@@ -182,102 +182,93 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
 
 async function searchICD11(query: string, language: string): Promise<any[]> {
   const token = await getOAuthToken();
-  const normalizedQuery = normalizePTBR(query);
 
   console.log(`CID-11 unified search - query: "${query}"`);
 
-  // Busca oficial da API do CID-11
+  // Busca oficial da API do CID-11 com fallback de idiomas
   const releaseId = '2024-01';
   const versionPath = 'icd/release/11';
   const baseUrl = `https://id.who.int/${versionPath}/${releaseId}/mms/search`;
-  const searchParams = new URLSearchParams({
-    q: query,
-    useFlexisearch: 'true',
-    flatResults: 'true',
-  });
-  const searchUrl = `${baseUrl}?${searchParams.toString()}`;
 
-  const searchResponse = await fetch(searchUrl, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/json',
-      'API-Version': 'v2',
-      'Accept-Language': language,
-    },
-  });
+  const tryLangs = Array.from(new Set([
+    language,
+    language?.toLowerCase().startsWith('pt') ? 'pt' : 'en',
+    'en',
+  ].filter(Boolean))) as string[];
 
-  if (!searchResponse.ok) {
-    const errorText = await searchResponse.text();
-    console.error('ICD-11 search error:', errorText);
-    return [];
-  }
+  let destinationEntities: any[] = [];
+  let usedLang = language;
 
-  const searchData = await searchResponse.json();
-  
-  // Formatar e filtrar resultados
-  let results = (searchData.destinationEntities || [])
-    .map((entity: any) => {
-      const rawCode: string | undefined = entity.theCode;
-      const title = String(entity.title || 'Sem título')
-        .replace(/<em class='found'>/g, '')
-        .replace(/<\/em>/g, '');
+  for (const lang of tryLangs) {
+    const searchParams = new URLSearchParams({
+      q: query,
+      useFlexisearch: 'true',
+      flatResults: 'true',
+    });
+    const searchUrl = `${baseUrl}?${searchParams.toString()}`;
 
-      let fallbackCode = '';
-      if (!rawCode && entity.id) {
-        const match = String(entity.id).match(/\/([A-Z0-9.]+)$/);
-        fallbackCode = match ? match[1] : '';
-      }
-
-      const code = String(rawCode || fallbackCode).toUpperCase();
-      const isValidCode = /^[A-Z0-9.]+$/.test(code);
-
-      return {
-        code,
-        title,
-        version: `CID-11`,
-        id: entity.id,
-        score: entity.score || 0,
-        __valid: Boolean(code) && isValidCode,
-      } as any;
-    })
-    .filter((r: any) => r.__valid)
-    // Filtro adicional local por código ou título
-    .filter((r: any) => {
-      const normalizedCode = normalizePTBR(r.code);
-      const normalizedTitle = normalizePTBR(r.title);
-      return normalizedCode.includes(normalizedQuery) || normalizedTitle.includes(normalizedQuery);
+    const resp = await fetch(searchUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'API-Version': 'v2',
+        'Accept-Language': lang,
+      },
     });
 
-  // Ordenar por relevância
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error(`ICD-11 search error (${lang}):`, errorText);
+      continue;
+    }
+
+    const data = await resp.json();
+    destinationEntities = data.destinationEntities || [];
+    if (destinationEntities.length > 0) {
+      usedLang = lang;
+      break;
+    }
+  }
+
+  let results = destinationEntities.map((entity: any) => {
+    const rawCode: string | undefined = entity.theCode;
+    const title = String(entity.title || 'Sem título')
+      .replace(/<em class='found'>/g, '')
+      .replace(/<\/em>/g, '');
+
+    let fallbackCode = '';
+    if (!rawCode && entity.id) {
+      const match = String(entity.id).match(/\/([A-Z0-9.]+)$/);
+      fallbackCode = match ? match[1] : '';
+    }
+
+    const code = String(rawCode || fallbackCode).toUpperCase();
+    const isValidCode = /^[A-Z0-9.]+$/.test(code);
+
+    return {
+      code,
+      title,
+      version: `CID-11`,
+      id: entity.id,
+      score: entity.score || 0,
+      lang: usedLang,
+      __valid: Boolean(code) && isValidCode,
+    } as any;
+  }).filter((r: any) => r.__valid);
+
+  // Ordenação: prioriza correspondência de código quando apropriado, depois score
+  const isCodeLike = /^[A-Z0-9.]+$/i.test(query.trim());
+  const q = query.trim().toUpperCase();
   results.sort((a: any, b: any) => {
-    const aTitleNorm = normalizePTBR(a.title);
-    const bTitleNorm = normalizePTBR(b.title);
-    const aCodeNorm = normalizePTBR(a.code);
-    const bCodeNorm = normalizePTBR(b.code);
-    
-    // Código exato primeiro
-    const aCodeMatch = aCodeNorm === normalizedQuery;
-    const bCodeMatch = bCodeNorm === normalizedQuery;
-    if (aCodeMatch && !bCodeMatch) return -1;
-    if (bCodeMatch && !aCodeMatch) return 1;
-    
-    // Código começa com o termo
-    const aCodeStarts = aCodeNorm.startsWith(normalizedQuery);
-    const bCodeStarts = bCodeNorm.startsWith(normalizedQuery);
-    if (aCodeStarts && !bCodeStarts) return -1;
-    if (bCodeStarts && !aCodeStarts) return 1;
-    
-    // Score da API
+    if (isCodeLike) {
+      const aEq = a.code === q; const bEq = b.code === q;
+      if (aEq && !bEq) return -1; if (bEq && !aEq) return 1;
+      const aStarts = a.code.startsWith(q); const bStarts = b.code.startsWith(q);
+      if (aStarts && !bStarts) return -1; if (bStarts && !aStarts) return 1;
+    }
     if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
-    
-    // Título começa com o termo
-    const aTitleStarts = aTitleNorm.startsWith(normalizedQuery);
-    const bTitleStarts = bTitleNorm.startsWith(normalizedQuery);
-    if (aTitleStarts && !bTitleStarts) return -1;
-    if (bTitleStarts && !aTitleStarts) return 1;
-    
-    return aTitleNorm.localeCompare(bTitleNorm);
+    return String(a.title).localeCompare(String(b.title));
   });
 
   console.log(`CID-11 unified search found ${results.length} results`);
