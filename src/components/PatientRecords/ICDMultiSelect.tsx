@@ -178,30 +178,35 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
       </div>
 
       {selectedCodes.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <TooltipProvider>
-            {selectedCodes.map((code, index) => (
-              <Tooltip key={`${code.code}-${code.version}-${index}`}>
-                <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="pr-1 max-w-[200px]">
-                    <span className="truncate">
-                      {code.code} - {code.version}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(index)}
-                      className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+        <div className="space-y-2">
+          {selectedCodes.map((code, index) => (
+            <div 
+              key={`${code.code}-${code.version}-${index}`}
+              className="flex items-start gap-3 p-3 rounded-lg border bg-muted/50"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {code.code}
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">{code.title}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
+                  <span className="text-xs text-muted-foreground">
+                    {code.version}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground">
+                  {code.title}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemove(index)}
+                className="flex-shrink-0 rounded-full p-1.5 hover:bg-muted transition-colors"
+                aria-label="Remover código"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
