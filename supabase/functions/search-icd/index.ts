@@ -78,50 +78,111 @@ async function collectICD10Children(obj: any, acc: any[] = []): Promise<any[]> {
   return acc;
 }
 
-async function searchICD10ByCodePrefix(query: string, language: string): Promise<any[]> {
+async function searchICD10(query: string, language: string): Promise<any[]> {
   const token = await getOAuthToken();
+  const isCode = /^[A-Z0-9.]+$/i.test(query);
   const Q = query.toUpperCase().replace(/[^A-Z0-9.]/g, '');
-  const releaseCandidates = ['2019', '2016'];
-  const base = Q.split('.')[0];
-  const codeCandidates: string[] = [];
-  if (/^[A-Z]$/.test(base)) {
-    codeCandidates.push(`${base}00`, `${base}0`, base);
-  } else if (/^[A-Z][0-9]$/.test(base)) {
-    codeCandidates.push(`${base}0`, `${base}00`, base);
-  } else if (base.length >= 3) {
-    codeCandidates.push(base.slice(0, 3));
-  }
-  if (Q !== base) codeCandidates.push(Q);
+  const searchText = query.toLowerCase().trim();
 
+  // Capítulos principais do CID-10 para busca por texto
+  const chapters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+  
   let payload: any | null = null;
-  for (const rel of releaseCandidates) {
-    for (const c of codeCandidates) {
-      const url = `https://id.who.int/icd/release/10/${rel}/${encodeURIComponent(c)}`;
-      const resp = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'API-Version': 'v2',
-          'Accept-Language': language,
-        },
-      });
-      if (resp.ok) {
-        payload = await resp.json();
-        // Stop at first success
-        break;
-      }
+  const releaseCandidates = ['2019', '2016'];
+
+  if (isCode) {
+    // Busca por código: tentar encontrar o código específico ou seu pai
+    const base = Q.split('.')[0];
+    const codeCandidates: string[] = [];
+    if (/^[A-Z]$/.test(base)) {
+      codeCandidates.push(`${base}00`, `${base}0`, base);
+    } else if (/^[A-Z][0-9]$/.test(base)) {
+      codeCandidates.push(`${base}0`, `${base}00`, base);
+    } else if (base.length >= 3) {
+      codeCandidates.push(base.slice(0, 3));
     }
-    if (payload) break;
+    if (Q !== base) codeCandidates.push(Q);
+
+    for (const rel of releaseCandidates) {
+      for (const c of codeCandidates) {
+        const url = `https://id.who.int/icd/release/10/${rel}/${encodeURIComponent(c)}`;
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'API-Version': 'v2',
+            'Accept-Language': language,
+          },
+        });
+        if (resp.ok) {
+          payload = await resp.json();
+          break;
+        }
+      }
+      if (payload) break;
+    }
+  } else {
+    // Busca por texto: coletar dos capítulos principais
+    const allNodes: any[] = [];
+    for (const rel of releaseCandidates) {
+      for (const chapter of chapters.slice(0, 10)) { // Limitar a 10 capítulos para performance
+        const url = `https://id.who.int/icd/release/10/${rel}/${chapter}`;
+        try {
+          const resp = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+              'API-Version': 'v2',
+              'Accept-Language': language,
+            },
+          });
+          if (resp.ok) {
+            const chapterData = await resp.json();
+            const nodes = await collectICD10Children(chapterData, []);
+            allNodes.push(...nodes);
+          }
+        } catch (e) {
+          // Ignorar erros de capítulos específicos
+          console.error(`Error fetching chapter ${chapter}:`, e);
+        }
+        if (allNodes.length > 200) break; // Limite de segurança
+      }
+      if (allNodes.length > 0) break;
+    }
+
+    // Filtrar por texto
+    const filtered = allNodes
+      .filter(n => /^[A-Z][0-9A-Z.]*$/.test(n.code))
+      .filter(n => n.title.toLowerCase().includes(searchText))
+      .map(n => ({ code: n.code.toUpperCase(), title: n.title }));
+
+    // Deduplicate
+    const unique = new Map<string, any>();
+    for (const it of filtered) if (!unique.has(it.code)) unique.set(it.code, it);
+    
+    const results = Array.from(unique.values());
+    results.sort((a, b) => {
+      // Ordenar por relevância: títulos que começam com o texto primeiro
+      const aTitleLower = a.title.toLowerCase();
+      const bTitleLower = b.title.toLowerCase();
+      const aStarts = aTitleLower.startsWith(searchText);
+      const bStarts = bTitleLower.startsWith(searchText);
+      if (aStarts && !bStarts) return -1;
+      if (bStarts && !aStarts) return 1;
+      return aTitleLower.localeCompare(bTitleLower);
+    });
+
+    return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
   }
 
   if (!payload) return [];
 
   const nodes = await collectICD10Children(payload, []);
-  const q = Q;
   const filtered = nodes
     .filter(n => /^[A-Z][0-9A-Z.]*$/.test(n.code))
-    .filter(n => n.code.startsWith(q))
+    .filter(n => n.code.startsWith(Q))
     .map(n => ({ code: n.code.toUpperCase(), title: n.title }));
 
   // Deduplicate by code
@@ -132,25 +193,23 @@ async function searchICD10ByCodePrefix(query: string, language: string): Promise
   results.sort((a, b) => {
     const au = a.code.toUpperCase();
     const bu = b.code.toUpperCase();
-    if (au === q && bu !== q) return -1;
-    if (bu === q && au !== q) return 1;
-    if (au.startsWith(q) && !bu.startsWith(q)) return -1;
-    if (bu.startsWith(q) && !au.startsWith(q)) return 1;
-    // Ordenar por tamanho desc e código desc para aproximar a lista do exemplo (A069, A068, ...)
+    if (au === Q && bu !== Q) return -1;
+    if (bu === Q && au !== Q) return 1;
+    if (au.startsWith(Q) && !bu.startsWith(Q)) return -1;
+    if (bu.startsWith(Q) && !au.startsWith(Q)) return 1;
     if (au.length !== bu.length) return bu.length - au.length;
     return bu.localeCompare(au);
   });
 
   return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
 }
+}
 
 async function searchICD(query: string, version: string, language: string = 'pt-BR'): Promise<any[]> {
   const lang = language && language.toLowerCase().startsWith('pt') ? 'pt-BR' : (language || 'pt-BR');
-  // CID-10: não há endpoint de busca; implementamos busca por prefixo de código
-  const isCodeQuery = /^[A-Z0-9.]+$/i.test(query);
+  
   if (version === '10') {
-    if (!isCodeQuery) return [];
-    const results = await searchICD10ByCodePrefix(query.trim(), lang);
+    const results = await searchICD10(query.trim(), lang);
     return results;
   }
 
