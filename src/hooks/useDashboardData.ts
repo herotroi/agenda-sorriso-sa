@@ -284,13 +284,23 @@ export function useDashboardData() {
     if (!user) return;
     
     try {
+      // Definir todas as formas de pagamento possíveis
+      const allPaymentMethods = [
+        'dinheiro',
+        'pix',
+        'credito',
+        'debito',
+        'boleto',
+        'transferencia',
+        'outros'
+      ];
+
       let query = supabase
         .from('appointments')
         .select('payment_method, price, payment_status')
         .eq('user_id', user.id)
         .eq('payment_status', 'pagamento_realizado') // Apenas pagamentos realizados
-        .not('price', 'is', null)
-        .not('payment_method', 'is', null);
+        .not('price', 'is', null);
 
       if (startDate && endDate) {
         query = query
@@ -300,28 +310,35 @@ export function useDashboardData() {
 
       const { data } = await query;
 
+      // Inicializar todos os métodos com 0
+      const groupedData = allPaymentMethods.reduce((acc, method) => {
+        acc[method] = { count: 0, total: 0 };
+        return acc;
+      }, {} as Record<string, { count: number; total: number }>);
+
+      // Adicionar os dados reais
       if (data) {
-        const groupedData = data.reduce((acc, appointment) => {
-          const method = appointment.payment_method || 'Não informado';
+        data.forEach(appointment => {
+          const method = appointment.payment_method?.toLowerCase() || 'outros';
           
-          if (!acc[method]) {
-            acc[method] = { count: 0, total: 0 };
+          if (groupedData[method]) {
+            groupedData[method].count += 1;
+            groupedData[method].total += appointment.price || 0;
+          } else {
+            // Se o método não está na lista predefinida, adiciona em "outros"
+            groupedData['outros'].count += 1;
+            groupedData['outros'].total += appointment.price || 0;
           }
-          
-          acc[method].count += 1;
-          acc[method].total += appointment.price || 0;
-          
-          return acc;
-        }, {} as Record<string, { count: number; total: number }>);
-
-        const paymentMethods = Object.entries(groupedData).map(([method, data]) => ({
-          method,
-          count: data.count,
-          total: data.total,
-        }));
-
-        setPaymentMethodsData(paymentMethods);
+        });
       }
+
+      const paymentMethods = Object.entries(groupedData).map(([method, data]) => ({
+        method,
+        count: data.count,
+        total: data.total,
+      }));
+
+      setPaymentMethodsData(paymentMethods);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
     }
@@ -331,6 +348,15 @@ export function useDashboardData() {
     if (!user) return;
     
     try {
+      // Definir todos os status de pagamento possíveis
+      const allPaymentStatuses = {
+        'pagamento_realizado': 'Pagamento Realizado',
+        'aguardando_pagamento': 'Aguardando Pagamento',
+        'nao_pagou': 'Não Pagou',
+        'pagamento_cancelado': 'Pagamento Cancelado',
+        'sem_pagamento': 'Sem Pagamento',
+      };
+
       let query = supabase
         .from('appointments')
         .select('payment_status, price')
@@ -345,36 +371,31 @@ export function useDashboardData() {
 
       const { data } = await query;
 
-      if (data) {
-        const statusLabels: Record<string, string> = {
-          'pagamento_realizado': 'Pagamento Realizado',
-          'aguardando_pagamento': 'Aguardando Pagamento',
-          'nao_pagou': 'Não Pagou',
-          'pagamento_cancelado': 'Pagamento Cancelado',
-          'sem_pagamento': 'Sem Pagamento',
-        };
+      // Inicializar todos os status com 0
+      const groupedData = Object.keys(allPaymentStatuses).reduce((acc, status) => {
+        acc[status] = { count: 0, total: 0 };
+        return acc;
+      }, {} as Record<string, { count: number; total: number }>);
 
-        const groupedData = data.reduce((acc, appointment) => {
+      // Adicionar os dados reais
+      if (data) {
+        data.forEach(appointment => {
           const status = appointment.payment_status || 'sem_pagamento';
           
-          if (!acc[status]) {
-            acc[status] = { count: 0, total: 0 };
+          if (groupedData[status]) {
+            groupedData[status].count += 1;
+            groupedData[status].total += appointment.price || 0;
           }
-          
-          acc[status].count += 1;
-          acc[status].total += appointment.price || 0;
-          
-          return acc;
-        }, {} as Record<string, { count: number; total: number }>);
-
-        const paymentStatus = Object.entries(groupedData).map(([status, data]) => ({
-          status: statusLabels[status] || status,
-          count: data.count,
-          total: data.total,
-        }));
-
-        setPaymentStatusData(paymentStatus);
+        });
       }
+
+      const paymentStatus = Object.entries(groupedData).map(([status, data]) => ({
+        status: allPaymentStatuses[status as keyof typeof allPaymentStatuses] || status,
+        count: data.count,
+        total: data.total,
+      }));
+
+      setPaymentStatusData(paymentStatus);
     } catch (error) {
       console.error('Error fetching payment status:', error);
     }
