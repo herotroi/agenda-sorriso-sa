@@ -16,6 +16,12 @@ interface DashboardStats {
   completedCount: number;
 }
 
+interface PaymentMethodData {
+  method: string;
+  count: number;
+  total: number;
+}
+
 interface RevenueData {
   name: string;
   value: number;
@@ -49,6 +55,7 @@ export function useDashboardData() {
   });
   const [upcomingAppointments, setUpcomingAppointments] = useState<UpcomingAppointment[]>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<RevenueData[]>([]);
+  const [paymentMethodsData, setPaymentMethodsData] = useState<PaymentMethodData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDateRange, setCurrentDateRange] = useState<DateRange>({
     start: new Date(new Date().getFullYear(), 0, 1),
@@ -259,12 +266,59 @@ export function useDashboardData() {
     }
   };
 
+  const fetchPaymentMethods = async (startDate?: string, endDate?: string) => {
+    if (!user) return;
+    
+    try {
+      let query = supabase
+        .from('appointments')
+        .select('payment_method, price, payment_status')
+        .eq('user_id', user.id)
+        .not('price', 'is', null)
+        .not('payment_method', 'is', null);
+
+      if (startDate && endDate) {
+        query = query
+          .gte('start_time', startDate)
+          .lte('start_time', endDate);
+      }
+
+      const { data } = await query;
+
+      if (data) {
+        const groupedData = data.reduce((acc, appointment) => {
+          const method = appointment.payment_method || 'Não informado';
+          
+          if (!acc[method]) {
+            acc[method] = { count: 0, total: 0 };
+          }
+          
+          acc[method].count += 1;
+          acc[method].total += appointment.price || 0;
+          
+          return acc;
+        }, {} as Record<string, { count: number; total: number }>);
+
+        const paymentMethods = Object.entries(groupedData).map(([method, data]) => ({
+          method,
+          count: data.count,
+          total: data.total,
+        }));
+
+        setPaymentMethodsData(paymentMethods);
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+    }
+  };
+
   const fetchData = async (startDate?: string, endDate?: string) => {
     setLoading(true);
     await Promise.all([
       fetchStats(startDate, endDate),
       fetchUpcomingAppointments(),
       fetchRevenueData(startDate, endDate),
+      fetchPaymentMethods(startDate, endDate),
     ]);
     setLoading(false);
   };
@@ -291,6 +345,7 @@ export function useDashboardData() {
     stats,
     upcomingAppointments,
     monthlyRevenueData,
+    paymentMethodsData,
     loading,
     refetch,
     onDateRangeChange,

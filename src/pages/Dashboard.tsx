@@ -12,7 +12,8 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
-  TrendingDown
+  TrendingDown,
+  CreditCard
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,8 @@ export default function Dashboard() {
   const { 
     stats, 
     upcomingAppointments, 
-    monthlyRevenueData, 
+    monthlyRevenueData,
+    paymentMethodsData, 
     loading, 
     refetch,
     onDateRangeChange,
@@ -143,6 +145,35 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Methods */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center text-base sm:text-lg">
+            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            Formas de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {paymentMethodsData.length === 0 ? (
+              <p className="text-gray-500 text-sm">Nenhuma forma de pagamento registrada</p>
+            ) : (
+              paymentMethodsData.map((payment, index) => (
+                <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-xs sm:text-sm truncate capitalize">{payment.method}</p>
+                    <p className="text-xs text-gray-600">{payment.count} {payment.count === 1 ? 'pagamento' : 'pagamentos'}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p className="font-medium text-xs sm:text-sm text-green-600">{formatCurrency(payment.total)}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Status Overview - Ajustado para melhor responsividade */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
