@@ -422,11 +422,16 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         return;
       }
 
+      console.log('📄 Full record for print:', fullRecord);
+      console.log('📋 ICD codes:', fullRecord.icd_codes);
+
       // Buscar agendamentos vinculados
       const { data: linkedAppointments } = await supabase
         .from('record_appointments')
         .select('appointment_id')
         .eq('record_id', record.id);
+
+      console.log('🔗 Linked appointments:', linkedAppointments);
 
       const appointmentIds = linkedAppointments?.map(item => item.appointment_id) || [];
       
@@ -457,6 +462,20 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           .order('start_time', { ascending: false });
         
         appointmentsData = data || [];
+        console.log('📅 Appointments data:', appointmentsData);
+      }
+
+      // Parse ICD codes
+      let icdCodes: any[] = [];
+      if (fullRecord.icd_codes) {
+        try {
+          icdCodes = typeof fullRecord.icd_codes === 'string' 
+            ? JSON.parse(fullRecord.icd_codes) 
+            : fullRecord.icd_codes;
+          console.log('🏥 Parsed ICD codes:', icdCodes);
+        } catch (e) {
+          console.error('Error parsing ICD codes:', e);
+        }
       }
 
       // Criar conteúdo HTML para impressão
@@ -553,9 +572,10 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
 
           ${appointmentsData.length > 0 ? `
           <div class="section">
-            <h3>CONSULTAS VINCULADAS</h3>
-            ${appointmentsData.map(apt => `
+            <h3>CONSULTAS VINCULADAS (${appointmentsData.length})</h3>
+            ${appointmentsData.map((apt, index) => `
               <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #007bff;">
+                <div class="info-item"><strong>Consulta ${index + 1}:</strong></div>
                 <div class="info-item"><strong>Data/Hora:</strong> ${format(new Date(apt.start_time), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</div>
                 ${apt.procedures ? `<div class="info-item"><strong>Procedimento:</strong> ${apt.procedures.name}</div>` : ''}
               </div>
@@ -563,27 +583,18 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           </div>
           ` : ''}
 
-          ${fullRecord.icd_codes ? (() => {
-            try {
-              const icds = typeof fullRecord.icd_codes === 'string' ? JSON.parse(fullRecord.icd_codes) : fullRecord.icd_codes;
-              if (Array.isArray(icds) && icds.length > 0) {
-                return `
-                <div class="section">
-                  <h3>CÓDIGOS CID</h3>
-                  ${icds.map(icd => `
-                    <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #28a745;">
-                      <div class="info-item"><strong>Código:</strong> ${icd.code} (${icd.version})</div>
-                      <div class="info-item"><strong>Descrição:</strong> ${icd.title}</div>
-                    </div>
-                  `).join('')}
-                </div>
-                `;
-              }
-            } catch (e) {
-              console.error('Error parsing ICD codes for print:', e);
-            }
-            return '';
-          })() : ''}
+          ${icdCodes && Array.isArray(icdCodes) && icdCodes.length > 0 ? `
+          <div class="section">
+            <h3>CÓDIGOS CID (${icdCodes.length})</h3>
+            ${icdCodes.map((icd, index) => `
+              <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #28a745;">
+                <div class="info-item"><strong>CID ${index + 1}:</strong></div>
+                <div class="info-item"><strong>Código:</strong> ${icd.code} (${icd.version})</div>
+                <div class="info-item"><strong>Descrição:</strong> ${icd.title}</div>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
 
           ${fullRecord.content || fullRecord.notes ? `
           <div class="section">
