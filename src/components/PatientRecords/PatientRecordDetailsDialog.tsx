@@ -667,21 +667,24 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               /* Estilos para documentos na impressão */
               .document-item {
-                margin: 3px 0 !important;
-                padding: 4px !important;
+                margin: 0 auto 6px auto !important;
+                padding: 2px !important;
                 border: 1px solid #e5e7eb !important;
-                border-radius: 4px !important;
+                border-radius: 2px !important;
                 page-break-inside: avoid !important;
+                max-width: 50% !important;
+                text-align: center !important;
               }
               
               .document-info-bar {
                 margin-bottom: 2px !important;
-                padding-bottom: 2px !important;
+                padding: 2px 4px !important;
                 border-bottom: 1px solid #e5e7eb !important;
+                text-align: center !important;
               }
               
               .document-info-bar strong {
-                font-size: 10pt !important;
+                font-size: 9pt !important;
                 color: #000 !important;
                 display: block !important;
                 margin-bottom: 1px !important;
@@ -689,34 +692,38 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               
               .document-info-bar p {
                 margin: 0 !important;
+                font-size: 8pt !important;
               }
               
               .document-image-container {
                 text-align: center !important;
-                margin: 2px 0 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
               }
               
               .document-image-full { 
-                margin: 2px auto !important; 
+                margin: 0 auto !important; 
                 border: 1px solid #ddd !important; 
-                max-height: 300px !important;
-                width: 30% !important; 
-                max-width: 30% !important;
+                max-height: 200px !important;
+                width: auto !important; 
+                max-width: 100% !important;
                 height: auto !important;
                 object-fit: contain !important;
+                display: block !important;
               }
               
               .pdf-icon {
-                font-size: 16px !important;
-                margin-right: 4px !important;
+                font-size: 14px !important;
+                margin-right: 2px !important;
               }
               
               .pdf-info-box,
               .file-info-box {
-                padding: 4px !important;
+                padding: 3px !important;
                 background-color: #f9fafb !important;
-                border-radius: 4px !important;
-                margin-top: 2px !important;
+                border-radius: 2px !important;
+                margin: 0 !important;
+                text-align: center !important;
               }
               
               .signature-section {
