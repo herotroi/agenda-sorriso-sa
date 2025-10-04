@@ -65,11 +65,16 @@ export function DayView({
   };
 
   const getCardStyle = (type?: string) => {
-    if (type === 'vacation') return 'border-yellow-300 bg-yellow-50';
-    if (type === 'break') return 'border-gray-300 bg-gray-50';
+    if (type === 'vacation') return 'border-yellow-300 bg-yellow-50/90';
+    if (type === 'break') return 'border-gray-300 bg-gray-50/90';
     return '';
   };
 
+  const getZIndex = (type?: string) => {
+    if (type === 'break') return 50;
+    if (type === 'vacation') return 40;
+    return 30; // agendamentos normais
+  };
   const PX_PER_MIN = 1; // 1px por minuto
   const minutesFromMidnight = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
@@ -131,7 +136,7 @@ export function DayView({
               <Card
                 key={appointment.id}
                 className={`absolute left-0 right-0 cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
-                style={{ top: `${top}px`, height: `${height}px` }}
+                style={{ top: `${top}px`, height: `${height}px`, zIndex: getZIndex(itemType) }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
                 <CardContent className="p-3 h-full">
