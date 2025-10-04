@@ -348,47 +348,40 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         
         if (doc.mime_type.startsWith('image/')) {
           return `
-            <div class="document-embed page-break">
-              <div class="document-header">
-                <h4>${doc.name}</h4>
-                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+            <div class="document-item">
+              <div class="document-info-bar">
+                <strong>${doc.name}</strong>
+                ${doc.description ? `<p style="margin: 4px 0; font-size: 9pt; color: #666;">${doc.description}</p>` : ''}
               </div>
-              <div class="document-content">
+              <div class="document-image-container">
                 <img src="${docUrl}" alt="${doc.name}" class="document-image-full" />
               </div>
             </div>
           `;
         } else if (doc.mime_type === 'application/pdf') {
-          // Para PDFs, vamos tentar incorporar como imagem ou mostrar aviso
           return `
-            <div class="document-embed page-break">
-              <div class="document-header">
-                <h4>${doc.name}</h4>
-                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+            <div class="document-item pdf-item">
+              <div class="document-info-bar">
+                <span class="pdf-icon">📄</span>
+                <strong>${doc.name}</strong>
+                ${doc.description ? `<p style="margin: 4px 0; font-size: 9pt; color: #666;">${doc.description}</p>` : ''}
               </div>
-              <div class="document-content pdf-placeholder">
-                <div class="pdf-info">
-                  <div class="pdf-icon">📄</div>
-                  <h5>Documento PDF: ${doc.name}</h5>
-                  <p>Para visualizar o PDF completo, acesse: ${docUrl}</p>
-                  <p class="pdf-note">Este documento será impresso em página separada.</p>
-                </div>
+              <div class="pdf-info-box">
+                <p style="font-size: 9pt; margin: 4px 0;"><strong>Tipo:</strong> PDF</p>
+                <p style="font-size: 8pt; margin: 4px 0; color: #666;">Acesso: ${docUrl}</p>
               </div>
             </div>
           `;
         } else {
           return `
-            <div class="document-embed">
-              <div class="document-header">
-                <h4>${doc.name}</h4>
-                ${doc.description ? `<p class="document-description">${doc.description}</p>` : ''}
+            <div class="document-item file-item">
+              <div class="document-info-bar">
+                <strong>${doc.name}</strong>
+                ${doc.description ? `<p style="margin: 4px 0; font-size: 9pt; color: #666;">${doc.description}</p>` : ''}
               </div>
-              <div class="document-content file-placeholder">
-                <div class="file-info">
-                  <p><strong>Arquivo:</strong> ${doc.name}</p>
-                  <p><strong>Tipo:</strong> ${doc.mime_type}</p>
-                  <p><strong>Acesso:</strong> ${docUrl}</p>
-                </div>
+              <div class="file-info-box">
+                <p style="font-size: 9pt; margin: 4px 0;"><strong>Tipo:</strong> ${doc.mime_type}</p>
+                <p style="font-size: 8pt; margin: 4px 0; color: #666;">Acesso: ${docUrl}</p>
               </div>
             </div>
           `;
@@ -398,9 +391,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       const resolvedDocuments = await Promise.all(documentPromises);
       
       documentsEmbedHtml = `
-        <div class="documents-section">
-          <h3 class="section-title">Documentos Anexados (${selectedDocs.length})</h3>
-          ${resolvedDocuments.join('')}
+        <div class="medical-section">
+          <div class="section-header">Documentos Anexados (${selectedDocs.length})</div>
+          <div class="section-content">
+            ${resolvedDocuments.join('')}
+          </div>
         </div>
       `;
     }
@@ -670,22 +665,51 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                 min-height: 0 !important;
               }
               
-              /* Compactar documentos/imagens na impressão */
-              .documents-section { margin-top: 0 !important; }
-              .document-header { display: none !important; }
-              .document-embed { 
-                page-break-before: auto !important; 
-                page-break-inside: avoid !important; 
-                margin: 0 !important; 
-                padding: 0 !important;
+              /* Estilos para documentos na impressão */
+              .document-item {
+                margin: 12px 0 !important;
+                padding: 8px !important;
+                border: 1px solid #e5e7eb !important;
+                border-radius: 4px !important;
+                page-break-inside: avoid !important;
               }
-              .document-content { margin: 0 !important; padding: 0 !important; }
+              
+              .document-info-bar {
+                margin-bottom: 8px !important;
+                padding-bottom: 6px !important;
+                border-bottom: 1px solid #e5e7eb !important;
+              }
+              
+              .document-info-bar strong {
+                font-size: 10pt !important;
+                color: #000 !important;
+              }
+              
+              .document-image-container {
+                text-align: center !important;
+                margin: 8px 0 !important;
+              }
+              
               .document-image-full { 
-                margin: 0 auto 4px !important; 
-                border: none !important; 
+                margin: 8px auto !important; 
+                border: 1px solid #ddd !important; 
                 max-height: 400px !important;
-                width: 50% !important; 
-                max-width: 50% !important;
+                width: 60% !important; 
+                max-width: 60% !important;
+                height: auto !important;
+                object-fit: contain !important;
+              }
+              
+              .pdf-icon {
+                font-size: 16px !important;
+                margin-right: 6px !important;
+              }
+              
+              .pdf-info-box,
+              .file-info-box {
+                padding: 8px !important;
+                background-color: #f9fafb !important;
+                border-radius: 4px !important;
               }
               
               .signature-section {
