@@ -134,8 +134,7 @@ export function useAppointmentFormSubmit(
         const { error: updateError } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointmentToEdit.id)
-          .eq('user_id', user.id);
+          .eq('id', appointmentToEdit.id);
         error = updateError;
       } else {
         const { error: insertError } = await supabase

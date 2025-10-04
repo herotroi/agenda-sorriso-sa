@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +20,9 @@ export function useAppointmentFormData(
   const [statuses, setStatuses] = useState<AppointmentStatus[]>([]);
   const [originalData, setOriginalData] = useState<AppointmentFormData | null>(null);
   const [fieldModified, setFieldModified] = useState<Record<string, boolean>>({});
+  
+  const initializedRef = useRef(false);
+  const lastIdRef = useRef<string | null>(null);
 
   const [formData, setFormData] = useState<AppointmentFormData>({
     patient_id: '',
@@ -154,6 +157,20 @@ export function useAppointmentFormData(
   }, [isOpen, user]);
 
   useEffect(() => {
+    // Prevenir re-inicialização durante edições
+    const currentId = appointmentToEdit?.id || null;
+    const shouldInitialize = !initializedRef.current || lastIdRef.current !== currentId || !isOpen;
+    
+    if (!isOpen) {
+      initializedRef.current = false;
+      lastIdRef.current = null;
+      return;
+    }
+    
+    if (!shouldInitialize) {
+      return;
+    }
+    
     if (appointmentToEdit) {
       const startTime = new Date(appointmentToEdit.start_time);
       const endTime = new Date(appointmentToEdit.end_time);
@@ -196,8 +213,11 @@ export function useAppointmentFormData(
       setFormData(newData);
       setOriginalData(null);
     }
+    
     setFieldModified({});
-  }, [appointmentToEdit, selectedDate, selectedProfessionalId, isOpen]);
+    initializedRef.current = true;
+    lastIdRef.current = currentId;
+  }, [isOpen, appointmentToEdit?.id, selectedDate, selectedProfessionalId]);
 
   return {
     patients,
