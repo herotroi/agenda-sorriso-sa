@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Check } from 'lucide-react';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
-import { ForgotPasswordForm } from './ForgotPasswordForm';
+import { PasswordRecoveryFlow } from './PasswordRecoveryFlow';
 
 interface AuthTabsProps {
   onSignIn: (email: string, password: string) => Promise<void>;
@@ -17,14 +18,15 @@ interface AuthTabsProps {
   isLoading: boolean;
 }
 
-export const AuthTabs = ({ 
-  onSignIn, 
-  onSignUp, 
-  onResetPassword, 
-  error, 
-  successMessage, 
-  isLoading 
+export const AuthTabs = ({
+  onSignIn,
+  onSignUp,
+  onResetPassword,
+  error,
+  successMessage,
+  isLoading
 }: AuthTabsProps) => {
+  const navigate = useNavigate();
   return (
     <div className="max-w-md mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
       <Card className="shadow-2xl border-border/50 backdrop-blur-sm bg-card/95 overflow-hidden">
@@ -85,7 +87,7 @@ export const AuthTabs = ({
             </TabsContent>
 
             <TabsContent value="reset" className="mt-6">
-              <ForgotPasswordForm onSubmit={onResetPassword} isLoading={isLoading} />
+              <PasswordRecoveryFlow onSuccess={() => navigate('/dashboard')} />
             </TabsContent>
           </Tabs>
         </CardContent>

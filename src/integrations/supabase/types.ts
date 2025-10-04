@@ -190,6 +190,45 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          request_user_agent: string | null
+          requested_ip: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          request_user_agent?: string | null
+          requested_ip?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          request_user_agent?: string | null
+          requested_ip?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       patient_records: {
         Row: {
           appointment_id: string | null
@@ -767,6 +806,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_reset_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_user_usage_stats: {
         Args: { p_user_id: string }
         Returns: {
