@@ -958,8 +958,8 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={selectedAppointments.includes(appointment.id)}
-                          onCheckedChange={() => handleAppointmentToggle(appointment.id)}
-                          className="mt-1"
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1 pointer-events-none"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
