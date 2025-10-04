@@ -60,9 +60,9 @@ export function DocumentUploadDialog({ onDocumentUpload }: DocumentUploadDialogP
   return (
     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Adicionar Documento do Cliente
+        <Button size="sm" className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4">
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+          <span className="truncate">Adicionar Documento do Cliente</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
