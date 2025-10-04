@@ -91,7 +91,7 @@ export default function Dashboard() {
     const reportAppointmentDetails = appointmentDetails.map(ad => ({
       datetime: ad.start_time,
       patient_name: ad.patient_name,
-      procedure_name: null,
+      procedure_name: ad.procedure_name,
       professional_name: ad.professional_name,
       status_name: ad.status_name,
       price: ad.price

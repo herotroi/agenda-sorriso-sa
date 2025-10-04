@@ -38,6 +38,7 @@ interface AppointmentDetail {
   id: string;
   patient_name: string;
   professional_name: string;
+  procedure_name: string | null;
   start_time: string;
   price: number | null;
   payment_method: string | null;
@@ -481,6 +482,7 @@ export function useDashboardData() {
           is_blocked,
           patients(full_name),
           professionals(name),
+          procedures(name),
           appointment_statuses(label)
         `)
         .eq('user_id', user.id)
@@ -499,6 +501,7 @@ export function useDashboardData() {
           id: apt.id,
           patient_name: apt.is_blocked ? 'Horário Bloqueado' : (apt.patients?.full_name || 'Paciente não informado'),
           professional_name: apt.professionals?.name || 'Profissional não informado',
+          procedure_name: apt.is_blocked ? null : (apt.procedures?.name || null),
           start_time: apt.start_time,
           price: apt.price,
           payment_method: apt.payment_method,
