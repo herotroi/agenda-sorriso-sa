@@ -368,18 +368,16 @@
     margin: 10mm;
   }
 
-  body {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  /* Focus print on the report */
-  body * {
-    visibility: hidden !important;
-  }
-  [data-print-report],
-  [data-print-report] * {
-    visibility: visible !important;
+  /* Hide everything except the report */
+  body > *:not(:has([data-print-report])) {
+    display: none !important;
   }
 
   /* Hide dialog overlays and navigation */
@@ -392,16 +390,15 @@
     display: none !important;
   }
 
-  /* Show only report content */
+  /* Center and constrain report to printable area */
   [data-print-report] {
     display: block !important;
-    max-width: 100% !important;
-    margin: 0 !important;
+    position: static !important;
+    width: auto !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   /* Remove dialog styles for print */
@@ -443,9 +440,15 @@
     color: #6b7280 !important;
   }
 
-  /* Ensure tables don't break */
+  /* Ensure tables don't break and handle overflow */
   table {
     page-break-inside: auto;
+    table-layout: fixed !important;
+    word-break: break-word !important;
+  }
+
+  th, td {
+    word-wrap: break-word !important;
   }
 
   tr {

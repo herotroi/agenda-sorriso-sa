@@ -111,7 +111,7 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
   };
 
   return (
-    <div className="space-y-6 p-8 bg-white print:p-0 print:space-y-2" data-print-report>
+    <div className="space-y-6 p-8 bg-white print:p-0 print:space-y-2 print:max-w-[190mm] print:mx-auto" data-print-report>
       {/* Header */}
       <div className="text-center border-b pb-4 print:pb-1 print:mb-1">
         <h1 className="text-3xl font-bold text-gray-900 print:text-base">Relatório de Vendas e Serviços</h1>
