@@ -68,7 +68,9 @@ const getPaymentStatusLabel = (status: string | null) => {
   const labels: Record<string, string> = {
     'pago': 'Pago',
     'pendente': 'Pendente',
-    'cancelado': 'Cancelado'
+    'cancelado': 'Cancelado',
+    'nao_pagou': 'Não Pagou',
+    'pagamento_realizado': 'Pagamento Realizado'
   };
   return status ? labels[status] || status : 'Não informado';
 };
