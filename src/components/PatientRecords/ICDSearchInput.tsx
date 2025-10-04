@@ -91,7 +91,7 @@ export function ICDSearchInput({ onSelect, initialCode, initialVersion }: ICDSea
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="icd-search">Código CID</Label>
+      <Label htmlFor="icd-search">CID (código ou descrição)</Label>
       <div className="flex gap-2">
         <Select value={version} onValueChange={(v) => setVersion(v as '10' | '11')}>
           <SelectTrigger className="w-32">
@@ -111,7 +111,7 @@ export function ICDSearchInput({ onSelect, initialCode, initialVersion }: ICDSea
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim().length >= 2 && setShowResults(true)}
-              placeholder={`Buscar código ${version === '10' ? 'CID-10' : 'CID-11'}...`}
+              placeholder="Buscar por código ou descrição..."
               className="pr-10"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">

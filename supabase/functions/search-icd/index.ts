@@ -5,6 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Normalização para português brasileiro (remove acentos)
+function normalizePTBR(str: string): string {
+  return str.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+// Aliases comuns em português para termos médicos
+const ALIASES_PT: Record<string, string> = {
+  'tdah': 'transtorno do déficit de atenção e hiperatividade',
+  'avc': 'acidente vascular cerebral',
+  'iam': 'infarto agudo do miocárdio',
+  'has': 'hipertensão arterial sistêmica',
+  'dpoc': 'doença pulmonar obstrutiva crônica',
+  'toc': 'transtorno obsessivo compulsivo',
+  'tept': 'transtorno de estresse pós-traumático',
+};
+
 // Cache do token OAuth (válido por 1 hora)
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -13,7 +31,6 @@ async function getOAuthToken(): Promise<string> {
   
   // Retorna token em cache se ainda válido
   if (cachedToken && cachedToken.expiresAt > now) {
-    console.log('Using cached OAuth token');
     return cachedToken.token;
   }
 
@@ -83,6 +100,9 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
   const isCode = /^[A-Z0-9.]+$/i.test(query);
   const Q = query.toUpperCase().replace(/[^A-Z0-9.]/g, '');
   const searchText = query.toLowerCase().trim();
+  const normalizedQuery = normalizePTBR(query);
+
+  console.log(`CID-10 search - query: "${query}", isCode: ${isCode}`);
 
   // Capítulos principais do CID-10 para busca por texto
   const chapters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
@@ -152,10 +172,13 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
       if (allNodes.length > 0) break;
     }
 
-    // Filtrar por texto
+    // Filtrar por texto usando normalização (accent-insensitive)
     const filtered = allNodes
       .filter(n => /^[A-Z][0-9A-Z.]*$/.test(n.code))
-      .filter(n => n.title.toLowerCase().includes(searchText))
+      .filter(n => {
+        const normalizedTitle = normalizePTBR(n.title);
+        return normalizedTitle.includes(normalizedQuery);
+      })
       .map(n => ({ code: n.code.toUpperCase(), title: n.title }));
 
     // Deduplicate
@@ -165,15 +188,16 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
     const results = Array.from(unique.values());
     results.sort((a, b) => {
       // Ordenar por relevância: títulos que começam com o texto primeiro
-      const aTitleLower = a.title.toLowerCase();
-      const bTitleLower = b.title.toLowerCase();
-      const aStarts = aTitleLower.startsWith(searchText);
-      const bStarts = bTitleLower.startsWith(searchText);
+      const aTitleNorm = normalizePTBR(a.title);
+      const bTitleNorm = normalizePTBR(b.title);
+      const aStarts = aTitleNorm.startsWith(normalizedQuery);
+      const bStarts = bTitleNorm.startsWith(normalizedQuery);
       if (aStarts && !bStarts) return -1;
       if (bStarts && !aStarts) return 1;
-      return aTitleLower.localeCompare(bTitleLower);
+      return aTitleNorm.localeCompare(bTitleNorm);
     });
 
+    console.log(`CID-10 text search found ${results.length} results`);
     return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
   }
 
@@ -204,14 +228,7 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
   return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
 }
 
-async function searchICD(query: string, version: string, language: string = 'pt-BR'): Promise<any[]> {
-  const lang = language && language.toLowerCase().startsWith('pt') ? 'pt-BR' : (language || 'pt-BR');
-  
-  if (version === '10') {
-    const results = await searchICD10(query.trim(), lang);
-    return results;
-  }
-
+async function searchICD11(query: string, language: string): Promise<any[]> {
   const token = await getOAuthToken();
 
   // CID-11 (com busca oficial)
@@ -226,9 +243,6 @@ async function searchICD(query: string, version: string, language: string = 'pt-
     flatResults: 'true',
   });
   const searchUrl = `${baseUrl}?${searchParams.toString()}`;
-  
-  console.log(`Searching ICD-11 for query: "${query}"`);
-  console.log(`Search URL: ${searchUrl}`);
 
   const searchResponse = await fetch(searchUrl, {
     method: 'GET',
@@ -236,36 +250,33 @@ async function searchICD(query: string, version: string, language: string = 'pt-
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
       'API-Version': 'v2',
-      'Accept-Language': lang,
+      'Accept-Language': language,
     },
   });
 
   if (!searchResponse.ok) {
     const errorText = await searchResponse.text();
     console.error('ICD search error:', errorText);
-    throw new Error(`Failed to search ICD-11`);
+    return [];
   }
 
   const searchData = await searchResponse.json();
   
   // Formatar resultados
   let results = (searchData.destinationEntities || []).map((entity: any) => {
-    // Preferir o código retornado pela API (theCode)
     const rawCode: string | undefined = entity.theCode;
 
-    // Remover tags HTML do título (a API destaca o termo com <em>)
+    // Remover tags HTML do título
     const title = String(entity.title || 'Sem título')
       .replace(/<em class='found'>/g, '')
       .replace(/<\/em>/g, '');
 
-    // Se não houver theCode, tentar extrair do id, mas apenas se for um formato simples
     let fallbackCode = '';
     if (!rawCode && entity.id) {
       const match = String(entity.id).match(/\/([A-Z0-9.]+)$/);
       fallbackCode = match ? match[1] : '';
     }
 
-    // Escolher o código final e validar para aceitar apenas formatos simples (sem espaços, & etc.)
     const code = String(rawCode || fallbackCode).toUpperCase();
     const isValidCode = /^[A-Z0-9.]+$/.test(code);
 
@@ -278,10 +289,9 @@ async function searchICD(query: string, version: string, language: string = 'pt-
       __valid: Boolean(code) && isValidCode,
     } as any;
   })
-  // Manter apenas resultados com código válido
   .filter((r: any) => r.__valid);
 
-  // Se a query parece ser um código (ex.: "6A", "A00.0"), filtrar para começar com a query
+  // Se a query parece ser um código, filtrar
   const isCodeSearch = /^[A-Z0-9.]+$/i.test(query);
   if (isCodeSearch && query.length >= 2) {
     const q = query.toUpperCase();
@@ -290,17 +300,14 @@ async function searchICD(query: string, version: string, language: string = 'pt-
     if (startsWithMatches.length > 0) {
       results = startsWithMatches;
     } else {
-      // Se não houver início exato, tentar códigos que contenham a query
       const containsMatches = results.filter((r: any) => r.code.includes(q));
       if (containsMatches.length > 0) {
         results = containsMatches;
       } else {
-        // Nenhum código combina: preferimos retornar vazio para evitar ruído
         results = [];
       }
     }
 
-    // Ordenar: igualdade perfeita primeiro, depois começa com + menor código
     results.sort((a: any, b: any) => {
       const au = a.code.toUpperCase();
       const bu = b.code.toUpperCase();
@@ -308,20 +315,83 @@ async function searchICD(query: string, version: string, language: string = 'pt-
       if (bu === q && au !== q) return 1;
       if (au.startsWith(q) && !bu.startsWith(q)) return -1;
       if (bu.startsWith(q) && !au.startsWith(q)) return 1;
-      // Menor tamanho e ordem lexicográfica como desempate
       if (au.length !== bu.length) return au.length - bu.length;
       return au.localeCompare(bu);
     });
   } else {
-    // Busca por texto: ordenar por score desc e então título
     results.sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0) || String(a.title).localeCompare(String(b.title)));
   }
 
-  // Limitar para não poluir o dropdown
-  results = results.slice(0, 20);
+  return results.slice(0, 20);
+}
 
-  console.log(`Found ${results.length} results for ICD-11`);
-  return results;
+async function searchICD(query: string, version: string, language: string = 'pt-BR'): Promise<any[]> {
+  const lang = language && language.toLowerCase().startsWith('pt') ? 'pt-BR' : (language || 'pt-BR');
+  const normalizedQuery = normalizePTBR(query);
+  const isCodeSearch = version === '10' 
+    ? /^[A-Z]\d{2}(\.\d{1,2})?$/i.test(query.trim())
+    : /^\d[A-Z0-9]{2,}(\.\d+)?$/i.test(query.trim());
+  
+  console.log(`Search ICD - version: ${version}, query: "${query}", isCode: ${isCodeSearch}`);
+  
+  // Verificar se há alias para expandir o termo
+  let expandedQuery: string | null = null;
+  if (!isCodeSearch) {
+    const queryKey = normalizedQuery.trim();
+    if (ALIASES_PT[queryKey]) {
+      expandedQuery = ALIASES_PT[queryKey];
+      console.log(`Alias found - expanding "${query}" to "${expandedQuery}"`);
+    }
+  }
+  
+  // Busca na versão selecionada
+  let results: any[] = [];
+  
+  if (version === '10') {
+    results = await searchICD10(query.trim(), lang);
+  } else {
+    results = await searchICD11(query.trim(), lang);
+  }
+  
+  console.log(`Initial search (version ${version}) found ${results.length} results`);
+  
+  // Se não houver resultados e não for busca por código, tentar na outra versão (fallback)
+  if (results.length === 0 && !isCodeSearch) {
+    const otherVersion = version === '10' ? '11' : '10';
+    console.log(`No results found, trying fallback to CID-${otherVersion}`);
+    
+    const fallbackResults = otherVersion === '10' 
+      ? await searchICD10(query.trim(), lang)
+      : await searchICD11(query.trim(), lang);
+    
+    if (fallbackResults.length > 0) {
+      console.log(`Fallback to CID-${otherVersion} found ${fallbackResults.length} results`);
+      results = fallbackResults;
+    }
+  }
+  
+  // Se houver termo expandido (alias) e ainda não temos muitos resultados, buscar com termo expandido no CID-11
+  if (expandedQuery && results.length < 10) {
+    console.log(`Searching with expanded term in CID-11: "${expandedQuery}"`);
+    const expandedResults = await searchICD11(expandedQuery, lang);
+    
+    if (expandedResults.length > 0) {
+      // Mesclar sem duplicar por código
+      const existingCodes = new Set(results.map(r => r.code));
+      expandedResults.forEach((r: any) => {
+        if (!existingCodes.has(r.code)) {
+          results.push(r);
+        }
+      });
+      console.log(`Expanded term search added ${expandedResults.filter(r => !existingCodes.has(r.code)).length} new results`);
+    }
+  }
+  
+  // Limitar a 20 resultados
+  const finalResults = results.slice(0, 20);
+  console.log(`Returning ${finalResults.length} total results`);
+  
+  return finalResults;
 }
 
 serve(async (req) => {
