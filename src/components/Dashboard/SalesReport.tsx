@@ -8,7 +8,8 @@ import {
   XCircle,
   AlertCircle,
   CreditCard,
-  FileCheck
+  FileCheck,
+  Users
 } from 'lucide-react';
 
 interface SalesReportProps {
@@ -32,13 +33,18 @@ interface SalesReportProps {
     count: number;
     total: number;
   }>;
+  professionalAppointmentsData: Array<{
+    professionalId: string;
+    professionalName: string;
+    appointmentCount: number;
+  }>;
   dateRange: {
     start: Date;
     end: Date;
   };
 }
 
-export function SalesReport({ stats, paymentMethodsData, paymentStatusData, dateRange }: SalesReportProps) {
+export function SalesReport({ stats, paymentMethodsData, paymentStatusData, professionalAppointmentsData, dateRange }: SalesReportProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -209,6 +215,49 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, date
                         <td className={`py-3 px-4 text-right font-semibold ${statusColor}`}>
                           {formatCurrency(status.total)}
                         </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Agendamentos por Profissional */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <Users className="h-5 w-5 mr-2" />
+          Agendamentos por Profissional
+        </h2>
+        <Card>
+          <CardContent className="pt-6">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4 font-semibold text-gray-700">Profissional</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">Nº de Agendamentos</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">% do Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {professionalAppointmentsData.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4 text-gray-500">
+                      Nenhum profissional cadastrado
+                    </td>
+                  </tr>
+                ) : (
+                  professionalAppointmentsData.map((prof, index) => {
+                    const totalAppointments = professionalAppointmentsData.reduce((sum, p) => sum + p.appointmentCount, 0);
+                    const percentage = totalAppointments > 0 ? ((prof.appointmentCount / totalAppointments) * 100).toFixed(1) : '0.0';
+                    
+                    return (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">{prof.professionalName}</td>
+                        <td className="py-3 px-4 text-center font-semibold text-blue-600">{prof.appointmentCount}</td>
+                        <td className="py-3 px-4 text-center text-gray-600">{percentage}%</td>
                       </tr>
                     );
                   })

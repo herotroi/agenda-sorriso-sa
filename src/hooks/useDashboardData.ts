@@ -28,6 +28,12 @@ interface PaymentStatusData {
   total: number;
 }
 
+interface ProfessionalAppointmentData {
+  professionalId: string;
+  professionalName: string;
+  appointmentCount: number;
+}
+
 interface RevenueData {
   name: string;
   value: number;
@@ -63,6 +69,7 @@ export function useDashboardData() {
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<RevenueData[]>([]);
   const [paymentMethodsData, setPaymentMethodsData] = useState<PaymentMethodData[]>([]);
   const [paymentStatusData, setPaymentStatusData] = useState<PaymentStatusData[]>([]);
+  const [professionalAppointmentsData, setProfessionalAppointmentsData] = useState<ProfessionalAppointmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDateRange, setCurrentDateRange] = useState<DateRange>({
     start: new Date(new Date().getFullYear(), 0, 1),
@@ -373,6 +380,55 @@ export function useDashboardData() {
     }
   };
 
+  const fetchProfessionalAppointments = async (startDate?: string, endDate?: string) => {
+    if (!user) return;
+    
+    try {
+      // Buscar todos os profissionais ativos
+      const { data: professionals } = await supabase
+        .from('professionals')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('name');
+
+      if (!professionals) return;
+
+      // Buscar agendamentos do período
+      let appointmentsQuery = supabase
+        .from('appointments')
+        .select('professional_id')
+        .eq('user_id', user.id);
+
+      if (startDate && endDate) {
+        appointmentsQuery = appointmentsQuery
+          .gte('start_time', startDate)
+          .lte('start_time', endDate);
+      }
+
+      const { data: appointments } = await appointmentsQuery;
+
+      // Contar agendamentos por profissional
+      const appointmentCounts = appointments?.reduce((acc, app) => {
+        if (app.professional_id) {
+          acc[app.professional_id] = (acc[app.professional_id] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      // Mapear todos os profissionais com suas contagens
+      const professionalData = professionals.map(prof => ({
+        professionalId: prof.id,
+        professionalName: prof.name,
+        appointmentCount: appointmentCounts[prof.id] || 0,
+      }));
+
+      setProfessionalAppointmentsData(professionalData);
+    } catch (error) {
+      console.error('Error fetching professional appointments:', error);
+    }
+  };
+
   const fetchData = async (startDate?: string, endDate?: string) => {
     setLoading(true);
     await Promise.all([
@@ -381,6 +437,7 @@ export function useDashboardData() {
       fetchRevenueData(startDate, endDate),
       fetchPaymentMethods(startDate, endDate),
       fetchPaymentStatus(startDate, endDate),
+      fetchProfessionalAppointments(startDate, endDate),
     ]);
     setLoading(false);
   };
@@ -409,6 +466,7 @@ export function useDashboardData() {
     monthlyRevenueData,
     paymentMethodsData,
     paymentStatusData,
+    professionalAppointmentsData,
     loading,
     refetch,
     onDateRangeChange,
