@@ -57,7 +57,7 @@ export function ProfessionalColumn({
   ) : [];
 
   return (
-    <div className="border-r border-gray-100 last:border-r-0 relative w-full">
+    <div className="border-r border-gray-100 last:border-r-0 relative w-full overflow-hidden">
       <div className="relative min-h-full">
         {timeSlots.map((slot) => {
           const hasAppointment = appointments.some(apt => {
@@ -82,48 +82,52 @@ export function ProfessionalColumn({
         })}
         
         {/* Blocos de tempo (folgas e férias) posicionados absolutamente */}
-        <div className="absolute inset-0 pointer-events-none">
-          {professionalTimeBlocks.map((timeBlock) => {
-            const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
-            
-            return (
-              <TimeBlock
-                key={timeBlock.id}
-                timeBlock={timeBlock}
-                position={position}
-              />
-            );
-          })}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 px-1">
+            {professionalTimeBlocks.map((timeBlock) => {
+              const position = getItemPosition(timeBlock.start_time, timeBlock.end_time);
+              
+              return (
+                <TimeBlock
+                  key={timeBlock.id}
+                  timeBlock={timeBlock}
+                  position={position}
+                />
+              );
+            })}
+          </div>
         </div>
         
         {/* Agendamentos posicionados absolutamente */}
-        <div className="absolute inset-0 pointer-events-none">
-          {appointments.map((appointment) => {
-            const position = getItemPosition(appointment.start_time, appointment.end_time);
-            
-            const draggableAppointment = {
-              id: appointment.id,
-              patient_id: appointment.patient_id,
-              professional_id: appointment.professional_id,
-              start_time: appointment.start_time,
-              end_time: appointment.end_time,
-              status_id: appointment.status_id,
-              patients: appointment.patients,
-              procedures: appointment.procedures,
-              appointment_statuses: appointment.appointment_statuses
-            };
-            
-            return (
-              <div key={appointment.id} className="pointer-events-auto">
-                <DraggableAppointment
-                  appointment={draggableAppointment}
-                  professionalColor={professional.calendarColor || professional.color}
-                  position={position}
-                  onClick={() => onAppointmentClick(appointment)}
-                />
-              </div>
-            );
-          })}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 px-1">
+            {appointments.map((appointment) => {
+              const position = getItemPosition(appointment.start_time, appointment.end_time);
+              
+              const draggableAppointment = {
+                id: appointment.id,
+                patient_id: appointment.patient_id,
+                professional_id: appointment.professional_id,
+                start_time: appointment.start_time,
+                end_time: appointment.end_time,
+                status_id: appointment.status_id,
+                patients: appointment.patients,
+                procedures: appointment.procedures,
+                appointment_statuses: appointment.appointment_statuses
+              };
+              
+              return (
+                <div key={appointment.id} className="pointer-events-auto">
+                  <DraggableAppointment
+                    appointment={draggableAppointment}
+                    professionalColor={professional.calendarColor || professional.color}
+                    position={position}
+                    onClick={() => onAppointmentClick(appointment)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

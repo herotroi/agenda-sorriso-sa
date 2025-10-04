@@ -87,7 +87,7 @@ export function CalendarGrid({
     <div className="flex-1 bg-white rounded-lg shadow overflow-hidden">
       <div 
         ref={headerScrollRef}
-        className="flex border-b border-gray-200 overflow-x-auto"
+        className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide"
       >
         <div className="w-12 sm:w-20 flex-shrink-0 bg-gray-50 border-r border-gray-200">
           <div className="h-10 sm:h-12 flex items-center justify-center text-xs sm:text-sm font-medium text-gray-500">
@@ -118,7 +118,7 @@ export function CalendarGrid({
 
       <div 
         ref={scrollContainerRef}
-        className="overflow-y-auto overflow-x-auto"
+        className="overflow-y-auto overflow-x-auto scrollbar-hide"
         style={{ height: containerHeight }}
       >
         <div className="flex relative min-w-fit">
@@ -135,9 +135,9 @@ export function CalendarGrid({
             ))}
           </div>
 
-          <div className="flex min-w-fit relative">
+          <div className="flex min-w-fit relative flex-1">
             {professionals.map((professional) => (
-              <div key={professional.id} className="min-w-[140px] sm:min-w-[180px]">
+              <div key={professional.id} className="min-w-[140px] sm:min-w-[180px] relative">
                 <ProfessionalColumn
                   professional={professional}
                   selectedDate={currentDate}

@@ -63,16 +63,18 @@ export function CalendarContent({
         selectedDate={selectedDate}
       />
       
-      <div className={`${isMobile ? 'overflow-x-auto' : ''}`}>
-        <CalendarGrid
-          currentDate={selectedDate}
-          professionals={mappedProfessionals}
-          appointments={appointments}
-          onAppointmentClick={onAppointmentClick}
-          onTimeSlotClick={(professionalId: string, startTime: Date) => {
-            // Handle time slot click
-          }}
-        />
+      <div className="w-full">
+        <div className={`${isMobile ? 'overflow-x-auto -mx-3 px-3' : ''}`}>
+          <CalendarGrid
+            currentDate={selectedDate}
+            professionals={mappedProfessionals}
+            appointments={appointments}
+            onAppointmentClick={onAppointmentClick}
+            onTimeSlotClick={(professionalId: string, startTime: Date) => {
+              // Handle time slot click
+            }}
+          />
+        </div>
       </div>
     </div>
   );
