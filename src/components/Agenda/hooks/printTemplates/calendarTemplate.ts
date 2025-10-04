@@ -91,12 +91,8 @@ export const generateCalendarPrintTemplate = (
 
   const hours = generateHours();
   const currentDate = getCurrentDate();
-  // Usar selectedDate se fornecida, senão usar data atual
-  const dateForBlocks = selectedDate || new Date();
-  
-  // Gerar blocos de tempo (pausas e férias) usando a data correta
-  const timeBlocks = generateTimeBlocks(professionals, dateForBlocks);
-  console.log('Time blocks generated:', timeBlocks.length);
+  // Pausas e férias desativadas para impressão
+  const timeBlocks: any[] = [];
   
   // Create header row with professional names
   const headerCells = professionals.map(prof => 
