@@ -14,6 +14,8 @@ import { FileText, Stethoscope, Pill, Calendar, User, Upload, X, Download, Eye, 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EditableRichTextEditor } from './EditableRichTextEditor';
+import { ICDMultiSelect } from './ICDMultiSelect';
+import { ICDCode } from '@/types/prontuario';
 
 interface PatientRecord {
   id: string;
@@ -85,6 +87,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [files, setFiles] = useState<FileUpload[]>([]);
+  const [selectedIcds, setSelectedIcds] = useState<ICDCode[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
@@ -158,6 +161,30 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       });
       
       setFormData(newFormData);
+      
+      // Carregar ICD codes
+      const recordWithIcds = data as any;
+      if (recordWithIcds.icd_codes) {
+        try {
+          const parsedIcds = typeof recordWithIcds.icd_codes === 'string' 
+            ? JSON.parse(recordWithIcds.icd_codes) 
+            : recordWithIcds.icd_codes;
+          setSelectedIcds(Array.isArray(parsedIcds) ? parsedIcds : []);
+        } catch (e) {
+          console.error('Error parsing icd_codes:', e);
+          setSelectedIcds([]);
+        }
+      } else if (recordWithIcds.icd_code && recordWithIcds.icd_version) {
+        // Migrar dado legado
+        setSelectedIcds([{
+          code: recordWithIcds.icd_code,
+          version: recordWithIcds.icd_version,
+          title: `${recordWithIcds.icd_code} - ${recordWithIcds.icd_version}`
+        }]);
+      } else {
+        setSelectedIcds([]);
+      }
+      
       setDataLoaded(true);
       console.log('✅ Data marked as loaded');
       
@@ -753,6 +780,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         prescription: formData.prescription?.trim() || null,
         appointment_id: selectedAppointments.length > 0 ? selectedAppointments[0] : null,
         professional_id: formData.professional_id || null,
+        icd_codes: selectedIcds.length > 0 ? JSON.stringify(selectedIcds) : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -984,6 +1012,15 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
               placeholder="Ex: Consulta de retorno, Primeira consulta, etc."
               className="h-12"
               required
+            />
+          </div>
+
+          {/* CID Codes */}
+          <div className="space-y-2">
+            <ICDMultiSelect
+              selectedCodes={selectedIcds}
+              onCodesChange={setSelectedIcds}
+              maxCodes={10}
             />
           </div>
 
