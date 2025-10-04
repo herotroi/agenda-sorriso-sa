@@ -222,6 +222,7 @@ export function PasswordChangeSection() {
           <Button 
             onClick={handlePasswordChange} 
             disabled={loading || !isFormValid}
+            className="w-full sm:w-auto"
           >
             {loading ? 'Alterando...' : 'Alterar Senha'}
           </Button>

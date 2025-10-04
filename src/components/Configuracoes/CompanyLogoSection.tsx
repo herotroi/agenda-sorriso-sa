@@ -175,7 +175,7 @@ export function CompanyLogoSection() {
           </div>
         </div>
 
-        <Button onClick={handleSave} className="w-full" disabled={isUploading}>
+        <Button onClick={handleSave} className="w-full sm:w-auto" disabled={isUploading}>
           <Save className="h-4 w-4 mr-2" />
           {isUploading ? 'Salvando...' : 'Salvar Informações'}
         </Button>
