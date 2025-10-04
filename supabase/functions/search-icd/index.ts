@@ -203,7 +203,6 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
 
   return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
 }
-}
 
 async function searchICD(query: string, version: string, language: string = 'pt-BR'): Promise<any[]> {
   const lang = language && language.toLowerCase().startsWith('pt') ? 'pt-BR' : (language || 'pt-BR');
