@@ -40,17 +40,13 @@ export function ICDSearchInput({ onSelect, initialCode, initialVersion }: ICDSea
         if (useVersion !== version) setVersion(useVersion);
         searchICD(q, useVersion);
         setShowResults(true);
-      }, 400);
+      }, 600); // Aumentado para 600ms para evitar buscas excessivas
     } else {
       clearResults();
       setShowResults(false);
     }
 
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
+    // Não limpar o timeout no cleanup para evitar cancelar buscas em andamento
   }, [query, version, searchICD, clearResults]);
 
   // Fechar dropdown ao clicar fora
