@@ -22,6 +22,9 @@ import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
 import { DateRangeSelector } from '@/components/Dashboard/DateRangeSelector';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { generateReportHTML } from '@/utils/reportPrintUtils';
 
 
 export default function Dashboard() {
@@ -49,11 +52,224 @@ export default function Dashboard() {
   };
 
   const handlePrintReport = () => {
-    setShowReport(true);
-    // Aguarda o dialog abrir antes de imprimir
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.error('Não foi possível abrir janela de impressão');
+      return;
+    }
+
+    const dateRangeText = `${format(currentDateRange.start, "dd/MM/yyyy", { locale: ptBR })} - ${format(currentDateRange.end, "dd/MM/yyyy", { locale: ptBR })}`;
+    
+    // Mapear os dados para o formato esperado pela função de geração HTML
+    const reportStats = {
+      revenue: stats.monthlyRevenue,
+      receivable: stats.receivableRevenue,
+      cancelled: stats.cancelledRevenue,
+      confirmed: stats.confirmedCount,
+      completed: stats.completedCount,
+      cancelledCount: stats.cancelledCount,
+      noShows: stats.noShowCount
+    };
+
+    const reportPaymentMethods = paymentMethodsData.map(pm => ({
+      payment_method: pm.method,
+      count: pm.count,
+      total: pm.total
+    }));
+
+    const reportPaymentStatus = paymentStatusData.map(ps => ({
+      payment_status: ps.status,
+      count: ps.count,
+      total: ps.total
+    }));
+
+    const reportProfessionalAppointments = professionalAppointmentsData.map(pa => ({
+      professional_name: pa.professionalName,
+      count: pa.appointmentCount
+    }));
+
+    const reportAppointmentDetails = appointmentDetails.map(ad => ({
+      datetime: ad.start_time,
+      patient_name: ad.patient_name,
+      procedure_name: null,
+      professional_name: ad.professional_name,
+      status_name: ad.status_name,
+      price: ad.price
+    }));
+    
+    // Gerar HTML do relatório
+    const reportHTML = generateReportHTML(
+      reportStats,
+      reportPaymentMethods,
+      reportPaymentStatus,
+      reportProfessionalAppointments,
+      reportAppointmentDetails,
+      dateRangeText
+    );
+
+    const printHTML = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Relatório de Vendas e Serviços - ${dateRangeText}</title>
+        <style>
+          @media print {
+            @page {
+              margin: 1cm;
+              size: A4;
+            }
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+          
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.4;
+            color: #1f2937;
+            margin: 0;
+            padding: 20px;
+            background: white;
+          }
+          
+          .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 15px;
+          }
+          
+          .print-header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+          }
+          
+          .print-header .date-info {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 4px 0;
+          }
+          
+          .section {
+            margin-bottom: 24px;
+            page-break-inside: avoid;
+          }
+          
+          .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          
+          .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+          }
+          
+          .stat-card {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f9fafb;
+          }
+          
+          .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+          }
+          
+          .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          
+          table th,
+          table td {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+          }
+          
+          table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+          }
+          
+          table tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+          }
+          
+          .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+          }
+
+          @media print {
+            table {
+              page-break-inside: auto;
+            }
+            
+            tr {
+              page-break-inside: avoid;
+              page-break-after: auto;
+            }
+            
+            .section {
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-header">
+          <h1>Relatório de Vendas e Serviços</h1>
+          <div class="date-info">Período: ${dateRangeText}</div>
+          <div class="date-info">Gerado em: ${new Date().toLocaleString('pt-BR')}</div>
+        </div>
+        
+        ${reportHTML}
+        
+        <div class="footer">
+          <p>Documento confidencial - Relatório gerado automaticamente pelo sistema</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
   };
 
   if (loading) {
