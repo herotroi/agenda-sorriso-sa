@@ -124,6 +124,8 @@ export function useAppointmentFormSubmit(
         notes: formData.is_blocked ? (formData.notes || 'Horário bloqueado') : (formData.notes || null),
         status_id: formData.is_blocked ? 1 : formData.status_id,
         is_blocked: formData.is_blocked || false,
+        payment_method: formData.is_blocked ? null : (formData.payment_method || null),
+        payment_status: formData.is_blocked ? null : (formData.payment_status || null),
         user_id: user.id
       };
 

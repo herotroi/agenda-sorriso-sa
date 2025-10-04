@@ -73,6 +73,10 @@ export function useAppointmentEditor(
         updateData.status_id = parseInt(editingCell.value);
       } else if (editingCell.field === 'notes') {
         updateData.notes = editingCell.value || null;
+      } else if (editingCell.field === 'payment_method') {
+        updateData.payment_method = editingCell.value || null;
+      } else if (editingCell.field === 'payment_status') {
+        updateData.payment_status = editingCell.value || null;
       }
 
       console.log('📤 Sending update to Supabase:', {

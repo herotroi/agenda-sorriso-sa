@@ -30,7 +30,9 @@ export function useAppointmentFormData(
     duration: '60',
     notes: '',
     status_id: 1,
-    is_blocked: false
+    is_blocked: false,
+    payment_method: '',
+    payment_status: ''
   });
 
   const handleFieldChange = (field: string, value: any) => {
@@ -166,7 +168,9 @@ export function useAppointmentFormData(
         duration: duration,
         notes: appointmentToEdit.notes || '',
         status_id: appointmentToEdit.status_id || 1,
-        is_blocked: appointmentToEdit.is_blocked || false
+        is_blocked: appointmentToEdit.is_blocked || false,
+        payment_method: appointmentToEdit.payment_method || '',
+        payment_status: appointmentToEdit.payment_status || ''
       };
       setFormData(editData);
       setOriginalData(editData);
@@ -185,7 +189,9 @@ export function useAppointmentFormData(
         duration: '60',
         notes: '',
         status_id: 1,
-        is_blocked: false
+        is_blocked: false,
+        payment_method: '',
+        payment_status: ''
       };
       setFormData(newData);
       setOriginalData(null);
