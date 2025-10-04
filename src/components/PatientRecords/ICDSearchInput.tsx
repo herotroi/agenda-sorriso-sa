@@ -22,16 +22,25 @@ export function ICDSearchInput({ onSelect, initialCode, initialVersion }: ICDSea
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Debounce da busca
+    // Debounce da busca com auto-detecção da versão pelo padrão do código
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    if (query.trim().length >= 2) {
+    const q = query.trim();
+    if (q.length >= 2) {
       searchTimeoutRef.current = setTimeout(() => {
-        searchICD(query, version);
+        // Detectar padrão: CID-10 (A00, A06.0, B24...) vs CID-11 (6A05, 8C20.1...)
+        const looksICD10 = /^[A-Za-z][0-9]{1,3}(\.[0-9A-Za-z]+)?$/i.test(q);
+        const looksICD11 = /^[0-9][A-Za-z][0-9A-Za-z.]*$/i.test(q);
+        let useVersion: '10' | '11' = version;
+        if (looksICD10) useVersion = '10';
+        else if (looksICD11) useVersion = '11';
+
+        if (useVersion !== version) setVersion(useVersion);
+        searchICD(q, useVersion);
         setShowResults(true);
-      }, 500);
+      }, 400);
     } else {
       clearResults();
       setShowResults(false);
