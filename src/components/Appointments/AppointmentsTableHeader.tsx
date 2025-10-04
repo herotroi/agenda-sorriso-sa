@@ -22,44 +22,46 @@ export function AppointmentsTableHeader({
   refreshing
 }: AppointmentsTableHeaderProps) {
   return (
-    <CardHeader className="p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <CardTitle className="text-base sm:text-lg">Agendamentos</CardTitle>
-          <Badge variant="secondary" className="text-xs sm:text-sm px-2 py-0.5">
+    <CardHeader className="p-3 sm:p-4 md:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Primeira linha - Título e Badge */}
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-sm sm:text-base md:text-lg">Agendamentos</CardTitle>
+          <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-green-100 text-green-800 font-semibold">
             {appointmentsCount} {hasActiveFilters ? 'filtrados' : 'total'}
           </Badge>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2">
+        {/* Segunda linha - Botões */}
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
-            size="default"
+            size="sm"
             onClick={onPrint}
-            className="flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[40px] w-full sm:w-auto"
+            className="h-8 sm:h-9 px-3 text-xs sm:text-sm flex items-center gap-1.5 flex-1 sm:flex-none min-w-[100px]"
           >
-            <Printer className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Printer className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
             <span>Imprimir</span>
           </Button>
           
           <Button
             variant="outline"
-            size="default"
+            size="sm"
             onClick={onRefresh}
             disabled={refreshing}
-            className="flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[40px] w-full sm:w-auto"
+            className="h-8 sm:h-9 px-3 text-xs sm:text-sm flex items-center gap-1.5 flex-1 sm:flex-none min-w-[100px]"
           >
-            <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
           </Button>
           
           <Button
             onClick={onCreateAppointment}
-            size="default"
-            className="flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[40px] w-full sm:w-auto"
+            size="sm"
+            className="h-8 sm:h-9 px-3 text-xs sm:text-sm flex items-center gap-1.5 flex-1 sm:flex-none min-w-[140px]"
           >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span>Novo Agendamento</span>
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="truncate">Novo</span>
           </Button>
         </div>
       </div>
