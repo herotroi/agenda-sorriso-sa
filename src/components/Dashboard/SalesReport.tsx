@@ -341,6 +341,37 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
                   <p className="text-3xl font-bold text-red-600 mt-2">{stats.cancelledCount}</p>
                 </div>
                 <XCircle className="h-12 w-12 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Não Compareceram</p>
+                  <p className="text-3xl font-bold text-orange-600 mt-2">{stats.noShowCount}</p>
+                </div>
+                <AlertCircle className="h-12 w-12 text-orange-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Totais */}
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Agendamentos</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats.confirmedCount + stats.completedCount + stats.cancelledCount + stats.noShowCount}
+                </p>
+              </div>
+              <Calendar className="h-12 w-12 text-gray-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Lista de Agendamentos */}
@@ -389,37 +420,6 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
                 )}
               </tbody>
             </table>
-          </CardContent>
-        </Card>
-      </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Não Compareceram</p>
-                  <p className="text-3xl font-bold text-orange-600 mt-2">{stats.noShowCount}</p>
-                </div>
-                <AlertCircle className="h-12 w-12 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Totais */}
-        <Card className="mt-4">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total de Agendamentos</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {stats.confirmedCount + stats.completedCount + stats.cancelledCount + stats.noShowCount}
-                </p>
-              </div>
-              <Calendar className="h-12 w-12 text-gray-600" />
-            </div>
           </CardContent>
         </Card>
       </div>
