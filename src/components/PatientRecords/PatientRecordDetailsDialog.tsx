@@ -1456,6 +1456,21 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         </div>
                       </>
                     )}
+
+                    {/* CID Codes */}
+                    {(record as any).icd_codes && Array.isArray((record as any).icd_codes) && (record as any).icd_codes.length > 0 && (
+                      <div>
+                        <span className="font-medium text-gray-600">Códigos CID:</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {(record as any).icd_codes.map((icd: any, idx: number) => (
+                            <Badge key={`${icd.code}-${idx}`} variant="outline" className="text-xs">
+                              {icd.code} - {icd.version}
+                              {icd.title && <span className="ml-1 text-muted-foreground">({icd.title})</span>}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

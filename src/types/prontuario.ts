@@ -18,6 +18,12 @@ export interface Appointment {
   professionals: { name: string } | null;
 }
 
+export interface ICDCode {
+  code: string;
+  version: string;
+  title: string;
+}
+
 export interface PatientRecord {
   id: string;
   title?: string;
@@ -28,6 +34,9 @@ export interface PatientRecord {
   updated_at: string;
   user_id: string;
   patient_id?: string;
+  icd_code?: string; // Legacy field for backward compatibility
+  icd_version?: string; // Legacy field for backward compatibility
+  icd_codes?: ICDCode[]; // New field for multiple ICD codes
   professionals?: { name: string };
   appointments?: { 
     start_time: string;

@@ -12,7 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Upload, X, Calendar, User, Clock, DollarSign, Stethoscope, Pill, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { ICDSearchInput } from './ICDSearchInput';
+import { ICDMultiSelect } from './ICDMultiSelect';
+import { ICDCode } from '@/types/prontuario';
 
 interface PatientRecordFormProps {
   isOpen: boolean;
@@ -72,8 +73,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
   const [loading, setLoading] = useState(false);
   const [fetchingAppointments, setFetchingAppointments] = useState(false);
   const [fetchingProfessionals, setFetchingProfessionals] = useState(false);
-  const [icdCode, setIcdCode] = useState('');
-  const [icdVersion, setIcdVersion] = useState('');
+  const [selectedIcds, setSelectedIcds] = useState<ICDCode[]>([]);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -208,15 +208,27 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setDocumentsToDelete([]);
       setAppointments([]);
       setProfessionals([]);
-      setIcdCode('');
-      setIcdVersion('');
+      setSelectedIcds([]);
     } else if (recordToEdit) {
       // Preencher campos para edição
       setTitle(recordToEdit.title || '');
       setContent(recordToEdit.content || '');
       setPrescription(recordToEdit.prescription || '');
-      setIcdCode((recordToEdit as any).icd_code || '');
-      setIcdVersion((recordToEdit as any).icd_version || '');
+      
+      // Carregar ICD codes (novo formato de array ou legado)
+      const recordWithIcds = recordToEdit as any;
+      if (recordWithIcds.icd_codes && Array.isArray(recordWithIcds.icd_codes) && recordWithIcds.icd_codes.length > 0) {
+        setSelectedIcds(recordWithIcds.icd_codes);
+      } else if (recordWithIcds.icd_code && recordWithIcds.icd_version) {
+        // Migrar dado legado para novo formato
+        setSelectedIcds([{
+          code: recordWithIcds.icd_code,
+          version: recordWithIcds.icd_version,
+          title: `${recordWithIcds.icd_code} - ${recordWithIcds.icd_version}`
+        }]);
+      } else {
+        setSelectedIcds([]);
+      }
       // Carregar profissional se o registro tiver um professional_id
       if ('professional_id' in recordToEdit && recordToEdit.professional_id) {
         setSelectedProfessional(String(recordToEdit.professional_id));
@@ -238,8 +250,7 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
       setSelectedAppointments([]);
       setExistingDocuments([]);
       setDocumentsToDelete([]);
-      setIcdCode('');
-      setIcdVersion('');
+      setSelectedIcds([]);
     }
   }, [isOpen, recordToEdit]);
 
@@ -522,9 +533,8 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
         professional_id: selectedProfessional || null,
         user_id: user.id,
         created_by: user.id,
-        icd_code: icdCode || null,
-        icd_version: icdVersion || null,
-      };
+        icd_codes: selectedIcds.length > 0 ? JSON.stringify(selectedIcds) : null,
+      } as any;
 
       let record;
 
@@ -665,13 +675,10 @@ export function PatientRecordForm({ isOpen, onClose, patientId, recordToEdit }: 
                 />
               </div>
 
-              <ICDSearchInput
-                onSelect={(code, version) => {
-                  setIcdCode(code);
-                  setIcdVersion(version);
-                }}
-                initialCode={icdCode}
-                initialVersion={icdVersion}
+              <ICDMultiSelect
+                selectedCodes={selectedIcds}
+                onCodesChange={setSelectedIcds}
+                maxCodes={10}
               />
 
               <div>

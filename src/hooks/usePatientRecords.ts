@@ -35,7 +35,13 @@ export function usePatientRecords(patientId: string) {
 
       if (error) throw error;
       
-      setRecords(data || []);
+      // Parse icd_codes JSON field if present
+      const parsedRecords = (data || []).map(record => ({
+        ...record,
+        icd_codes: record.icd_codes ? (typeof record.icd_codes === 'string' ? JSON.parse(record.icd_codes) : record.icd_codes) : []
+      }));
+      
+      setRecords(parsedRecords as PatientRecord[]);
     } catch (error) {
       console.error('Error fetching patient records:', error);
       toast({

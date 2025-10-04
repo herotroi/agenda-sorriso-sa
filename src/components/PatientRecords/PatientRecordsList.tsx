@@ -135,6 +135,15 @@ export function PatientRecordsList({ records, onEditRecord, loading }: PatientRe
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-2">
+                    {record.icd_codes && record.icd_codes.length > 0 && (
+                      <>
+                        {record.icd_codes.map((icd, idx) => (
+                          <Badge key={`${icd.code}-${idx}`} variant="outline" className="text-xs">
+                            {icd.code} - {icd.version}
+                          </Badge>
+                        ))}
+                      </>
+                    )}
                     {record.appointments?.procedures && (
                       <Badge variant="secondary" className="text-xs">
                         {record.appointments.procedures.name}

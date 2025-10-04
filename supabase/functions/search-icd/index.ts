@@ -12,6 +12,11 @@ function normalizePTBR(str: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+// Normaliza código removendo pontos, espaços e convertendo para maiúsculas
+function normalizeCode(code: string): string {
+  return code.toUpperCase().replace(/[.\s-]/g, '');
+}
+
 // Aliases comuns em português para termos médicos
 const ALIASES_PT: Record<string, string> = {
   'tdah': 'transtorno do déficit de atenção e hiperatividade',
@@ -132,13 +137,17 @@ async function searchICD10(query: string, language: string): Promise<any[]> {
     if (allNodes.length > 0) break;
   }
 
-  // Filtrar comparando tanto código quanto título
+  // Filtrar comparando tanto código quanto título (incluindo código sem pontos)
+  const normalizedQueryCode = normalizeCode(query);
   const filtered = allNodes
     .filter(n => /^[A-Z][0-9A-Z.]*$/.test(n.code))
     .filter(n => {
       const normalizedCode = normalizePTBR(n.code);
+      const normalizedCodeNoPunct = normalizeCode(n.code);
       const normalizedTitle = normalizePTBR(n.title);
-      return normalizedCode.includes(normalizedQuery) || normalizedTitle.includes(normalizedQuery);
+      return normalizedCode.includes(normalizedQuery) || 
+             normalizedCodeNoPunct.includes(normalizedQueryCode) ||
+             normalizedTitle.includes(normalizedQuery);
     })
     .map(n => ({ code: n.code.toUpperCase(), title: n.title }));
 
@@ -257,15 +266,26 @@ async function searchICD11(query: string, language: string): Promise<any[]> {
     } as any;
   }).filter((r: any) => r.__valid);
 
-  // Ordenação: prioriza correspondência de código quando apropriado, depois score
+  // Ordenação: prioriza correspondência de código (inclusive sem pontuação), depois score
   const isCodeLike = /^[A-Z0-9.]+$/i.test(query.trim());
   const q = query.trim().toUpperCase();
+  const qNorm = normalizeCode(query);
   results.sort((a: any, b: any) => {
     if (isCodeLike) {
-      const aEq = a.code === q; const bEq = b.code === q;
+      // Match exato (com ou sem pontos)
+      const aEq = a.code === q || normalizeCode(a.code) === qNorm;
+      const bEq = b.code === q || normalizeCode(b.code) === qNorm;
       if (aEq && !bEq) return -1; if (bEq && !aEq) return 1;
-      const aStarts = a.code.startsWith(q); const bStarts = b.code.startsWith(q);
+      
+      // Começa com (com ou sem pontos)
+      const aStarts = a.code.startsWith(q) || normalizeCode(a.code).startsWith(qNorm);
+      const bStarts = b.code.startsWith(q) || normalizeCode(b.code).startsWith(qNorm);
       if (aStarts && !bStarts) return -1; if (bStarts && !aStarts) return 1;
+      
+      // Contém (sem pontos)
+      const aContains = normalizeCode(a.code).includes(qNorm);
+      const bContains = normalizeCode(b.code).includes(qNorm);
+      if (aContains && !bContains) return -1; if (bContains && !aContains) return 1;
     }
     if ((b.score ?? 0) !== (a.score ?? 0)) return (b.score ?? 0) - (a.score ?? 0);
     return String(a.title).localeCompare(String(b.title));
