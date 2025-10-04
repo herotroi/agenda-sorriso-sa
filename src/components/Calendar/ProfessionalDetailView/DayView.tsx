@@ -137,13 +137,14 @@ export function DayView({
           return (
             <Card
               key={appointment.id}
-              className={`absolute cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
+              className={`absolute cursor-pointer overflow-hidden shadow-sm ${getCardStyle(itemType)}`}
               style={{ 
                 top: `${top}px`, 
                 height: `${height}px`, 
-                left: '68px',
+                left: 'calc(4rem + 8px)',
                 right: '8px',
-                zIndex: getZIndex(itemType) 
+                zIndex: getZIndex(itemType),
+                width: 'calc(100% - 4rem - 16px)'
               }}
               onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
             >
