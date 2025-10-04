@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Pencil } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Pencil, Lock } from 'lucide-react';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import { AppointmentInfo } from './AppointmentInfo';
 import { AppointmentStatusUpdater } from './AppointmentStatusUpdater';
@@ -74,8 +75,19 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
           <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
             <div className="space-y-4 pb-6">
               <div>
-                <h3 className="font-semibold text-lg">{appointment.patients?.full_name}</h3>
-                <AppointmentStatusBadge statusId={appointment.status_id} />
+                <h3 className="font-semibold text-lg">
+                  {appointment.is_blocked ? 'Horário Bloqueado' : appointment.patients?.full_name}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  {appointment.is_blocked ? (
+                    <Badge variant="destructive" className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Bloqueado
+                    </Badge>
+                  ) : (
+                    <AppointmentStatusBadge statusId={appointment.status_id} />
+                  )}
+                </div>
               </div>
 
               <Separator />
@@ -84,21 +96,25 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
               <Separator />
 
-              <AppointmentStatusUpdater 
-                appointment={appointmentWithStatus} 
-                onClose={handleClose}
-                onUpdate={handleStatusUpdate}
-              />
+              {!appointment.is_blocked && (
+                <>
+                  <AppointmentStatusUpdater 
+                    appointment={appointmentWithStatus} 
+                    onClose={handleClose}
+                    onUpdate={handleStatusUpdate}
+                  />
 
-              <Separator />
+                  <Separator />
 
-              <AppointmentPaymentUpdater
-                appointment={appointmentWithStatus}
-                onClose={handleClose}
-                onUpdate={handleStatusUpdate}
-              />
+                  <AppointmentPaymentUpdater
+                    appointment={appointmentWithStatus}
+                    onClose={handleClose}
+                    onUpdate={handleStatusUpdate}
+                  />
 
-              <Separator />
+                  <Separator />
+                </>
+              )}
 
               <AppointmentActions 
                 appointmentId={appointment.id}
