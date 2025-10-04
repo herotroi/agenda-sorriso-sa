@@ -25,8 +25,8 @@ export function ProfessionalTabs({ professionals, onProfessionalClick, selectedD
   };
 
   return (
-    <ScrollArea className="w-full">
-      <div className="flex space-x-2 pb-2">
+    <div className="w-full overflow-x-auto">
+      <div className="flex space-x-2 pb-2 min-w-fit">
         {professionals.map((prof) => (
           <div
             key={prof.id}
@@ -55,6 +55,6 @@ export function ProfessionalTabs({ professionals, onProfessionalClick, selectedD
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
