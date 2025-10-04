@@ -160,6 +160,7 @@ export function useAppointmentFormData(
     // Prevenir re-inicialização durante edições
     const currentId = appointmentToEdit?.id || null;
     const shouldInitialize = !initializedRef.current || lastIdRef.current !== currentId || !isOpen;
+    console.log('useAppointmentFormData init check', { isOpen, currentId, shouldInitialize, initialized: initializedRef.current, lastId: lastIdRef.current });
     
     if (!isOpen) {
       initializedRef.current = false;
@@ -188,7 +189,8 @@ export function useAppointmentFormData(
         is_blocked: appointmentToEdit.is_blocked || false,
         payment_method: appointmentToEdit.payment_method || '',
         payment_status: appointmentToEdit.payment_status || ''
-      };
+      } as AppointmentFormData;
+      console.log('Initializing edit formData:', editData);
       setFormData(editData);
       setOriginalData(editData);
     } else {
