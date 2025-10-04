@@ -113,7 +113,9 @@ async function handleStart(email: string, ip: string, userAgent: string) {
   try {
     const appUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "") || "https://seu-app.com";
     
-    await resend.emails.send({
+    console.log(`Attempting to send email to: ${email}`);
+    
+    const emailResult = await resend.emails.send({
       from: "Sistema <onboarding@resend.dev>",
       to: [email],
       subject: "Código de Recuperação de Senha",
@@ -146,11 +148,22 @@ async function handleStart(email: string, ip: string, userAgent: string) {
       `,
     });
     
-    console.log(`Password reset code sent to ${email}`);
+    console.log(`Resend API response:`, JSON.stringify(emailResult, null, 2));
+    
+    if (emailResult.error) {
+      console.error(`Resend error details:`, JSON.stringify(emailResult.error, null, 2));
+      return new Response(
+        JSON.stringify({ error: `Erro ao enviar email: ${emailResult.error.message || 'Erro desconhecido'}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`Password reset code sent successfully to ${email}. Email ID: ${emailResult.data?.id}`);
   } catch (emailError) {
     console.error("Error sending email:", emailError);
+    console.error("Error details:", JSON.stringify(emailError, null, 2));
     return new Response(
-      JSON.stringify({ error: "Erro ao enviar email" }),
+      JSON.stringify({ error: `Falha ao enviar email: ${emailError.message || 'Erro desconhecido'}` }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
