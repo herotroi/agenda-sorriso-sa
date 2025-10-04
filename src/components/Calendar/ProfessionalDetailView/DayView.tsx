@@ -91,23 +91,24 @@ export function DayView({
   const regularAppointments = appointments.filter(apt => !(apt as any).type);
   const specialItems = appointments.filter(apt => (apt as any).type);
 
-  // Calcular "lanes" para evitar colapso entre agendamentos que se sobrepõem
+  // Calcular "lanes" e o número máximo de colunas simultâneas para cada agendamento
   const layoutAppointments = useMemo(() => {
-    const normal = appointments
+    const normals = appointments
       .filter((a) => !(a as any).type)
       .slice()
       .sort(
         (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
       );
 
-    const active: { end: number }[] = [];
-    const result: { item: Appointment; lane: number }[] = [];
+    type Meta = { lane: number; cols: number; start: number; end: number; item: Appointment };
+    const metas: Meta[] = [];
+    const active: Meta[] = [];
 
-    for (const apt of normal) {
+    for (const apt of normals) {
       const start = new Date(apt.start_time).getTime();
       const end = new Date(apt.end_time).getTime();
 
-      // remover agendamentos ativos que já terminaram
+      // Remove itens que já terminaram
       for (let i = 0; i < active.length; i++) {
         if (active[i].end <= start) {
           active.splice(i, 1);
@@ -115,17 +116,27 @@ export function DayView({
         }
       }
 
-      const lane = active.length; // próximo espaço disponível
-      active.push({ end });
-      result.push({ item: apt, lane });
+      // Descobrir o menor lane disponível
+      const used = new Set(active.map((m) => m.lane));
+      let lane = 0;
+      while (used.has(lane)) lane++;
+
+      const meta: Meta = { lane, cols: Math.max(1, active.length + 1), start, end, item: apt };
+      active.push(meta);
+      metas.push(meta);
+
+      // Atualiza cols de todos os ativos (máximo simultâneo)
+      for (const m of active) {
+        m.cols = Math.max(m.cols, active.length);
+      }
     }
 
-    // Itens especiais sem deslocamento
+    // Itens especiais ocupam largura total
     appointments
       .filter((a) => (a as any).type)
-      .forEach((s) => result.push({ item: s, lane: 0 }));
+      .forEach((s) => metas.push({ lane: 0, cols: 1, start: new Date(s.start_time).getTime(), end: new Date(s.end_time).getTime(), item: s }));
 
-    return result;
+    return metas;
   }, [appointments]);
 
   return (
@@ -165,7 +176,7 @@ export function DayView({
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
         <div className="absolute left-16 sm:left-20 right-0 top-0 bottom-0 relative">
-          {layoutAppointments.map(({ item, lane }) => {
+          {layoutAppointments.map(({ item, lane, cols }) => {
             const appointment = item;
             const itemType = (appointment as any).type;
             const isSpecialItem = itemType === 'vacation' || itemType === 'break';
@@ -173,7 +184,11 @@ export function DayView({
             const end = new Date(appointment.end_time);
             const top = minutesFromMidnight(start) * PX_PER_MIN;
             const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
-            const offset = isSpecialItem ? 0 : lane * 12;
+            const lanes = isSpecialItem ? 1 : Math.max(1, cols);
+            const laneIndex = isSpecialItem ? 0 : lane;
+            const widthPct = 100 / lanes;
+            const leftPct = widthPct * laneIndex;
+            const GUTTER = 8; // espaçamento entre colunas
 
             return (
               <Card
@@ -182,9 +197,9 @@ export function DayView({
                 style={{
                   top: `${top}px`,
                   height: `${height}px`,
-                  left: `${8 + offset}px`,
-                  right: `${8 + offset}px`,
-                  zIndex: getZIndex(itemType)
+                  left: `calc(${leftPct}% + ${GUTTER / 2}px)`,
+                  width: `calc(${widthPct}% - ${GUTTER}px)`,
+                  zIndex: getZIndex(itemType) + laneIndex
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
