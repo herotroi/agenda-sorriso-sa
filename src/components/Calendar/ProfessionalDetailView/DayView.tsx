@@ -32,18 +32,10 @@ export function DayView({
   const getAppointmentsForHour = (hour: number) => {
     return appointments.filter(apt => {
       const startHour = new Date(apt.start_time).getHours();
-      const endHour = new Date(apt.end_time).getHours();
       
-      // Para agendamentos normais, pausas e férias que começam nesta hora
-      if (startHour === hour) return true;
-      
-      // Para agendamentos que se estendem por esta hora
-      if (hour > startHour && hour < endHour) return true;
-      
-      // Para agendamentos que terminam nesta hora
-      if (hour === endHour && new Date(apt.end_time).getMinutes() > 0 && startHour !== endHour) return true;
-      
-      return false;
+      // Mostrar apenas agendamentos que COMEÇAM nesta hora
+      // Isso evita duplicação - cada agendamento aparece apenas uma vez
+      return startHour === hour;
     });
   };
 
