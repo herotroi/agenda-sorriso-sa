@@ -92,7 +92,7 @@ export function DayView({
 
   return (
     <div className="space-y-4">
-      <div className="text-center sticky top-0 bg-background z-10 pb-4 border-b shadow-none">
+      <div className="text-center sticky top-0 bg-background z-30 pb-4 border-b shadow-none">
         <h3 className="text-lg font-semibold">
           {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
@@ -102,13 +102,13 @@ export function DayView({
         </p>
       </div>
 
-      <div className="relative overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+      <div className="relative mt-2 overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
         {/* Horários à esquerda (posicionados absolutamente) */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 border-r bg-gray-50/50 z-10">
+        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 border-r bg-gray-50/50 z-0">
           {timeSlots.map((slot) => (
             <div 
               key={slot.time} 
-              className="absolute text-xs sm:text-sm text-gray-500 font-medium px-2 -translate-y-2"
+              className="absolute text-xs sm:text-sm text-gray-500 font-medium px-2"
               style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
             >
               {slot.time}
