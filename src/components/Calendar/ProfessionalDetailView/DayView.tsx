@@ -2,6 +2,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, User, FileText } from 'lucide-react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Professional, Appointment } from '@/types';
@@ -90,6 +91,43 @@ export function DayView({
   const regularAppointments = appointments.filter(apt => !(apt as any).type);
   const specialItems = appointments.filter(apt => (apt as any).type);
 
+  // Calcular "lanes" para evitar colapso entre agendamentos que se sobrepõem
+  const layoutAppointments = useMemo(() => {
+    const normal = appointments
+      .filter((a) => !(a as any).type)
+      .slice()
+      .sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+
+    const active: { end: number }[] = [];
+    const result: { item: Appointment; lane: number }[] = [];
+
+    for (const apt of normal) {
+      const start = new Date(apt.start_time).getTime();
+      const end = new Date(apt.end_time).getTime();
+
+      // remover agendamentos ativos que já terminaram
+      for (let i = 0; i < active.length; i++) {
+        if (active[i].end <= start) {
+          active.splice(i, 1);
+          i--;
+        }
+      }
+
+      const lane = active.length; // próximo espaço disponível
+      active.push({ end });
+      result.push({ item: apt, lane });
+    }
+
+    // Itens especiais sem deslocamento
+    appointments
+      .filter((a) => (a as any).type)
+      .forEach((s) => result.push({ item: s, lane: 0 }));
+
+    return result;
+  }, [appointments]);
+
   return (
     <div className="space-y-4">
       <div className="text-center sticky top-0 bg-background z-30 pb-4 border-b shadow-none">
@@ -125,66 +163,69 @@ export function DayView({
           />
         ))}
 
-        {/* Cards posicionados por minuto com margem à esquerda para horários */}
-        {appointments.map((appointment) => {
-          const itemType = (appointment as any).type;
-          const isSpecialItem = itemType === 'vacation' || itemType === 'break';
-          const start = new Date(appointment.start_time);
-          const end = new Date(appointment.end_time);
-          const top = minutesFromMidnight(start) * PX_PER_MIN;
-          const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
+        {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
+        <div className="absolute left-16 sm:left-20 right-0 top-0 bottom-0 relative">
+          {layoutAppointments.map(({ item, lane }) => {
+            const appointment = item;
+            const itemType = (appointment as any).type;
+            const isSpecialItem = itemType === 'vacation' || itemType === 'break';
+            const start = new Date(appointment.start_time);
+            const end = new Date(appointment.end_time);
+            const top = minutesFromMidnight(start) * PX_PER_MIN;
+            const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
+            const offset = isSpecialItem ? 0 : lane * 12;
 
-          return (
-            <Card
-              key={appointment.id}
-              className={`absolute cursor-pointer overflow-hidden shadow-sm ${getCardStyle(itemType)}`}
-              style={{ 
-                top: `${top}px`, 
-                height: `${height}px`, 
-                left: 'calc(4rem + 8px)',
-                right: '8px',
-                zIndex: getZIndex(itemType),
-                width: 'calc(100% - 4rem - 16px)'
-              }}
-              onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
-            >
-              <CardContent className="p-2 sm:p-3 h-full">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-3 flex-wrap min-w-0">
-                    <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
-                      <Clock className="h-3 w-3" />
-                      {isSpecialItem && itemType === 'vacation'
-                        ? 'Dia todo'
-                        : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
-                    </div>
-                    {appointment.patients && (
-                      <div className="flex items-center gap-1 text-sm min-w-0">
-                        <User className="h-3 w-3 flex-shrink-0" />
-                        <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
-                          {appointment.patients.full_name}
-                        </span>
+            return (
+              <Card
+                key={appointment.id}
+                className={`absolute cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
+                style={{
+                  top: `${top}px`,
+                  height: `${height}px`,
+                  left: `${8 + offset}px`,
+                  right: `${8 + offset}px`,
+                  zIndex: getZIndex(itemType)
+                }}
+                onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
+              >
+                <CardContent className="p-2 sm:p-3 h-full">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3 flex-wrap min-w-0">
+                      <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {isSpecialItem && itemType === 'vacation'
+                          ? 'Dia todo'
+                          : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
                       </div>
-                    )}
+                      {appointment.patients && (
+                        <div className="flex items-center gap-1 text-sm min-w-0">
+                          <User className="h-3 w-3 flex-shrink-0" />
+                          <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
+                            {appointment.patients.full_name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
+                      {appointment.appointment_statuses?.label || 'Status não definido'}
+                    </Badge>
                   </div>
-                  <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
-                    {appointment.appointment_statuses?.label || 'Status não definido'}
-                  </Badge>
-                </div>
-                {appointment.procedures && !isSpecialItem && (
-                  <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
-                    <FileText className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{appointment.procedures.name}</span>
-                  </div>
-                )}
-                {appointment.notes && (
-                  <div className="mt-2 text-xs text-gray-500 truncate">
-                    {appointment.notes}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                  {appointment.procedures && !isSpecialItem && (
+                    <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
+                      <FileText className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{appointment.procedures.name}</span>
+                    </div>
+                  )}
+                  {appointment.notes && (
+                    <div className="mt-2 text-xs text-gray-500 truncate">
+                      {appointment.notes}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
