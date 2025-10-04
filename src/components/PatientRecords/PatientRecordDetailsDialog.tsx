@@ -61,6 +61,7 @@ interface Appointment {
   start_time: string;
   end_time?: string;
   procedures?: { name: string };
+  professionals?: { name: string; specialty?: string; crm_cro?: string };
 }
 
 interface RecordDocument {
@@ -100,6 +101,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
   const [patient, setPatient] = useState<Patient | null>(null);
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [linkedAppointments, setLinkedAppointments] = useState<Appointment[]>([]);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [previewDocument, setPreviewDocument] = useState<RecordDocument | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -159,7 +161,34 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         }
       }
 
-      // Buscar dados do agendamento
+      // Buscar agendamentos vinculados através de record_appointments
+      const { data: linkedAppointmentsData, error: linkedError } = await supabase
+        .from('record_appointments')
+        .select(`
+          appointment_id,
+          appointments:appointment_id (
+            id,
+            start_time,
+            end_time,
+            procedures(name),
+            professionals(id, name, specialty, crm_cro)
+          )
+        `)
+        .eq('record_id', recordData.id);
+
+      if (!linkedError && linkedAppointmentsData && linkedAppointmentsData.length > 0) {
+        const appointments = linkedAppointmentsData
+          .map((item: any) => item.appointments)
+          .filter(Boolean) as Appointment[];
+        setLinkedAppointments(appointments);
+        
+        // Set the first appointment as the primary one if no appointment_id is set
+        if (appointments.length > 0 && !recordData.appointment_id) {
+          setAppointment(appointments[0]);
+        }
+      }
+
+      // Buscar dados do agendamento principal (legacy support)
       if (recordData.appointment_id) {
         const { data: appointmentData, error: appointmentError } = await supabase
           .from('appointments')
@@ -1442,7 +1471,48 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                       </div>
                     )}
 
-                    {appointment && (
+                    {/* Agendamentos Vinculados */}
+                    {linkedAppointments.length > 0 && (
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          {linkedAppointments.length > 1 ? 'Consultas Vinculadas:' : 'Consulta Vinculada:'}
+                        </span>
+                        <div className="mt-2 space-y-2">
+                          {linkedAppointments.map((appt, index) => (
+                            <div key={appt.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Calendar className="h-4 w-4 text-blue-600" />
+                                <span className="font-semibold text-sm">
+                                  {format(new Date(appt.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 mt-2">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{format(new Date(appt.start_time), 'HH:mm', { locale: ptBR })}</span>
+                                  {appt.end_time && <span>- {format(new Date(appt.end_time), 'HH:mm', { locale: ptBR })}</span>}
+                                </div>
+                                {appt.procedures && (
+                                  <Badge variant="secondary" className="w-fit text-xs">
+                                    {appt.procedures.name}
+                                  </Badge>
+                                )}
+                                {appt.professionals && (
+                                  <div className="flex items-center gap-1 sm:col-span-2">
+                                    <User className="h-3 w-3" />
+                                    <span>Dr(a). {appt.professionals.name}</span>
+                                    {appt.professionals.crm_cro && <span className="text-gray-500">- {appt.professionals.crm_cro}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback: appointment_id antigo (se não houver linkedAppointments) */}
+                    {linkedAppointments.length === 0 && appointment && (
                       <>
                         {appointment.procedures && (
                           <Badge variant="secondary" className="w-fit">
