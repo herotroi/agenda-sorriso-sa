@@ -52,14 +52,14 @@ export function AppointmentFormFields({
   useEffect(() => {
     if (!appointmentToEdit) return;
     const patch: Partial<AppointmentFormData> = {};
-    if (!formData.patient_id && appointmentToEdit.patient_id) patch.patient_id = appointmentToEdit.patient_id;
-    if (!formData.procedure_id && appointmentToEdit.procedure_id) patch.procedure_id = appointmentToEdit.procedure_id;
-    if (!formData.professional_id && appointmentToEdit.professional_id) patch.professional_id = appointmentToEdit.professional_id;
-    if (!formData.payment_method && appointmentToEdit.payment_method) patch.payment_method = appointmentToEdit.payment_method;
-    if (!formData.payment_status && appointmentToEdit.payment_status) patch.payment_status = appointmentToEdit.payment_status;
-    if (!formData.notes && appointmentToEdit.notes) patch.notes = appointmentToEdit.notes;
-    if (!formData.is_blocked && appointmentToEdit.is_blocked) patch.is_blocked = appointmentToEdit.is_blocked;
-    if ((!formData.status_id || formData.status_id === 0) && appointmentToEdit.status_id) patch.status_id = appointmentToEdit.status_id;
+    if (!formData.patient_id && appointmentToEdit.patient_id) patch.patient_id = String(appointmentToEdit.patient_id);
+    if (!formData.procedure_id && appointmentToEdit.procedure_id) patch.procedure_id = String(appointmentToEdit.procedure_id);
+    if (!formData.professional_id && appointmentToEdit.professional_id) patch.professional_id = String(appointmentToEdit.professional_id);
+    if (!formData.payment_method && appointmentToEdit.payment_method) patch.payment_method = String(appointmentToEdit.payment_method);
+    if (!formData.payment_status && appointmentToEdit.payment_status) patch.payment_status = String(appointmentToEdit.payment_status);
+    if (!formData.notes && appointmentToEdit.notes) patch.notes = String(appointmentToEdit.notes);
+    if (!formData.is_blocked && appointmentToEdit.is_blocked) patch.is_blocked = !!appointmentToEdit.is_blocked;
+    if ((!formData.status_id || formData.status_id === 0) && appointmentToEdit.status_id) patch.status_id = Number(appointmentToEdit.status_id);
     if (Object.keys(patch).length) {
       setFormData({ ...formData, ...patch } as AppointmentFormData);
     }

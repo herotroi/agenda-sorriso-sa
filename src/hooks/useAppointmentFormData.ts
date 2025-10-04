@@ -183,11 +183,11 @@ export function useAppointmentFormData(
           start_time: toLocalDateTimeString(startDate),
           end_time: toLocalDateTimeString(endDate),
           duration,
-          notes: appointmentToEdit.notes || '',
+          notes: appointmentToEdit.notes ? String(appointmentToEdit.notes) : '',
           status_id: appointmentToEdit.status_id || 1,
           is_blocked: appointmentToEdit.is_blocked || false,
-          payment_method: appointmentToEdit.payment_method || '',
-          payment_status: appointmentToEdit.payment_status || ''
+          payment_method: appointmentToEdit.payment_method ? String(appointmentToEdit.payment_method) : '',
+          payment_status: appointmentToEdit.payment_status ? String(appointmentToEdit.payment_status) : ''
         };
 
         setFormData(editData);
