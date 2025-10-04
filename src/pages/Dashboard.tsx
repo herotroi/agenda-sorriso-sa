@@ -13,7 +13,8 @@ import {
   XCircle,
   RefreshCw,
   TrendingDown,
-  CreditCard
+  CreditCard,
+  Printer
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,10 @@ export default function Dashboard() {
     }).format(value);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -60,10 +65,16 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm sm:text-base text-gray-600">Visão geral da sua clínica</p>
         </div>
-        <Button onClick={refetch} variant="outline" size="sm" className="w-full sm:w-auto">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={refetch} variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button onClick={handlePrint} variant="outline" size="sm" className="flex-1 sm:flex-initial print:hidden">
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir
+          </Button>
+        </div>
       </div>
 
       {/* Date Range Selector */}

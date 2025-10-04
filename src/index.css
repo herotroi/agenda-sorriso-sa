@@ -360,3 +360,52 @@
   font-style: italic;
   color: hsl(var(--muted-foreground));
 }
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide navigation and unnecessary elements */
+  nav,
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Adjust layout for print */
+  .grid {
+    break-inside: avoid;
+  }
+
+  /* Ensure cards print properly */
+  .shadow-sm {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Page breaks */
+  .break-before-page {
+    page-break-before: always;
+  }
+
+  .break-after-avoid {
+    page-break-after: avoid;
+  }
+
+  /* Make text darker for print */
+  .text-gray-600 {
+    color: #374151 !important;
+  }
+
+  .text-gray-500 {
+    color: #6b7280 !important;
+  }
+}
