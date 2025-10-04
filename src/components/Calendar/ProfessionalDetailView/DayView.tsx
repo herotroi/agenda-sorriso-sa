@@ -102,13 +102,13 @@ export function DayView({
         </p>
       </div>
 
-      <div className="grid grid-cols-[80px,1fr] gap-2">
-        {/* Coluna de horários (esquerda) */}
-        <div className="relative" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+      <div className="relative overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+        {/* Horários à esquerda (posicionados absolutamente) */}
+        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 border-r bg-gray-50/50 z-10">
           {timeSlots.map((slot) => (
             <div 
               key={slot.time} 
-              className="absolute text-sm text-gray-500 font-medium -translate-y-2"
+              className="absolute text-xs sm:text-sm text-gray-500 font-medium px-2 -translate-y-2"
               style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
             >
               {slot.time}
@@ -116,71 +116,74 @@ export function DayView({
           ))}
         </div>
 
-        {/* Coluna de agenda contínua (direita) */}
-        <div className="relative overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
-          {/* Linhas de grade por hora */}
-          {timeSlots.map((slot) => (
-            <div
-              key={slot.hour}
-              className="absolute left-0 right-0 border-t border-gray-100"
-              style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
-            />
-          ))}
+        {/* Linhas de grade por hora */}
+        {timeSlots.map((slot) => (
+          <div
+            key={slot.hour}
+            className="absolute left-16 sm:left-20 right-0 border-t border-gray-100"
+            style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
+          />
+        ))}
 
-          {/* Cards posicionados por minuto */}
-          {appointments.map((appointment) => {
-            const itemType = (appointment as any).type;
-            const isSpecialItem = itemType === 'vacation' || itemType === 'break';
-            const start = new Date(appointment.start_time);
-            const end = new Date(appointment.end_time);
-            const top = minutesFromMidnight(start) * PX_PER_MIN;
-            const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
+        {/* Cards posicionados por minuto com margem à esquerda para horários */}
+        {appointments.map((appointment) => {
+          const itemType = (appointment as any).type;
+          const isSpecialItem = itemType === 'vacation' || itemType === 'break';
+          const start = new Date(appointment.start_time);
+          const end = new Date(appointment.end_time);
+          const top = minutesFromMidnight(start) * PX_PER_MIN;
+          const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
 
-            return (
-              <Card
-                key={appointment.id}
-                className={`absolute left-2 right-2 cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
-                style={{ top: `${top}px`, height: `${height}px`, zIndex: getZIndex(itemType) }}
-                onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
-              >
-                <CardContent className="p-2 sm:p-3 h-full">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-3 flex-wrap min-w-0">
-                      <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
-                        <Clock className="h-3 w-3" />
-                        {isSpecialItem && itemType === 'vacation'
-                          ? 'Dia todo'
-                          : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
+          return (
+            <Card
+              key={appointment.id}
+              className={`absolute cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
+              style={{ 
+                top: `${top}px`, 
+                height: `${height}px`, 
+                left: '68px',
+                right: '8px',
+                zIndex: getZIndex(itemType) 
+              }}
+              onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
+            >
+              <CardContent className="p-2 sm:p-3 h-full">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 flex-wrap min-w-0">
+                    <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
+                      <Clock className="h-3 w-3" />
+                      {isSpecialItem && itemType === 'vacation'
+                        ? 'Dia todo'
+                        : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
+                    </div>
+                    {appointment.patients && (
+                      <div className="flex items-center gap-1 text-sm min-w-0">
+                        <User className="h-3 w-3 flex-shrink-0" />
+                        <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
+                          {appointment.patients.full_name}
+                        </span>
                       </div>
-                      {appointment.patients && (
-                        <div className="flex items-center gap-1 text-sm min-w-0">
-                          <User className="h-3 w-3 flex-shrink-0" />
-                          <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
-                            {appointment.patients.full_name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
-                      {appointment.appointment_statuses?.label || 'Status não definido'}
-                    </Badge>
+                    )}
                   </div>
-                  {appointment.procedures && !isSpecialItem && (
-                    <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
-                      <FileText className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{appointment.procedures.name}</span>
-                    </div>
-                  )}
-                  {appointment.notes && (
-                    <div className="mt-2 text-xs text-gray-500 truncate">
-                      {appointment.notes}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
+                    {appointment.appointment_statuses?.label || 'Status não definido'}
+                  </Badge>
+                </div>
+                {appointment.procedures && !isSpecialItem && (
+                  <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
+                    <FileText className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{appointment.procedures.name}</span>
+                  </div>
+                )}
+                {appointment.notes && (
+                  <div className="mt-2 text-xs text-gray-500 truncate">
+                    {appointment.notes}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
