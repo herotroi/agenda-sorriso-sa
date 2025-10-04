@@ -108,12 +108,13 @@ export const fetchAllAppointments = async (professionalId?: string) => {
       status_id,
       notes,
       price,
+      is_blocked,
       created_at,
       updated_at,
-      patients!inner(full_name),
+      patients(full_name),
       professionals!inner(name),
       procedures(name),
-      appointment_statuses!inner(label, color)
+      appointment_statuses(label, color)
     `);
 
   // Add professional filter if specified
@@ -130,9 +131,9 @@ export const fetchAllAppointments = async (professionalId?: string) => {
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.patients || { full_name: 'Paciente não informado' },
+    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.procedures || { name: 'Sem procedimento' },
+    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
@@ -159,12 +160,13 @@ export const fetchFilteredAppointments = async (
       status_id,
       notes,
       price,
+      is_blocked,
       created_at,
       updated_at,
-      patients!inner(full_name),
+      patients(full_name),
       professionals!inner(name),
       procedures(name),
-      appointment_statuses!inner(label, color)
+      appointment_statuses(label, color)
     `);
 
   // Apply filters
@@ -190,9 +192,9 @@ export const fetchFilteredAppointments = async (
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.patients || { full_name: 'Paciente não informado' },
+    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.procedures || { name: 'Sem procedimento' },
+    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
