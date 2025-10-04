@@ -113,7 +113,7 @@ export function DayView({
         </div>
 
         {/* Coluna de agenda contínua (direita) */}
-        <div className="relative" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+        <div className="relative overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
           {/* Linhas de grade por hora */}
           {timeSlots.map((slot) => (
             <div
@@ -135,7 +135,7 @@ export function DayView({
             return (
               <Card
                 key={appointment.id}
-                className={`absolute left-0 right-0 cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
+                className={`absolute inset-x-1 sm:inset-x-2 cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
                 style={{ top: `${top}px`, height: `${height}px`, zIndex: getZIndex(itemType) }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
