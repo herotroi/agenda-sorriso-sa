@@ -92,7 +92,7 @@ export function DayView({
 
   return (
     <div className="space-y-4">
-      <div className="text-center sticky top-0 bg-background z-10 pb-4 border-b">
+      <div className="text-center sticky top-0 bg-background z-10 pb-4 border-b shadow-none">
         <h3 className="text-lg font-semibold">
           {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
         </h3>
