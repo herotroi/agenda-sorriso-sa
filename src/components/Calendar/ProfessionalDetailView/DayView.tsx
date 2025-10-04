@@ -75,7 +75,7 @@ export function DayView({
     if (type === 'vacation') return 40;
     return 30; // agendamentos normais
   };
-  const PX_PER_MIN = 1; // 1px por minuto
+  const PX_PER_MIN = 1.5; // 1.5px por minuto para cards maiores
   const minutesFromMidnight = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
   if (loading) {
@@ -106,7 +106,7 @@ export function DayView({
         {/* Coluna de horários (esquerda) */}
         <div>
           {timeSlots.map((slot) => (
-            <div key={slot.time} className="h-[60px] text-sm text-gray-500 font-medium">
+            <div key={slot.time} className="h-[90px] text-sm text-gray-500 font-medium">
               {slot.time}
             </div>
           ))}
