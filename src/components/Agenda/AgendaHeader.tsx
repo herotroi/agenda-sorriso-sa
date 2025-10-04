@@ -4,10 +4,11 @@ import { Printer } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AgendaHeaderProps {
-  onPrint: () => void;
+  onPrint?: () => void;
+  showPrintButton?: boolean;
 }
 
-export function AgendaHeader({ onPrint }: AgendaHeaderProps) {
+export function AgendaHeader({ onPrint, showPrintButton = true }: AgendaHeaderProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -21,15 +22,17 @@ export function AgendaHeader({ onPrint }: AgendaHeaderProps) {
         </p>
       </div>
       
-      <Button 
-        onClick={onPrint}
-        variant="outline"
-        className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-6"
-        size="default"
-      >
-        <Printer className="h-5 w-5" />
-        <span className="font-medium">Imprimir</span>
-      </Button>
+      {showPrintButton && onPrint && (
+        <Button 
+          onClick={onPrint}
+          variant="outline"
+          className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] px-6"
+          size="default"
+        >
+          <Printer className="h-5 w-5" />
+          <span className="font-medium">Imprimir</span>
+        </Button>
+      )}
     </div>
   );
 }
