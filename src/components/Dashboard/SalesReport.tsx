@@ -197,8 +197,9 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, date
                     // Define colors based on status
                     let statusColor = 'text-gray-600';
                     if (status.status.includes('Realizado')) statusColor = 'text-green-600';
-                    if (status.status.includes('Aguardando') || status.status.includes('Não Pagou')) statusColor = 'text-blue-600';
-                    if (status.status.includes('Cancelado') || status.status.includes('Sem Pagamento')) statusColor = 'text-red-600';
+                    if (status.status.includes('Aguardando')) statusColor = 'text-blue-600';
+                    if (status.status.includes('Não Pagou')) statusColor = 'text-red-600';
+                    if (status.status.includes('Cancelado') || status.status.includes('Sem Pagamento')) statusColor = 'text-orange-600';
                     
                     return (
                       <tr key={index} className="border-b hover:bg-gray-50">
@@ -211,18 +212,6 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, date
                       </tr>
                     );
                   })
-                )}
-                {paymentStatusData.length > 0 && (
-                  <tr className="bg-gray-50 font-bold">
-                    <td className="py-3 px-4">Total</td>
-                    <td className="py-3 px-4 text-center">
-                      {paymentStatusData.reduce((sum, s) => sum + s.count, 0)}
-                    </td>
-                    <td className="py-3 px-4 text-center">100%</td>
-                    <td className="py-3 px-4 text-right text-gray-900">
-                      {formatCurrency(paymentStatusData.reduce((sum, s) => sum + s.total, 0))}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>

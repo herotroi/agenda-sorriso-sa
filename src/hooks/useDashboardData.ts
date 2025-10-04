@@ -281,6 +281,7 @@ export function useDashboardData() {
         .from('appointments')
         .select('payment_method, price, payment_status')
         .eq('user_id', user.id)
+        .eq('payment_status', 'pagamento_realizado') // Apenas pagamentos realizados
         .not('price', 'is', null)
         .not('payment_method', 'is', null);
 
