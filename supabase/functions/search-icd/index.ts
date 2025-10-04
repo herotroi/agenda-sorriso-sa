@@ -98,18 +98,24 @@ async function searchICD(query: string, version: string, language: string = 'pt'
   
   // Formatar resultados
   let results = (searchData.destinationEntities || []).map((entity: any) => {
-    // Extrair código do theCode ou ID
-    let code = entity.theCode || '';
-    if (!code && entity.id) {
-      // Tentar extrair código do ID (ex: http://id.who.int/icd/entity/123456789)
-      const match = entity.id.match(/\/([A-Z0-9.]+)$/);
-      code = match ? match[1] : '';
-    }
+    // Preferir o código retornado pela API (theCode)
+    const rawCode: string | undefined = entity.theCode;
 
-    // Remover tags HTML do título
-    const title = (entity.title || 'Sem título')
+    // Remover tags HTML do título (a API destaca o termo com <em>)
+    const title = String(entity.title || 'Sem título')
       .replace(/<em class='found'>/g, '')
       .replace(/<\/em>/g, '');
+
+    // Se não houver theCode, tentar extrair do id, mas apenas se for um formato simples
+    let fallbackCode = '';
+    if (!rawCode && entity.id) {
+      const match = String(entity.id).match(/\/([A-Z0-9.]+)$/);
+      fallbackCode = match ? match[1] : '';
+    }
+
+    // Escolher o código final e validar para aceitar apenas formatos simples (sem espaços, & etc.)
+    const code = String(rawCode || fallbackCode).toUpperCase();
+    const isValidCode = /^[A-Z0-9.]+$/.test(code);
 
     return {
       code,
@@ -117,29 +123,49 @@ async function searchICD(query: string, version: string, language: string = 'pt'
       version: `CID-${version}`,
       id: entity.id,
       score: entity.score || 0,
-    };
-  }).filter((result: any) => result.code); // Filtrar apenas resultados com código
+      __valid: Boolean(code) && isValidCode,
+    } as any;
+  })
+  // Manter apenas resultados com código válido
+  .filter((r: any) => r.__valid);
 
-  // Se a query parece ser um código (começa com letra ou número), priorizar códigos que começam com a query
-  const isCodeSearch = /^[A-Z0-9]/i.test(query);
-  
-  if (isCodeSearch) {
-    const queryUpper = query.toUpperCase();
-    
-    // Separar em resultados exatos e outros
-    const exactMatches = results.filter((r: any) => 
-      r.code.toUpperCase().startsWith(queryUpper)
-    );
-    
-    const otherMatches = results.filter((r: any) => 
-      !r.code.toUpperCase().startsWith(queryUpper)
-    );
-    
-    // Priorizar matches exatos
-    results = [...exactMatches, ...otherMatches];
+  // Se a query parece ser um código (ex.: "6A", "A00.0"), filtrar para começar com a query
+  const isCodeSearch = /^[A-Z0-9.]+$/i.test(query);
+  if (isCodeSearch && query.length >= 2) {
+    const q = query.toUpperCase();
+    const startsWithMatches = results.filter((r: any) => r.code.startsWith(q));
+
+    if (startsWithMatches.length > 0) {
+      results = startsWithMatches;
+    } else {
+      // Se não houver início exato, tentar códigos que contenham a query
+      const containsMatches = results.filter((r: any) => r.code.includes(q));
+      if (containsMatches.length > 0) {
+        results = containsMatches;
+      } else {
+        // Nenhum código combina: preferimos retornar vazio para evitar ruído
+        results = [];
+      }
+    }
+
+    // Ordenar: igualdade perfeita primeiro, depois começa com + menor código
+    results.sort((a: any, b: any) => {
+      const au = a.code.toUpperCase();
+      const bu = b.code.toUpperCase();
+      if (au === q && bu !== q) return -1;
+      if (bu === q && au !== q) return 1;
+      if (au.startsWith(q) && !bu.startsWith(q)) return -1;
+      if (bu.startsWith(q) && !au.startsWith(q)) return 1;
+      // Menor tamanho e ordem lexicográfica como desempate
+      if (au.length !== bu.length) return au.length - bu.length;
+      return au.localeCompare(bu);
+    });
+  } else {
+    // Busca por texto: ordenar por score desc e então título
+    results.sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0) || String(a.title).localeCompare(String(b.title)));
   }
-  
-  // Limitar a 20 resultados mais relevantes
+
+  // Limitar para não poluir o dropdown
   results = results.slice(0, 20);
 
   console.log(`Found ${results.length} results for ICD-${version}`);
