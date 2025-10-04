@@ -1394,10 +1394,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           </div>
         </DialogHeader>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden">
-          {/* Coluna Esquerda - Informações Principais */}
-          <div className="border-r border-gray-200">
-            <ScrollArea className="h-[calc(95vh-100px)] px-6 py-4">
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-[calc(95vh-100px)]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 sm:p-6">
+              {/* Coluna Esquerda - Informações Principais */}
               <div className="space-y-6">
                 {/* Informações do Paciente */}
                 <div className="bg-blue-50 rounded-lg p-4">
@@ -1420,7 +1420,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         <p className="mt-1 font-medium">{patient?.full_name || 'Não informado'}</p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {patient?.cpf && (
                           <div>
                             <span className="font-medium text-gray-600 flex items-center gap-1">
@@ -1442,7 +1442,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <span className="font-medium text-gray-600">Sexo:</span>
                           <p className="mt-1">{patient?.gender || 'Não informado'}</p>
@@ -1578,289 +1578,258 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
 
                     {/* Agendamentos Vinculados */}
                     {linkedAppointments.length > 0 && (
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          {linkedAppointments.length > 1 ? 'Consultas Vinculadas:' : 'Consulta Vinculada:'}
-                        </span>
-                        <div className="mt-2 space-y-2">
-                          {linkedAppointments.map((appt, index) => (
-                            <div key={appt.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <Calendar className="h-4 w-4 text-blue-600" />
-                                <span className="font-semibold text-sm">
-                                  {format(new Date(appt.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      <div className="border-t pt-3">
+                        <h4 className="font-medium text-gray-700 flex items-center gap-1 mb-3">
+                          <Clock className="h-4 w-4" />
+                          Consultas Vinculadas ({linkedAppointments.length})
+                        </h4>
+                        <div className="space-y-3">
+                          {linkedAppointments.map((appt) => (
+                            <div key={appt.id} className="bg-gray-50 p-3 rounded-lg">
+                              <div className="flex items-center gap-2 text-sm mb-1">
+                                <Calendar className="h-3 w-3" />
+                                <span className="font-medium">
+                                  {format(new Date(appt.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                                 </span>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 mt-2">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{format(new Date(appt.start_time), 'HH:mm', { locale: ptBR })}</span>
-                                  {appt.end_time && <span>- {format(new Date(appt.end_time), 'HH:mm', { locale: ptBR })}</span>}
+                              {appt.procedures && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Pill className="h-3 w-3" />
+                                  <span>{appt.procedures.name}</span>
                                 </div>
-                                {appt.procedures && (
-                                  <Badge variant="secondary" className="w-fit text-xs">
-                                    {appt.procedures.name}
-                                  </Badge>
-                                )}
-                                {appt.professionals && (
-                                  <div className="flex items-center gap-1 sm:col-span-2">
-                                    <User className="h-3 w-3" />
-                                    <span>Dr(a). {appt.professionals.name}</span>
-                                    {appt.professionals.crm_cro && <span className="text-gray-500">- {appt.professionals.crm_cro}</span>}
-                                  </div>
-                                )}
-                              </div>
+                              )}
+                              {appt.professionals && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <User className="h-3 w-3" />
+                                  <span>Dr(a). {appt.professionals.name}</span>
+                                  {appt.professionals.crm_cro && <span className="text-xs">({appt.professionals.crm_cro})</span>}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    {/* Fallback: appointment_id antigo (se não houver linkedAppointments) */}
-                    {linkedAppointments.length === 0 && appointment && (
-                      <>
-                        {appointment.procedures && (
-                          <Badge variant="secondary" className="w-fit">
-                            {appointment.procedures.name}
-                          </Badge>
-                        )}
-
-                        <div>
-                          <span className="font-medium text-gray-600">Data da consulta:</span>
-                          <p className="mt-1">{format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
-                        </div>
-                      </>
-                    )}
-
-                    {/* CID Codes */}
-                    {(record as any).icd_codes && Array.isArray((record as any).icd_codes) && (record as any).icd_codes.length > 0 && (
-                      <div>
-                        <span className="font-medium text-gray-600">Códigos CID:</span>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {(record as any).icd_codes.map((icd: any, idx: number) => (
-                            <Badge key={`${icd.code}-${idx}`} variant="outline" className="text-xs">
-                              {icd.code} - {icd.version}
-                              {icd.title && <span className="ml-1 text-muted-foreground">({icd.title})</span>}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {/* Anamnese e Exame */}
-                {(record.content || record.notes) && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Anamnese e Exame Clínico</h3>
-                    <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                      <HtmlContent 
-                        content={record.content || record.notes || ''} 
-                        className="text-sm leading-relaxed"
-                      />
+                {/* Conteúdo do Prontuário */}
+                <div className="space-y-4">
+                  {record.content && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Conteúdo do Prontuário
+                      </h3>
+                      <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
+                        <HtmlContent content={record.content} />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Prescrição */}
-                {record.prescription && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Pill className="h-5 w-5 text-green-600" />
-                      Prescrição Médica
-                    </h3>
-                    <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                      <HtmlContent 
-                        content={record.prescription || ''} 
-                        className="text-sm leading-relaxed"
-                      />
+                  {record.notes && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Observações</h3>
+                      <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
+                        <HtmlContent content={record.notes} />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {record.prescription && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                        <Pill className="h-5 w-5" />
+                        Prescrição
+                      </h3>
+                      <div className="prose prose-sm max-w-none bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                        <HtmlContent content={record.prescription} />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </ScrollArea>
-          </div>
 
-          {/* Coluna Direita - Documentos */}
-          <div>
-            <div className="px-6 py-4 border-b bg-gray-50">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Documentos Anexados</h3>
-                  <div className="flex items-center gap-2">
-                    {documents.length > 1 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowOrderControls(!showOrderControls)}
-                        className="text-xs"
-                      >
-                        {showOrderControls ? 'Ocultar' : 'Ordenar'}
-                      </Button>
-                    )}
+              {/* Coluna Direita - Documentos */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Documentos Anexados
+                    </h3>
+                    <Button
+                      variant={showOrderControls ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowOrderControls(!showOrderControls)}
+                      disabled={documents.length <= 1}
+                      className="text-xs sm:text-sm"
+                    >
+                      <GripVertical className="h-4 w-4 mr-1" />
+                      {showOrderControls ? 'Concluir' : 'Reordenar'}
+                    </Button>
                   </div>
+                  
+                  {documents.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
+                      <div className="flex flex-col sm:flex-row items-start gap-2 mb-3">
+                        <Printer className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-blue-800 mb-1">
+                            Selecione para Impressão
+                          </p>
+                          <p className="text-xs text-blue-700">
+                            Marque os documentos que deseja incluir na impressão do prontuário
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                        <span className="text-blue-700 font-medium text-xs sm:text-sm">
+                          {selectedDocuments.length} de {documents.length} selecionados
+                        </span>
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedDocuments(documents.map(d => d.id))}
+                            className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
+                          >
+                            Selecionar Todos
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedDocuments([])}
+                            className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
+                          >
+                            Limpar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {showOrderControls && documents.length > 1 && (
+                    <div className="p-3 sm:p-4 bg-amber-50 rounded-lg border border-amber-200 animate-fade-in mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <GripVertical className="h-5 w-5 text-amber-600 mt-0.5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-amber-800 mb-1">
+                            Como reordenar os documentos:
+                          </p>
+                          <ul className="text-xs text-amber-700 space-y-1">
+                            <li>• <strong>Arrastar e soltar:</strong> Clique e arraste os documentos para nova posição</li>
+                            <li>• <strong>Botões de seta:</strong> Use ↑ ↓ para mover um de cada vez</li>
+                            <li>• <strong>Posição:</strong> A numeração mostra a ordem de impressão</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {loadingDocs ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                    </div>
+                  ) : documents.length > 0 ? (
+                    <div className="space-y-3">
+                      {getOrderedDocuments().map((doc, index) => (
+                        <div 
+                          key={doc.id} 
+                          className={`flex items-start gap-2 p-3 sm:p-4 border rounded-lg bg-white transition-all ${
+                            showOrderControls 
+                              ? draggedIndex === index 
+                                ? 'cursor-grabbing opacity-50 scale-105 border-blue-300 bg-blue-50' 
+                                : 'cursor-grab hover:bg-blue-50 hover:border-blue-200'
+                              : 'hover:bg-gray-50'
+                          }`}
+                          draggable={showOrderControls}
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          {showOrderControls && (
+                            <div className="flex flex-col gap-1 items-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => moveDocumentUp(index)}
+                                disabled={index === 0}
+                                className="p-1 h-6 w-6"
+                              >
+                                <ChevronUp className="h-3 w-3" />
+                              </Button>
+                              <GripVertical className="h-4 w-4 text-gray-400" />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => moveDocumentDown(index)}
+                                disabled={index === getOrderedDocuments().length - 1}
+                                className="p-1 h-6 w-6"
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                          <Checkbox
+                            checked={selectedDocuments.includes(doc.id)}
+                            onCheckedChange={() => toggleDocumentSelection(doc.id)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate text-sm">{doc.name}</h4>
+                            {doc.description && (
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{doc.description}</p>
+                            )}
+                            {!showOrderControls && (
+                              <>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Enviado em {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Tamanho: {(doc.file_size / 1024).toFixed(1)} KB
+                                </p>
+                              </>
+                            )}
+                            {showOrderControls && (
+                              <p className="text-xs text-blue-600 font-medium mt-1">
+                                Posição: {index + 1}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => previewDoc(doc)}
+                              className="flex-shrink-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => downloadDocument(doc)}
+                              className="flex-shrink-0"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                      <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhum documento anexado</p>
+                    </div>
+                  )}
                 </div>
-                
-                {documents.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                    <div className="flex flex-col sm:flex-row items-start gap-2 mb-3">
-                      <Printer className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-blue-800 mb-1">
-                          Selecione para Impressão
-                        </p>
-                        <p className="text-xs text-blue-700">
-                          Marque os documentos que deseja incluir na impressão do prontuário
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-                      <span className="text-blue-700 font-medium text-xs sm:text-sm">
-                        {selectedDocuments.length} de {documents.length} selecionados
-                      </span>
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedDocuments(documents.map(d => d.id))}
-                          className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
-                        >
-                          Selecionar Todos
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedDocuments([])}
-                          className="text-xs h-7 px-2 sm:px-3 text-blue-600 hover:text-blue-700"
-                        >
-                          Limpar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {showOrderControls && documents.length > 1 && (
-                  <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 animate-fade-in">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        <GripVertical className="h-5 w-5 text-amber-600 mt-0.5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-amber-800 mb-1">
-                          Como reordenar os documentos:
-                        </p>
-                        <ul className="text-xs text-amber-700 space-y-1">
-                          <li>• <strong>Arrastar e soltar:</strong> Clique e arraste os documentos para nova posição</li>
-                          <li>• <strong>Botões de seta:</strong> Use ↑ ↓ para mover um de cada vez</li>
-                          <li>• <strong>Posição:</strong> A numeração mostra a ordem de impressão</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
-            <ScrollArea className="h-[calc(95vh-140px)] px-6 py-4">
-              {loadingDocs ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
-                </div>
-              ) : documents.length > 0 ? (
-                <div className="space-y-3">
-                  {getOrderedDocuments().map((doc, index) => (
-                    <div 
-                      key={doc.id} 
-                      className={`flex items-start gap-2 p-4 border rounded-lg bg-white transition-all ${
-                        showOrderControls 
-                          ? draggedIndex === index 
-                            ? 'cursor-grabbing opacity-50 scale-105 border-blue-300 bg-blue-50' 
-                            : 'cursor-grab hover:bg-blue-50 hover:border-blue-200'
-                          : 'hover:bg-gray-50'
-                      }`}
-                      draggable={showOrderControls}
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      {showOrderControls && (
-                        <div className="flex flex-col gap-1 items-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveDocumentUp(index)}
-                            disabled={index === 0}
-                            className="p-1 h-6 w-6"
-                          >
-                            <ChevronUp className="h-3 w-3" />
-                          </Button>
-                          <GripVertical className="h-4 w-4 text-gray-400" />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => moveDocumentDown(index)}
-                            disabled={index === getOrderedDocuments().length - 1}
-                            className="p-1 h-6 w-6"
-                          >
-                            <ChevronDown className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      <Checkbox
-                        checked={selectedDocuments.includes(doc.id)}
-                        onCheckedChange={() => toggleDocumentSelection(doc.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate text-sm">{doc.name}</h4>
-                        {doc.description && (
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{doc.description}</p>
-                        )}
-                        {!showOrderControls && (
-                          <>
-                            <p className="text-xs text-gray-500 mt-2">
-                              Enviado em {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Tamanho: {(doc.file_size / 1024).toFixed(1)} KB
-                            </p>
-                          </>
-                        )}
-                        {showOrderControls && (
-                          <p className="text-xs text-blue-600 font-medium mt-1">
-                            Posição: {index + 1}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => previewDoc(doc)}
-                          className="flex-shrink-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadDocument(doc)}
-                          className="flex-shrink-0"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Nenhum documento anexado</p>
-                </div>
-              )}
-            </ScrollArea>
-          </div>
+          </ScrollArea>
         </div>
 
         {/* Preview Modal */}
