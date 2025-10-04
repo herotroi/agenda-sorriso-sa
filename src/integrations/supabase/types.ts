@@ -49,6 +49,8 @@ export type Database = {
           is_blocked: boolean | null
           notes: string | null
           patient_id: string | null
+          payment_method: string | null
+          payment_status: string | null
           price: number | null
           procedure_id: string | null
           professional_id: string | null
@@ -64,6 +66,8 @@ export type Database = {
           is_blocked?: boolean | null
           notes?: string | null
           patient_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           price?: number | null
           procedure_id?: string | null
           professional_id?: string | null
@@ -79,6 +83,8 @@ export type Database = {
           is_blocked?: boolean | null
           notes?: string | null
           patient_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           price?: number | null
           procedure_id?: string | null
           professional_id?: string | null

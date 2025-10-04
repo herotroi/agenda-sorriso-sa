@@ -261,8 +261,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
         ...apt,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        status: mapStatus(apt.status)
+        date: new Date(apt.start_time).toISOString().split('T')[0]
       }));
       
       const professionalData = await fetchProfessionalData();
@@ -320,8 +319,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
         ...apt,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        status: mapStatus(apt.status)
+        date: new Date(apt.start_time).toISOString().split('T')[0]
       }));
       
       const professionalData = await fetchProfessionalData();
@@ -373,8 +371,7 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       
       const mappedAppointments: Appointment[] = (data || []).map(apt => ({
         ...apt,
-        date: new Date(apt.start_time).toISOString().split('T')[0],
-        status: mapStatus(apt.status)
+        date: new Date(apt.start_time).toISOString().split('T')[0]
       }));
       
       const professionalData = await fetchProfessionalData();

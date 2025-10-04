@@ -116,7 +116,7 @@ export const useAppointmentValidation = () => {
         .from('appointments')
         .select('id, start_time, end_time, patients(full_name)')
         .eq('professional_id', professionalId)
-        .neq('status', 'Cancelado')
+        .neq('status_id', 2)
         .gte('start_time', new Date(startTime).toISOString().split('T')[0] + 'T00:00:00')
         .lte('start_time', new Date(startTime).toISOString().split('T')[0] + 'T23:59:59');
 

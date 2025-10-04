@@ -9,6 +9,8 @@ export interface AppointmentFormData {
   notes: string;
   status_id: number;
   is_blocked?: boolean;
+  payment_method?: string;
+  payment_status?: string;
 }
 
 export interface Patient {

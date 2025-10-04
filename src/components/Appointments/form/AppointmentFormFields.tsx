@@ -5,6 +5,7 @@ import { DateTimeDurationSection } from './DateTimeDurationSection';
 import { StatusSelector } from './StatusSelector';
 import { NotesInput } from './NotesInput';
 import { BlockedAppointmentToggle } from './BlockedAppointmentToggle';
+import { PaymentSection } from './PaymentSection';
 
 interface AppointmentStatus {
   id: number;
@@ -71,15 +72,26 @@ export function AppointmentFormFields({
       />
 
       {!formData.is_blocked && (
-        <StatusSelector
-          statuses={statuses}
-          value={formData.status_id.toString()}
-          onChange={(value) => handleFieldUpdate('status_id', parseInt(value))}
-          currentStatusName={originalData && !fieldModified.status_id 
-            ? statuses.find(s => s.id === originalData.status_id)?.label 
-            : undefined
-          }
-        />
+        <>
+          <StatusSelector
+            statuses={statuses}
+            value={formData.status_id.toString()}
+            onChange={(value) => handleFieldUpdate('status_id', parseInt(value))}
+            currentStatusName={originalData && !fieldModified.status_id 
+              ? statuses.find(s => s.id === originalData.status_id)?.label 
+              : undefined
+            }
+          />
+
+          <PaymentSection
+            paymentMethod={formData.payment_method || ''}
+            paymentStatus={formData.payment_status || ''}
+            onPaymentMethodChange={(value) => handleFieldUpdate('payment_method', value)}
+            onPaymentStatusChange={(value) => handleFieldUpdate('payment_status', value)}
+            currentPaymentMethod={originalData && !fieldModified.payment_method ? originalData.payment_method : undefined}
+            currentPaymentStatus={originalData && !fieldModified.payment_status ? originalData.payment_status : undefined}
+          />
+        </>
       )}
 
       <NotesInput

@@ -102,8 +102,7 @@ export function useAppointmentEditor(
       if (data && data[0]) {
         const updatedAppointment = {
           ...data[0],
-          date: new Date(data[0].start_time).toISOString().split('T')[0],
-          status: data[0].status || 'confirmado'
+          date: new Date(data[0].start_time).toISOString().split('T')[0]
         } as Appointment;
 
         setAppointments(prev => prev.map(appointment => 

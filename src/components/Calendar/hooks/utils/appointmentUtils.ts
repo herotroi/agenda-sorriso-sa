@@ -39,8 +39,7 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
     // Map database fields to frontend interface
     return (data || []).map(apt => ({
       ...apt,
-      date: new Date(apt.start_time).toISOString().split('T')[0],
-      status: apt.status || 'confirmado'
+      date: new Date(apt.start_time).toISOString().split('T')[0]
     })) as Appointment[];
   } catch (error) {
     console.error('❌ Error fetching appointments:', error);

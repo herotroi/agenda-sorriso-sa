@@ -61,6 +61,8 @@ export interface Appointment {
   date: string;
   user_id: string;
   is_blocked?: boolean;
+  payment_method?: string;
+  payment_status?: string;
   
   // Relacionamentos
   patients?: {
