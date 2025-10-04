@@ -405,34 +405,40 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       `;
     }
 
-    // Consultas vinculadas (todas)
-    let linkedAppointmentsHtml = '';
-    if (linkedAppointments && linkedAppointments.length > 0) {
-      const rows = linkedAppointments
-        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-        .map((appt) => {
-          const dateStr = format(new Date(appt.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR });
-          const proc = appt.procedures?.name || '-';
-          const prof = appt.professionals ? `Dr(a). ${appt.professionals.name}${appt.professionals.crm_cro ? ' - ' + appt.professionals.crm_cro : ''}` : '-';
-          return `<tr><td>${dateStr}</td><td>${proc}</td><td>${prof}</td></tr>`;
-        }).join('');
+    // Consultas vinculadas no formato de lista (mesclar com appointment)
+    let allAppointmentsHtml = '';
+    const allAppts = linkedAppointments && linkedAppointments.length > 0 ? linkedAppointments : (appointment ? [appointment] : []);
+    
+    if (allAppts.length > 0) {
+      const sortedAppts = allAppts.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      
+      const appointmentsItems = sortedAppts.map((appt, index) => {
+        const dateStr = format(new Date(appt.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+        const proc = appt.procedures?.name || '-';
+        const prof = appt.professionals ? `Dr(a). ${appt.professionals.name}${appt.professionals.crm_cro ? ' - ' + appt.professionals.crm_cro : ''}` : '-';
+        
+        return `
+          ${index > 0 ? '<div style="border-top: 1px solid #e5e7eb; margin: 12px 0;"></div>' : ''}
+          <div class="appointment-field">
+            <span class="field-label">Data:</span>
+            <span class="field-value">${dateStr}</span>
+          </div>
+          <div class="appointment-field">
+            <span class="field-label">Procedimento:</span>
+            <span class="field-value">${proc}</span>
+          </div>
+          <div class="appointment-field">
+            <span class="field-label">Profissional:</span>
+            <span class="field-value">${prof}</span>
+          </div>
+        `;
+      }).join('');
 
-      linkedAppointmentsHtml = `
-        <div class="medical-section">
-          <div class="section-header">Consultas Vinculadas</div>
-          <div class="section-content">
-            <table>
-              <thead>
-                <tr>
-                  <th style="text-align:left">Data</th>
-                  <th style="text-align:left">Procedimento</th>
-                  <th style="text-align:left">Profissional</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows}
-              </tbody>
-            </table>
+      allAppointmentsHtml = `
+        <div class="appointment-info">
+          <h3>Informações da${allAppts.length > 1 ? 's' : ''} Consulta${allAppts.length > 1 ? 's' : ''}</h3>
+          <div class="appointment-grid">
+            ${appointmentsItems}
           </div>
         </div>
       `;
@@ -458,21 +464,19 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         }
         const rows = Array.from(unique.values()).map((item: any) => `
           <tr>
-            <td>${item.code || '-'}</td>
-            <td>${item.version || '-'}</td>
-            <td>${item.title || ''}</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: 500;">${item.code || '-'}</td>
+            <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.title || item.version || ''}</td>
           </tr>
         `).join('');
         icdHtml = `
           <div class="medical-section">
             <div class="section-header">Códigos CID</div>
             <div class="section-content">
-              <table>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
                 <thead>
-                  <tr>
-                    <th style="text-align:left">Código</th>
-                    <th style="text-align:left">Versão</th>
-                    <th style="text-align:left">Descrição</th>
+                  <tr style="background-color: #f9fafb;">
+                    <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600; width: 120px;">Código</th>
+                    <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600;">Descrição</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1181,31 +1185,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
             </div>
           </div>
           
-          ${appointment ? `
-            <div class="appointment-info">
-              <h3>Informações da Consulta</h3>
-              <div class="appointment-grid">
-                <div class="appointment-field">
-                  <span class="field-label">Data:</span>
-                  <span class="field-value">${format(new Date(appointment.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-                </div>
-                ${appointment.procedures ? `
-                  <div class="appointment-field">
-                    <span class="field-label">Procedimento:</span>
-                    <span class="field-value">${appointment.procedures.name}</span>
-                  </div>
-                ` : ''}
-                ${professional ? `
-                  <div class="appointment-field">
-                    <span class="field-label">Profissional:</span>
-                    <span class="field-value">Dr(a). ${professional.name}${professional.crm_cro ? ` - ${professional.crm_cro}` : ''}</span>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-          ` : ''}
-
-          ${linkedAppointmentsHtml}
+          ${allAppointmentsHtml}
           
           ${record.content || record.notes ? `
             <div class="medical-section">
