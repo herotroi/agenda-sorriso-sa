@@ -49,7 +49,7 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="fullName">Nome Completo</Label>
+        <Label htmlFor="fullName" className="text-sm font-medium">Nome Completo</Label>
         <Input
           id="fullName"
           type="text"
@@ -57,10 +57,11 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
+          className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="text-sm font-medium">Email</Label>
         <Input
           id="email"
           type="email"
@@ -68,10 +69,11 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
+        <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
         <div className="relative">
           <Input
             id="password"
@@ -80,6 +82,7 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="h-11 pr-10 transition-all focus:ring-2 focus:ring-primary/20"
           />
           <Button
             type="button"
@@ -119,7 +122,7 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+        <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirmar Senha</Label>
         <div className="relative">
           <Input
             id="confirmPassword"
@@ -128,6 +131,7 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            className="h-11 pr-10 transition-all focus:ring-2 focus:ring-primary/20"
           />
           <Button
             type="button"
@@ -154,7 +158,7 @@ export const RegisterForm = ({ onSubmit, isLoading }: RegisterFormProps) => {
       
       <Button 
         type="submit" 
-        className="w-full" 
+        className="w-full h-11 font-medium bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-md mt-6" 
         disabled={isLoading || !passwordValidation.isValid || !passwordsMatch}
       >
         {isLoading ? 'Cadastrando...' : 'Cadastrar'}

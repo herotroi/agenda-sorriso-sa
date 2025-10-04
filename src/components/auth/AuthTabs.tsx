@@ -26,45 +26,65 @@ export const AuthTabs = ({
   isLoading 
 }: AuthTabsProps) => {
   return (
-    <div className="max-w-md mx-auto">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-center">Acesse sua conta</CardTitle>
-          <CardDescription className="text-center">
+    <div className="max-w-md mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
+      <Card className="shadow-2xl border-border/50 backdrop-blur-sm bg-card/95 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
+        
+        <CardHeader className="space-y-3 pb-6">
+          <CardTitle className="text-center text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Acesse sua conta
+          </CardTitle>
+          <CardDescription className="text-center text-muted-foreground">
             Entre com sua conta, cadastre-se ou recupere sua senha
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        
+        <CardContent className="pb-8">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="register">Cadastrar</TabsTrigger>
-              <TabsTrigger value="reset">Esqueci a Senha</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1">
+              <TabsTrigger 
+                value="login"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all"
+              >
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all"
+              >
+                Cadastrar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reset"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all text-xs sm:text-sm"
+              >
+                Recuperar
+              </TabsTrigger>
             </TabsList>
 
             {error && (
-              <Alert variant="destructive" className="mt-4">
+              <Alert variant="destructive" className="mt-4 animate-fade-in border-destructive/50">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             {successMessage && (
-              <Alert className="mt-4 border-green-200 bg-green-50">
-                <Check className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+              <Alert className="mt-4 border-green-500/50 bg-green-50 dark:bg-green-950/20 animate-fade-in">
+                <Check className="h-4 w-4 text-green-600 dark:text-green-500" />
+                <AlertDescription className="text-green-800 dark:text-green-300">{successMessage}</AlertDescription>
               </Alert>
             )}
 
-            <TabsContent value="login">
+            <TabsContent value="login" className="mt-6">
               <LoginForm onSubmit={onSignIn} isLoading={isLoading} />
             </TabsContent>
 
-            <TabsContent value="register">
+            <TabsContent value="register" className="mt-6">
               <RegisterForm onSubmit={onSignUp} isLoading={isLoading} />
             </TabsContent>
 
-            <TabsContent value="reset">
+            <TabsContent value="reset" className="mt-6">
               <ForgotPasswordForm onSubmit={onResetPassword} isLoading={isLoading} />
             </TabsContent>
           </Tabs>

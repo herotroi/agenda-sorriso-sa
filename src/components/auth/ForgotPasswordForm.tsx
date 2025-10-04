@@ -19,9 +19,9 @@ export const ForgotPasswordForm = ({ onSubmit, isLoading }: ForgotPasswordFormPr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="resetEmail">Email</Label>
+        <Label htmlFor="resetEmail" className="text-sm font-medium">Email</Label>
         <Input
           id="resetEmail"
           type="email"
@@ -29,14 +29,15 @@ export const ForgotPasswordForm = ({ onSubmit, isLoading }: ForgotPasswordFormPr
           value={resetEmail}
           onChange={(e) => setResetEmail(e.target.value)}
           required
+          className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
         />
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Digite seu email para receber o link de recuperação de senha
         </p>
       </div>
       <Button 
         type="submit" 
-        className="w-full" 
+        className="w-full h-11 font-medium bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity shadow-md" 
         disabled={isLoading}
       >
         {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
