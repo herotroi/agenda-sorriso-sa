@@ -82,7 +82,16 @@ async function searchICD10ByCodePrefix(query: string, language: string): Promise
   const token = await getOAuthToken();
   const Q = query.toUpperCase().replace(/[^A-Z0-9.]/g, '');
   const releaseCandidates = ['2019', '2016'];
-  const codeCandidates = [Q, Q.slice(0, 4), Q.slice(0, 3), Q.slice(0, 2)].filter(Boolean);
+  const base = Q.split('.')[0];
+  const codeCandidates: string[] = [];
+  if (/^[A-Z]$/.test(base)) {
+    codeCandidates.push(`${base}00`, `${base}0`, base);
+  } else if (/^[A-Z][0-9]$/.test(base)) {
+    codeCandidates.push(`${base}0`, `${base}00`, base);
+  } else if (base.length >= 3) {
+    codeCandidates.push(base.slice(0, 3));
+  }
+  if (Q !== base) codeCandidates.push(Q);
 
   let payload: any | null = null;
   for (const rel of releaseCandidates) {
@@ -132,15 +141,16 @@ async function searchICD10ByCodePrefix(query: string, language: string): Promise
     return bu.localeCompare(au);
   });
 
-  return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10' }));
+  return results.slice(0, 20).map(r => ({ ...r, version: 'CID-10', id: `cid10:${r.code}` }));
 }
 
-async function searchICD(query: string, version: string, language: string = 'pt'): Promise<any[]> {
+async function searchICD(query: string, version: string, language: string = 'pt-BR'): Promise<any[]> {
+  const lang = language && language.toLowerCase().startsWith('pt') ? 'pt-BR' : (language || 'pt-BR');
   // CID-10: não há endpoint de busca; implementamos busca por prefixo de código
   const isCodeQuery = /^[A-Z0-9.]+$/i.test(query);
   if (version === '10') {
     if (!isCodeQuery) return [];
-    const results = await searchICD10ByCodePrefix(query.trim(), language);
+    const results = await searchICD10ByCodePrefix(query.trim(), lang);
     return results;
   }
 
@@ -168,7 +178,7 @@ async function searchICD(query: string, version: string, language: string = 'pt'
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
       'API-Version': 'v2',
-      'Accept-Language': language,
+      'Accept-Language': lang,
     },
   });
 
@@ -263,7 +273,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, version = '11', language = 'pt' } = await req.json();
+    const { query, version = '10', language = 'pt-BR' } = await req.json();
 
     if (!query || query.trim().length < 2) {
       return new Response(

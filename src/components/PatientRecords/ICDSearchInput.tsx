@@ -14,7 +14,7 @@ interface ICDSearchInputProps {
 
 export function ICDSearchInput({ onSelect, initialCode, initialVersion }: ICDSearchInputProps) {
   const [query, setQuery] = useState(initialCode || '');
-  const [version, setVersion] = useState<'10' | '11'>((initialVersion === 'CID-10' ? '10' : '11') as '10' | '11');
+  const [version, setVersion] = useState<'10' | '11'>((initialVersion === 'CID-11' ? '11' : '10') as '10' | '11');
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const { searchICD, loading, results, clearResults } = useICDSearch();

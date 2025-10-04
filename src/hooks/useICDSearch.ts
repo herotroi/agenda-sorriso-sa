@@ -15,7 +15,7 @@ export function useICDSearch() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const searchICD = useCallback(async (query: string, version: '10' | '11' = '11') => {
+  const searchICD = useCallback(async (query: string, version: '10' | '11' = '10') => {
     if (!query || query.trim().length < 2) {
       setResults([]);
       return;
@@ -26,7 +26,7 @@ export function useICDSearch() {
 
     try {
       const { data, error: functionError } = await supabase.functions.invoke('search-icd', {
-        body: { query: query.trim(), version, language: 'pt' }
+        body: { query: query.trim(), version, language: 'pt-BR' }
       });
 
       if (functionError) {
