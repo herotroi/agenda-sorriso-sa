@@ -161,8 +161,9 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       });
       
       setFormData(newFormData);
+      setDataLoaded(true);
       
-      // Carregar ICD codes
+      // Carregar ICD codes após marcar como loaded
       const recordWithIcds = data as any;
       if (recordWithIcds.icd_codes) {
         try {
@@ -185,7 +186,6 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
         setSelectedIcds([]);
       }
       
-      setDataLoaded(true);
       console.log('✅ Data marked as loaded');
       
     } catch (err) {
