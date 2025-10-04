@@ -5,6 +5,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentFormData, Patient, Professional, Procedure, AppointmentStatus } from '@/types/appointment-form';
 
+// Helper: format Date to 'YYYY-MM-DDTHH:mm' in LOCAL time (for datetime-local inputs)
+const toLocalDateTimeString = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 export function useAppointmentFormData(
   isOpen: boolean,
   appointmentToEdit: any,
@@ -28,7 +34,7 @@ export function useAppointmentFormData(
     patient_id: '',
     professional_id: selectedProfessionalId || '',
     procedure_id: '',
-    start_time: selectedDate.toISOString().slice(0, 16),
+    start_time: toLocalDateTimeString(selectedDate),
     end_time: '',
     duration: '60',
     notes: '',
@@ -157,55 +163,68 @@ export function useAppointmentFormData(
   }, [isOpen, user]);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (appointmentToEdit) {
-      const startTime = new Date(appointmentToEdit.start_time);
-      const endTime = new Date(appointmentToEdit.end_time);
-      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)).toString();
-
-      const editData: AppointmentFormData = {
-        patient_id: appointmentToEdit.patient_id || '',
-        professional_id: appointmentToEdit.professional_id || '',
-        procedure_id: appointmentToEdit.procedure_id || '',
-        start_time: startTime.toISOString().slice(0, 16),
-        end_time: endTime.toISOString().slice(0, 16),
-        duration,
-        notes: appointmentToEdit.notes || '',
-        status_id: appointmentToEdit.status_id || 1,
-        is_blocked: appointmentToEdit.is_blocked || false,
-        payment_method: appointmentToEdit.payment_method || '',
-        payment_status: appointmentToEdit.payment_status || ''
-      };
-
-      setFormData(editData);
-      setOriginalData(editData);
-    } else {
-      const startTime = selectedDate.toISOString().slice(0, 16);
-      const endDate = new Date(selectedDate);
-      endDate.setMinutes(endDate.getMinutes() + 60);
-      const endTime = endDate.toISOString().slice(0, 16);
-
-      const newData: AppointmentFormData = {
-        patient_id: '',
-        professional_id: selectedProfessionalId || '',
-        procedure_id: '',
-        start_time: startTime,
-        end_time: endTime,
-        duration: '60',
-        notes: '',
-        status_id: 1,
-        is_blocked: false,
-        payment_method: '',
-        payment_status: ''
-      };
-
-      setFormData(newData);
-      setOriginalData(null);
+    if (!isOpen) {
+      initializedRef.current = false;
+      lastIdRef.current = null;
+      return;
     }
 
-    setFieldModified({});
-  }, [isOpen, appointmentToEdit?.id]);
+    if (appointmentToEdit) {
+      // Initialize once per appointment being edited
+      if (!initializedRef.current || lastIdRef.current !== appointmentToEdit.id) {
+        const startDate = new Date(appointmentToEdit.start_time);
+        const endDate = new Date(appointmentToEdit.end_time);
+        const duration = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60)).toString();
+
+        const editData: AppointmentFormData = {
+          patient_id: appointmentToEdit.patient_id || '',
+          professional_id: appointmentToEdit.professional_id || '',
+          procedure_id: appointmentToEdit.procedure_id || '',
+          start_time: toLocalDateTimeString(startDate),
+          end_time: toLocalDateTimeString(endDate),
+          duration,
+          notes: appointmentToEdit.notes || '',
+          status_id: appointmentToEdit.status_id || 1,
+          is_blocked: appointmentToEdit.is_blocked || false,
+          payment_method: appointmentToEdit.payment_method || '',
+          payment_status: appointmentToEdit.payment_status || ''
+        };
+
+        setFormData(editData);
+        setOriginalData(editData);
+        setFieldModified({});
+        initializedRef.current = true;
+        lastIdRef.current = appointmentToEdit.id;
+      }
+    } else {
+      // New appointment - initialize only once when opening
+      if (!initializedRef.current) {
+        const startDate = selectedDate;
+        const endDate = new Date(selectedDate);
+        endDate.setMinutes(endDate.getMinutes() + 60);
+
+        const newData: AppointmentFormData = {
+          patient_id: '',
+          professional_id: selectedProfessionalId || '',
+          procedure_id: '',
+          start_time: toLocalDateTimeString(startDate),
+          end_time: toLocalDateTimeString(endDate),
+          duration: '60',
+          notes: '',
+          status_id: 1,
+          is_blocked: false,
+          payment_method: '',
+          payment_status: ''
+        };
+
+        setFormData(newData);
+        setOriginalData(null);
+        setFieldModified({});
+        initializedRef.current = true;
+        lastIdRef.current = null;
+      }
+    }
+  }, [isOpen, appointmentToEdit?.id, selectedDate, selectedProfessionalId]);
 
   return {
     patients,
