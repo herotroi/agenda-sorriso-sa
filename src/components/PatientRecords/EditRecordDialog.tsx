@@ -748,7 +748,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   if (!record || !isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(next) => { if (!next) setTimeout(() => onClose(), 0); }}>
+    <Dialog key={record.id} defaultOpen onOpenChange={(next) => { if (!next) onClose(); }}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogDescription className="sr-only">Editar registro do prontuário</DialogDescription>
         <DialogHeader className="space-y-4">
