@@ -8,6 +8,7 @@ import { Pencil } from 'lucide-react';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import { AppointmentInfo } from './AppointmentInfo';
 import { AppointmentStatusUpdater } from './AppointmentStatusUpdater';
+import { AppointmentPaymentUpdater } from './AppointmentPaymentUpdater';
 import { AppointmentActions } from './AppointmentActions';
 import { AppointmentForm } from './AppointmentForm';
 import { Appointment } from '@/types';
@@ -85,6 +86,14 @@ export function AppointmentDetails({ appointment, isOpen, onClose, onUpdate }: A
 
               <AppointmentStatusUpdater 
                 appointment={appointmentWithStatus} 
+                onClose={handleClose}
+                onUpdate={handleStatusUpdate}
+              />
+
+              <Separator />
+
+              <AppointmentPaymentUpdater
+                appointment={appointmentWithStatus}
                 onClose={handleClose}
                 onUpdate={handleStatusUpdate}
               />
