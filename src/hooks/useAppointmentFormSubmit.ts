@@ -108,9 +108,16 @@ export function useAppointmentFormSubmit(
 
     setLoading(true);
     try {
-      const startTime = new Date(formData.start_time);
-      const endTime = new Date(startTime);
-      endTime.setMinutes(endTime.getMinutes() + parseInt(formData.duration));
+      // Criar datas sem conversão de timezone
+      const startTime = formData.start_time.includes('T') 
+        ? formData.start_time + ':00'  // Adiciona segundos se necessário
+        : formData.start_time;
+      
+      // Calcular end_time baseado na duração
+      const startDate = new Date(startTime);
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
+      const endTime = endDate.toISOString();
 
       const procedure = procedures.find(p => p.id === formData.procedure_id);
 
@@ -118,8 +125,8 @@ export function useAppointmentFormSubmit(
         patient_id: formData.is_blocked ? null : formData.patient_id,
         professional_id: formData.professional_id,
         procedure_id: formData.is_blocked ? null : (formData.procedure_id || null),
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        start_time: startTime,
+        end_time: endTime,
         price: formData.is_blocked ? null : (procedure?.price || null),
         notes: formData.is_blocked ? (formData.notes || 'Horário bloqueado') : (formData.notes || null),
         status_id: formData.is_blocked ? 1 : formData.status_id,
