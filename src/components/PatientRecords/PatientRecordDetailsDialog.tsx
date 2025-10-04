@@ -161,34 +161,42 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
         }
       }
 
-      // Buscar agendamentos vinculados através de record_appointments
-      const { data: linkedAppointmentsData, error: linkedError } = await supabase
+      // Buscar agendamentos vinculados (2 etapas por falta de FK declarada)
+      const { data: linkRows, error: linkErr } = await supabase
         .from('record_appointments')
-        .select(`
-          appointment_id,
-          appointments:appointment_id (
-            id,
-            start_time,
-            end_time,
-            procedures(name),
-            professionals(id, name, specialty, crm_cro)
-          )
-        `)
+        .select('appointment_id')
         .eq('record_id', recordData.id);
 
-      if (!linkedError && linkedAppointmentsData && linkedAppointmentsData.length > 0) {
-        const appointments = linkedAppointmentsData
-          .map((item: any) => item.appointments)
-          .filter(Boolean) as Appointment[];
-        setLinkedAppointments(appointments);
-        
-        // Set the first appointment as the primary one if no appointment_id is set
-        if (appointments.length > 0 && !recordData.appointment_id) {
-          setAppointment(appointments[0]);
+      if (linkErr) {
+        console.error('Error fetching linked appointment ids:', linkErr);
+      } else if (linkRows && linkRows.length > 0) {
+        const ids = linkRows.map((r: any) => r.appointment_id).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: apptsData, error: apptsErr } = await supabase
+            .from('appointments')
+            .select(`
+              id,
+              start_time,
+              end_time,
+              procedures(name),
+              professionals(id, name, specialty, crm_cro)
+            `)
+            .in('id', ids)
+            .order('start_time', { ascending: true });
+
+          if (apptsErr) {
+            console.error('Error fetching linked appointments:', apptsErr);
+          } else if (apptsData) {
+            setLinkedAppointments(apptsData as any);
+            // Se não houver appointment principal, use o primeiro da lista
+            if (!recordData.appointment_id && apptsData.length > 0) {
+              setAppointment(apptsData[0] as any);
+            }
+          }
         }
       }
 
-      // Buscar dados do agendamento principal (legacy support)
+      // Buscar dados do agendamento principal (compatibilidade legada)
       if (recordData.appointment_id) {
         const { data: appointmentData, error: appointmentError } = await supabase
           .from('appointments')
