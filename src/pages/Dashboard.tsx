@@ -30,7 +30,8 @@ export default function Dashboard() {
     stats, 
     upcomingAppointments, 
     monthlyRevenueData,
-    paymentMethodsData, 
+    paymentMethodsData,
+    paymentStatusData, 
     loading, 
     refetch,
     onDateRangeChange,
@@ -96,6 +97,7 @@ export default function Dashboard() {
             <SalesReport 
               stats={stats}
               paymentMethodsData={paymentMethodsData}
+              paymentStatusData={paymentStatusData}
               dateRange={currentDateRange}
             />
             <div className="flex justify-end gap-2 mt-4 print:hidden">

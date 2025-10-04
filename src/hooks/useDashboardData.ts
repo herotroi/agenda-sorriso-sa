@@ -22,6 +22,12 @@ interface PaymentMethodData {
   total: number;
 }
 
+interface PaymentStatusData {
+  status: string;
+  count: number;
+  total: number;
+}
+
 interface RevenueData {
   name: string;
   value: number;
@@ -56,6 +62,7 @@ export function useDashboardData() {
   const [upcomingAppointments, setUpcomingAppointments] = useState<UpcomingAppointment[]>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<RevenueData[]>([]);
   const [paymentMethodsData, setPaymentMethodsData] = useState<PaymentMethodData[]>([]);
+  const [paymentStatusData, setPaymentStatusData] = useState<PaymentStatusData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDateRange, setCurrentDateRange] = useState<DateRange>({
     start: new Date(new Date().getFullYear(), 0, 1),
@@ -312,6 +319,59 @@ export function useDashboardData() {
     }
   };
 
+  const fetchPaymentStatus = async (startDate?: string, endDate?: string) => {
+    if (!user) return;
+    
+    try {
+      let query = supabase
+        .from('appointments')
+        .select('payment_status, price')
+        .eq('user_id', user.id)
+        .not('price', 'is', null);
+
+      if (startDate && endDate) {
+        query = query
+          .gte('start_time', startDate)
+          .lte('start_time', endDate);
+      }
+
+      const { data } = await query;
+
+      if (data) {
+        const statusLabels: Record<string, string> = {
+          'pagamento_realizado': 'Pagamento Realizado',
+          'aguardando_pagamento': 'Aguardando Pagamento',
+          'nao_pagou': 'Não Pagou',
+          'pagamento_cancelado': 'Pagamento Cancelado',
+          'sem_pagamento': 'Sem Pagamento',
+        };
+
+        const groupedData = data.reduce((acc, appointment) => {
+          const status = appointment.payment_status || 'sem_pagamento';
+          
+          if (!acc[status]) {
+            acc[status] = { count: 0, total: 0 };
+          }
+          
+          acc[status].count += 1;
+          acc[status].total += appointment.price || 0;
+          
+          return acc;
+        }, {} as Record<string, { count: number; total: number }>);
+
+        const paymentStatus = Object.entries(groupedData).map(([status, data]) => ({
+          status: statusLabels[status] || status,
+          count: data.count,
+          total: data.total,
+        }));
+
+        setPaymentStatusData(paymentStatus);
+      }
+    } catch (error) {
+      console.error('Error fetching payment status:', error);
+    }
+  };
+
   const fetchData = async (startDate?: string, endDate?: string) => {
     setLoading(true);
     await Promise.all([
@@ -319,6 +379,7 @@ export function useDashboardData() {
       fetchUpcomingAppointments(),
       fetchRevenueData(startDate, endDate),
       fetchPaymentMethods(startDate, endDate),
+      fetchPaymentStatus(startDate, endDate),
     ]);
     setLoading(false);
   };
@@ -346,6 +407,7 @@ export function useDashboardData() {
     upcomingAppointments,
     monthlyRevenueData,
     paymentMethodsData,
+    paymentStatusData,
     loading,
     refetch,
     onDateRangeChange,

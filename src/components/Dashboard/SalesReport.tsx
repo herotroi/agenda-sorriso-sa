@@ -7,7 +7,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  FileCheck
 } from 'lucide-react';
 
 interface SalesReportProps {
@@ -26,13 +27,18 @@ interface SalesReportProps {
     count: number;
     total: number;
   }>;
+  paymentStatusData: Array<{
+    status: string;
+    count: number;
+    total: number;
+  }>;
   dateRange: {
     start: Date;
     end: Date;
   };
 }
 
-export function SalesReport({ stats, paymentMethodsData, dateRange }: SalesReportProps) {
+export function SalesReport({ stats, paymentMethodsData, paymentStatusData, dateRange }: SalesReportProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -113,26 +119,33 @@ export function SalesReport({ stats, paymentMethodsData, dateRange }: SalesRepor
                 <tr className="border-b">
                   <th className="text-left py-2 px-4 font-semibold text-gray-700">Forma de Pagamento</th>
                   <th className="text-center py-2 px-4 font-semibold text-gray-700">Quantidade</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">% do Total</th>
                   <th className="text-right py-2 px-4 font-semibold text-gray-700">Valor Total</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentMethodsData.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-4 text-gray-500">
+                    <td colSpan={4} className="text-center py-4 text-gray-500">
                       Nenhuma forma de pagamento registrada
                     </td>
                   </tr>
                 ) : (
-                  paymentMethodsData.map((payment, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 capitalize">{payment.method}</td>
-                      <td className="py-3 px-4 text-center">{payment.count}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-green-600">
-                        {formatCurrency(payment.total)}
-                      </td>
-                    </tr>
-                  ))
+                  paymentMethodsData.map((payment, index) => {
+                    const totalCount = paymentMethodsData.reduce((sum, p) => sum + p.count, 0);
+                    const percentage = ((payment.count / totalCount) * 100).toFixed(1);
+                    
+                    return (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 capitalize">{payment.method}</td>
+                        <td className="py-3 px-4 text-center">{payment.count}</td>
+                        <td className="py-3 px-4 text-center text-blue-600">{percentage}%</td>
+                        <td className="py-3 px-4 text-right font-semibold text-green-600">
+                          {formatCurrency(payment.total)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
                 {paymentMethodsData.length > 0 && (
                   <tr className="bg-gray-50 font-bold">
@@ -140,8 +153,74 @@ export function SalesReport({ stats, paymentMethodsData, dateRange }: SalesRepor
                     <td className="py-3 px-4 text-center">
                       {paymentMethodsData.reduce((sum, p) => sum + p.count, 0)}
                     </td>
+                    <td className="py-3 px-4 text-center">100%</td>
                     <td className="py-3 px-4 text-right text-green-600">
                       {formatCurrency(paymentMethodsData.reduce((sum, p) => sum + p.total, 0))}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Status de Pagamento */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <FileCheck className="h-5 w-5 mr-2" />
+          Status de Pagamento
+        </h2>
+        <Card>
+          <CardContent className="pt-6">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">Quantidade</th>
+                  <th className="text-center py-2 px-4 font-semibold text-gray-700">% do Total</th>
+                  <th className="text-right py-2 px-4 font-semibold text-gray-700">Valor Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentStatusData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-4 text-gray-500">
+                      Nenhum status de pagamento registrado
+                    </td>
+                  </tr>
+                ) : (
+                  paymentStatusData.map((status, index) => {
+                    const totalCount = paymentStatusData.reduce((sum, s) => sum + s.count, 0);
+                    const percentage = ((status.count / totalCount) * 100).toFixed(1);
+                    
+                    // Define colors based on status
+                    let statusColor = 'text-gray-600';
+                    if (status.status.includes('Realizado')) statusColor = 'text-green-600';
+                    if (status.status.includes('Aguardando') || status.status.includes('Não Pagou')) statusColor = 'text-blue-600';
+                    if (status.status.includes('Cancelado') || status.status.includes('Sem Pagamento')) statusColor = 'text-red-600';
+                    
+                    return (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className={`py-3 px-4 font-medium ${statusColor}`}>{status.status}</td>
+                        <td className="py-3 px-4 text-center">{status.count}</td>
+                        <td className="py-3 px-4 text-center text-blue-600">{percentage}%</td>
+                        <td className={`py-3 px-4 text-right font-semibold ${statusColor}`}>
+                          {formatCurrency(status.total)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+                {paymentStatusData.length > 0 && (
+                  <tr className="bg-gray-50 font-bold">
+                    <td className="py-3 px-4">Total</td>
+                    <td className="py-3 px-4 text-center">
+                      {paymentStatusData.reduce((sum, s) => sum + s.count, 0)}
+                    </td>
+                    <td className="py-3 px-4 text-center">100%</td>
+                    <td className="py-3 px-4 text-right text-gray-900">
+                      {formatCurrency(paymentStatusData.reduce((sum, s) => sum + s.total, 0))}
                     </td>
                   </tr>
                 )}
