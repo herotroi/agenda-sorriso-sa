@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -923,14 +924,24 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             </>
           )}
 
-          <Separator />
-
           {/* Agendamentos Vinculados */}
           <Card className="border-blue-200 bg-blue-50/30">
             <CardContent className="p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <h3 className="text-lg font-semibold">Agendamentos Vinculados</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold">Agendamentos Vinculados</h3>
+                  </div>
+                  {selectedAppointments.length > 0 && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                      {selectedAppointments.length} selecionado{selectedAppointments.length > 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Selecione os agendamentos relacionados a este registro médico
+                </p>
               </div>
               
               {loadingAppointments ? (
@@ -939,25 +950,28 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                   <span className="ml-2 text-gray-600">Carregando agendamentos...</span>
                 </div>
               ) : appointments.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                  {appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
-                        selectedAppointments.includes(appointment.id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-blue-300'
-                      }`}
-                      onClick={() => handleAppointmentToggle(appointment.id)}
-                    >
-                      <div className="flex items-start gap-3">
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                  {appointments.map((appointment) => {
+                    const isSelected = selectedAppointments.includes(appointment.id);
+                    return (
+                      <label
+                        key={appointment.id}
+                        htmlFor={`appointment-${appointment.id}`}
+                        className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                            : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                        }`}
+                      >
                         <Checkbox
-                          checked={selectedAppointments.includes(appointment.id)}
+                          id={`appointment-${appointment.id}`}
+                          checked={isSelected}
+                          onCheckedChange={() => handleAppointmentToggle(appointment.id)}
                           className="mt-1"
                         />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="h-4 w-4 text-blue-600" />
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
                             <span className="font-semibold text-gray-900">
                               {format(new Date(appointment.start_time), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                             </span>
@@ -965,7 +979,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                             <div className="flex items-center gap-2">
-                              <Clock className="h-3 w-3 text-gray-500" />
+                              <Clock className="h-3 w-3 text-gray-500 flex-shrink-0" />
                               <span className="text-gray-600">
                                 {format(new Date(appointment.start_time), 'HH:mm', { locale: ptBR })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: ptBR })}
                               </span>
@@ -973,34 +987,28 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
                             
                             {appointment.procedures && (
                               <div className="flex items-center gap-2">
-                                <Stethoscope className="h-3 w-3 text-gray-500" />
-                                <span className="text-gray-600">{appointment.procedures.name}</span>
+                                <Stethoscope className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                                <span className="text-gray-600 truncate">{appointment.procedures.name}</span>
                               </div>
                             )}
                             
                             {appointment.professionals && (
-                              <div className="flex items-center gap-2">
-                                <User className="h-3 w-3 text-gray-500" />
-                                <span className="text-gray-600">Dr(a). {appointment.professionals.name}</span>
+                              <div className="flex items-center gap-2 sm:col-span-2">
+                                <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                                <span className="text-gray-600 truncate">Dr(a). {appointment.professionals.name}</span>
                               </div>
                             )}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      </label>
+                    );
+                  })}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-4 text-center">
-                  Nenhum agendamento encontrado para este paciente.
-                </p>
-              )}
-              
-              {selectedAppointments.length > 0 && (
-                <div className="pt-3 border-t border-blue-200">
-                  <p className="text-sm text-blue-700 font-medium">
-                    {selectedAppointments.length} agendamento{selectedAppointments.length > 1 ? 's' : ''} selecionado{selectedAppointments.length > 1 ? 's' : ''}
-                  </p>
+                <div className="text-center py-8 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm font-medium">Nenhum agendamento encontrado</p>
+                  <p className="text-gray-400 text-xs mt-1">Este paciente ainda não possui agendamentos</p>
                 </div>
               )}
             </CardContent>
