@@ -699,9 +699,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               .document-image-full { 
                 margin: 2px auto !important; 
                 border: 1px solid #ddd !important; 
-                max-height: 400px !important;
-                width: 60% !important; 
-                max-width: 60% !important;
+                max-height: 300px !important;
+                width: 30% !important; 
+                max-width: 30% !important;
                 height: auto !important;
                 object-fit: contain !important;
               }
