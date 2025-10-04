@@ -61,7 +61,8 @@ export const fetchDateAppointments = async (selectedDate?: Date, professionalId?
       appointment_statuses(label, color)
     `)
     .gte('start_time', startOfDay.toISOString())
-    .lte('start_time', endOfDay.toISOString());
+    .lte('start_time', endOfDay.toISOString())
+    .eq('is_blocked', false); // Excluir pausas e férias
 
   // Add professional filter if specified
   if (professionalId) {
@@ -77,9 +78,9 @@ export const fetchDateAppointments = async (selectedDate?: Date, professionalId?
 
   const processedAppointments = appointments?.map(apt => ({
     ...apt,
-    patients: apt.is_blocked ? null : (apt.patients || { full_name: 'Paciente não informado' }),
+    patients: apt.patients || { full_name: 'Paciente não informado' },
     professionals: apt.professionals || { name: 'Profissional não informado' },
-    procedures: apt.is_blocked ? null : (apt.procedures || { name: 'Sem procedimento' }),
+    procedures: apt.procedures || { name: 'Sem procedimento' },
     appointment_statuses: apt.appointment_statuses || { label: 'Confirmado', color: '#10b981' }
   })) || [];
 
@@ -108,13 +109,15 @@ export const fetchAllAppointments = async (professionalId?: string) => {
       status_id,
       notes,
       price,
+      is_blocked,
       created_at,
       updated_at,
       patients!inner(full_name),
       professionals!inner(name),
       procedures(name),
       appointment_statuses!inner(label, color)
-    `);
+    `)
+    .eq('is_blocked', false); // Excluir pausas e férias
 
   // Add professional filter if specified
   if (professionalId) {
@@ -159,13 +162,15 @@ export const fetchFilteredAppointments = async (
       status_id,
       notes,
       price,
+      is_blocked,
       created_at,
       updated_at,
       patients!inner(full_name),
       professionals!inner(name),
       procedures(name),
       appointment_statuses!inner(label, color)
-    `);
+    `)
+    .eq('is_blocked', false); // Excluir pausas e férias
 
   // Apply filters
   if (filters.statusId) {
