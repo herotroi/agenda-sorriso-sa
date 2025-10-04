@@ -19,6 +19,7 @@ export function ProcedureSelector({
   currentProcedureName,
   disabled = false
 }: ProcedureSelectorProps) {
+  const hasOption = value && procedures.some(p => p.id === value);
   return (
     <FormField 
       label="Procedimento" 
@@ -32,6 +33,16 @@ export function ProcedureSelector({
           </div>
         </SelectTrigger>
         <SelectContent>
+          {!hasOption && value && currentProcedureName && (
+            <SelectItem value={value}>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4" />
+                  {currentProcedureName}
+                </div>
+              </div>
+            </SelectItem>
+          )}
           {procedures.map((procedure) => (
             <SelectItem key={procedure.id} value={procedure.id}>
               <div className="flex items-center justify-between w-full">

@@ -26,6 +26,8 @@ export function PatientSelector({ patients, value, onChange, currentPatientName 
     (patient.phone && patient.phone.includes(searchTerm))
   );
 
+  const hasOption = value && filteredPatients.some(p => p.id === value);
+
   return (
     <FormField 
       label="Paciente" 
@@ -40,6 +42,16 @@ export function PatientSelector({ patients, value, onChange, currentPatientName 
           </div>
         </SelectTrigger>
         <SelectContent>
+          {!hasOption && value && currentPatientName && (
+            <SelectItem value={value}>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>{currentPatientName}</span>
+                </div>
+              </div>
+            </SelectItem>
+          )}
           <div className="p-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

@@ -13,6 +13,7 @@ interface PatientProfessionalSectionProps {
   onProcedureChange: (procedureId: string) => void;
   originalData: AppointmentFormData | null;
   fieldModified: Record<string, boolean>;
+  appointmentToEdit?: any;
 }
 
 export function PatientProfessionalSection({
@@ -23,8 +24,25 @@ export function PatientProfessionalSection({
   onFieldChange,
   onProcedureChange,
   originalData,
-  fieldModified
+  fieldModified,
+  appointmentToEdit
 }: PatientProfessionalSectionProps) {
+  // Resolver nomes atuais mesmo antes do carregamento das listas
+  const currentPatientName =
+    (originalData && !fieldModified.patient_id
+      ? patients.find(p => p.id === originalData.patient_id)?.full_name
+      : undefined) || appointmentToEdit?.patients?.full_name;
+
+  const currentProcedureName =
+    (originalData && !fieldModified.procedure_id
+      ? procedures.find(p => p.id === originalData.procedure_id)?.name
+      : undefined) || appointmentToEdit?.procedures?.name;
+
+  const currentProfessionalName =
+    (originalData && !fieldModified.professional_id
+      ? professionals.find(p => p.id === originalData.professional_id)?.name
+      : undefined) || appointmentToEdit?.professionals?.name;
+
   // Se for agendamento bloqueado, mostrar apenas profissional
   if (formData.is_blocked) {
     return (
@@ -35,10 +53,7 @@ export function PatientProfessionalSection({
             procedures={procedures}
             value={formData.professional_id}
             onChange={(value) => onFieldChange('professional_id', value)}
-            currentProfessionalName={originalData && !fieldModified.professional_id 
-              ? professionals.find(p => p.id === originalData.professional_id)?.name 
-              : undefined
-            }
+            currentProfessionalName={currentProfessionalName}
             isBlocked={true}
           />
         </div>
@@ -55,20 +70,14 @@ export function PatientProfessionalSection({
           patients={patients}
           value={formData.patient_id}
           onChange={(value) => onFieldChange('patient_id', value)}
-          currentPatientName={originalData && !fieldModified.patient_id 
-            ? patients.find(p => p.id === originalData.patient_id)?.full_name 
-            : undefined
-          }
+          currentPatientName={currentPatientName}
         />
         
         <ProcedureSelector
           procedures={procedures.filter(p => p.active !== false)}
           value={formData.procedure_id}
           onChange={onProcedureChange}
-          currentProcedureName={originalData && !fieldModified.procedure_id 
-            ? procedures.find(p => p.id === originalData.procedure_id)?.name 
-            : undefined
-          }
+          currentProcedureName={currentProcedureName}
         />
       </div>
 
@@ -80,10 +89,7 @@ export function PatientProfessionalSection({
             procedures={procedures}
             value={formData.professional_id}
             onChange={(value) => onFieldChange('professional_id', value)}
-            currentProfessionalName={originalData && !fieldModified.professional_id 
-              ? professionals.find(p => p.id === originalData.professional_id)?.name 
-              : undefined
-            }
+            currentProfessionalName={currentProfessionalName}
             selectedProcedureId={formData.procedure_id}
             isBlocked={false}
           />

@@ -43,6 +43,8 @@ export function ProfessionalSelector({
         return false;
       });
 
+  const hasOption = value && filteredProfessionals.some(p => p.id === value);
+
   const getPlaceholder = () => {
     if (isBlocked) {
       return "Selecione o profissional";
@@ -63,6 +65,14 @@ export function ProfessionalSelector({
           </div>
         </SelectTrigger>
         <SelectContent>
+          {!hasOption && value && currentProfessionalName && (
+            <SelectItem value={value}>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                {currentProfessionalName}
+              </div>
+            </SelectItem>
+          )}
           {!isBlocked && !selectedProcedureId && (
             <div className="px-2 py-1 text-sm text-gray-500">
               Selecione primeiro um procedimento

@@ -24,6 +24,7 @@ interface AppointmentFormFieldsProps {
   handleFieldChange: (field: string, value: any) => void;
   originalData: AppointmentFormData | null;
   fieldModified: Record<string, boolean>;
+  appointmentToEdit?: any;
 }
 
 export function AppointmentFormFields({
@@ -36,7 +37,8 @@ export function AppointmentFormFields({
   onProcedureChange,
   handleFieldChange,
   originalData,
-  fieldModified
+  fieldModified,
+  appointmentToEdit
 }: AppointmentFormFieldsProps) {
   const handleFieldUpdate = (field: keyof AppointmentFormData, value: any) => {
     setFormData({
@@ -62,6 +64,7 @@ export function AppointmentFormFields({
         onProcedureChange={onProcedureChange}
         originalData={originalData}
         fieldModified={fieldModified}
+        appointmentToEdit={appointmentToEdit}
       />
       
       <DateTimeDurationSection

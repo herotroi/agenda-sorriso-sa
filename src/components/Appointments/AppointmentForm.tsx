@@ -88,6 +88,7 @@ export function AppointmentForm({
             handleFieldChange={handleFieldChange}
             originalData={originalData}
             fieldModified={fieldModified}
+            appointmentToEdit={appointmentToEdit}
           />
 
           <AppointmentFormActions
