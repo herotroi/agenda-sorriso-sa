@@ -125,6 +125,11 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  if (query.trim().length >= 2 && results.length > 0) {
+                    setShowResults(true);
+                  }
+                }}
                 disabled={selectedCodes.length >= maxCodes}
                 className="pr-10"
               />
