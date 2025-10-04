@@ -93,18 +93,16 @@ export function DayView({
 
   // Calcular "lanes" e o número máximo de colunas simultâneas para cada agendamento
   const layoutAppointments = useMemo(() => {
-    const normals = appointments
-      .filter((a) => !(a as any).type)
+    const items = appointments
+      .filter((a) => (a as any).type !== 'vacation') // inclui normais e pausas
       .slice()
-      .sort(
-        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-      );
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
     type Meta = { lane: number; cols: number; start: number; end: number; item: Appointment };
     const metas: Meta[] = [];
     const active: Meta[] = [];
 
-    for (const apt of normals) {
+    for (const apt of items) {
       const start = new Date(apt.start_time).getTime();
       const end = new Date(apt.end_time).getTime();
 
@@ -125,16 +123,11 @@ export function DayView({
       active.push(meta);
       metas.push(meta);
 
-      // Atualiza cols de todos os ativos (máximo simultâneo)
+      // Atualiza cols de todos os ativos (máximo simultâneo até o momento)
       for (const m of active) {
         m.cols = Math.max(m.cols, active.length);
       }
     }
-
-    // Itens especiais ocupam largura total
-    appointments
-      .filter((a) => (a as any).type)
-      .forEach((s) => metas.push({ lane: 0, cols: 1, start: new Date(s.start_time).getTime(), end: new Date(s.end_time).getTime(), item: s }));
 
     return metas;
   }, [appointments]);
@@ -176,6 +169,22 @@ export function DayView({
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
         <div className="absolute left-16 sm:left-20 right-0 top-0 bottom-0 relative">
+          {/* Férias como faixa de fundo (não clicável) */}
+          {appointments.filter(a => (a as any).type === 'vacation').map((appointment) => {
+            const start = new Date(appointment.start_time);
+            const end = new Date(appointment.end_time);
+            const top = minutesFromMidnight(start) * PX_PER_MIN;
+            const height = Math.max(((end.getTime() - start.getTime()) / 60000) * PX_PER_MIN, 40);
+            return (
+              <Card
+                key={`vac-${appointment.id}`}
+                className={`absolute pointer-events-none ${getCardStyle('vacation')}`}
+                style={{ top: `${top}px`, height: `${height}px`, left: '8px', right: '8px', zIndex: 5 }}
+              >
+                <CardContent className="p-1 h-full" />
+              </Card>
+            );
+          })}
           {layoutAppointments.map(({ item, lane, cols }) => {
             const appointment = item;
             const itemType = (appointment as any).type;
@@ -199,7 +208,7 @@ export function DayView({
                   height: `${height}px`,
                   left: `calc(${leftPct}% + ${GUTTER / 2}px)`,
                   width: `calc(${widthPct}% - ${GUTTER}px)`,
-                  zIndex: getZIndex(itemType) + laneIndex
+                  zIndex: 1 + laneIndex
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
