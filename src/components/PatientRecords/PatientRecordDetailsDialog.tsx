@@ -1684,45 +1684,82 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           {/* Coluna Direita - Documentos */}
           <div>
             <div className="px-6 py-4 border-b bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Documentos Anexados</h3>
-                <div className="flex items-center gap-2">
-                  {documents.length > 1 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowOrderControls(!showOrderControls)}
-                      className="text-xs"
-                    >
-                      {showOrderControls ? 'Ocultar' : 'Ordenar'}
-                    </Button>
-                  )}
-                  {documents.length > 0 && (
-                    <div className="text-sm text-gray-600">
-                      {selectedDocuments.length} de {documents.length} selecionados
-                    </div>
-                  )}
-                </div>
-              </div>
-              {showOrderControls && documents.length > 1 && (
-                <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 animate-fade-in">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <GripVertical className="h-5 w-5 text-blue-600 mt-0.5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-800 mb-1">
-                        Como reordenar os documentos:
-                      </p>
-                      <ul className="text-xs text-blue-700 space-y-1">
-                        <li>• <strong>Arrastar e soltar:</strong> Clique e arraste os documentos para nova posição</li>
-                        <li>• <strong>Botões de seta:</strong> Use ↑ ↓ para mover um de cada vez</li>
-                        <li>• <strong>Posição:</strong> A numeração mostra a ordem de impressão</li>
-                      </ul>
-                    </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Documentos Anexados</h3>
+                  <div className="flex items-center gap-2">
+                    {documents.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowOrderControls(!showOrderControls)}
+                        className="text-xs"
+                      >
+                        {showOrderControls ? 'Ocultar' : 'Ordenar'}
+                      </Button>
+                    )}
                   </div>
                 </div>
-              )}
+                
+                {documents.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Printer className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-800 mb-1">
+                          Selecione para Impressão
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          Marque os documentos que deseja incluir na impressão do prontuário
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-blue-700 font-medium">
+                        {selectedDocuments.length} de {documents.length} selecionados
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedDocuments(documents.map(d => d.id))}
+                          className="text-xs h-7 text-blue-600 hover:text-blue-700"
+                        >
+                          Selecionar Todos
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedDocuments([])}
+                          className="text-xs h-7 text-blue-600 hover:text-blue-700"
+                        >
+                          Limpar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {showOrderControls && documents.length > 1 && (
+                  <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 animate-fade-in">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <GripVertical className="h-5 w-5 text-amber-600 mt-0.5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-amber-800 mb-1">
+                          Como reordenar os documentos:
+                        </p>
+                        <ul className="text-xs text-amber-700 space-y-1">
+                          <li>• <strong>Arrastar e soltar:</strong> Clique e arraste os documentos para nova posição</li>
+                          <li>• <strong>Botões de seta:</strong> Use ↑ ↓ para mover um de cada vez</li>
+                          <li>• <strong>Posição:</strong> A numeração mostra a ordem de impressão</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <ScrollArea className="h-[calc(95vh-140px)] px-6 py-4">
               {loadingDocs ? (
