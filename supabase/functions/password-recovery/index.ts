@@ -116,7 +116,7 @@ async function handleStart(email: string, ip: string, userAgent: string) {
     console.log(`Attempting to send email to: ${email}`);
     
     const emailResult = await resend.emails.send({
-      from: "Sistema <onboarding@resend.dev>",
+      from: Deno.env.get("RESEND_FROM_EMAIL") || "noreply@reset.herotroiautomacoes.site",
       to: [email],
       subject: "Código de Recuperação de Senha",
       html: `
