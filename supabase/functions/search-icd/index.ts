@@ -66,10 +66,17 @@ async function searchICD(query: string, version: string, language: string = 'pt'
   const releaseId = version === '10' ? '2019-04' : '2024-01';
   const versionPath = version === '10' ? 'icd/release/10' : 'icd/release/11';
   
-  // Endpoint de busca da API da OMS
-  const searchUrl = `https://id.who.int/${versionPath}/${releaseId}/mms/search`;
+  // Construir URL de busca com query parameters
+  const baseUrl = `https://id.who.int/${versionPath}/${releaseId}/mms/search`;
+  const searchParams = new URLSearchParams({
+    q: query,
+    useFlexisearch: 'true',
+    flatResults: 'true',
+  });
+  const searchUrl = `${baseUrl}?${searchParams.toString()}`;
   
   console.log(`Searching ICD-${version} for query: "${query}"`);
+  console.log(`Search URL: ${searchUrl}`);
 
   const searchResponse = await fetch(searchUrl, {
     method: 'GET',
@@ -79,8 +86,6 @@ async function searchICD(query: string, version: string, language: string = 'pt'
       'API-Version': 'v2',
       'Accept-Language': language,
     },
-    // Adiciona parâmetros de busca
-    // Note: a API usa q= para o termo de busca
   });
 
   if (!searchResponse.ok) {
