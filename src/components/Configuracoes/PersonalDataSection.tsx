@@ -108,8 +108,8 @@ export function PersonalDataSection() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="lg:col-span-2">
             <Label htmlFor="full_name">Nome Completo</Label>
             <Input
               id="full_name"
@@ -140,7 +140,7 @@ export function PersonalDataSection() {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0">
           {isEditing ? (
             <>
               <Button 
@@ -149,15 +149,16 @@ export function PersonalDataSection() {
                   setIsEditing(false);
                   fetchPersonalData();
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={loading}>
+              <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
                 {loading ? 'Salvando...' : 'Salvar'}
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)}>
+            <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto">
               Editar
             </Button>
           )}

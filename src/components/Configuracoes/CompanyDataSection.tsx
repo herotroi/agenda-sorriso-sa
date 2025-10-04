@@ -154,7 +154,7 @@ export function CompanyDataSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="phone">Telefone</Label>
               <Input
@@ -188,8 +188,8 @@ export function CompanyDataSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="lg:col-span-2">
               <Label htmlFor="zip_code">CEP</Label>
               <Input
                 id="zip_code"
@@ -199,7 +199,7 @@ export function CompanyDataSection() {
                 disabled={!isEditing}
               />
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <Label htmlFor="street">Rua</Label>
               <Input
                 id="street"
@@ -257,7 +257,7 @@ export function CompanyDataSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="working_hours_start">Horário de Início</Label>
               <Input
@@ -283,7 +283,7 @@ export function CompanyDataSection() {
       </Card>
 
       {/* Ações */}
-      <div className="flex justify-end space-x-2">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2 sm:gap-0">
         {isEditing ? (
           <>
             <Button 
@@ -292,15 +292,16 @@ export function CompanyDataSection() {
                 setIsEditing(false);
                 fetchCompanyData();
               }}
+              className="w-full sm:w-auto"
             >
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={loading}>
+            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
               {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </>
         ) : (
-          <Button onClick={() => setIsEditing(true)}>
+          <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto">
             Editar
           </Button>
         )}

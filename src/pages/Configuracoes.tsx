@@ -8,13 +8,13 @@ import { CouponSection } from '@/components/Configuracoes/CouponSection';
 
 export default function Configuracoes() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-        <p className="text-gray-600">Gerencie suas configurações de conta e perfil</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configurações</h1>
+        <p className="text-sm sm:text-base text-gray-600">Gerencie suas configurações de conta e perfil</p>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         <PersonalDataSection />
         <PasswordChangeSection />
         <CompanyLogoSection />
