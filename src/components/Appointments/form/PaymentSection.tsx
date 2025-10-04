@@ -6,8 +6,8 @@ interface PaymentSectionProps {
   paymentStatus: string;
   onPaymentMethodChange: (value: string) => void;
   onPaymentStatusChange: (value: string) => void;
-  currentPaymentMethod?: string;
-  currentPaymentStatus?: string;
+  currentPaymentMethod?: string | undefined;
+  currentPaymentStatus?: string | undefined;
 }
 
 const paymentMethods = [
