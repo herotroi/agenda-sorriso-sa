@@ -405,6 +405,88 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       `;
     }
 
+    // Consultas vinculadas (todas)
+    let linkedAppointmentsHtml = '';
+    if (linkedAppointments && linkedAppointments.length > 0) {
+      const rows = linkedAppointments
+        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+        .map((appt) => {
+          const dateStr = format(new Date(appt.start_time), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+          const proc = appt.procedures?.name || '-';
+          const prof = appt.professionals ? `Dr(a). ${appt.professionals.name}${appt.professionals.crm_cro ? ' - ' + appt.professionals.crm_cro : ''}` : '-';
+          return `<tr><td>${dateStr}</td><td>${proc}</td><td>${prof}</td></tr>`;
+        }).join('');
+
+      linkedAppointmentsHtml = `
+        <div class="medical-section">
+          <div class="section-header">Consultas Vinculadas</div>
+          <div class="section-content">
+            <table>
+              <thead>
+                <tr>
+                  <th style="text-align:left">Data</th>
+                  <th style="text-align:left">Procedimento</th>
+                  <th style="text-align:left">Profissional</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // CIDs no final da impressão
+    let icdHtml = '';
+    try {
+      const r: any = record;
+      let icds: any[] = [];
+      if (r?.icd_codes) {
+        icds = typeof r.icd_codes === 'string' ? JSON.parse(r.icd_codes) : r.icd_codes;
+      } else if (r?.icd_code && r?.icd_version) {
+        icds = [{ code: r.icd_code, version: r.icd_version, title: `${r.icd_code} - ${r.icd_version}` }];
+      }
+      if (Array.isArray(icds) && icds.length > 0) {
+        // Unificar por código+versão
+        const unique = new Map<string, any>();
+        for (const item of icds) {
+          if (!item) continue;
+          const key = `${item.code || ''}-${item.version || ''}`;
+          if (!unique.has(key)) unique.set(key, item);
+        }
+        const rows = Array.from(unique.values()).map((item: any) => `
+          <tr>
+            <td>${item.code || '-'}</td>
+            <td>${item.version || '-'}</td>
+            <td>${item.title || ''}</td>
+          </tr>
+        `).join('');
+        icdHtml = `
+          <div class="medical-section">
+            <div class="section-header">Códigos CID</div>
+            <div class="section-content">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Código</th>
+                    <th style="text-align:left">Versão</th>
+                    <th style="text-align:left">Descrição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+    } catch (e) {
+      console.error('Erro ao preparar CIDs para impressão:', e);
+    }
+
     const printContent = `
       <html>
         <head>
@@ -1122,6 +1204,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               </div>
             </div>
           ` : ''}
+
+          ${linkedAppointmentsHtml}
           
           ${record.content || record.notes ? `
             <div class="medical-section">
@@ -1138,6 +1222,8 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
           ` : ''}
           
           ${documentsEmbedHtml}
+          
+          ${icdHtml}
           
           <div class="signature-section">
             <div class="signature-box">
