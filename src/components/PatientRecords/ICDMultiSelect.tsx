@@ -32,18 +32,14 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
 
     if (query.trim().length >= 2) {
       searchTimeoutRef.current = setTimeout(() => {
-        // Auto-detect version based on query pattern
-        const q = query.trim();
-        const useVersion = /^[0-9]/.test(q) ? '11' : version;
-        if (useVersion !== version) setVersion(useVersion);
-        searchICD(q, useVersion);
+        searchICD(query.trim(), version);
         setShowResults(true);
       }, 600);
     } else {
       clearResults();
       setShowResults(false);
     }
-  }, [query, version, searchICD, clearResults]);
+  }, [query, searchICD, clearResults, version]);
 
   // Close dropdown on click outside
   useEffect(() => {
