@@ -20,6 +20,7 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { searchICD, loading, results, clearResults } = useICDSearch();
@@ -44,7 +45,10 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
   // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideDropdown = dropdownRef.current?.contains(target);
+      const insideResults = resultsRef.current?.contains(target);
+      if (!insideDropdown && !insideResults) {
         setShowResults(false);
       }
     };
@@ -143,7 +147,7 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
             </div>
 
             {showResults && results.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-60 overflow-auto">
+              <div ref={resultsRef} className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-60 overflow-auto">
                 {results.map((result, idx) => (
                   <button
                     key={`${result.code}-${result.version}-${idx}`}
@@ -164,7 +168,7 @@ export function ICDMultiSelect({ selectedCodes, onCodesChange, maxCodes = 10 }: 
             )}
 
             {showResults && query.trim().length >= 2 && results.length === 0 && !loading && (
-              <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
+              <div ref={resultsRef} className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg p-3 text-sm text-muted-foreground">
                 Nenhum código encontrado
               </div>
             )}
