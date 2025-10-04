@@ -394,7 +394,7 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
   };
 
   const handlePrint = async () => {
-    if (!record) return;
+    if (!record || !user?.id) return;
 
     try {
       // Buscar dados completos para impressão incluindo agendamentos vinculados
@@ -425,25 +425,30 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
       console.log('📄 Full record for print:', fullRecord);
       console.log('📋 ICD codes:', fullRecord.icd_codes);
 
-      // Buscar agendamentos vinculados
-      const { data: linkedAppointments } = await supabase
-        .from('record_appointments')
-        .select('appointment_id')
-        .eq('record_id', record.id);
+      // Determinar IDs de agendamentos (preferir os selecionados na UI)
+      let appointmentIds: string[] = [];
+      if (selectedAppointments && selectedAppointments.length > 0) {
+        appointmentIds = [...selectedAppointments];
+      } else {
+        const { data: linkedAppointments } = await supabase
+          .from('record_appointments')
+          .select('appointment_id')
+          .eq('record_id', record.id);
+        appointmentIds = linkedAppointments?.map(item => item.appointment_id) || [];
+      }
+      console.log('🔗 Appointment IDs to print:', appointmentIds);
 
-      console.log('🔗 Linked appointments:', linkedAppointments);
-
-      const appointmentIds = linkedAppointments?.map(item => item.appointment_id) || [];
-      
       // Buscar dados dos agendamentos
       let appointmentsData: any[] = [];
       if (appointmentIds.length > 0) {
         const { data } = await supabase
           .from('appointments')
           .select(`
+            id,
             start_time,
             end_time,
             procedures(name),
+            professionals(name),
             patients(
               full_name,
               cpf,
@@ -459,34 +464,74 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             )
           `)
           .in('id', appointmentIds)
+          .eq('user_id', user.id)
           .order('start_time', { ascending: false });
-        
         appointmentsData = data || [];
         console.log('📅 Appointments data:', appointmentsData);
       }
 
-      // Parse ICD codes
+      // Obter CIDs (preferir os selecionados na UI)
       let icdCodes: any[] = [];
-      if (fullRecord.icd_codes) {
+      if (selectedIcds && selectedIcds.length > 0) {
+        icdCodes = selectedIcds;
+      } else if (fullRecord.icd_codes) {
         try {
-          icdCodes = typeof fullRecord.icd_codes === 'string' 
-            ? JSON.parse(fullRecord.icd_codes) 
+          icdCodes = typeof fullRecord.icd_codes === 'string'
+            ? JSON.parse(fullRecord.icd_codes)
             : fullRecord.icd_codes;
           console.log('🏥 Parsed ICD codes:', icdCodes);
         } catch (e) {
           console.error('Error parsing ICD codes:', e);
         }
+      } else if (fullRecord.icd_code && fullRecord.icd_version) {
+        icdCodes = [{ code: fullRecord.icd_code, version: fullRecord.icd_version, title: `${fullRecord.icd_code} - ${fullRecord.icd_version}` }];
       }
 
-      // Buscar documentos vinculados
-      const { data: documentsData } = await supabase
+      // Buscar documentos vinculados (por registro, consultas e paciente)
+      const docsSelect = 'id, name, description, file_size, uploaded_at';
+      const { data: docsByRecord } = await supabase
         .from('prontuario_documents')
-        .select('name, description, file_size, uploaded_at')
+        .select(docsSelect)
         .eq('record_id', record.id)
         .eq('user_id', user.id)
         .order('uploaded_at', { ascending: false });
 
-      console.log('📎 Documents data:', documentsData);
+      const docsPromises: any[] = [];
+
+      if (appointmentIds.length > 0) {
+        docsPromises.push(
+          supabase
+            .from('prontuario_documents')
+            .select(docsSelect)
+            .in('appointment_id', appointmentIds)
+            .eq('user_id', user.id)
+            .order('uploaded_at', { ascending: false })
+        );
+      }
+
+      if (fullRecord.patient_id) {
+        docsPromises.push(
+          supabase
+            .from('prontuario_documents')
+            .select(docsSelect)
+            .eq('patient_id', fullRecord.patient_id as string)
+            .eq('user_id', user.id)
+            .order('uploaded_at', { ascending: false })
+        );
+      }
+
+      const docsResults = await Promise.all(docsPromises);
+      const docsLists = [
+        docsByRecord || [],
+        ...docsResults.map((r: any) => r?.data || [])
+      ];
+
+      const docsMap = new Map<string, any>();
+      docsLists.flat().forEach((d: any) => {
+        if (d && !docsMap.has(d.id)) docsMap.set(d.id, d);
+      });
+      const documentsData = Array.from(docsMap.values());
+      console.log('📎 Documents merged:', documentsData.length);
 
       // Criar conteúdo HTML para impressão
       const printContent = `
