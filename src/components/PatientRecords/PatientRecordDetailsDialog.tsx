@@ -252,6 +252,10 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
       if (docs.length > 0 && documentOrder.length === 0) {
         setDocumentOrder(docs.map(doc => doc.id));
       }
+      // Select all by default so eles entrem na impressão
+      if (docs.length > 0) {
+        setSelectedDocuments(docs.map(doc => doc.id));
+      }
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
@@ -339,7 +343,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
 
     // Buscar e incorporar documentos selecionados usando a ordem personalizada
     const orderedDocs = getOrderedDocuments();
-    const selectedDocs = orderedDocs.filter(doc => selectedDocuments.includes(doc.id));
+    const selectedDocs = selectedDocuments.length > 0
+      ? orderedDocs.filter(doc => selectedDocuments.includes(doc.id))
+      : orderedDocs;
     let documentsEmbedHtml = '';
 
     if (selectedDocs.length > 0) {
@@ -1344,7 +1350,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
     if (record?.id && isOpen) {
       fetchDocuments(record.id);
       fetchRecordData(record);
-      setSelectedDocuments([]);
+      // Mantém seleção atual; fetchDocuments já seleciona todos por padrão
       setDocumentOrder([]);
       setShowOrderControls(false);
       setDraggedIndex(null);
