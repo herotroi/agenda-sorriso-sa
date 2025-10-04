@@ -39,6 +39,14 @@ export function DayView({
     });
   };
 
+  const calculateCardHeight = (appointment: Appointment) => {
+    const start = new Date(appointment.start_time);
+    const end = new Date(appointment.end_time);
+    const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+    // Cada minuto = 1px de altura, mínimo 40px
+    return Math.max(durationMinutes, 40);
+  };
+
   const getStatusColor = (statusId?: number, type?: string) => {
     // Cores especiais para férias e pausas
     if (type === 'vacation') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
@@ -102,10 +110,13 @@ export function DayView({
                       const itemType = (appointment as any).type;
                       const isSpecialItem = itemType === 'vacation' || itemType === 'break';
                       
+                      const cardHeight = calculateCardHeight(appointment);
+                      
                       return (
                         <Card 
                           key={appointment.id}
                           className={`cursor-pointer hover:shadow-md transition-shadow ${getCardStyle(itemType)}`}
+                          style={{ height: `${cardHeight}px` }}
                           onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
                         >
                           <CardContent className="p-3">
