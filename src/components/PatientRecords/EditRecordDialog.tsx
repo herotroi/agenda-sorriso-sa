@@ -397,30 +397,12 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
     if (!record) return;
 
     try {
-      // Buscar dados completos para impressão
+      // Buscar dados completos para impressão incluindo agendamentos vinculados
       const { data: fullRecord, error } = await supabase
         .from('patient_records')
         .select(`
           *,
-          professionals(name, specialty, crm_cro),
-          appointments(
-            start_time,
-            end_time,
-            procedures(name),
-            patients(
-              full_name,
-              cpf,
-              phone,
-              email,
-              birth_date,
-              gender,
-              street,
-              number,
-              neighborhood,
-              city,
-              state
-            )
-          )
+          professionals(name, specialty, crm_cro)
         `)
         .eq('id', record.id)
         .eq('user_id', user?.id)
@@ -438,6 +420,43 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           variant: 'destructive',
         });
         return;
+      }
+
+      // Buscar agendamentos vinculados
+      const { data: linkedAppointments } = await supabase
+        .from('record_appointments')
+        .select('appointment_id')
+        .eq('record_id', record.id);
+
+      const appointmentIds = linkedAppointments?.map(item => item.appointment_id) || [];
+      
+      // Buscar dados dos agendamentos
+      let appointmentsData: any[] = [];
+      if (appointmentIds.length > 0) {
+        const { data } = await supabase
+          .from('appointments')
+          .select(`
+            start_time,
+            end_time,
+            procedures(name),
+            patients(
+              full_name,
+              cpf,
+              phone,
+              email,
+              birth_date,
+              gender,
+              street,
+              number,
+              neighborhood,
+              city,
+              state
+            )
+          `)
+          .in('id', appointmentIds)
+          .order('start_time', { ascending: false });
+        
+        appointmentsData = data || [];
       }
 
       // Criar conteúdo HTML para impressão
@@ -504,19 +523,19 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
             <h3>DADOS DO PACIENTE</h3>
             <div class="info-grid">
               <div>
-                <div class="info-item"><strong>Nome:</strong> ${fullRecord.appointments?.patients?.full_name || 'Não informado'}</div>
-                <div class="info-item"><strong>CPF:</strong> ${fullRecord.appointments?.patients?.cpf || 'Não informado'}</div>
-                <div class="info-item"><strong>Telefone:</strong> ${fullRecord.appointments?.patients?.phone || 'Não informado'}</div>
-                <div class="info-item"><strong>Email:</strong> ${fullRecord.appointments?.patients?.email || 'Não informado'}</div>
+                <div class="info-item"><strong>Nome:</strong> ${appointmentsData[0]?.patients?.full_name || 'Não informado'}</div>
+                <div class="info-item"><strong>CPF:</strong> ${appointmentsData[0]?.patients?.cpf || 'Não informado'}</div>
+                <div class="info-item"><strong>Telefone:</strong> ${appointmentsData[0]?.patients?.phone || 'Não informado'}</div>
+                <div class="info-item"><strong>Email:</strong> ${appointmentsData[0]?.patients?.email || 'Não informado'}</div>
               </div>
               <div>
-                <div class="info-item"><strong>Data de Nascimento:</strong> ${fullRecord.appointments?.patients?.birth_date ? format(new Date(fullRecord.appointments.patients.birth_date), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado'}</div>
-                <div class="info-item"><strong>Sexo:</strong> ${fullRecord.appointments?.patients?.gender || 'Não informado'}</div>
+                <div class="info-item"><strong>Data de Nascimento:</strong> ${appointmentsData[0]?.patients?.birth_date ? format(new Date(appointmentsData[0].patients.birth_date), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado'}</div>
+                <div class="info-item"><strong>Sexo:</strong> ${appointmentsData[0]?.patients?.gender || 'Não informado'}</div>
               </div>
             </div>
             
-            ${fullRecord.appointments?.patients?.street ? `
-            <div class="info-item"><strong>Endereço:</strong> ${fullRecord.appointments.patients.street}, ${fullRecord.appointments.patients.number || 's/n'} - ${fullRecord.appointments.patients.neighborhood || ''} - ${fullRecord.appointments.patients.city || ''} - ${fullRecord.appointments.patients.state || ''}</div>
+            ${appointmentsData[0]?.patients?.street ? `
+            <div class="info-item"><strong>Endereço:</strong> ${appointmentsData[0].patients.street}, ${appointmentsData[0].patients.number || 's/n'} - ${appointmentsData[0].patients.neighborhood || ''} - ${appointmentsData[0].patients.city || ''} - ${appointmentsData[0].patients.state || ''}</div>
             ` : ''}
           </div>
 
@@ -530,11 +549,41 @@ export function EditRecordDialog({ record, isOpen, onClose, onRecordUpdated, onR
           <div class="section">
             <h3>DADOS DA CONSULTA</h3>
             <div class="info-item"><strong>Título:</strong> ${fullRecord.title || 'Não informado'}</div>
-            ${fullRecord.appointments ? `
-            <div class="info-item"><strong>Data/Hora:</strong> ${format(new Date(fullRecord.appointments.start_time), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</div>
-            <div class="info-item"><strong>Procedimento:</strong> ${fullRecord.appointments.procedures?.name || 'Não informado'}</div>
-            ` : ''}
           </div>
+
+          ${appointmentsData.length > 0 ? `
+          <div class="section">
+            <h3>CONSULTAS VINCULADAS</h3>
+            ${appointmentsData.map(apt => `
+              <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #007bff;">
+                <div class="info-item"><strong>Data/Hora:</strong> ${format(new Date(apt.start_time), 'dd/MM/yyyy \'às\' HH:mm', { locale: ptBR })}</div>
+                ${apt.procedures ? `<div class="info-item"><strong>Procedimento:</strong> ${apt.procedures.name}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          ${fullRecord.icd_codes ? (() => {
+            try {
+              const icds = typeof fullRecord.icd_codes === 'string' ? JSON.parse(fullRecord.icd_codes) : fullRecord.icd_codes;
+              if (Array.isArray(icds) && icds.length > 0) {
+                return `
+                <div class="section">
+                  <h3>CÓDIGOS CID</h3>
+                  ${icds.map(icd => `
+                    <div style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-left: 3px solid #28a745;">
+                      <div class="info-item"><strong>Código:</strong> ${icd.code} (${icd.version})</div>
+                      <div class="info-item"><strong>Descrição:</strong> ${icd.title}</div>
+                    </div>
+                  `).join('')}
+                </div>
+                `;
+              }
+            } catch (e) {
+              console.error('Error parsing ICD codes for print:', e);
+            }
+            return '';
+          })() : ''}
 
           ${fullRecord.content || fullRecord.notes ? `
           <div class="section">
