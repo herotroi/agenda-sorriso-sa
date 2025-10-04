@@ -25,6 +25,7 @@ const paymentMethods = [
   { value: 'dinheiro', label: 'Dinheiro' },
   { value: 'pix', label: 'PIX' },
   { value: 'boleto', label: 'Boleto' },
+  { value: 'transferencia', label: 'Transferência' },
   { value: 'nao_informado', label: 'Não Informado' },
   { value: 'gratis', label: 'Grátis' },
   { value: 'outros', label: 'Outros' }
