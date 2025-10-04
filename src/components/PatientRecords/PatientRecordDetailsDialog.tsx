@@ -1369,32 +1369,33 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[1200px] max-h-[95vh] flex flex-col p-0">
-        <DialogHeader className="px-3 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
+      <DialogContent className="max-w-[95vw] sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[1200px] max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-3.5 md:py-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <DialogTitle className="flex items-center gap-2 text-base sm:text-xl">
-                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+              <DialogTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+                <FileText className="h-5 w-5 sm:h-5.5 sm:w-5.5 md:h-6 md:w-6 text-blue-600 flex-shrink-0" />
                 <span className="truncate">Prontuário Médico</span>
               </DialogTitle>
               <DialogDescription className="sr-only">
                 Detalhes do prontuário médico do paciente
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0">
               <Button 
                 onClick={handlePrint} 
                 variant="default" 
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-2 sm:px-4"
+                className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-2 sm:px-3 md:px-4"
                 disabled={loadingData}
               >
-                <Printer className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Imprimir Prontuário</span>
+                <Printer className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 sm:mr-1.5 md:mr-2" />
+                <span className="hidden sm:inline">Imprimir</span>
+                <span className="hidden md:inline"> Prontuário</span>
               </Button>
               <DialogClose asChild>
-                <Button variant="ghost" size="icon" aria-label="Fechar" className="h-8 w-8 sm:h-10 sm:w-10">
-                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Button variant="ghost" size="icon" aria-label="Fechar" className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10">
+                  <X className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
                 </Button>
               </DialogClose>
             </div>
@@ -1407,9 +1408,9 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               {/* Coluna Esquerda - Informações Principais */}
               <div className="space-y-6">
                 {/* Informações do Paciente */}
-                <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
-                  <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-blue-800">
-                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                <div className="bg-blue-50 rounded-lg p-3 sm:p-3.5 md:p-4">
+                  <h3 className="text-base sm:text-base md:text-lg font-semibold mb-2 sm:mb-2.5 md:mb-3 flex items-center gap-2 text-blue-800">
+                    <User className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
                     Identificação do Paciente
                   </h3>
                   {loadingData ? (
@@ -1658,11 +1659,11 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
               </div>
 
               {/* Coluna Direita - Documentos */}
-              <div className="space-y-3 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6">
                 <div>
-                  <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-                    <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                      <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <div className="flex items-center justify-between mb-3 sm:mb-3.5 md:mb-4 gap-2">
+                    <h3 className="text-base sm:text-base md:text-lg font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
                       Documentos Anexados
                     </h3>
                     <Button
@@ -1670,7 +1671,7 @@ export function PatientRecordDetailsDialog({ record, isOpen, onClose }: PatientR
                       size="sm"
                       onClick={() => setShowOrderControls(!showOrderControls)}
                       disabled={documents.length <= 1}
-                      className="text-xs sm:text-sm"
+                      className="text-xs sm:text-sm px-2 sm:px-3 md:px-4"
                     >
                       <GripVertical className="h-4 w-4 mr-1" />
                       {showOrderControls ? 'Concluir' : 'Reordenar'}
