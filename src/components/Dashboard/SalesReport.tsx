@@ -111,51 +111,51 @@ export function SalesReport({ stats, paymentMethodsData, paymentStatusData, prof
   };
 
   return (
-    <div className="space-y-6 p-8 bg-white print:p-4 print:space-y-3" data-print-report>
+    <div className="space-y-6 p-8 bg-white print:p-2 print:space-y-2" data-print-report>
       {/* Header */}
-      <div className="text-center border-b pb-4 print:pb-2">
-        <h1 className="text-3xl font-bold text-gray-900 print:text-lg">Relatório de Vendas e Serviços</h1>
-        <p className="text-gray-600 mt-2 print:text-xs print:mt-1">
+      <div className="text-center border-b pb-4 print:pb-1 print:mb-1">
+        <h1 className="text-3xl font-bold text-gray-900 print:text-base">Relatório de Vendas e Serviços</h1>
+        <p className="text-gray-600 mt-2 print:text-[9px] print:mt-0">
           Período: {formatDate(dateRange.start)} - {formatDate(dateRange.end)}
         </p>
-        <p className="text-sm text-gray-500 mt-1 print:text-[10px] print:mt-0">
+        <p className="text-sm text-gray-500 mt-1 print:text-[8px] print:mt-0">
           Gerado em: {formatDate(new Date())} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
 
       {/* Resumo Financeiro */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center print:text-sm print:mb-2">
+      <div className="print:mt-1">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center print:text-xs print:mb-1">
           <DollarSign className="h-5 w-5 mr-2 print:h-3 print:w-3 print:mr-1" />
           Resumo Financeiro
         </h2>
-        <div className="grid grid-cols-3 gap-4 print:gap-2">
+        <div className="grid grid-cols-3 gap-4 print:gap-1">
           <Card>
-            <CardContent className="pt-6 print:pt-3 print:pb-2">
+            <CardContent className="pt-6 print:pt-1 print:pb-1">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-600 print:text-[10px]">Receita do Período</p>
-                <p className="text-2xl font-bold text-green-600 mt-2 print:text-sm print:mt-1">{formatCurrency(stats.monthlyRevenue)}</p>
-                <p className="text-xs text-gray-500 mt-1 print:text-[9px] print:mt-0">Pagamento Realizado</p>
+                <p className="text-sm font-medium text-gray-600 print:text-[8px]">Receita do Período</p>
+                <p className="text-2xl font-bold text-green-600 mt-2 print:text-xs print:mt-0">{formatCurrency(stats.monthlyRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1 print:text-[7px] print:mt-0">Pagamento Realizado</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="pt-6 print:pt-3 print:pb-2">
+            <CardContent className="pt-6 print:pt-1 print:pb-1">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-600 print:text-[10px]">A Receber</p>
-                <p className="text-2xl font-bold text-blue-600 mt-2 print:text-sm print:mt-1">{formatCurrency(stats.receivableRevenue)}</p>
-                <p className="text-xs text-gray-500 mt-1 print:text-[9px] print:mt-0">Aguardando Pagamento</p>
+                <p className="text-sm font-medium text-gray-600 print:text-[8px]">A Receber</p>
+                <p className="text-2xl font-bold text-blue-600 mt-2 print:text-xs print:mt-0">{formatCurrency(stats.receivableRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1 print:text-[7px] print:mt-0">Aguardando Pagamento</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="pt-6 print:pt-3 print:pb-2">
+            <CardContent className="pt-6 print:pt-1 print:pb-1">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-600 print:text-[10px]">Valores Cancelados</p>
-                <p className="text-2xl font-bold text-red-600 mt-2 print:text-sm print:mt-1">{formatCurrency(stats.cancelledRevenue)}</p>
-                <p className="text-xs text-gray-500 mt-1 print:text-[9px] print:mt-0">Cancelados/Sem Pagamento</p>
+                <p className="text-sm font-medium text-gray-600 print:text-[8px]">Valores Cancelados</p>
+                <p className="text-2xl font-bold text-red-600 mt-2 print:text-xs print:mt-0">{formatCurrency(stats.cancelledRevenue)}</p>
+                <p className="text-xs text-gray-500 mt-1 print:text-[7px] print:mt-0">Cancelados/Sem Pagamento</p>
               </div>
             </CardContent>
           </Card>
