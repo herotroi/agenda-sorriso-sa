@@ -1,8 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, User } from 'lucide-react';
-import { ProntuarioPrintButton } from './ProntuarioPrintButton';
+import { Plus, User } from 'lucide-react';
 
 interface ProntuarioHeaderProps {
   selectedPatient: string;
@@ -28,10 +27,6 @@ export function ProntuarioHeader({ selectedPatient, onNewAppointment, canCreate 
       
       {selectedPatient && (
         <div className="flex flex-wrap gap-2 w-full">
-          <ProntuarioPrintButton 
-            selectedPatient={selectedPatient}
-            disabled={!selectedPatient}
-          />
           <Button
             onClick={onNewAppointment}
             disabled={!canCreate}
