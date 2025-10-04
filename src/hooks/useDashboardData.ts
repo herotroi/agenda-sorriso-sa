@@ -102,25 +102,27 @@ export function useDashboardData() {
 
       const { data: revenueData } = await revenueQuery;
 
-      // Receita do Período: apenas "pagamento realizado"
+      // Receita do Período: apenas "pagamento_realizado"
       const monthlyRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.payment_status === 'pagamento realizado') {
+        if (appointment.payment_status === 'pagamento_realizado') {
           return sum + (appointment.price || 0);
         }
         return sum;
       }, 0) || 0;
 
-      // A Receber: "aguardando pagamento" ou "não pagou"
+      // A Receber: "aguardando_pagamento" ou "nao_pagou"
       const receivableRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.payment_status === 'aguardando pagamento' || appointment.payment_status === 'não pagou') {
+        if (appointment.payment_status === 'aguardando_pagamento' || appointment.payment_status === 'nao_pagou') {
           return sum + (appointment.price || 0);
         }
         return sum;
       }, 0) || 0;
 
-      // Valores Cancelados: "pagamento cancelado" ou "sem pagamento"
+      // Valores Cancelados: "pagamento_cancelado" ou "sem_pagamento" (ou null/undefined)
       const cancelledRevenue = revenueData?.reduce((sum, appointment) => {
-        if (appointment.payment_status === 'pagamento cancelado' || appointment.payment_status === 'sem pagamento') {
+        if (appointment.payment_status === 'pagamento_cancelado' || 
+            appointment.payment_status === 'sem_pagamento' || 
+            !appointment.payment_status) {
           return sum + (appointment.price || 0);
         }
         return sum;
@@ -213,7 +215,7 @@ export function useDashboardData() {
         .select('start_time, price, payment_status')
         .eq('user_id', user.id)
         .not('price', 'is', null)
-        .eq('payment_status', 'pagamento realizado') // Apenas pagamento realizado no gráfico
+        .eq('payment_status', 'pagamento_realizado') // Apenas pagamento realizado no gráfico
         .order('start_time');
 
       if (startDate && endDate) {
