@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, CheckCircle2 } from 'lucide-react';
+import { Loader2, Mail, Lock, CheckCircle2, Eye, EyeOff, Check, X } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Email inválido').max(255);
@@ -33,6 +33,22 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
   const [isLoading, setIsLoading] = useState(false);
   const [canResend, setCanResend] = useState(false);
   const [countdown, setCountdown] = useState(60);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const validatePassword = (password: string) => {
+    return {
+      minLength: password.length >= 8,
+      hasUpperCase: /[A-Z]/.test(password),
+      hasLowerCase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecialChar: /[^A-Za-z0-9]/.test(password),
+    };
+  };
+
+  const passwordValidation = validatePassword(newPassword);
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+  const passwordsMatch = newPassword === confirmPassword && confirmPassword !== '';
 
   const startCountdown = () => {
     setCanResend(false);
@@ -118,10 +134,24 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
     try {
       // Validate passwords
       if (newPassword !== confirmPassword) {
-        throw new Error('As senhas não coincidem');
+        toast({
+          title: 'Erro',
+          description: 'As senhas não coincidem',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
       }
 
-      passwordSchema.parse(newPassword);
+      if (!isPasswordValid) {
+        toast({
+          title: 'Erro',
+          description: 'A senha não atende aos requisitos mínimos',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Reset password
       const { data, error } = await supabase.functions.invoke('password-recovery', {
@@ -291,15 +321,24 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
             <Lock className="w-4 h-4" />
             Nova Senha
           </Label>
-          <Input
-            id="newPassword"
-            type="password"
-            placeholder="Mínimo 8 caracteres"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
-          />
+          <div className="relative">
+            <Input
+              id="newPassword"
+              type={showNewPassword ? "text" : "password"}
+              placeholder="Mínimo 8 caracteres"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              className="h-11 pr-10 transition-all focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -307,26 +346,98 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
             <CheckCircle2 className="w-4 h-4" />
             Confirmar Nova Senha
           </Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="Digite a senha novamente"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
-          />
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Digite a senha novamente"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="h-11 pr-10 transition-all focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {confirmPassword && (
+            <div className="flex items-center gap-1 text-xs mt-1">
+              {passwordsMatch ? (
+                <>
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span className="text-green-500">Senhas coincidem</span>
+                </>
+              ) : (
+                <>
+                  <X className="w-3 h-3 text-destructive" />
+                  <span className="text-destructive">Senhas não coincidem</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-          <p className="text-xs font-medium">Requisitos da senha:</p>
-          <ul className="text-xs text-muted-foreground space-y-1 ml-4">
-            <li className="list-disc">Mínimo 8 caracteres</li>
-            <li className="list-disc">Letra maiúscula e minúscula</li>
-            <li className="list-disc">Pelo menos um número</li>
-            <li className="list-disc">Pelo menos um caractere especial</li>
-          </ul>
-        </div>
+        {newPassword && (
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium mb-2">Requisitos da senha:</p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs">
+                {passwordValidation.minLength ? (
+                  <Check className="w-3 h-3 text-green-500" />
+                ) : (
+                  <X className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={passwordValidation.minLength ? 'text-green-500' : 'text-muted-foreground'}>
+                  Mínimo 8 caracteres
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {passwordValidation.hasUpperCase ? (
+                  <Check className="w-3 h-3 text-green-500" />
+                ) : (
+                  <X className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={passwordValidation.hasUpperCase ? 'text-green-500' : 'text-muted-foreground'}>
+                  Pelo menos uma letra maiúscula
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {passwordValidation.hasLowerCase ? (
+                  <Check className="w-3 h-3 text-green-500" />
+                ) : (
+                  <X className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={passwordValidation.hasLowerCase ? 'text-green-500' : 'text-muted-foreground'}>
+                  Pelo menos uma letra minúscula
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {passwordValidation.hasNumber ? (
+                  <Check className="w-3 h-3 text-green-500" />
+                ) : (
+                  <X className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={passwordValidation.hasNumber ? 'text-green-500' : 'text-muted-foreground'}>
+                  Pelo menos um número
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {passwordValidation.hasSpecialChar ? (
+                  <Check className="w-3 h-3 text-green-500" />
+                ) : (
+                  <X className="w-3 h-3 text-muted-foreground" />
+                )}
+                <span className={passwordValidation.hasSpecialChar ? 'text-green-500' : 'text-muted-foreground'}>
+                  Pelo menos um caractere especial
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -345,7 +456,7 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
         <Button
           type="submit"
           className="flex-1 bg-gradient-to-r from-primary to-secondary"
-          disabled={isLoading}
+          disabled={isLoading || !isPasswordValid || !passwordsMatch}
         >
           {isLoading ? (
             <>
