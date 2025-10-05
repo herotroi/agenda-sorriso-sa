@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
   const [countdown, setCountdown] = useState(60);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const validatePassword = (password: string) => {
     return {
@@ -50,13 +51,31 @@ export const PasswordRecoveryFlow = ({ onSuccess }: PasswordRecoveryFlowProps) =
   const isPasswordValid = Object.values(passwordValidation).every(Boolean);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword !== '';
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
   const startCountdown = () => {
+    // Clear existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     setCanResend(false);
     setCountdown(60);
-    const timer = setInterval(() => {
+    
+    timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           setCanResend(true);
           return 0;
         }
