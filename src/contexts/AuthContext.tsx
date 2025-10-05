@@ -49,11 +49,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      // Verificar tentativas de login antes de tentar autenticar
+      const checkResponse = await supabase.functions.invoke('check-login-attempts', {
+        body: { 
+          email, 
+          action: 'check',
+          ip_address: window.location.hostname
+        }
+      });
+
+      if (checkResponse.error) {
+        console.error('[Auth] Error checking login attempts:', checkResponse.error);
+        // Continuar com login mesmo se verificação falhar
+      } else if (checkResponse.data && !checkResponse.data.allowed) {
+        return { 
+          error: { 
+            message: checkResponse.data.message 
+          } 
+        };
+      }
+
+      // Tentar login
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        // Incrementar contador de tentativas falhas
+        await supabase.functions.invoke('check-login-attempts', {
+          body: { 
+            email, 
+            action: 'increment',
+            ip_address: window.location.hostname
+          }
+        });
+        return { error };
+      }
+
+      // Login bem-sucedido - resetar tentativas
+      await supabase.functions.invoke('check-login-attempts', {
+        body: { email, action: 'reset' }
+      });
+
+      return { error: null };
+    } catch (err) {
+      console.error('[Auth] Unexpected error during sign in:', err);
+      return { error: err };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {

@@ -154,6 +154,39 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          last_attempt_at: string | null
+          locked_until: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           appointment_id: string | null
@@ -762,6 +795,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_coupons: {
+        Row: {
+          coupon_id: string
+          created_at: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -807,6 +875,10 @@ export type Database = {
     }
     Functions: {
       cleanup_expired_reset_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_login_attempts: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
