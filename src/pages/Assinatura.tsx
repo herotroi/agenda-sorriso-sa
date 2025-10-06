@@ -9,7 +9,7 @@ import { Settings, CreditCard, Users, Calendar, FileText, Stethoscope } from 'lu
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const plans = [
+const getDefaultPlans = () => [
   {
     id: 'free',
     title: 'Plano Gratuito',
@@ -80,6 +80,7 @@ export default function Assinatura() {
   const [loading, setLoading] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [hasAutomacao, setHasAutomacao] = useState(false);
+  const [plans, setPlans] = useState(getDefaultPlans());
 
   const checkSubscription = async () => {
     try {
@@ -95,6 +96,33 @@ export default function Assinatura() {
     } catch (error) {
       console.error('Erro inesperado:', error);
       toast.error('Erro inesperado ao verificar assinatura');
+    }
+  };
+
+  const fetchStripePrices = async () => {
+    try {
+      console.log('Fetching Stripe prices...');
+      const { data, error } = await supabase.functions.invoke('get-stripe-prices');
+      
+      if (error) {
+        console.error('Erro ao buscar preços da Stripe:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('Stripe prices:', data);
+        setPlans(prevPlans => prevPlans.map(plan => {
+          if (plan.id === 'monthly' && data.monthly) {
+            return { ...plan, price: data.monthly.amount };
+          }
+          if (plan.id === 'annual' && data.yearly) {
+            return { ...plan, price: Math.round(data.yearly.amount / 12) };
+          }
+          return plan;
+        }));
+      }
+    } catch (error) {
+      console.error('Erro inesperado ao buscar preços:', error);
     }
   };
 
@@ -139,7 +167,7 @@ export default function Assinatura() {
   useEffect(() => {
     const loadData = async () => {
       setChecking(true);
-      await Promise.all([checkSubscription(), fetchUsageStats()]);
+      await Promise.all([checkSubscription(), fetchUsageStats(), fetchStripePrices()]);
       setChecking(false);
     };
     loadData();
