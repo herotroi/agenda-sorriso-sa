@@ -58,6 +58,8 @@ interface UpcomingAppointment {
   professional: string;
   type: string;
   time: string;
+  date: string;
+  start_time: string;
 }
 
 interface DateRange {
@@ -233,6 +235,11 @@ export function useDashboardData() {
             hour: '2-digit',
             minute: '2-digit',
           }),
+          date: new Date(appointment.start_time).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+          }),
+          start_time: appointment.start_time,
         }));
         setUpcomingAppointments(appointments);
       }

@@ -18,17 +18,23 @@ import {
   CreditCard,
   FileText
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
 import { DateRangeSelector } from '@/components/Dashboard/DateRangeSelector';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateReportHTML } from '@/utils/reportPrintUtils';
+import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
+import { supabase } from '@/integrations/supabase/client';
+import { Appointment } from '@/types';
+
 
 
 export default function Dashboard() {
   const [showReport, setShowReport] = useState(false);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const { 
     stats, 
     upcomingAppointments, 
@@ -50,6 +56,41 @@ export default function Dashboard() {
       currency: 'BRL',
     }).format(value);
   };
+
+  const fetchAppointmentDetails = async (appointmentId: string) => {
+    const { data, error } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        patients(full_name),
+        professionals(name),
+        procedures(name),
+        appointment_statuses(label)
+      `)
+      .eq('id', appointmentId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching appointment:', error);
+      return;
+    }
+
+    if (data) {
+      setSelectedAppointment(data as unknown as Appointment);
+    }
+  };
+
+  const handleAppointmentClick = async (appointmentId: string) => {
+    setSelectedAppointmentId(appointmentId);
+    await fetchAppointmentDetails(appointmentId);
+  };
+
+  const handleCloseAppointmentDetails = () => {
+    setSelectedAppointmentId(null);
+    setSelectedAppointment(null);
+    refetch(); // Atualizar dados após fechar
+  };
+
 
   const handlePrintReport = () => {
     const printWindow = window.open('', '_blank');
@@ -396,14 +437,19 @@ export default function Dashboard() {
                 <p className="text-gray-500 text-sm">Nenhum agendamento próximo</p>
               ) : (
                 upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
+                  <div 
+                    key={appointment.id} 
+                    className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => handleAppointmentClick(appointment.id)}
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-xs sm:text-sm truncate">{appointment.patient}</p>
                       <p className="text-xs text-gray-600 truncate">{appointment.professional}</p>
                       <p className="text-xs text-gray-500 truncate">{appointment.type}</p>
                     </div>
                     <div className="text-right flex-shrink-0 ml-2">
-                      <p className="font-medium text-xs sm:text-sm">{appointment.time}</p>
+                      <p className="font-medium text-xs sm:text-sm">{appointment.date}</p>
+                      <p className="text-xs text-gray-600">{appointment.time}</p>
                       <div className="w-2 h-2 bg-green-500 rounded-full ml-auto mt-1"></div>
                     </div>
                   </div>
@@ -493,6 +539,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Detalhes do Agendamento */}
+      {selectedAppointment && (
+        <AppointmentDetails
+          appointment={selectedAppointment}
+          isOpen={!!selectedAppointmentId}
+          onClose={handleCloseAppointmentDetails}
+          onUpdate={refetch}
+        />
+      )}
     </div>
   );
 }
