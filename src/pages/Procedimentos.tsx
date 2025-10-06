@@ -201,6 +201,7 @@ export default function Procedimentos() {
               <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 <div className="flex-1 space-y-2">
                   <h3 className="text-base sm:text-lg font-semibold">{procedure.name}</h3>
+                  <p className="text-xs text-muted-foreground font-mono">ID: {procedure.id}</p>
                   <p className="text-gray-600 text-xs sm:text-sm">{procedure.description}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                     <span className="whitespace-nowrap">Preço: R$ {procedure.price.toFixed(2)}</span>
