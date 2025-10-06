@@ -144,6 +144,9 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
                 <h3 className="font-semibold text-lg text-gray-900 truncate">
                   {professional.name}
                 </h3>
+                <p className="text-xs text-muted-foreground font-mono">
+                  ID: {professional.id}
+                </p>
                 {professional.specialty && (
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Briefcase className="h-3 w-3" />
