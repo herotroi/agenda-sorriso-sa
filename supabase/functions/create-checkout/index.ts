@@ -79,15 +79,34 @@ serve(async (req) => {
       throw new Error("Failed to check existing customers");
     }
 
-    // Definir price ID baseado no plano
+    // Buscar prices ativos da Stripe para o plano especificado
     let priceId;
-    if (planId === 'monthly') {
-      priceId = 'price_1RjqEpRDyYwOIEUI2xrUMO8P';
-    } else if (planId === 'annual') {
-      priceId = 'price_1RjqGgRDyYwOIEUI1FDtx1rm';
-    } else {
-      logStep("ERROR: Invalid plan ID", { planId });
-      throw new Error("Invalid plan ID");
+    try {
+      const interval = planId === 'monthly' ? 'month' : 'year';
+      logStep("Searching for active prices", { interval });
+      
+      const prices = await stripe.prices.list({
+        active: true,
+        type: 'recurring',
+        limit: 100,
+      });
+
+      // Filtrar pelo intervalo correto
+      const matchingPrice = prices.data.find(
+        price => price.recurring?.interval === interval && price.active
+      );
+
+      if (!matchingPrice) {
+        logStep("ERROR: No active price found", { interval, planId });
+        throw new Error(`Nenhum plano ativo encontrado para ${planId}. Verifique seus produtos no Stripe.`);
+      }
+
+      priceId = matchingPrice.id;
+      logStep("Found active price", { priceId, amount: matchingPrice.unit_amount, interval });
+      
+    } catch (stripeError) {
+      logStep("ERROR: Failed to fetch prices", { error: stripeError });
+      throw new Error(`Erro ao buscar planos no Stripe: ${stripeError.message}`);
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
