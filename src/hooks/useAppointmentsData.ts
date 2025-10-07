@@ -12,10 +12,25 @@ export function useAppointmentsData() {
   const { user } = useAuth();
 
   const fetchAppointments = async (patientId: string) => {
-    if (!patientId || !user) return;
+    if (!patientId || !user) {
+      console.error('Tentativa de buscar agendamentos sem autenticação ou ID do paciente');
+      return;
+    }
     
     setLoading(true);
     try {
+      // Primeiro verifica se o paciente pertence ao usuário
+      const { data: patientCheck } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('id', patientId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!patientCheck) {
+        throw new Error('Você não tem permissão para acessar este paciente');
+      }
+
       const { data, error } = await supabase
         .from('appointments')
         .select(`

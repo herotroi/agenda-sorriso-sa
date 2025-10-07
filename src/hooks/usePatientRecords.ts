@@ -19,6 +19,26 @@ export function usePatientRecords(patientId: string) {
 
     setLoading(true);
     try {
+      // Primeiro verifica se o paciente pertence ao usuário
+      const { data: patientCheck } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('id', patientId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!patientCheck) {
+        console.error('Tentativa de acesso a prontuário de paciente não autorizado');
+        toast({
+          title: 'Acesso Negado',
+          description: 'Você não tem permissão para acessar este paciente',
+          variant: 'destructive',
+        });
+        setRecords([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('patient_records')
         .select(`

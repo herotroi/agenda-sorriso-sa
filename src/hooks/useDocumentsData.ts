@@ -11,9 +11,30 @@ export function useDocumentsData() {
   const { user } = useAuth();
 
   const fetchDocuments = async (patientId: string) => {
-    if (!user) return;
+    if (!patientId || !user) {
+      console.error('Tentativa de buscar documentos sem autenticação ou ID do paciente');
+      return;
+    }
     
     try {
+      // Primeiro verifica se o paciente pertence ao usuário
+      const { data: patientCheck } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('id', patientId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!patientCheck) {
+        console.error('Tentativa de acesso a documentos de paciente não autorizado');
+        toast({
+          title: 'Acesso Negado',
+          description: 'Você não tem permissão para acessar documentos deste paciente',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('prontuario_documents')
         .select('*')
@@ -57,9 +78,28 @@ export function useDocumentsData() {
     selectedPatient: string
   ) => {
     if (!selectedPatient || !user) {
+      console.error('Tentativa de upload sem autenticação ou ID do paciente');
       toast({
         title: 'Erro',
         description: 'Selecione um paciente primeiro',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Verifica se o paciente pertence ao usuário
+    const { data: patientCheck } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('id', selectedPatient)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!patientCheck) {
+      console.error('Tentativa de upload de documento para paciente não autorizado');
+      toast({
+        title: 'Acesso Negado',
+        description: 'Você não tem permissão para fazer upload de documentos para este paciente',
         variant: 'destructive',
       });
       return;
@@ -115,13 +155,16 @@ export function useDocumentsData() {
     documentId: string,
     selectedPatient: string
   ) => {
-    if (!user) return;
+    if (!documentId || !user) {
+      console.error('Tentativa de deletar documento sem autenticação');
+      return;
+    }
     
     try {
-      // Get document details first
+      // Get document details first and verify ownership
       const { data: docData, error: fetchError } = await supabase
         .from('prontuario_documents')
-        .select('file_path')
+        .select('file_path, user_id')
         .eq('id', documentId)
         .eq('user_id', user.id)
         .maybeSingle();
@@ -132,7 +175,13 @@ export function useDocumentsData() {
       }
 
       if (!docData) {
-        throw new Error('Documento não encontrado');
+        console.error('Tentativa de deletar documento não autorizado');
+        toast({
+          title: 'Acesso Negado',
+          description: 'Você não tem permissão para deletar este documento',
+          variant: 'destructive',
+        });
+        return;
       }
 
       // Delete from storage

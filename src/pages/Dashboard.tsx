@@ -28,13 +28,16 @@ import { generateReportHTML } from '@/utils/reportPrintUtils';
 import { AppointmentDetails } from '@/components/Appointments/AppointmentDetails';
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment } from '@/types';
-
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function Dashboard() {
   const [showReport, setShowReport] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { 
     stats, 
     upcomingAppointments, 
@@ -58,6 +61,11 @@ export default function Dashboard() {
   };
 
   const fetchAppointmentDetails = async (appointmentId: string) => {
+    if (!user) {
+      console.error('Tentativa de acesso sem autenticação');
+      return;
+    }
+
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -68,10 +76,16 @@ export default function Dashboard() {
         appointment_statuses(label)
       `)
       .eq('id', appointmentId)
+      .eq('user_id', user.id)
       .single();
 
     if (error) {
       console.error('Error fetching appointment:', error);
+      toast({
+        title: 'Erro',
+        description: 'Agendamento não encontrado ou você não tem permissão para acessá-lo',
+        variant: 'destructive',
+      });
       return;
     }
 
