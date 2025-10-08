@@ -54,8 +54,13 @@ export function RevenueChart({ data = [], selectedPeriod }: RevenueChartProps) {
       
       if (selectedPeriod?.day && selectedPeriod.month !== 'all') {
         displayLabel = `${label}`;
-      } else if (selectedPeriod?.month !== 'all') {
-        displayLabel = `Dia ${label}`;
+      } else if (selectedPeriod?.month !== 'all' && typeof selectedPeriod?.month === 'number') {
+        // Mês específico - label já é o dia
+        const monthName = new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleDateString('pt-BR', { month: 'long' });
+        displayLabel = `Dia ${label} de ${monthName}`;
+      } else {
+        // Ano inteiro - label é DD/MM
+        displayLabel = `${label}`;
       }
       
       return (
@@ -116,8 +121,11 @@ export function RevenueChart({ data = [], selectedPeriod }: RevenueChartProps) {
               dataKey="name" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               dy={10}
+              angle={selectedPeriod?.month === 'all' ? -45 : 0}
+              textAnchor={selectedPeriod?.month === 'all' ? 'end' : 'middle'}
+              height={selectedPeriod?.month === 'all' ? 60 : 30}
             />
             <YAxis 
               tickFormatter={(value) => formatCurrency(value).replace('R$', 'R$').replace(',00', '')}

@@ -276,19 +276,20 @@ export function useDashboardData() {
       const { data } = await query;
 
       if (data) {
-        // Agrupar por mês se for ano inteiro, por dia se for mês específico
+        // Sempre agrupar por dia para melhor visualização
         const groupedData = data.reduce((acc, appointment) => {
           const date = new Date(appointment.start_time);
           let key: string;
           
           if (selectedPeriod.month === 'all') {
-            // Agrupar por mês
-            key = date.toLocaleDateString('pt-BR', { month: 'short' });
-          } else {
-            // Agrupar por dia - mostrando dia/mês
+            // Se for ano inteiro, mostrar dia/mês
             const day = date.getDate();
             const month = date.getMonth() + 1;
             key = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`;
+          } else {
+            // Se for mês específico, mostrar apenas dia
+            const day = date.getDate();
+            key = day.toString().padStart(2, '0');
           }
           
           if (!acc[key]) {
@@ -298,7 +299,20 @@ export function useDashboardData() {
           return acc;
         }, {} as Record<string, number>);
 
-        const chartData = Object.entries(groupedData).map(([name, value]) => ({
+        // Ordenar os dados por data
+        const sortedEntries = Object.entries(groupedData).sort((a, b) => {
+          if (selectedPeriod.month === 'all') {
+            // Formato DD/MM - converter para comparação
+            const [dayA, monthA] = a[0].split('/').map(Number);
+            const [dayB, monthB] = b[0].split('/').map(Number);
+            return (monthA * 100 + dayA) - (monthB * 100 + dayB);
+          } else {
+            // Apenas dias
+            return parseInt(a[0]) - parseInt(b[0]);
+          }
+        });
+
+        const chartData = sortedEntries.map(([name, value]) => ({
           name,
           value,
         }));
