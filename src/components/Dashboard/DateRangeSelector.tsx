@@ -12,8 +12,9 @@ interface DateRangeSelectorProps {
 
 export function DateRangeSelector({ onDateRangeChange, selectedYear }: DateRangeSelectorProps) {
   const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
   const [year, setYear] = useState(selectedYear || currentYear);
-  const [month, setMonth] = useState<number | 'all'>('all');
+  const [month, setMonth] = useState<number | 'all'>(currentMonth);
   const [day, setDay] = useState<number | null>(null);
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -64,14 +65,18 @@ export function DateRangeSelector({ onDateRangeChange, selectedYear }: DateRange
   };
 
   const handleClearFilter = () => {
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
     setYear(currentYear);
-    setMonth('all');
+    setMonth(currentMonth);
     setDay(null);
     
-    const startDate = new Date(currentYear, 0, 1);
-    const endDate = new Date(currentYear, 11, 31, 23, 59, 59);
-    onDateRangeChange(startDate, endDate, { year: currentYear, month: 'all', day: null });
+    // Voltar ao mês atual
+    const startDate = new Date(currentYear, currentMonth - 1, 1);
+    const endDate = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+    onDateRangeChange(startDate, endDate, { year: currentYear, month: currentMonth, day: null });
   };
 
   const handleMonthChange = (value: string) => {

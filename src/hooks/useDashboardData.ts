@@ -87,14 +87,21 @@ export function useDashboardData() {
   const [professionalAppointmentsData, setProfessionalAppointmentsData] = useState<ProfessionalAppointmentData[]>([]);
   const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDateRange, setCurrentDateRange] = useState<DateRange>({
-    start: new Date(new Date().getFullYear(), 0, 1),
-    end: new Date(new Date().getFullYear(), 11, 31, 23, 59, 59),
+  const [currentDateRange, setCurrentDateRange] = useState<DateRange>(() => {
+    // Definir mês atual como padrão
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    return { start, end };
   });
-  const [selectedPeriod, setSelectedPeriod] = useState<{ year: number; month?: number | 'all'; day?: number | null }>({
-    year: new Date().getFullYear(),
-    month: 'all',
-    day: null,
+  const [selectedPeriod, setSelectedPeriod] = useState<{ year: number; month?: number | 'all'; day?: number | null }>(() => {
+    // Definir mês atual como padrão
+    const now = new Date();
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1, // 1-12
+      day: null,
+    };
   });
   const { user } = useAuth();
 
@@ -552,7 +559,8 @@ export function useDashboardData() {
 
   useEffect(() => {
     if (user) {
-      fetchData();
+      // Carregar dados do mês atual por padrão
+      fetchData(currentDateRange.start.toISOString(), currentDateRange.end.toISOString());
     }
   }, [user]);
 
