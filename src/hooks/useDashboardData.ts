@@ -285,8 +285,10 @@ export function useDashboardData() {
             // Agrupar por mês
             key = date.toLocaleDateString('pt-BR', { month: 'short' });
           } else {
-            // Agrupar por dia
-            key = date.getDate().toString();
+            // Agrupar por dia - mostrando dia/mês
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            key = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}`;
           }
           
           if (!acc[key]) {
