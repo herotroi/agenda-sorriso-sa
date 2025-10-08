@@ -207,11 +207,11 @@ export function useDashboardData() {
     }
   };
 
-  const fetchUpcomingAppointments = async (startDate?: string, endDate?: string) => {
+  const fetchUpcomingAppointments = async () => {
     if (!user) return;
     
     try {
-      let query = supabase
+      const { data } = await supabase
         .from('appointments')
         .select(`
           id,
@@ -221,20 +221,9 @@ export function useDashboardData() {
           procedures(name)
         `)
         .eq('user_id', user.id)
+        .gte('start_time', new Date().toISOString())
         .order('start_time')
         .limit(5);
-
-      // Se tiver filtro de período, aplica o filtro
-      if (startDate && endDate) {
-        query = query
-          .gte('start_time', startDate)
-          .lte('start_time', endDate);
-      } else {
-        // Senão, mostra apenas futuros
-        query = query.gte('start_time', new Date().toISOString());
-      }
-
-      const { data } = await query;
 
       if (data) {
         const appointments = data.map((appointment: any) => ({
@@ -539,7 +528,7 @@ export function useDashboardData() {
     setLoading(true);
     await Promise.all([
       fetchStats(startDate, endDate),
-      fetchUpcomingAppointments(startDate, endDate),
+      fetchUpcomingAppointments(),
       fetchRevenueData(startDate, endDate),
       fetchPaymentMethods(startDate, endDate),
       fetchPaymentStatus(startDate, endDate),
