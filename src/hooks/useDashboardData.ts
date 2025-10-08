@@ -299,23 +299,34 @@ export function useDashboardData() {
           return acc;
         }, {} as Record<string, number>);
 
-        // Ordenar os dados por data
-        const sortedEntries = Object.entries(groupedData).sort((a, b) => {
-          if (selectedPeriod.month === 'all') {
+        let chartData: Array<{ name: string; value: number }>;
+
+        // Se for mês específico, preencher todos os dias
+        if (selectedPeriod.month !== 'all' && typeof selectedPeriod.month === 'number') {
+          const daysInMonth = new Date(selectedPeriod.year, selectedPeriod.month, 0).getDate();
+          chartData = [];
+          
+          for (let day = 1; day <= daysInMonth; day++) {
+            const dayKey = day.toString().padStart(2, '0');
+            chartData.push({
+              name: dayKey,
+              value: groupedData[dayKey] || 0,
+            });
+          }
+        } else {
+          // Se for ano inteiro, ordenar os dados existentes
+          const sortedEntries = Object.entries(groupedData).sort((a, b) => {
             // Formato DD/MM - converter para comparação
             const [dayA, monthA] = a[0].split('/').map(Number);
             const [dayB, monthB] = b[0].split('/').map(Number);
             return (monthA * 100 + dayA) - (monthB * 100 + dayB);
-          } else {
-            // Apenas dias
-            return parseInt(a[0]) - parseInt(b[0]);
-          }
-        });
+          });
 
-        const chartData = sortedEntries.map(([name, value]) => ({
-          name,
-          value,
-        }));
+          chartData = sortedEntries.map(([name, value]) => ({
+            name,
+            value,
+          }));
+        }
 
         setMonthlyRevenueData(chartData);
       }
