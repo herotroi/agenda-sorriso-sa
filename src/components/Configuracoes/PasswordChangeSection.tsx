@@ -72,6 +72,21 @@ export function PasswordChangeSection() {
 
       if (error) throw error;
 
+      // Resetar tentativas de login após trocar senha com sucesso
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        try {
+          await supabase.functions.invoke('check-login-attempts', {
+            body: {
+              email: user.email,
+              action: 'reset'
+            }
+          });
+        } catch (err) {
+          console.error('Error resetting login attempts:', err);
+        }
+      }
+
       setPasswords({
         currentPassword: '',
         newPassword: '',

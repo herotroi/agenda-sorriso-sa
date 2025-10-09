@@ -47,6 +47,20 @@ serve(async (req) => {
           );
         }
 
+        // Se o bloqueio expirou, resetar as tentativas
+        if (attempt.locked_until && new Date(attempt.locked_until) <= new Date()) {
+          console.log(`[Login Attempts] Lock expired, resetting attempts for ${email}`);
+          await supabase
+            .from('login_attempts')
+            .delete()
+            .eq('email', email);
+
+          return new Response(
+            JSON.stringify({ allowed: true, attempts: 0, remaining: 20 }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         // Verificar número de tentativas
         if (attempt.attempt_count >= 20) {
           // Bloquear por 30 minutos
