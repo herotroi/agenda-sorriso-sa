@@ -6,6 +6,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 import { FeaturesSection } from '@/components/auth/FeaturesSection';
 import { PasswordResetForm } from '@/components/auth/PasswordResetForm';
 import { AuthTabs } from '@/components/auth/AuthTabs';
+import { LandingPageContent } from '@/components/auth/LandingPageContent';
 
 const Auth = () => {
   const { user, signIn, signUp, resetPassword, loading } = useAuth();
@@ -92,18 +93,25 @@ const Auth = () => {
   }
 
   return (
-    <AuthLayout>
-      <FeaturesSection />
-      <AuthTabs
-        onSignIn={handleSignIn}
-        onSignUp={handleSignUp}
-        onResetPassword={handleResetPassword}
-        onRecoverySuccess={() => navigate('/dashboard')}
-        error={error}
-        successMessage={successMessage}
-        isLoading={isLoading}
-      />
-    </AuthLayout>
+    <>
+      <AuthLayout>
+        <FeaturesSection />
+        <AuthTabs
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+          onResetPassword={handleResetPassword}
+          onRecoverySuccess={() => navigate('/dashboard')}
+          error={error}
+          successMessage={successMessage}
+          isLoading={isLoading}
+        />
+      </AuthLayout>
+      
+      {/* Landing Page Content */}
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+        <LandingPageContent />
+      </div>
+    </>
   );
 };
 
