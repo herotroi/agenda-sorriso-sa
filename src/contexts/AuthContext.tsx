@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Verificar tentativas de login antes de tentar autenticar
+      // Verificar tentativas, mas NÃO bloquear tentativa de login com senha correta
       const checkResponse = await supabase.functions.invoke('check-login-attempts', {
         body: { 
           email, 
@@ -59,18 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      if (checkResponse.error) {
-        console.error('[Auth] Error checking login attempts:', checkResponse.error);
-        // Continuar com login mesmo se verificação falhar
-      } else if (checkResponse.data && !checkResponse.data.allowed) {
-        return { 
-          error: { 
-            message: checkResponse.data.message 
-          } 
-        };
-      }
-
-      // Tentar login
+      // Tentar login sempre
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -85,7 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ip_address: window.location.hostname
           }
         });
-        return { error };
+
+        // Se o check indicou bloqueio, priorizar a mensagem amigável
+        const lockedMessage = (checkResponse?.data as any)?.locked ? (checkResponse?.data as any)?.message : null;
+        return { error: { message: lockedMessage || error.message } };
       }
 
       // Login bem-sucedido - resetar tentativas

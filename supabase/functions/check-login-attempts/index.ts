@@ -30,6 +30,24 @@ serve(async (req) => {
         .single();
 
       if (attempt) {
+        // Reset por inatividade (24h sem tentativas)
+        if (attempt.last_attempt_at) {
+          const last = new Date(attempt.last_attempt_at);
+          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          if (last < twentyFourHoursAgo) {
+            console.log(`[Login Attempts] Last attempt >24h ago. Resetting for ${email}`);
+            await supabase
+              .from('login_attempts')
+              .delete()
+              .eq('email', email);
+
+            return new Response(
+              JSON.stringify({ allowed: true, attempts: 0, remaining: 20 }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+
         // Verificar se está bloqueado
         if (attempt.locked_until && new Date(attempt.locked_until) > new Date()) {
           const remainingTime = Math.ceil((new Date(attempt.locked_until).getTime() - Date.now()) / 1000 / 60);
@@ -112,13 +130,18 @@ serve(async (req) => {
         .single();
 
       if (attempt) {
-        const newCount = attempt.attempt_count + 1;
+        const resetDueToInactivity = attempt.last_attempt_at
+          ? new Date(attempt.last_attempt_at) < new Date(Date.now() - 24 * 60 * 60 * 1000)
+          : false;
+
+        const newCount = (resetDueToInactivity ? 0 : attempt.attempt_count) + 1;
         await supabase
           .from('login_attempts')
           .update({ 
             attempt_count: newCount,
             last_attempt_at: new Date().toISOString(),
-            ip_address: ip_address || attempt.ip_address
+            ip_address: ip_address || attempt.ip_address,
+            locked_until: resetDueToInactivity ? null : attempt.locked_until
           })
           .eq('email', email);
 
