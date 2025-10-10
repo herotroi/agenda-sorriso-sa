@@ -27,37 +27,37 @@ export const AuthTabs = ({
   isLoading
 }: AuthTabsProps) => {
   return (
-    <div className="max-w-md mx-auto animate-fade-in" style={{ animationDelay: '300ms' }}>
+    <div className="max-w-md mx-auto animate-fade-in px-3 sm:px-0" style={{ animationDelay: '300ms' }}>
       <Card className="shadow-2xl border-border/50 backdrop-blur-sm bg-card/95 overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
         
-        <CardHeader className="space-y-3 pb-6">
-          <CardTitle className="text-center text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <CardHeader className="space-y-2 sm:space-y-3 pb-4 sm:pb-6 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-center text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Acesse sua conta
           </CardTitle>
-          <CardDescription className="text-center text-muted-foreground">
+          <CardDescription className="text-center text-muted-foreground text-xs sm:text-sm">
             Entre com sua conta, cadastre-se ou recupere sua senha
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="pb-8">
+        <CardContent className="pb-6 sm:pb-8 px-4 sm:px-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 h-auto">
               <TabsTrigger 
                 value="login"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all text-xs sm:text-sm py-2"
               >
                 Entrar
               </TabsTrigger>
               <TabsTrigger 
                 value="register"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all text-xs sm:text-sm py-2"
               >
                 Cadastrar
               </TabsTrigger>
               <TabsTrigger 
                 value="reset"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all text-xs sm:text-sm"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md transition-all text-xs sm:text-sm py-2"
               >
                 Recuperar
               </TabsTrigger>
@@ -77,15 +77,15 @@ export const AuthTabs = ({
               </Alert>
             )}
 
-            <TabsContent value="login" className="mt-6">
+            <TabsContent value="login" className="mt-4 sm:mt-6">
               <LoginForm onSubmit={onSignIn} isLoading={isLoading} />
             </TabsContent>
 
-            <TabsContent value="register" className="mt-6">
+            <TabsContent value="register" className="mt-4 sm:mt-6">
               <RegisterForm onSubmit={onSignUp} isLoading={isLoading} />
             </TabsContent>
 
-            <TabsContent value="reset" className="mt-6">
+            <TabsContent value="reset" className="mt-4 sm:mt-6">
               <PasswordRecoveryFlow onSuccess={onRecoverySuccess} />
             </TabsContent>
           </Tabs>
