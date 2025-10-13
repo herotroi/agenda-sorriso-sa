@@ -1,16 +1,13 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment } from '@/types';
+import { getStartOfDay, getEndOfDay } from '@/utils/timezoneUtils';
 
 export async function fetchAppointments(selectedDate: Date): Promise<Appointment[]> {
   console.log('🔄 Fetching appointments for date:', selectedDate);
   
-  // Criar datas no timezone local do navegador
-  const startOfDay = new Date(selectedDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  
-  const endOfDay = new Date(selectedDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Usar utilitários de timezone para obter início e fim do dia
+  const startOfDay = getStartOfDay(selectedDate);
+  const endOfDay = getEndOfDay(selectedDate);
 
   console.log('📅 Date range:', { 
     start: startOfDay.toISOString(), 

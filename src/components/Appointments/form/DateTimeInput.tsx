@@ -1,7 +1,7 @@
-
 import { Input } from '@/components/ui/input';
 import { Calendar, Clock } from 'lucide-react';
 import { FormField } from './FormField';
+import { formatDateTime } from '@/utils/timezoneUtils';
 
 interface DateTimeInputProps {
   value: string;
@@ -12,7 +12,7 @@ interface DateTimeInputProps {
 export function DateTimeInput({ value, onChange, currentValue }: DateTimeInputProps) {
   const formatCurrentValue = (dateTime: string) => {
     if (!dateTime) return '';
-    return new Date(dateTime).toLocaleString('pt-BR');
+    return formatDateTime(dateTime);
   };
 
   return (

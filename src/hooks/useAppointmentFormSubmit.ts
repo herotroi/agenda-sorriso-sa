@@ -6,6 +6,7 @@ import { useAppointmentValidation } from '@/hooks/useAppointmentValidation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { AppointmentFormData } from '@/types/appointment-form';
+import { parseLocalDateTime } from '@/utils/timezoneUtils';
 
 interface Procedure {
   id: string;
@@ -108,25 +109,20 @@ export function useAppointmentFormSubmit(
 
     setLoading(true);
     try {
-      // Criar data no timezone local do navegador
-      let startDate: Date;
-      
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(formData.start_time)) {
-        // Formato datetime-local (YYYY-MM-DDTHH:mm)
-        // Criar data interpretando como horário local
-        const [datePart, timePart] = formData.start_time.split('T');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hours, minutes] = timePart.split(':').map(Number);
-        startDate = new Date(year, month - 1, day, hours, minutes, 0);
-      } else {
-        // Formato ISO completo
-        startDate = new Date(formData.start_time);
-      }
+      // Criar data no timezone local usando utilitário
+      const startDate = parseLocalDateTime(formData.start_time);
       
       // Calcular end_time baseado na duração
       const endDate = new Date(startDate);
       endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
       const endTime = endDate.toISOString();
+
+      console.log('📅 Appointment times:', {
+        input: formData.start_time,
+        startDate: startDate.toISOString(),
+        endDate: endTime,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
 
       const procedure = procedures.find(p => p.id === formData.procedure_id);
 
