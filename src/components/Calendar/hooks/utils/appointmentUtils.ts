@@ -5,13 +5,17 @@ import { getStartOfDay, getEndOfDay } from '@/utils/timezoneUtils';
 export async function fetchAppointments(selectedDate: Date): Promise<Appointment[]> {
   console.log('🔄 Fetching appointments for date:', selectedDate);
   
-  // Usar utilitários de timezone para obter início e fim do dia
-  const startOfDay = getStartOfDay(selectedDate);
-  const endOfDay = getEndOfDay(selectedDate);
+  // Formatar data para timestamp sem timezone (YYYY-MM-DD)
+  const year = selectedDate.getFullYear();
+  const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(selectedDate.getDate()).padStart(2, '0');
+  
+  const startOfDay = `${year}-${month}-${day} 00:00:00`;
+  const endOfDay = `${year}-${month}-${day} 23:59:59`;
 
   console.log('📅 Date range:', { 
-    start: startOfDay.toISOString(), 
-    end: endOfDay.toISOString(),
+    start: startOfDay, 
+    end: endOfDay,
     selectedDate: selectedDate.toDateString(),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
@@ -26,8 +30,8 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
         procedures(name),
         appointment_statuses(label, color)
       `)
-      .gte('start_time', startOfDay.toISOString())
-      .lte('start_time', endOfDay.toISOString())
+      .gte('start_time', startOfDay)
+      .lte('start_time', endOfDay)
       .order('start_time');
 
     if (error) throw error;

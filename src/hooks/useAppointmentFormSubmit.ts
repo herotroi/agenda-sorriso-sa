@@ -109,19 +109,32 @@ export function useAppointmentFormSubmit(
 
     setLoading(true);
     try {
-      // Criar data no timezone local usando utilitário
+      // Criar data no timezone local
       const startDate = parseLocalDateTime(formData.start_time);
       
       // Calcular end_time baseado na duração
       const endDate = new Date(startDate);
       endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
-      const endTime = endDate.toISOString();
+
+      // Formatar para timestamp sem timezone (formato: YYYY-MM-DD HH:mm:ss)
+      const formatTimestamp = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
+
+      const startTime = formatTimestamp(startDate);
+      const endTime = formatTimestamp(endDate);
 
       console.log('📅 Appointment times:', {
         input: formData.start_time,
-        startDate: startDate.toISOString(),
+        startDate: startTime,
         endDate: endTime,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        localTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
 
       const procedure = procedures.find(p => p.id === formData.procedure_id);
@@ -130,7 +143,7 @@ export function useAppointmentFormSubmit(
         patient_id: formData.is_blocked ? null : formData.patient_id,
         professional_id: formData.professional_id,
         procedure_id: formData.is_blocked ? null : (formData.procedure_id || null),
-        start_time: startDate.toISOString(),
+        start_time: startTime,
         end_time: endTime,
         price: formData.is_blocked ? null : (procedure?.price || null),
         notes: formData.is_blocked ? (formData.notes || 'Horário bloqueado') : (formData.notes || null),
