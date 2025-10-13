@@ -108,14 +108,22 @@ export function useAppointmentFormSubmit(
 
     setLoading(true);
     try {
-      // Criar datas sem conversão de timezone
-      const startTime =
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(formData.start_time)
-          ? `${formData.start_time}:00`
-          : formData.start_time;
+      // Criar data no timezone local do navegador
+      let startDate: Date;
+      
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(formData.start_time)) {
+        // Formato datetime-local (YYYY-MM-DDTHH:mm)
+        // Criar data interpretando como horário local
+        const [datePart, timePart] = formData.start_time.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        startDate = new Date(year, month - 1, day, hours, minutes, 0);
+      } else {
+        // Formato ISO completo
+        startDate = new Date(formData.start_time);
+      }
       
       // Calcular end_time baseado na duração
-      const startDate = new Date(startTime);
       const endDate = new Date(startDate);
       endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
       const endTime = endDate.toISOString();
@@ -126,7 +134,7 @@ export function useAppointmentFormSubmit(
         patient_id: formData.is_blocked ? null : formData.patient_id,
         professional_id: formData.professional_id,
         procedure_id: formData.is_blocked ? null : (formData.procedure_id || null),
-        start_time: new Date(startTime).toISOString(),
+        start_time: startDate.toISOString(),
         end_time: endTime,
         price: formData.is_blocked ? null : (procedure?.price || null),
         notes: formData.is_blocked ? (formData.notes || 'Horário bloqueado') : (formData.notes || null),
