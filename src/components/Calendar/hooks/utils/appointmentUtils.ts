@@ -5,6 +5,7 @@ import { Appointment } from '@/types';
 export async function fetchAppointments(selectedDate: Date): Promise<Appointment[]> {
   console.log('🔄 Fetching appointments for date:', selectedDate);
   
+  // Criar datas no timezone local do navegador
   const startOfDay = new Date(selectedDate);
   startOfDay.setHours(0, 0, 0, 0);
   
@@ -14,7 +15,8 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
   console.log('📅 Date range:', { 
     start: startOfDay.toISOString(), 
     end: endOfDay.toISOString(),
-    selectedDate: selectedDate.toDateString()
+    selectedDate: selectedDate.toDateString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
 
   try {
