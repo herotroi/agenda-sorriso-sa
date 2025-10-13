@@ -5,6 +5,7 @@ import { CompanyLogoSection } from '@/components/Configuracoes/CompanyLogoSectio
 import { IntegrationDataSection } from '@/components/Configuracoes/IntegrationDataSection';
 import { AutomationContactSection } from '@/components/Configuracoes/AutomationContactSection';
 import { CouponSection } from '@/components/Configuracoes/CouponSection';
+import { TimezoneSection } from '@/components/Configuracoes/TimezoneSection';
 
 export default function Configuracoes() {
   return (
@@ -17,6 +18,7 @@ export default function Configuracoes() {
       <div className="grid gap-4 sm:gap-6 max-w-full">
         <PersonalDataSection />
         <PasswordChangeSection />
+        <TimezoneSection />
         <CompanyLogoSection />
         <CompanyDataSection />
         <IntegrationDataSection />
