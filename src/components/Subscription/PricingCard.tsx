@@ -13,6 +13,9 @@ interface PricingCardProps {
   isCurrentPlan?: boolean;
   loading?: boolean;
   onSubscribe: () => void;
+  quantity?: number;
+  onQuantityChange?: (quantity: number) => void;
+  unitPrice?: number;
 }
 
 export function PricingCard({ 
@@ -23,8 +26,13 @@ export function PricingCard({
   isPopular, 
   isCurrentPlan,
   loading = false,
-  onSubscribe 
+  onSubscribe,
+  quantity = 1,
+  onQuantityChange,
+  unitPrice = 0
 }: PricingCardProps) {
+  const totalPrice = unitPrice * quantity;
+  const isPaidPlan = price > 0 || unitPrice > 0;
   return (
     <Card className={`relative ${isPopular ? 'border-blue-500 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}>
       {isPopular && (
@@ -42,11 +50,14 @@ export function PricingCard({
       <CardHeader className="text-center pb-2">
         <CardTitle className="text-lg">{title}</CardTitle>
         <div className="mt-4">
-          {price === 0 ? (
+          {!isPaidPlan ? (
             <span className="text-4xl font-bold">Gratuito</span>
           ) : (
             <>
-              <span className="text-4xl font-bold">R$ {price}</span>
+              <div className="text-sm text-gray-600 mb-1">
+                R$ {unitPrice.toFixed(2)} por profissional/{period}
+              </div>
+              <span className="text-4xl font-bold">R$ {totalPrice.toFixed(2)}</span>
               <span className="text-gray-600">/{period}</span>
             </>
           )}
@@ -54,6 +65,40 @@ export function PricingCard({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {isPaidPlan && onQuantityChange && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Quantidade de Profissionais
+            </label>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                -
+              </Button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-20 text-center border rounded-md px-3 py-2"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => onQuantityChange(quantity + 1)}
+              >
+                +
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <ul className="space-y-3">
           {features.map((feature, index) => (
             <li key={index} className="flex items-center">
@@ -76,7 +121,7 @@ export function PricingCard({
             </>
           ) : isCurrentPlan ? (
             'Plano Atual'
-          ) : price === 0 ? (
+          ) : !isPaidPlan ? (
             'Plano Atual'
           ) : (
             'Contratar'

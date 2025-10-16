@@ -79,6 +79,9 @@ export default function Assinatura() {
   const [checking, setChecking] = useState(true);
   const [hasAutomacao, setHasAutomacao] = useState(false);
   const [plans, setPlans] = useState(getDefaultPlans());
+  const [monthlyQuantity, setMonthlyQuantity] = useState(1);
+  const [annualQuantity, setAnnualQuantity] = useState(1);
+  const [unitPrices, setUnitPrices] = useState({ monthly: 0, yearly: 0 });
 
   const checkSubscription = async () => {
     try {
@@ -109,6 +112,12 @@ export default function Assinatura() {
       
       if (data) {
         console.log('Stripe prices:', data);
+        // Armazenar preços unitários
+        setUnitPrices({
+          monthly: data.monthly?.amount || 0,
+          yearly: data.yearly?.amount || 0
+        });
+        
         setPlans(prevPlans => prevPlans.map(plan => {
           if (plan.id === 'monthly' && data.monthly) {
             return { ...plan, price: data.monthly.amount };
@@ -182,12 +191,14 @@ export default function Assinatura() {
       return;
     }
 
-    console.log('Iniciando assinatura para:', planId);
+    const quantity = planId === 'monthly' ? monthlyQuantity : annualQuantity;
+    
+    console.log('Iniciando assinatura para:', planId, 'Quantidade:', quantity);
     setLoading(planId);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { planId },
+        body: { planId, quantity },
       });
 
       if (error) {
@@ -353,6 +364,9 @@ export default function Assinatura() {
                 isCurrentPlan={currentSubscription?.plan_type === plan.id}
                 onSubscribe={() => handleSubscribe(plan.id)}
                 loading={loading === plan.id}
+                quantity={plan.id === 'monthly' ? monthlyQuantity : plan.id === 'annual' ? annualQuantity : 1}
+                onQuantityChange={plan.id === 'monthly' ? setMonthlyQuantity : plan.id === 'annual' ? setAnnualQuantity : undefined}
+                unitPrice={plan.id === 'monthly' ? unitPrices.monthly : plan.id === 'annual' ? unitPrices.yearly : 0}
               />
             ))}
           </div>

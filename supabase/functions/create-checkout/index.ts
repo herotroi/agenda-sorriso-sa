@@ -55,12 +55,12 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const requestBody = await req.json();
-    const { planId } = requestBody;
+    const { planId, quantity = 1 } = requestBody;
     if (!planId) {
       logStep("ERROR: No planId provided");
       throw new Error("Plan ID is required");
     }
-    logStep("Plan ID received", { planId });
+    logStep("Plan ID and quantity received", { planId, quantity });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -120,7 +120,7 @@ serve(async (req) => {
         line_items: [
           {
             price: priceId,
-            quantity: 1,
+            quantity: quantity,
           },
         ],
         mode: "subscription",
@@ -129,6 +129,7 @@ serve(async (req) => {
         metadata: {
           user_id: user.id,
           plan_id: planId,
+          professionals_count: quantity.toString(),
         },
       });
 
