@@ -19,6 +19,12 @@ export function NotificationDropdown() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'appointment_created':
+        return <Calendar className="h-4 w-4 text-green-500" />;
+      case 'appointment_updated':
+        return <Calendar className="h-4 w-4 text-blue-500" />;
+      case 'appointment_deleted':
+        return <X className="h-4 w-4 text-red-500" />;
       case 'appointment_reminder':
         return <Calendar className="h-4 w-4 text-blue-500" />;
       case 'appointment_cancelled':

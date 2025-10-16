@@ -23,25 +23,38 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     }
     
     try {
-      // Verificar se já existe uma notificação similar criada recentemente (últimos 5 segundos)
-      const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+      // Para notificações de UPDATE, apenas verificar dentro de 2 segundos (mais permissivo)
+      // Para CREATE/DELETE, verificar se já existe
+      const timeWindowSeconds = notification.type === 'appointment_updated' ? 2 : 5;
+      const timeWindowAgo = new Date(Date.now() - (timeWindowSeconds * 1000)).toISOString();
       
       const { data: existingNotifications, error: checkError } = await supabase
         .from('notifications')
         .select('id')
         .eq('user_id', user.id)
-        .eq('title', notification.title)
-        .eq('message', notification.message)
         .eq('type', notification.type)
-        .gte('created_at', fiveSecondsAgo);
+        .gte('created_at', timeWindowAgo);
 
       if (checkError) {
         console.error('Error checking for duplicate notifications:', checkError);
       }
 
-      if (existingNotifications && existingNotifications.length > 0) {
-        console.log('📢 Duplicate notification detected, skipping insert');
-        return;
+      // Para CREATE e DELETE, verificar também o appointment_id
+      if (notification.type === 'appointment_created' || notification.type === 'appointment_deleted') {
+        const duplicateExists = existingNotifications?.some(
+          n => n.id !== undefined
+        );
+        
+        if (duplicateExists && existingNotifications && existingNotifications.length > 0) {
+          console.log('📢 Duplicate notification detected, skipping insert');
+          return;
+        }
+      } else if (notification.type === 'appointment_updated') {
+        // Para UPDATE, apenas verificar duplicatas nos últimos 2 segundos
+        if (existingNotifications && existingNotifications.length > 0) {
+          console.log('📢 Recent update notification detected, skipping insert');
+          return;
+        }
       }
 
       const { data, error } = await supabase
