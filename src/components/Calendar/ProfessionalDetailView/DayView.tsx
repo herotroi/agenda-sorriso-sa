@@ -48,17 +48,17 @@ export function DayView({
     return Math.max(durationMinutes, 40);
   };
 
-  const getStatusColor = (statusColor?: string, type?: string) => {
+  const getStatusStyle = (statusColor?: string, type?: string) => {
     // Cores especiais para férias e pausas
-    if (type === 'vacation') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    if (type === 'break') return 'bg-gray-100 text-gray-800 border-gray-300';
+    if (type === 'vacation') return { backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' };
+    if (type === 'break') return { backgroundColor: '#f3f4f6', color: '#1f2937', border: '1px solid #d1d5db' };
     
     // Usar a cor real do status do banco de dados
     if (statusColor) {
-      return `text-white border-0`;
+      return { backgroundColor: statusColor, color: 'white', border: 'none' };
     }
     
-    return 'bg-gray-100 text-gray-800';
+    return { backgroundColor: '#f3f4f6', color: '#1f2937' };
   };
 
   const getCardStyle = (type?: string) => {
@@ -221,8 +221,8 @@ export function DayView({
                           : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
                       </span>
                       <Badge 
-                        className={`${getStatusColor(appointment.appointment_statuses?.color, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}
-                        style={appointment.appointment_statuses?.color && !itemType ? { backgroundColor: appointment.appointment_statuses.color } : undefined}
+                        className="flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap"
+                        style={getStatusStyle(appointment.appointment_statuses?.color, itemType)}
                       >
                         {appointment.appointment_statuses?.label || 'Status não definido'}
                       </Badge>
