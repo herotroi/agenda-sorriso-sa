@@ -178,6 +178,18 @@ export default function Assinatura() {
     loadData();
   }, []);
 
+  // Inicializar quantidade baseada no plano atual do usuário
+  useEffect(() => {
+    if (currentSubscription && usageStats) {
+      const contractedProfessionals = usageStats.professionals_count || 1;
+      if (currentSubscription.plan_type === 'monthly') {
+        setMonthlyQuantity(contractedProfessionals);
+      } else if (currentSubscription.plan_type === 'annual') {
+        setAnnualQuantity(contractedProfessionals);
+      }
+    }
+  }, [currentSubscription, usageStats]);
+
   const handleSubscribe = async (planId: string) => {
     if (planId === 'free') {
       toast.info('Você já está no plano gratuito');

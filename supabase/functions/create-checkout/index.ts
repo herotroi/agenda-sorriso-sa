@@ -60,7 +60,11 @@ serve(async (req) => {
       logStep("ERROR: No priceId provided");
       throw new Error("Price ID is required");
     }
-    logStep("Price ID and quantity received", { priceId, quantity });
+    
+    // Para volume pricing, sempre enviar quantity 1 porque o priceId já contém o tier correto
+    const stripeQuantity = 1;
+    
+    logStep("Price ID received", { priceId, requestedQuantity: quantity, stripeQuantity });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -90,7 +94,7 @@ serve(async (req) => {
         line_items: [
           {
             price: priceId,
-            quantity: quantity,
+            quantity: stripeQuantity,
           },
         ],
         mode: "subscription",
@@ -99,6 +103,7 @@ serve(async (req) => {
         metadata: {
           user_id: user.id,
           price_id: priceId,
+          professionals_count: quantity,
         },
       });
 

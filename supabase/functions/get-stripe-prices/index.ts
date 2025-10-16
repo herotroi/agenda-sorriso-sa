@@ -51,99 +51,116 @@ serve(async (req) => {
 
     // Log completo dos preços para debug
     if (monthlyPrices.data.length > 0) {
+      const samplePrice = monthlyPrices.data[0];
       logStep("Monthly price structure sample", {
-        id: monthlyPrices.data[0].id,
-        unit_amount: monthlyPrices.data[0].unit_amount,
-        billing_scheme: monthlyPrices.data[0].billing_scheme,
-        tiers_mode: monthlyPrices.data[0].tiers_mode,
-        tiers: monthlyPrices.data[0].tiers,
-        transform_quantity: monthlyPrices.data[0].transform_quantity,
-        metadata: monthlyPrices.data[0].metadata,
+        id: samplePrice.id,
+        unit_amount: samplePrice.unit_amount,
+        billing_scheme: samplePrice.billing_scheme,
+        tiers_mode: samplePrice.tiers_mode,
+        tiers: samplePrice.tiers,
+        transform_quantity: samplePrice.transform_quantity,
+        metadata: samplePrice.metadata,
       });
     }
 
-    // Função para extrair quantidade e valor do preço
-    const extractPriceData = (price: any): { quantity: number; unitAmount: number; priceId: string } | null => {
+    // Função para extrair todos os tiers de um preço
+    const extractTiersFromPrice = (price: any): Array<{ quantity: number; unitAmount: number; priceId: string }> => {
       const priceId = price.id;
+      const results: Array<{ quantity: number; unitAmount: number; priceId: string }> = [];
       
       // Se tem tiers (graduated ou volume pricing)
       if (price.tiers && price.tiers.length > 0) {
-        // Para graduated pricing, cada tier tem um preço diferente
-        // Vamos retornar o primeiro tier como exemplo, mas na realidade
-        // a Stripe calcula automaticamente baseado na quantidade
-        const firstTier = price.tiers[0];
-        return {
-          quantity: price.metadata?.quantity ? parseInt(price.metadata.quantity) : 1,
-          unitAmount: firstTier.unit_amount ? firstTier.unit_amount / 100 : 0,
-          priceId,
-        };
+        logStep("Found tiers in price", { priceId, tiersCount: price.tiers.length, tiers_mode: price.tiers_mode });
+        
+        // Para volume pricing, cada tier representa um desconto para aquela quantidade
+        price.tiers.forEach((tier: any, index: number) => {
+          const quantity = tier.up_to || (index + 1);
+          const unitAmount = tier.unit_amount ? tier.unit_amount / 100 : 0;
+          
+          if (unitAmount > 0) {
+            results.push({
+              quantity,
+              unitAmount,
+              priceId,
+            });
+          }
+        });
+        
+        return results;
       }
       
       // Se tem transform_quantity
       if (price.transform_quantity?.divide_by) {
-        return {
-          quantity: price.transform_quantity.divide_by,
-          unitAmount: price.unit_amount ? price.unit_amount / 100 : 0,
-          priceId,
-        };
+        const quantity = price.transform_quantity.divide_by;
+        const unitAmount = price.unit_amount ? price.unit_amount / 100 : 0;
+        if (unitAmount > 0) {
+          results.push({ quantity, unitAmount, priceId });
+        }
+        return results;
       }
       
       // Se tem metadata com quantity
       if (price.metadata?.quantity) {
-        return {
-          quantity: parseInt(price.metadata.quantity),
-          unitAmount: price.unit_amount ? price.unit_amount / 100 : 0,
-          priceId,
-        };
+        const quantity = parseInt(price.metadata.quantity);
+        const unitAmount = price.unit_amount ? price.unit_amount / 100 : 0;
+        if (unitAmount > 0) {
+          results.push({ quantity, unitAmount, priceId });
+        }
+        return results;
       }
       
       // Preço padrão (sem quantidade específica)
       if (price.unit_amount) {
-        return {
+        results.push({
           quantity: 1,
           unitAmount: price.unit_amount / 100,
           priceId,
-        };
+        });
+        return results;
       }
       
-      return null;
+      return results;
     };
 
-    // Organizar preços mensais por quantidade
-    const monthlyPricesArray = monthlyPrices.data
+    // Organizar preços mensais por quantidade (extraindo todos os tiers)
+    const monthlyPricesArray: Array<{ quantity: number; unitAmount: number; priceId: string; total: number; currency: string }> = [];
+    monthlyPrices.data
       .filter(price => price.recurring?.interval === 'month' && price.active)
-      .map(price => {
-        const data = extractPriceData(price);
-        if (!data) return null;
-        
-        return {
-          quantity: data.quantity,
-          priceId: data.priceId,
-          unitAmount: data.unitAmount,
-          total: data.unitAmount * data.quantity,
-          currency: price.currency,
-        };
-      })
-      .filter(p => p !== null)
-      .sort((a, b) => a!.quantity - b!.quantity);
+      .forEach(price => {
+        const tiers = extractTiersFromPrice(price);
+        tiers.forEach(tier => {
+          monthlyPricesArray.push({
+            quantity: tier.quantity,
+            priceId: tier.priceId,
+            unitAmount: tier.unitAmount,
+            total: tier.unitAmount * tier.quantity,
+            currency: price.currency,
+          });
+        });
+      });
+    
+    // Ordenar por quantidade
+    monthlyPricesArray.sort((a, b) => a.quantity - b.quantity);
 
-    // Organizar preços anuais por quantidade
-    const yearlyPricesArray = yearlyPrices.data
+    // Organizar preços anuais por quantidade (extraindo todos os tiers)
+    const yearlyPricesArray: Array<{ quantity: number; unitAmount: number; priceId: string; total: number; currency: string }> = [];
+    yearlyPrices.data
       .filter(price => price.recurring?.interval === 'year' && price.active)
-      .map(price => {
-        const data = extractPriceData(price);
-        if (!data) return null;
-        
-        return {
-          quantity: data.quantity,
-          priceId: data.priceId,
-          unitAmount: data.unitAmount,
-          total: data.unitAmount * data.quantity,
-          currency: price.currency,
-        };
-      })
-      .filter(p => p !== null)
-      .sort((a, b) => a!.quantity - b!.quantity);
+      .forEach(price => {
+        const tiers = extractTiersFromPrice(price);
+        tiers.forEach(tier => {
+          yearlyPricesArray.push({
+            quantity: tier.quantity,
+            priceId: tier.priceId,
+            unitAmount: tier.unitAmount,
+            total: tier.unitAmount * tier.quantity,
+            currency: price.currency,
+          });
+        });
+      });
+    
+    // Ordenar por quantidade
+    yearlyPricesArray.sort((a, b) => a.quantity - b.quantity);
 
     const result = {
       monthly: monthlyPricesArray,
