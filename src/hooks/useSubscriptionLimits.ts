@@ -47,6 +47,13 @@ export function useSubscriptionLimits() {
     try {
       console.log('Fetching subscription data for user:', user.id);
 
+      // Tentar sincronizar com Stripe primeiro
+      try {
+        await supabase.functions.invoke('sync-subscription');
+      } catch (syncError) {
+        console.log('Sync error (não crítico):', syncError);
+      }
+
       // Buscar perfil do usuário para verificar automação
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
