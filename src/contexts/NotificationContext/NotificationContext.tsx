@@ -3,14 +3,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Notification, NotificationContextType } from './types';
 import { useNotificationActions } from './useNotificationActions';
 import { useNotificationData } from './useNotificationData';
-import { useRealtimeSubscription } from './useRealtimeSubscription';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Load notifications from database
+  // Load notifications from database and subscribe to real-time changes
   useNotificationData({ setNotifications });
 
   const { addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotificationActions({
@@ -18,7 +17,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setNotifications,
   });
 
-  useRealtimeSubscription({ addNotification });
+  // Notificações agora são criadas apenas por triggers no banco de dados
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
