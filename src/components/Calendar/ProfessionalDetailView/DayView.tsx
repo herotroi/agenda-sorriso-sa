@@ -146,11 +146,11 @@ export function DayView({
 
       <div className="relative mt-2 overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
         {/* Horários à esquerda (posicionados absolutamente) */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-20 border-r bg-gray-50/50 z-0">
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 md:w-20 border-r bg-gray-50/50 z-0">
           {timeSlots.map((slot) => (
             <div 
               key={slot.time} 
-              className="absolute text-xs sm:text-sm text-gray-500 font-medium px-2"
+              className="absolute text-[10px] sm:text-xs md:text-sm text-gray-500 font-medium px-1 sm:px-2"
               style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
             >
               {slot.time}
@@ -162,13 +162,13 @@ export function DayView({
         {timeSlots.map((slot) => (
           <div
             key={slot.hour}
-            className="absolute left-16 sm:left-20 right-0 border-t border-gray-100"
+            className="absolute left-12 sm:left-16 md:left-20 right-0 border-t border-gray-100"
             style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
           />
         ))}
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
-        <div className="absolute left-16 sm:left-20 right-0 top-0 bottom-0 relative">
+        <div className="absolute left-12 sm:left-16 md:left-20 right-0 top-0 bottom-0 relative">
           {/* Férias como faixa de fundo (não clicável) */}
           {appointments.filter(a => (a as any).type === 'vacation').map((appointment) => {
             const start = new Date(appointment.start_time);
@@ -212,36 +212,36 @@ export function DayView({
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
-                <CardContent className="p-2 sm:p-3 h-full">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-3 flex-wrap min-w-0">
-                      <div className="flex items-center gap-1 text-sm text-gray-600 flex-shrink-0">
-                        <Clock className="h-3 w-3" />
+                <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden">
+                  <div className="flex items-center justify-between flex-wrap gap-1 sm:gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+                      <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm text-gray-600 flex-shrink-0">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {isSpecialItem && itemType === 'vacation'
                           ? 'Dia todo'
                           : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
                       </div>
                       {appointment.patients && (
-                        <div className="flex items-center gap-1 text-sm min-w-0">
-                          <User className="h-3 w-3 flex-shrink-0" />
+                        <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm min-w-0">
+                          <User className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
                           <span className={`truncate ${isSpecialItem ? 'font-semibold' : ''}`}>
                             {appointment.patients.full_name}
                           </span>
                         </div>
                       )}
                     </div>
-                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0`}>
+                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1.5 sm:px-2 py-0.5`}>
                       {appointment.appointment_statuses?.label || 'Status não definido'}
                     </Badge>
                   </div>
                   {appointment.procedures && !isSpecialItem && (
-                    <div className="mt-2 text-sm text-gray-600 flex items-center gap-1">
-                      <FileText className="h-3 w-3 flex-shrink-0" />
+                    <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs md:text-sm text-gray-600 flex items-center gap-1">
+                      <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
                       <span className="truncate">{appointment.procedures.name}</span>
                     </div>
                   )}
                   {appointment.notes && (
-                    <div className="mt-2 text-xs text-gray-500 truncate">
+                    <div className="mt-1 sm:mt-2 text-[9px] sm:text-[10px] md:text-xs text-gray-500 line-clamp-2">
                       {appointment.notes}
                     </div>
                   )}
