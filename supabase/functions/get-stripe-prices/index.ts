@@ -131,7 +131,7 @@ serve(async (req) => {
     };
 
     // Construir mapa de 1..maxQty para cada intervalo
-    const MAX_QTY = 20; // limite seguro para UI
+    const MAX_QTY = 30; // limite máximo para UI
 
     // Mensal
     const monthlyPricesArray: Array<{ quantity: number; unitAmount: number; flatFee: number; priceId: string; total: number; currency: string }> = [];
