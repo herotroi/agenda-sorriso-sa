@@ -111,13 +111,8 @@ export function DraggableAppointment({
 
   return (
     <div
-      draggable={true}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
       onClick={onClick}
-      className={`absolute left-1 right-1 rounded-md p-2 text-white text-xs shadow-sm transition-all duration-200 cursor-move hover:shadow-md ${
-        isDragging ? 'opacity-50 scale-95' : ''
-      }`}
+      className={`absolute left-1 right-1 rounded-md p-2 text-white text-xs shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md`}
       style={{
         top: position.top,
         height: position.height,
