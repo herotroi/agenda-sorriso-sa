@@ -69,28 +69,50 @@ serve(async (req) => {
       limit: 1,
     });
     
-    let planType = 'free';
+    let planType: 'free' | 'monthly' | 'annual' = 'free';
     let status = 'active';
-    let currentPeriodStart = null;
-    let currentPeriodEnd = null;
-    let stripeSubscriptionId = null;
+    let currentPeriodStart: string | null = null;
+    let currentPeriodEnd: string | null = null;
+    let stripeSubscriptionId: string | null = null;
+    let professionalsPurchased = 1;
 
     if (subscriptions.data.length > 0) {
       const subscription = subscriptions.data[0];
       stripeSubscriptionId = subscription.id;
       currentPeriodStart = new Date(subscription.current_period_start * 1000).toISOString();
       currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      
-      const priceId = subscription.items.data[0].price.id;
-      if (priceId === 'price_1RjqEpRDyYwOIEUI2xrUMO8P') {
-        planType = 'monthly';
-      } else if (priceId === 'price_1RjqGgRDyYwOIEUI1FDtx1rm') {
-        planType = 'annual';
-      }
-      
-      logStep("Active subscription found", { subscriptionId: subscription.id, planType });
+      status = subscription.status;
+
+      const interval = subscription.items.data[0].price.recurring?.interval;
+      planType = interval === 'year' ? 'annual' : 'monthly';
+      professionalsPurchased = subscription.items.data[0].quantity || 1;
+
+      logStep("Active subscription found", { subscriptionId: subscription.id, planType, professionalsPurchased });
     } else {
       logStep("No active subscription found");
+    }
+
+    // Verificar uso de cupom
+    let usingCoupon = false;
+    let couponCode: string | null = null;
+    try {
+      const { data: userCoupon } = await supabaseClient
+        .from('user_coupons')
+        .select('id, used, coupon_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (userCoupon) {
+        usingCoupon = true;
+        const { data: coupon } = await supabaseClient
+          .from('cupons')
+          .select('codigo, ativo')
+          .eq('id', userCoupon.coupon_id)
+          .maybeSingle();
+        couponCode = coupon?.codigo || null;
+      }
+    } catch (e) {
+      logStep('Coupon check failed (non-critical)');
     }
 
     await supabaseClient.from("user_subscriptions").upsert({
@@ -99,16 +121,20 @@ serve(async (req) => {
       stripe_subscription_id: stripeSubscriptionId,
       plan_type: planType,
       status: status,
+      professionals_purchased: professionalsPurchased,
       current_period_start: currentPeriodStart,
       current_period_end: currentPeriodEnd,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
-    logStep("Updated database with subscription info", { planType, status });
+    logStep("Updated database with subscription info", { planType, status, professionalsPurchased, usingCoupon });
     return new Response(JSON.stringify({
       plan_type: planType,
       status: status,
-      current_period_end: currentPeriodEnd
+      current_period_end: currentPeriodEnd,
+      professionals_purchased: professionalsPurchased,
+      using_coupon: usingCoupon,
+      coupon_code: couponCode
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

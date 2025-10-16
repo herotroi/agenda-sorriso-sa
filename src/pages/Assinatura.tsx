@@ -161,7 +161,7 @@ export default function Assinatura() {
   // Inicializar quantidade e período baseado no plano atual do usuário
   useEffect(() => {
     if (currentSubscription && usageStats) {
-      const contractedProfessionals = usageStats.professionals_count || 1;
+      const contractedProfessionals = currentSubscription?.professionals_purchased || usageStats.professionals_count || 1;
       setQuantity(contractedProfessionals);
       
       if (currentSubscription.plan_type === 'annual') {
@@ -279,6 +279,9 @@ export default function Assinatura() {
                 <Badge variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}>
                   {hasAutomacao ? 'Ilimitado' : (currentSubscription?.status === 'active' ? 'Ativo' : 'Inativo')}
                 </Badge>
+                {currentSubscription?.using_coupon && (
+                  <Badge variant="outline">Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}</Badge>
+                )}
                 <span className="text-sm text-gray-600">
                   {hasAutomacao ? 'Acesso Ilimitado' : currentPlan.title}
                 </span>
