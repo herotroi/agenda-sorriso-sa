@@ -196,15 +196,6 @@ export const useAppointmentValidation = () => {
       };
     }
 
-    const duration = (end.getTime() - start.getTime()) / (1000 * 60);
-    if (duration < 15) {
-      const message = 'A duração mínima do agendamento é de 15 minutos.';
-      console.log('❌ Invalid time slot - too short:', message);
-      return {
-        isValid: false,
-        message
-      };
-    }
 
     console.log('✅ Time slot is valid');
     return { isValid: true };
