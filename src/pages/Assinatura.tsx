@@ -63,6 +63,32 @@ export default function Assinatura() {
   const [yearlyPrices, setYearlyPrices] = useState<any[]>([]);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [quantity, setQuantity] = useState(1);
+  const [canceling, setCanceling] = useState(false);
+  const [currentLimits, setCurrentLimits] = useState<any>(null);
+
+  // Mapear plan_type para plano de exibição
+  const getPlanForDisplay = () => {
+    if (!currentSubscription) return plans[0]; // free
+    
+    const planType = currentSubscription.plan_type;
+    if (planType === 'free') return plans[0];
+    if (planType === 'monthly' || planType === 'annual') return plans[1]; // paid
+    
+    return plans[0];
+  };
+
+  const currentPlan = getPlanForDisplay();
+  
+  // Descrição do plano atual
+  const getCurrentPlanDescription = () => {
+    if (hasAutomacao) return 'Plano Ilimitado';
+    if (!currentSubscription || currentSubscription.plan_type === 'free') return 'Plano Gratuito';
+    
+    const profCount = currentSubscription.professionals_purchased || 1;
+    const periodText = currentSubscription.plan_type === 'annual' ? 'Anual' : 'Mensal';
+    
+    return `Plano ${periodText} - ${profCount} ${profCount === 1 ? 'Profissional' : 'Profissionais'}`;
+  };
 
   const checkSubscription = async () => {
     try {
@@ -75,6 +101,17 @@ export default function Assinatura() {
       }
       console.log('Subscription data:', data);
       setCurrentSubscription(data);
+      
+      // Buscar limites do plano atual
+      if (data?.plan_type) {
+        const { data: limits } = await supabase
+          .from('subscription_limits')
+          .select('*')
+          .eq('plan_type', data.plan_type)
+          .single();
+        
+        setCurrentLimits(limits);
+      }
     } catch (error) {
       console.error('Erro inesperado:', error);
       toast.error('Erro inesperado ao verificar assinatura');
@@ -191,12 +228,46 @@ export default function Assinatura() {
       return;
     }
     
+    // Verificar se está fazendo downgrade de profissionais
+    const currentProfs = usageStats?.professionals_count || 0;
+    const hasActivePaidPlan = currentSubscription?.plan_type !== 'free';
+    
+    if (hasActivePaidPlan && quantity < currentProfs) {
+      const confirmed = confirm(
+        `Atenção: Você tem ${currentProfs} profissionais ativos, mas está tentando contratar um plano com ${quantity}. ` +
+        `Por favor, desative ${currentProfs - quantity} profissional(is) antes de fazer o downgrade.`
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    // Se já tem plano pago, avisar sobre troca de plano
+    if (hasActivePaidPlan) {
+      const action = quantity > (currentSubscription?.professionals_purchased || 1) ? 'upgrade' : 
+                     quantity < (currentSubscription?.professionals_purchased || 1) ? 'downgrade' : 'trocar';
+      
+      const confirmed = confirm(
+        `Você está prestes a ${action === 'upgrade' ? 'fazer upgrade do' : action === 'downgrade' ? 'fazer downgrade do' : 'trocar de'} plano. ` +
+        `O valor será ajustado proporcionalmente. Deseja continuar?`
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+    }
+    
     console.log('Iniciando assinatura:', billingPeriod, 'Quantidade:', quantity, 'Price:', selectedPrice);
     setLoading(planId);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: selectedPrice.priceId, quantity },
+        body: { 
+          priceId: selectedPrice.priceId, 
+          quantity,
+          isUpgrade: hasActivePaidPlan
+        },
       });
 
       if (error) {
@@ -241,7 +312,31 @@ export default function Assinatura() {
     }
   };
 
-  const currentPlan = plans.find(plan => plan.id === currentSubscription?.plan_type) || plans[0];
+  const handleCancelSubscription = async () => {
+    const confirmed = confirm(
+      'Tem certeza que deseja cancelar sua assinatura? Você manterá acesso até o final do período atual, ' +
+      'mas após isso voltará ao plano gratuito.'
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      setCanceling(true);
+      
+      const { data, error } = await supabase.functions.invoke('cancel-subscription');
+
+      if (error) throw error;
+
+      toast.success(`Assinatura Cancelada. Você terá acesso até ${data.access_until}.`);
+
+      // Recarregar dados da assinatura
+      await checkSubscription();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao cancelar assinatura');
+    } finally {
+      setCanceling(false);
+    }
+  };
 
   if (checking) {
     return (
@@ -283,7 +378,7 @@ export default function Assinatura() {
                   <Badge variant="outline">Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}</Badge>
                 )}
                 <span className="text-sm text-gray-600">
-                  {hasAutomacao ? 'Acesso Ilimitado' : currentPlan.title}
+                  {getCurrentPlanDescription()}
                 </span>
               </div>
               {currentSubscription?.current_period_end && !hasAutomacao && (
@@ -296,10 +391,15 @@ export default function Assinatura() {
               </p>
             </div>
             {currentSubscription?.plan_type !== 'free' && !hasAutomacao && (
-              <Button variant="outline" onClick={handleManageSubscription}>
-                <Settings className="h-4 w-4 mr-2" />
-                Gerenciar Assinatura
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleManageSubscription}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Gerenciar Assinatura
+                </Button>
+                <Button variant="destructive" onClick={handleCancelSubscription} disabled={canceling}>
+                  {canceling ? 'Cancelando...' : 'Cancelar Assinatura'}
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>
@@ -320,28 +420,28 @@ export default function Assinatura() {
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                 <p className="text-2xl font-bold">{usageStats.appointments_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Agendamentos {hasAutomacao || currentPlan.limits.appointments === -1 ? '' : `/ ${currentPlan.limits.appointments}`}
+                  Agendamentos {hasAutomacao || (currentLimits?.max_appointments === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.appointments}`}
                 </p>
               </div>
               <div className="text-center">
                 <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
                 <p className="text-2xl font-bold">{usageStats.patients_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Pacientes {hasAutomacao || currentPlan.limits.patients === -1 ? '' : `/ ${currentPlan.limits.patients}`}
+                  Pacientes {hasAutomacao || (currentLimits?.max_patients === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.patients}`}
                 </p>
               </div>
               <div className="text-center">
                 <Stethoscope className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                 <p className="text-2xl font-bold">{usageStats.professionals_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Profissionais {hasAutomacao || currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
+                  Profissionais {hasAutomacao ? '' : currentLimits?.max_professionals === -1 ? `/ ${currentSubscription?.professionals_purchased || 1}` : currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
                 </p>
               </div>
               <div className="text-center">
                 <FileText className="h-8 w-8 mx-auto mb-2 text-orange-600" />
                 <p className="text-2xl font-bold">{usageStats.procedures_count || 0}</p>
                 <p className="text-sm text-gray-600">
-                  Procedimentos {hasAutomacao || currentPlan.limits.procedures === -1 ? '' : `/ ${currentPlan.limits.procedures}`}
+                  Procedimentos {hasAutomacao || (currentLimits?.max_procedures === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.procedures}`}
                 </p>
               </div>
             </div>
@@ -384,6 +484,8 @@ export default function Assinatura() {
                   fixedFee={isPaidPlan ? (selectedPrice.flatFee || 0) : 0}
                   maxQuantity={isPaidPlan ? maxQty : 1}
                   billingPeriod={isPaidPlan ? billingPeriod : undefined}
+                  hasActivePaidPlan={currentSubscription?.plan_type !== 'free'}
+                  currentProfessionals={usageStats?.professionals_count || 0}
                 />
               );
             })}

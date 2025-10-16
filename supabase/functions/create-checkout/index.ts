@@ -55,12 +55,12 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const requestBody = await req.json();
-    const { priceId, quantity = 1 } = requestBody;
+    const { priceId, quantity = 1, isUpgrade = false } = requestBody;
     if (!priceId) {
       logStep("ERROR: No priceId provided");
       throw new Error("Price ID is required");
     }
-    logStep("Price ID and quantity received", { priceId, quantity });
+    logStep("Price ID and quantity received", { priceId, quantity, isUpgrade });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -100,25 +100,37 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
-    try {
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        customer_email: customerId ? undefined : user.email,
-        line_items: [
-          {
-            price: priceId,
-            quantity: quantity,
-          },
-        ],
-        mode: "subscription",
-        success_url: `${origin}/assinatura?success=true`,
-        cancel_url: `${origin}/assinatura?canceled=true`,
-        metadata: {
-          user_id: user.id,
-          price_id: priceId,
-          professionals_count: quantity,
+    // Verificar se já tem assinatura ativa para configurar upgrade/downgrade
+    const sessionConfig: any = {
+      customer: customerId,
+      customer_email: customerId ? undefined : user.email,
+      line_items: [
+        {
+          price: priceId,
+          quantity: quantity,
         },
-      });
+      ],
+      mode: "subscription",
+      success_url: `${origin}/assinatura?success=true`,
+      cancel_url: `${origin}/assinatura?canceled=true`,
+      metadata: {
+        user_id: user.id,
+        price_id: priceId,
+        professionals_count: quantity,
+        is_upgrade: isUpgrade.toString(),
+      },
+    };
+
+    // Se for upgrade/downgrade e já tem customer, configurar proration
+    if (isUpgrade && customerId) {
+      sessionConfig.subscription_data = {
+        proration_behavior: 'always_invoice',
+      };
+      logStep("Configured as upgrade with proration");
+    }
+
+    try {
+      const session = await stripe.checkout.sessions.create(sessionConfig);
 
       logStep("Checkout session created", { sessionId: session.id, url: session.url });
 

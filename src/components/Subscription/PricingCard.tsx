@@ -19,6 +19,8 @@ interface PricingCardProps {
   fixedFee?: number;
   maxQuantity?: number;
   billingPeriod?: 'monthly' | 'annual';
+  hasActivePaidPlan?: boolean;
+  currentProfessionals?: number;
 }
 
 export function PricingCard({ 
@@ -35,10 +37,37 @@ export function PricingCard({
   unitPrice = 0,
   fixedFee = 0,
   maxQuantity = 10,
-  billingPeriod
+  billingPeriod,
+  hasActivePaidPlan = false,
+  currentProfessionals = 0
 }: PricingCardProps) {
   const isPaidPlan = price > 0 || unitPrice > 0;
   const totalPrice = unitPrice * quantity + (fixedFee || 0);
+  
+  // Determinar o texto do botão baseado no contexto
+  const getButtonText = () => {
+    if (loading) return 'Processando...';
+    if (isCurrentPlan) return 'Plano Atual';
+    if (!isPaidPlan) return 'Plano Atual';
+    
+    if (hasActivePaidPlan) {
+      if (quantity > currentProfessionals) return 'Fazer Upgrade';
+      if (quantity < currentProfessionals) return 'Fazer Downgrade';
+      return 'Trocar Plano';
+    }
+    
+    return 'Contratar';
+  };
+
+  // Gerar features dinâmicas para plano pago
+  const displayFeatures = isPaidPlan && quantity > 0 ? [
+    'Agendamentos ilimitados',
+    'Pacientes ilimitados',
+    `${quantity} ${quantity === 1 ? 'profissional' : 'profissionais'}`,
+    'Procedimentos ilimitados',
+    'Acesso completo ao prontuário eletrônico',
+    'Suporte prioritário'
+  ] : features;
 
   return (
     <Card className={`relative ${isPopular ? 'border-primary shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
@@ -122,7 +151,7 @@ export function PricingCard({
 
         {/* Features */}
         <ul className="space-y-2 pt-2">
-          {features.map((feature, index) => (
+          {displayFeatures.map((feature, index) => (
             <li key={index} className="flex items-start">
               <Check className="h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
               <span className="text-sm">{feature}</span>
@@ -142,12 +171,8 @@ export function PricingCard({
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Processando...
             </>
-          ) : isCurrentPlan ? (
-            'Plano Atual'
-          ) : !isPaidPlan ? (
-            'Plano Atual'
           ) : (
-            'Contratar'
+            getButtonText()
           )}
         </Button>
       </CardContent>
