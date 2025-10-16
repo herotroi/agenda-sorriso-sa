@@ -37,7 +37,6 @@ export function PricingCard({
 }: PricingCardProps) {
   const isPaidPlan = price > 0 || unitPrice > 0;
   const totalPrice = unitPrice * quantity + (fixedFee || 0);
-  const savingsPerUnit = quantity > 1 && unitPrice > 0 ? (price / quantity - unitPrice) : 0;
 
   return (
     <Card className={`relative ${isPopular ? 'border-primary shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
@@ -67,11 +66,6 @@ export function PricingCard({
               <div className="text-sm text-muted-foreground mb-1">
                 R$ {unitPrice.toFixed(2)} por profissional
               </div>
-              {savingsPerUnit > 0 && (
-                <div className="text-xs text-green-600 mb-2">
-                  💰 Economize R$ {savingsPerUnit.toFixed(2)} por profissional
-                </div>
-              )}
             </>
           )}
         </div>
