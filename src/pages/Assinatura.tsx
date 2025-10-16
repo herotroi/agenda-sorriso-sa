@@ -227,35 +227,91 @@ export default function Assinatura() {
       toast.error('Preço não encontrado para essa quantidade');
       return;
     }
-    
-    // Verificar se está fazendo downgrade de profissionais
-    const currentProfs = usageStats?.professionals_count || 0;
-    const hasActivePaidPlan = currentSubscription?.plan_type !== 'free';
-    
-    if (hasActivePaidPlan && quantity < currentProfs) {
-      const confirmed = confirm(
-        `Atenção: Você tem ${currentProfs} profissionais ativos, mas está tentando contratar um plano com ${quantity}. ` +
-        `Por favor, desative ${currentProfs - quantity} profissional(is) antes de fazer o downgrade.`
-      );
-      
-      if (!confirmed) {
-        return;
-      }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return;
     }
 
-    // Se já tem plano pago, avisar sobre troca de plano
-    if (hasActivePaidPlan) {
-      const action = quantity > (currentSubscription?.professionals_purchased || 1) ? 'upgrade' : 
-                     quantity < (currentSubscription?.professionals_purchased || 1) ? 'downgrade' : 'trocar';
+    const currentProfessionals = currentSubscription?.professionals_purchased || 0;
+    const hasActiveSubscription = currentSubscription && 
+      currentSubscription.plan_type !== 'free' && 
+      currentSubscription.stripe_subscription_id;
+
+    // Se já tem assinatura ativa no mesmo período e está apenas mudando quantidade, usar update-subscription
+    if (hasActiveSubscription && billingPeriod === currentSubscription.plan_type) {
+      const isDowngrade = quantity < currentProfessionals;
+      const isUpgrade = quantity > currentProfessionals;
       
-      const confirmed = confirm(
-        `Você está prestes a ${action === 'upgrade' ? 'fazer upgrade do' : action === 'downgrade' ? 'fazer downgrade do' : 'trocar de'} plano. ` +
-        `O valor será ajustado proporcionalmente. Deseja continuar?`
+      if (isDowngrade) {
+        // Verificar quantos profissionais ativos o usuário tem
+        const { data: activeProfessionals } = await supabase
+          .from('professionals')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('active', true);
+
+        const activeProfessionalsCount = activeProfessionals?.length || 0;
+
+        if (activeProfessionalsCount > quantity) {
+          toast.error(
+            `Você tem ${activeProfessionalsCount} profissionais ativos. Desative ${activeProfessionalsCount - quantity} profissional(is) antes de fazer downgrade.`,
+            { duration: 6000 }
+          );
+          return;
+        }
+
+        // Confirmação para downgrade
+        const confirmDowngrade = window.confirm(
+          `Tem certeza que deseja reduzir de ${currentProfessionals} para ${quantity} profissional(is)?\n\n` +
+          `O valor não será reembolsado, mas será aplicado como crédito no próximo mês.\n` +
+          `A partir da próxima fatura você pagará ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}.`
+        );
+        
+        if (!confirmDowngrade) return;
+      } else if (isUpgrade) {
+        // Confirmação para upgrade
+        const confirmUpgrade = window.confirm(
+          `Confirmar upgrade de ${currentProfessionals} para ${quantity} profissional(is)?\n\n` +
+          `A diferença será cobrada proporcionalmente agora.\n` +
+          `A partir da próxima fatura: R$ ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}`
+        );
+        
+        if (!confirmUpgrade) return;
+      }
+
+      try {
+        setLoading(planId);
+
+        const { data, error } = await supabase.functions.invoke('update-subscription', {
+          body: { quantity }
+        });
+
+        if (error) throw error;
+
+        toast.success(data.message);
+        
+        // Atualizar dados
+        await checkSubscription();
+        await fetchUsageStats();
+      } catch (error: any) {
+        console.error('Erro ao atualizar assinatura:', error);
+        toast.error(error.message || 'Erro ao atualizar assinatura');
+      } finally {
+        setLoading('');
+      }
+      return;
+    }
+
+    // Se está mudando período de cobrança ou não tem assinatura, usar checkout normal
+    if (hasActiveSubscription) {
+      const confirmChange = window.confirm(
+        `Confirmar troca de plano?\n\n` +
+        `Nova cobrança: R$ ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}`
       );
       
-      if (!confirmed) {
-        return;
-      }
+      if (!confirmChange) return;
     }
     
     console.log('Iniciando assinatura:', billingPeriod, 'Quantidade:', quantity, 'Price:', selectedPrice);
@@ -263,10 +319,9 @@ export default function Assinatura() {
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
+          body: { 
           priceId: selectedPrice.priceId, 
-          quantity,
-          isUpgrade: hasActivePaidPlan
+          quantity
         },
       });
 

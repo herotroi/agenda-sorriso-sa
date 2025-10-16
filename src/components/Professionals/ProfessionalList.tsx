@@ -13,7 +13,7 @@ export function ProfessionalList() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { professionals, loading, fetchProfessionals, deleteProfessional } = useProfessionalsData();
-  const { subscriptionData } = useSubscriptionLimits();
+  const { subscriptionData, checkLimit, showLimitWarning } = useSubscriptionLimits();
 
   const filteredProfessionals = professionals.filter(professional =>
     professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,15 +39,40 @@ export function ProfessionalList() {
     fetchProfessionals(); // Atualiza a lista
   };
 
+  // Contar apenas profissionais ativos
+  const activeProfessionalsCount = professionals.filter(p => p.active !== false).length;
+  const maxProfessionals = subscriptionData?.limits.max_professionals || 0;
+
+  const handleAddClick = () => {
+    // Verificar limite antes de adicionar novo profissional
+    if (!checkLimit('professional')) {
+      showLimitWarning('professional');
+      return;
+    }
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <ProfessionalHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onAddClick={() => setIsFormOpen(true)}
+        onAddClick={handleAddClick}
         totalCount={professionals.length}
         filteredCount={filteredProfessionals.length}
       />
+
+      {/* Badge de uso de profissionais */}
+      {subscriptionData && (
+        <div className="flex justify-end">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm">
+            <span className="font-medium">
+              {activeProfessionalsCount}/{maxProfessionals === 999999 ? '∞' : maxProfessionals}
+            </span>
+            <span className="text-muted-foreground">profissionais ativos</span>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-8">Carregando profissionais...</div>
@@ -70,7 +95,7 @@ export function ProfessionalList() {
       {subscriptionData && (
         <SubscriptionFooter
           subscriptionData={subscriptionData}
-          currentCount={professionals.length}
+          currentCount={activeProfessionalsCount}
           maxCount={subscriptionData.limits.max_professionals}
           featureName="Profissionais"
           canUseFeature={subscriptionData.canCreateProfessional}

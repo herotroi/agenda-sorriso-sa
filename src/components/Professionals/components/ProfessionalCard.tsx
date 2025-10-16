@@ -286,14 +286,29 @@ export function ProfessionalCard({ professional, onUpdate, onDelete }: Professio
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tem certeza que deseja excluir o profissional "{professional.name}"? 
-                  Esta ação não pode ser desfeita.
+                  Tem certeza que deseja excluir o profissional "{professional.name}"?
+                  {professional.active !== false ? (
+                    <>
+                      <br /><br />
+                      <span className="text-amber-600 font-medium">
+                        Nota: Se o profissional tiver agendamentos ou prontuários registrados, 
+                        ele será apenas desativado para preservar o histórico.
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <br /><br />
+                      <span className="text-muted-foreground">
+                        Este profissional está inativo e será removido permanentemente se não houver histórico.
+                      </span>
+                    </>
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                  Excluir
+                  {professional.active !== false ? 'Excluir/Desativar' : 'Confirmar Exclusão'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

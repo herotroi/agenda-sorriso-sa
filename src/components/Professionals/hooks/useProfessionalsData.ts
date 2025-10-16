@@ -57,18 +57,50 @@ export function useProfessionalsData() {
 
   const deleteProfessional = async (professionalId: string) => {
     try {
-      const { error } = await supabase
-        .from('professionals')
-        .update({ active: false })
-        .eq('id', professionalId)
-        .eq('user_id', user?.id);
+      // Verificar se o profissional tem agendamentos ou prontuários
+      const { data: appointments } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('professional_id', professionalId)
+        .limit(1);
 
-      if (error) throw error;
+      const { data: records } = await supabase
+        .from('patient_records')
+        .select('id')
+        .eq('professional_id', professionalId)
+        .limit(1);
 
-      toast({
-        title: 'Sucesso',
-        description: 'Profissional removido com sucesso',
-      });
+      const hasHistory = (appointments && appointments.length > 0) || (records && records.length > 0);
+
+      if (hasHistory) {
+        // Se tem histórico, apenas desativa
+        const { error } = await supabase
+          .from('professionals')
+          .update({ active: false })
+          .eq('id', professionalId)
+          .eq('user_id', user?.id);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Profissional desativado',
+          description: 'Profissional desativado (possui histórico de atendimentos)',
+        });
+      } else {
+        // Se não tem histórico, exclui permanentemente
+        const { error } = await supabase
+          .from('professionals')
+          .delete()
+          .eq('id', professionalId)
+          .eq('user_id', user?.id);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Sucesso',
+          description: 'Profissional excluído com sucesso',
+        });
+      }
 
       fetchProfessionals();
     } catch (error) {

@@ -55,12 +55,12 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const requestBody = await req.json();
-    const { priceId, quantity = 1, isUpgrade = false } = requestBody;
+    const { priceId, quantity = 1 } = requestBody;
     if (!priceId) {
       logStep("ERROR: No priceId provided");
       throw new Error("Price ID is required");
     }
-    logStep("Price ID and quantity received", { priceId, quantity, isUpgrade });
+    logStep("Price ID and quantity received", { priceId, quantity });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -117,17 +117,9 @@ serve(async (req) => {
         user_id: user.id,
         price_id: priceId,
         professionals_count: quantity,
-        is_upgrade: isUpgrade.toString(),
       },
     };
 
-    // Se for upgrade/downgrade e já tem customer, configurar proration
-    if (isUpgrade && customerId) {
-      sessionConfig.subscription_data = {
-        proration_behavior: 'always_invoice',
-      };
-      logStep("Configured as upgrade with proration");
-    }
 
     try {
       const session = await stripe.checkout.sessions.create(sessionConfig);

@@ -74,13 +74,98 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Cancelar assinatura no Stripe (no final do período)
+    // Verificar se a assinatura foi criada há menos de 7 dias
+    const subscriptionCreatedAt = new Date(subscription.created_at);
+    const now = new Date();
+    const daysSinceCreation = Math.floor((now.getTime() - subscriptionCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+    
+    logStep("Checking cancellation timing", { 
+      createdAt: subscription.created_at,
+      daysSinceCreation,
+      shouldRefund: daysSinceCreation < 7
+    });
+
+    // Se foi criada há menos de 7 dias, cancelar imediatamente e reembolsar
+    if (daysSinceCreation < 7) {
+      logStep("Canceling immediately with refund (< 7 days)");
+      
+      // Buscar último invoice para reembolso
+      const invoices = await stripe.invoices.list({
+        customer: subscription.stripe_customer_id,
+        subscription: subscription.stripe_subscription_id,
+        limit: 1,
+      });
+
+      // Cancelar imediatamente
+      const canceledSubscription = await stripe.subscriptions.cancel(
+        subscription.stripe_subscription_id
+      );
+
+      logStep("Subscription canceled immediately", { 
+        subscriptionId: canceledSubscription.id,
+        status: canceledSubscription.status
+      });
+
+      // Processar reembolso se houver invoice pago
+      let refundInfo = null;
+      if (invoices.data[0] && invoices.data[0].payment_intent) {
+        try {
+          const refund = await stripe.refunds.create({
+            payment_intent: invoices.data[0].payment_intent as string,
+            reason: 'requested_by_customer',
+          });
+
+          refundInfo = {
+            amount: refund.amount / 100,
+            currency: refund.currency,
+            status: refund.status,
+          };
+
+          logStep("Refund created", refundInfo);
+        } catch (refundError) {
+          logStep("ERROR: Failed to create refund", { error: refundError });
+          // Continua mesmo se o reembolso falhar
+        }
+      }
+
+      // Atualizar no banco - status canceled e volta para free
+      const { error: updateError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .update({ 
+          status: 'canceled',
+          plan_type: 'free',
+          professionals_purchased: 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        logStep("ERROR: Failed to update subscription status", { error: updateError });
+        throw new Error("Erro ao atualizar status da assinatura");
+      }
+
+      logStep("Subscription status updated to canceled");
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Assinatura cancelada e reembolsada com sucesso',
+        immediate_cancellation: true,
+        refund: refundInfo,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Se passou 7 dias, cancelar no final do período (comportamento atual)
+    logStep("Canceling at period end (>= 7 days)");
+    
     const canceledSubscription = await stripe.subscriptions.update(
       subscription.stripe_subscription_id,
       { cancel_at_period_end: true }
     );
 
-    logStep("Subscription canceled in Stripe", { 
+    logStep("Subscription set to cancel at period end", { 
       subscriptionId: canceledSubscription.id,
       cancelAtPeriodEnd: canceledSubscription.cancel_at_period_end,
       currentPeriodEnd: canceledSubscription.current_period_end
