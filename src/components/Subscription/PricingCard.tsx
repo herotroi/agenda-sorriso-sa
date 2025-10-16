@@ -77,9 +77,9 @@ export function PricingCard({
           ) : isCurrentPlan ? (
             'Plano Atual'
           ) : price === 0 ? (
-            'Plano Gratuito'
+            'Plano Atual'
           ) : (
-            'Assinar Agora'
+            'Contratar'
           )}
         </Button>
       </CardContent>

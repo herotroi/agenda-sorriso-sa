@@ -38,7 +38,6 @@ const getDefaultPlans = () => [
     features: [
       'Agendamentos ilimitados',
       'Pacientes ilimitados',
-      'Profissionais ilimitados',
       'Procedimentos ilimitados',
       'Acesso completo ao prontuário',
     ],
@@ -58,10 +57,9 @@ const getDefaultPlans = () => [
     features: [
       'Agendamentos ilimitados',
       'Pacientes ilimitados',
-      'Profissionais ilimitados',
       'Procedimentos ilimitados',
       'Acesso completo ao prontuário',
-      '2 meses grátis no pagamento anual',
+      '+ econômico',
     ],
     isPopular: true,
     limits: {
