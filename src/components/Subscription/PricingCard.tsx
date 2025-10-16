@@ -61,13 +61,7 @@ export function PricingCard({
         <div className="text-center">
           {!isPaidPlan ? (
             <div className="text-4xl font-bold">Gratuito</div>
-          ) : (
-            <>
-              <div className="text-sm text-muted-foreground mb-1">
-                R$ {unitPrice.toFixed(2)} por profissional
-              </div>
-            </>
-          )}
+          ) : null}
         </div>
 
         {/* Seletor de Quantidade */}
