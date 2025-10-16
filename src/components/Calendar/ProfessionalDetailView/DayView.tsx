@@ -48,21 +48,17 @@ export function DayView({
     return Math.max(durationMinutes, 40);
   };
 
-  const getStatusColor = (statusId?: number, type?: string) => {
+  const getStatusColor = (statusColor?: string, type?: string) => {
     // Cores especiais para férias e pausas
     if (type === 'vacation') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     if (type === 'break') return 'bg-gray-100 text-gray-800 border-gray-300';
     
-    // Cores normais para agendamentos baseadas no status_id
-    // 1=Confirmado, 2=Cancelado, 3=Não Compareceu, 4=Em atendimento, 5=Finalizado
-    switch (statusId) {
-      case 1: return 'bg-green-100 text-green-800';
-      case 2: return 'bg-red-100 text-red-800';
-      case 3: return 'bg-orange-100 text-orange-800';
-      case 4: return 'bg-blue-100 text-blue-800';
-      case 5: return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+    // Usar a cor real do status do banco de dados
+    if (statusColor) {
+      return `text-white border-0`;
     }
+    
+    return 'bg-gray-100 text-gray-800';
   };
 
   const getCardStyle = (type?: string) => {
@@ -224,7 +220,10 @@ export function DayView({
                           ? 'Dia todo'
                           : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
                       </span>
-                      <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}>
+                      <Badge 
+                        className={`${getStatusColor(appointment.appointment_statuses?.color, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}
+                        style={appointment.appointment_statuses?.color && !itemType ? { backgroundColor: appointment.appointment_statuses.color } : undefined}
+                      >
                         {appointment.appointment_statuses?.label || 'Status não definido'}
                       </Badge>
                     </div>
