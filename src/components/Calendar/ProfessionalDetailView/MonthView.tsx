@@ -15,6 +15,19 @@ interface MonthViewProps {
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
+const getStatusStyle = (statusColor?: string, type?: string) => {
+  // Cores especiais para férias e pausas
+  if (type === 'vacation') return { backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' };
+  if (type === 'break') return { backgroundColor: '#f3f4f6', color: '#1f2937', border: '1px solid #d1d5db' };
+  
+  // Usar a cor real do status do banco de dados
+  if (statusColor) {
+    return { backgroundColor: statusColor, color: 'white', border: 'none' };
+  }
+  
+  return { backgroundColor: '#f3f4f6', color: '#1f2937' };
+};
+
 export function MonthView({
   professional,
   appointments,
@@ -128,7 +141,10 @@ export function MonthView({
                         </div>
                       )}
                     </div>
-                    <Badge variant="secondary">
+                    <Badge 
+                      className="flex-shrink-0 text-xs px-2 py-0.5 whitespace-nowrap"
+                      style={getStatusStyle(appointment.appointment_statuses?.color, itemType)}
+                    >
                       {itemType === 'vacation' ? 'Férias' :
                        itemType === 'break' ? 'Pausa' :
                        appointment.appointment_statuses?.label || 'Status não definido'}
