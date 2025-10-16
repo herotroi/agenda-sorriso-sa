@@ -79,9 +79,10 @@ export default function Assinatura() {
   const [checking, setChecking] = useState(true);
   const [hasAutomacao, setHasAutomacao] = useState(false);
   const [plans, setPlans] = useState(getDefaultPlans());
+  const [monthlyPrices, setMonthlyPrices] = useState<any[]>([]);
+  const [yearlyPrices, setYearlyPrices] = useState<any[]>([]);
   const [monthlyQuantity, setMonthlyQuantity] = useState(1);
   const [annualQuantity, setAnnualQuantity] = useState(1);
-  const [unitPrices, setUnitPrices] = useState({ monthly: 0, yearly: 0 });
 
   const checkSubscription = async () => {
     try {
@@ -112,25 +113,22 @@ export default function Assinatura() {
       
       if (data) {
         console.log('Stripe prices:', data);
-        // Armazenar preços unitários
-        setUnitPrices({
-          monthly: data.monthly?.amount || 0,
-          yearly: data.yearly?.amount || 0
-        });
         
-        setPlans(prevPlans => prevPlans.map(plan => {
-          if (plan.id === 'monthly' && data.monthly) {
-            return { ...plan, price: data.monthly.amount };
-          }
-          if (plan.id === 'annual' && data.yearly) {
-            return { ...plan, price: Math.round(data.yearly.amount / 12) };
-          }
-          return plan;
-        }));
+        if (data.monthly && Array.isArray(data.monthly)) {
+          setMonthlyPrices(data.monthly);
+        }
+
+        if (data.yearly && Array.isArray(data.yearly)) {
+          setYearlyPrices(data.yearly);
+        }
       }
     } catch (error) {
       console.error('Erro inesperado ao buscar preços:', error);
     }
+  };
+
+  const getPriceForQuantity = (prices: any[], quantity: number) => {
+    return prices.find(p => p.quantity === quantity) || prices[0] || { unitAmount: 0, total: 0, priceId: '' };
   };
 
   const fetchUsageStats = async () => {
@@ -192,13 +190,20 @@ export default function Assinatura() {
     }
 
     const quantity = planId === 'monthly' ? monthlyQuantity : annualQuantity;
+    const prices = planId === 'monthly' ? monthlyPrices : yearlyPrices;
+    const selectedPrice = getPriceForQuantity(prices, quantity);
+
+    if (!selectedPrice.priceId) {
+      toast.error('Preço não encontrado para essa quantidade');
+      return;
+    }
     
-    console.log('Iniciando assinatura para:', planId, 'Quantidade:', quantity);
+    console.log('Iniciando assinatura para:', planId, 'Quantidade:', quantity, 'Price:', selectedPrice);
     setLoading(planId);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { planId, quantity },
+        body: { priceId: selectedPrice.priceId, quantity: 1 },
       });
 
       if (error) {
@@ -353,22 +358,28 @@ export default function Assinatura() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Planos Disponíveis</h2>
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl">
-            {plans.map((plan) => (
-              <PricingCard
-                key={plan.id}
-                title={plan.title}
-                price={plan.price}
-                period={plan.period}
-                features={plan.features}
-                isPopular={plan.isPopular}
-                isCurrentPlan={currentSubscription?.plan_type === plan.id}
-                onSubscribe={() => handleSubscribe(plan.id)}
-                loading={loading === plan.id}
-                quantity={plan.id === 'monthly' ? monthlyQuantity : plan.id === 'annual' ? annualQuantity : 1}
-                onQuantityChange={plan.id === 'monthly' ? setMonthlyQuantity : plan.id === 'annual' ? setAnnualQuantity : undefined}
-                unitPrice={plan.id === 'monthly' ? unitPrices.monthly : plan.id === 'annual' ? unitPrices.yearly : 0}
-              />
-            ))}
+            {plans.map((plan) => {
+              const monthlyPrice = getPriceForQuantity(monthlyPrices, monthlyQuantity);
+              const yearlyPrice = getPriceForQuantity(yearlyPrices, annualQuantity);
+              
+              return (
+                <PricingCard
+                  key={plan.id}
+                  title={plan.title}
+                  price={plan.id === 'monthly' ? monthlyPrice.total : plan.id === 'annual' ? yearlyPrice.total : plan.price}
+                  period={plan.period}
+                  features={plan.features}
+                  isPopular={plan.isPopular}
+                  isCurrentPlan={currentSubscription?.plan_type === plan.id}
+                  onSubscribe={() => handleSubscribe(plan.id)}
+                  loading={loading === plan.id}
+                  quantity={plan.id === 'monthly' ? monthlyQuantity : plan.id === 'annual' ? annualQuantity : 1}
+                  onQuantityChange={plan.id === 'monthly' ? setMonthlyQuantity : plan.id === 'annual' ? setAnnualQuantity : undefined}
+                  unitPrice={plan.id === 'monthly' ? monthlyPrice.unitAmount : plan.id === 'annual' ? yearlyPrice.unitAmount : 0}
+                  maxQuantity={plan.id === 'monthly' ? (monthlyPrices.length > 0 ? Math.max(...monthlyPrices.map(p => p.quantity)) : 10) : plan.id === 'annual' ? (yearlyPrices.length > 0 ? Math.max(...yearlyPrices.map(p => p.quantity)) : 10) : 1}
+                />
+              );
+            })}
           </div>
         </div>
       )}

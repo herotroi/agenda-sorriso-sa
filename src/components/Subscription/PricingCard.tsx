@@ -16,6 +16,7 @@ interface PricingCardProps {
   quantity?: number;
   onQuantityChange?: (quantity: number) => void;
   unitPrice?: number;
+  maxQuantity?: number;
 }
 
 export function PricingCard({ 
@@ -29,9 +30,9 @@ export function PricingCard({
   onSubscribe,
   quantity = 1,
   onQuantityChange,
-  unitPrice = 0
+  unitPrice = 0,
+  maxQuantity = 10
 }: PricingCardProps) {
-  const totalPrice = unitPrice * quantity;
   const isPaidPlan = price > 0 || unitPrice > 0;
   return (
     <Card className={`relative ${isPopular ? 'border-blue-500 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}>
@@ -54,11 +55,16 @@ export function PricingCard({
             <span className="text-4xl font-bold">Gratuito</span>
           ) : (
             <>
-              <div className="text-sm text-gray-600 mb-1">
-                R$ {unitPrice.toFixed(2)} por profissional/{period}
+              <div className="text-sm text-muted-foreground mb-1">
+                R$ {unitPrice.toFixed(2)} por profissional
               </div>
-              <span className="text-4xl font-bold">R$ {totalPrice.toFixed(2)}</span>
-              <span className="text-gray-600">/{period}</span>
+              <span className="text-4xl font-bold">R$ {price.toFixed(2)}</span>
+              <span className="text-muted-foreground">/{period}</span>
+              {quantity > 1 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Total: {quantity} profissional{quantity > 1 ? 'is' : ''}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -67,7 +73,7 @@ export function PricingCard({
       <CardContent className="space-y-4">
         {isPaidPlan && onQuantityChange && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium mb-2">
               Quantidade de Profissionais
             </label>
             <div className="flex items-center gap-3">
@@ -83,19 +89,27 @@ export function PricingCard({
               <input
                 type="number"
                 min="1"
+                max={maxQuantity}
                 value={quantity}
-                onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  onQuantityChange(Math.min(maxQuantity, Math.max(1, val)));
+                }}
                 className="w-20 text-center border rounded-md px-3 py-2"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => onQuantityChange(quantity + 1)}
+                onClick={() => onQuantityChange(Math.min(maxQuantity, quantity + 1))}
+                disabled={quantity >= maxQuantity}
               >
                 +
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Cada profissional cadastrado ocupa 1 unidade
+            </p>
           </div>
         )}
         

@@ -29,7 +29,7 @@ serve(async (req) => {
     
     logStep("Fetching active prices from Stripe");
     
-    // Buscar preços dos produtos específicos
+    // Buscar TODOS os preços dos produtos específicos
     const monthlyPrices = await stripe.prices.list({
       active: true,
       type: 'recurring',
@@ -49,29 +49,55 @@ serve(async (req) => {
       yearlyCount: yearlyPrices.data.length 
     });
 
-    // Filtrar e organizar preços
-    const monthlyPrice = monthlyPrices.data.find(
-      price => price.recurring?.interval === 'month' && price.active
-    );
-    
-    const yearlyPrice = yearlyPrices.data.find(
-      price => price.recurring?.interval === 'year' && price.active
-    );
-
-    const result = {
-      monthly: monthlyPrice ? {
-        id: monthlyPrice.id,
-        amount: monthlyPrice.unit_amount ? monthlyPrice.unit_amount / 100 : 0,
-        currency: monthlyPrice.currency,
-      } : null,
-      yearly: yearlyPrice ? {
-        id: yearlyPrice.id,
-        amount: yearlyPrice.unit_amount ? yearlyPrice.unit_amount / 100 : 0,
-        currency: yearlyPrice.currency,
-      } : null,
+    // Função para extrair quantidade do preço
+    const extractQuantity = (price: any): number => {
+      // Tentar obter de transform_quantity
+      if (price.transform_quantity?.divide_by) {
+        return price.transform_quantity.divide_by;
+      }
+      // Tentar obter de metadata
+      if (price.metadata?.quantity) {
+        return parseInt(price.metadata.quantity);
+      }
+      // Default para 1
+      return 1;
     };
 
-    logStep("Returning prices", result);
+    // Organizar preços mensais por quantidade
+    const monthlyPricesArray = monthlyPrices.data
+      .filter(price => price.recurring?.interval === 'month' && price.active)
+      .map(price => ({
+        quantity: extractQuantity(price),
+        priceId: price.id,
+        unitAmount: price.unit_amount ? price.unit_amount / 100 : 0,
+        total: price.unit_amount ? (price.unit_amount / 100) * extractQuantity(price) : 0,
+        currency: price.currency,
+      }))
+      .sort((a, b) => a.quantity - b.quantity);
+
+    // Organizar preços anuais por quantidade
+    const yearlyPricesArray = yearlyPrices.data
+      .filter(price => price.recurring?.interval === 'year' && price.active)
+      .map(price => ({
+        quantity: extractQuantity(price),
+        priceId: price.id,
+        unitAmount: price.unit_amount ? price.unit_amount / 100 : 0,
+        total: price.unit_amount ? (price.unit_amount / 100) * extractQuantity(price) : 0,
+        currency: price.currency,
+      }))
+      .sort((a, b) => a.quantity - b.quantity);
+
+    const result = {
+      monthly: monthlyPricesArray,
+      yearly: yearlyPricesArray,
+    };
+
+    logStep("Returning organized prices", { 
+      monthlyPrices: monthlyPricesArray.length,
+      yearlyPrices: yearlyPricesArray.length,
+      monthlyQuantities: monthlyPricesArray.map(p => p.quantity),
+      yearlyQuantities: yearlyPricesArray.map(p => p.quantity),
+    });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

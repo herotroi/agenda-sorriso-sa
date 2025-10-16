@@ -55,12 +55,12 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const requestBody = await req.json();
-    const { planId, quantity = 1 } = requestBody;
-    if (!planId) {
-      logStep("ERROR: No planId provided");
-      throw new Error("Plan ID is required");
+    const { priceId, quantity = 1 } = requestBody;
+    if (!priceId) {
+      logStep("ERROR: No priceId provided");
+      throw new Error("Price ID is required");
     }
-    logStep("Plan ID and quantity received", { planId, quantity });
+    logStep("Price ID and quantity received", { priceId, quantity });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -79,37 +79,7 @@ serve(async (req) => {
       throw new Error("Failed to check existing customers");
     }
 
-    // Buscar prices ativos da Stripe para o plano especificado
-    let priceId;
-    try {
-      const productId = planId === 'monthly' ? 'prod_TFKKD8Xe5yUOQ5' : 'prod_TFLGsfXeZxyXBs';
-      const interval = planId === 'monthly' ? 'month' : 'year';
-      logStep("Searching for active prices", { interval, productId });
-      
-      const prices = await stripe.prices.list({
-        active: true,
-        type: 'recurring',
-        product: productId,
-        limit: 100,
-      });
-
-      // Filtrar pelo intervalo correto
-      const matchingPrice = prices.data.find(
-        price => price.recurring?.interval === interval && price.active
-      );
-
-      if (!matchingPrice) {
-        logStep("ERROR: No active price found", { interval, planId, productId });
-        throw new Error(`Nenhum plano ativo encontrado para ${planId}. Verifique seus produtos no Stripe.`);
-      }
-
-      priceId = matchingPrice.id;
-      logStep("Found active price", { priceId, amount: matchingPrice.unit_amount, interval, productId });
-      
-    } catch (stripeError) {
-      logStep("ERROR: Failed to fetch prices", { error: stripeError });
-      throw new Error(`Erro ao buscar planos no Stripe: ${stripeError.message}`);
-    }
+    logStep("Using specific price ID from request", { priceId });
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
@@ -128,8 +98,7 @@ serve(async (req) => {
         cancel_url: `${origin}/assinatura?canceled=true`,
         metadata: {
           user_id: user.id,
-          plan_id: planId,
-          professionals_count: quantity.toString(),
+          price_id: priceId,
         },
       });
 
