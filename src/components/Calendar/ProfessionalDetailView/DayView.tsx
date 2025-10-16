@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, User, FileText } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Professional, Appointment } from '@/types';
@@ -79,6 +79,18 @@ export function DayView({
   const PX_PER_MIN = 1.5; // 1.5px por minuto para cards maiores
   const minutesFromMidnight = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
+  // Gutter responsivo: 4px (sm), 8px (md), 12px (lg+)
+  const [GUTTER, setGUTTER] = useState(8);
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      setGUTTER(w < 640 ? 4 : w < 1024 ? 8 : 12);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -144,9 +156,9 @@ export function DayView({
         </p>
       </div>
 
-      <div className="relative mt-2 overflow-x-auto overflow-y-hidden rounded-md border bg-white max-w-full" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+      <div className="relative mt-2 overflow-x-hidden overflow-y-hidden rounded-md border bg-white max-w-full" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
         {/* Horários à esquerda (posicionados absolutamente) */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 md:w-20 border-r bg-gray-50/50 z-0">
+        <div className="absolute left-0 top-0 bottom-0 w-10 sm:w-14 md:w-16 border-r bg-gray-50/50 z-0">
           {timeSlots.map((slot) => (
             <div 
               key={slot.time} 
@@ -162,13 +174,13 @@ export function DayView({
         {timeSlots.map((slot) => (
           <div
             key={slot.hour}
-            className="absolute left-12 sm:left-16 md:left-20 right-0 border-t border-gray-100"
+            className="absolute left-10 sm:left-14 md:left-16 right-0 border-t border-gray-100"
             style={{ top: `${slot.hour * 60 * PX_PER_MIN}px` }}
           />
         ))}
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
-        <div className="absolute left-12 sm:left-16 md:left-20 right-0 top-0 bottom-0 relative min-w-0">
+        <div className="absolute left-10 sm:left-14 md:left-16 right-0 top-0 bottom-0 relative min-w-0">
           {/* Férias como faixa de fundo (não clicável) */}
           {appointments.filter(a => (a as any).type === 'vacation').map((appointment) => {
             const start = new Date(appointment.start_time);
@@ -197,7 +209,7 @@ export function DayView({
             const laneIndex = isSpecialItem ? 0 : lane;
             const widthPct = 100 / lanes;
             const leftPct = widthPct * laneIndex;
-            const GUTTER = 8; // espaçamento entre colunas
+            
 
             return (
               <Card
@@ -207,7 +219,7 @@ export function DayView({
                   top: `${top}px`,
                   height: `${height}px`,
                   left: `calc(${leftPct}% + ${GUTTER / 2}px)`,
-                  width: `calc(${widthPct}% - ${GUTTER}px)`,
+                  right: `calc(${100 - (leftPct + widthPct)}% + ${GUTTER / 2}px)`,
                   zIndex: 1 + laneIndex
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
