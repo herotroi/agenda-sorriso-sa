@@ -78,6 +78,7 @@ export interface Appointment {
   appointment_statuses?: {
     label: string;
     color: string;
+    key?: string;
   };
 }
 

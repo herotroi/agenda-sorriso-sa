@@ -21,6 +21,13 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
   });
 
   try {
+    // Buscar primeiro os status para identificar o ID de "Cancelado"
+    const { data: statuses } = await supabase
+      .from('appointment_statuses')
+      .select('id, key')
+      .eq('key', 'cancelled')
+      .single();
+
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -28,10 +35,11 @@ export async function fetchAppointments(selectedDate: Date): Promise<Appointment
         patients(full_name),
         professionals(name, color),
         procedures(name),
-        appointment_statuses(label, color)
+        appointment_statuses(label, color, key)
       `)
       .gte('start_time', startOfDay)
       .lte('start_time', endOfDay)
+      .neq('status_id', statuses?.id || 999) // Excluir agendamentos cancelados
       .order('start_time');
 
     if (error) throw error;
@@ -65,6 +73,11 @@ export function checkTimeConflicts(
 
     // Only check conflicts for the same professional
     if (appointment.professional_id !== professionalId) {
+      return false;
+    }
+
+    // Skip cancelled appointments (não devem bloquear novos agendamentos)
+    if (appointment.appointment_statuses?.key === 'cancelled') {
       return false;
     }
 
