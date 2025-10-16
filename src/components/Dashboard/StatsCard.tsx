@@ -23,7 +23,7 @@ export function StatsCard({ title, value, icon: Icon, change, className = '' }: 
         <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
       </CardHeader>
       <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight break-words">
+        <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
           {value}
         </div>
         {change && (
