@@ -1,11 +1,8 @@
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Check, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/contexts/NotificationContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,117 +15,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  created_at: string;
-  appointment_id?: string;
-}
 
 export default function Notificacoes() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { notifications, markAsRead, deleteNotification } = useNotifications();
 
-  const fetchNotifications = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Remove duplicatas baseado no ID
-      const uniqueNotifications = data?.reduce((acc: Notification[], current) => {
-        const exists = acc.find(item => item.id === current.id);
-        if (!exists) {
-          acc.push(current);
-        }
-        return acc;
-      }, []) || [];
-      
-      setNotifications(uniqueNotifications);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao carregar notificações',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const markAsRead = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === id ? { ...notification, read: true } : notification
-        )
-      );
-
-      toast({
-        title: 'Sucesso',
-        description: 'Notificação marcada como lida',
-      });
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao marcar notificação como lida',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const deleteNotification = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setNotifications(prev => prev.filter(notification => notification.id !== id));
-
-      toast({
-        title: 'Sucesso',
-        description: 'Notificação excluída com sucesso',
-      });
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-      toast({
-        title: 'Erro',
-        description: 'Erro ao excluir notificação',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -143,9 +33,6 @@ export default function Notificacoes() {
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Carregando...</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -186,7 +73,7 @@ export default function Notificacoes() {
                     </div>
                     <p className="text-gray-600 mb-2">{notification.message}</p>
                     <p className="text-sm text-gray-400">
-                      {new Date(notification.created_at).toLocaleString('pt-BR')}
+                      {new Date(notification.timestamp).toLocaleString('pt-BR')}
                     </p>
                   </div>
                   <div className="flex space-x-2 ml-4">
