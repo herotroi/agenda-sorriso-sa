@@ -1,5 +1,5 @@
 
-import { Bell, X, Calendar, Check } from 'lucide-react';
+import { Bell, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,7 @@ export function NotificationDropdown() {
     notifications, 
     unreadCount,
     markAsRead,
-    markAllAsRead,
-    deleteNotification
+    markAllAsRead
   } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
@@ -23,11 +22,10 @@ export function NotificationDropdown() {
       case 'appointment_updated':
         return <Calendar className="h-4 w-4 text-blue-500" />;
       case 'appointment_deleted':
-        return <X className="h-4 w-4 text-red-500" />;
+      case 'appointment_cancelled':
+        return <Calendar className="h-4 w-4 text-red-500" />;
       case 'appointment_reminder':
         return <Calendar className="h-4 w-4 text-blue-500" />;
-      case 'appointment_cancelled':
-        return <X className="h-4 w-4 text-red-500" />;
       default:
         return <Bell className="h-4 w-4 text-gray-500" />;
     }
@@ -89,26 +87,16 @@ export function NotificationDropdown() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead(notification.id)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                      )}
+                    {!notification.read && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteNotification(notification.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        onClick={() => markAsRead(notification.id)}
+                        className="h-6 w-6 p-0"
                       >
-                        <X className="h-3 w-3" />
+                        <Check className="h-3 w-3" />
                       </Button>
-                    </div>
+                    )}
                   </div>
                   
                 </div>

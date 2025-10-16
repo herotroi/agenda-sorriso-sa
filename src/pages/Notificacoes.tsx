@@ -1,23 +1,12 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, Trash2 } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 
 export default function Notificacoes() {
-  const { notifications, markAsRead, deleteNotification } = useNotifications();
+  const { notifications, markAsRead } = useNotifications();
 
 
   const getTypeColor = (type: string) => {
@@ -76,8 +65,8 @@ export default function Notificacoes() {
                       {new Date(notification.timestamp).toLocaleString('pt-BR')}
                     </p>
                   </div>
-                  <div className="flex space-x-2 ml-4">
-                    {!notification.read && (
+                  {!notification.read && (
+                    <div className="ml-4">
                       <Button
                         variant="outline"
                         size="sm"
@@ -86,34 +75,8 @@ export default function Notificacoes() {
                         <Check className="h-4 w-4 mr-1" />
                         Marcar como lida
                       </Button>
-                    )}
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir esta notificação? 
-                            Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteNotification(notification.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

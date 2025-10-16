@@ -28,5 +28,4 @@ export interface NotificationContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  deleteNotification: (id: string) => void;
 }
