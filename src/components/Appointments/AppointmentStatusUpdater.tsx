@@ -9,6 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 interface Appointment {
   id: string;
   status_id: number;
+  start_time: string;
+  end_time: string;
+  professional_id?: string;
+  appointment_statuses?: {
+    label?: string;
+    color?: string;
+    key?: string;
+  };
 }
 
 interface AppointmentStatusUpdaterProps {
@@ -66,7 +74,50 @@ export function AppointmentStatusUpdater({ appointment, onClose, onUpdate }: App
       return;
     }
 
+    const currentStatus = statusOptions.find(s => s.id === appointment.status_id);
     const selectedStatus = statusOptions.find(s => s.id === selectedStatusId);
+    
+    // Verificar se está mudando de cancelado para outro status
+    if (currentStatus?.key === 'cancelled' && selectedStatus?.key !== 'cancelled') {
+      try {
+        // Verificar se há conflitos de horário
+        const { data: conflictingAppointments, error: conflictError } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            appointment_statuses(key)
+          `)
+          .eq('professional_id', appointment.professional_id)
+          .neq('id', appointment.id)
+          .gte('end_time', appointment.start_time)
+          .lte('start_time', appointment.end_time);
+
+        if (conflictError) throw conflictError;
+
+        // Filtrar apenas agendamentos não cancelados
+        const activeConflicts = conflictingAppointments?.filter(
+          apt => apt.appointment_statuses?.key !== 'cancelled'
+        );
+
+        if (activeConflicts && activeConflicts.length > 0) {
+          toast({
+            title: 'Conflito de horário',
+            description: 'Já existe outro agendamento confirmado neste horário. Não é possível reativar este agendamento.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao verificar conflitos:', error);
+        toast({
+          title: 'Erro',
+          description: 'Erro ao verificar conflitos de horário',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     console.log('Atualizando status:', {
       appointmentId: appointment.id,
       statusAtualId: appointment.status_id,
