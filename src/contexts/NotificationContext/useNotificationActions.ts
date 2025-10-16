@@ -23,6 +23,27 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     }
     
     try {
+      // Verificar se já existe uma notificação similar criada recentemente (últimos 5 segundos)
+      const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+      
+      const { data: existingNotifications, error: checkError } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', notification.title)
+        .eq('message', notification.message)
+        .eq('type', notification.type)
+        .gte('created_at', fiveSecondsAgo);
+
+      if (checkError) {
+        console.error('Error checking for duplicate notifications:', checkError);
+      }
+
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('📢 Duplicate notification detected, skipping insert');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .insert({
