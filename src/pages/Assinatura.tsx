@@ -215,7 +215,7 @@ export default function Assinatura() {
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: selectedPrice.priceId, quantity: 1 },
+        body: { priceId: selectedPrice.priceId, quantity },
       });
 
       if (error) {
