@@ -215,9 +215,9 @@ export function DayView({
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
-                <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden">
-                  <div className="flex items-center justify-between flex-wrap gap-1 sm:gap-2">
-                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+                <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden w-full">
+                  <div className="flex items-center justify-between gap-1 sm:gap-2 w-full min-w-0">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap min-w-0 flex-1">
                       <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm text-gray-600 flex-shrink-0">
                         <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {isSpecialItem && itemType === 'vacation'
@@ -233,7 +233,7 @@ export function DayView({
                         </div>
                       )}
                     </div>
-                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1.5 sm:px-2 py-0.5`}>
+                    <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}>
                       {appointment.appointment_statuses?.label || 'Status não definido'}
                     </Badge>
                   </div>
