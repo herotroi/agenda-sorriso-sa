@@ -50,17 +50,7 @@ export function AppointmentForm({
   console.log('AppointmentForm render formData:', formData);
 
   const handleProcedureSelectChange = (procedureId: string) => {
-    const procedure = procedures.find(p => p.id === procedureId);
-    const duration = procedure ? procedure.default_duration.toString() : formData.duration;
-    
-    setFormData(prev => ({
-      ...prev,
-      procedure_id: procedureId,
-      duration: duration
-    }));
-    
-    handleFieldChange('procedure_id', procedureId);
-    handleFieldChange('duration', duration);
+    handleProcedureChange(procedureId);
   };
 
   const onSubmit = (e: React.FormEvent) => {

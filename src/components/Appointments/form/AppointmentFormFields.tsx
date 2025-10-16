@@ -15,7 +15,7 @@ interface AppointmentStatus {
 
 interface AppointmentFormFieldsProps {
   formData: AppointmentFormData;
-  setFormData: (data: AppointmentFormData) => void;
+  setFormData: React.Dispatch<React.SetStateAction<AppointmentFormData>>;
   patients: Patient[];
   professionals: Professional[];
   procedures: Procedure[];
@@ -41,11 +41,14 @@ export function AppointmentFormFields({
   appointmentToEdit
 }: AppointmentFormFieldsProps) {
   const handleFieldUpdate = (field: keyof AppointmentFormData, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
+    // Mark field as modified first
     handleFieldChange(field, value);
+    
+    // Update form data with the new value
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Prefill safety: ensure fields are populated when editing
