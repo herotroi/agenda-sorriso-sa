@@ -885,6 +885,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      extract_second_immutable: {
+        Args: { ts: string }
+        Returns: string
+      }
       get_user_usage_stats: {
         Args: { p_user_id: string }
         Returns: {

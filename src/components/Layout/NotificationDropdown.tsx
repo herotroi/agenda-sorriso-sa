@@ -13,8 +13,7 @@ export function NotificationDropdown() {
     unreadCount,
     markAsRead,
     markAllAsRead,
-    deleteNotification,
-    createAppointmentFromNotification
+    deleteNotification
   } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
@@ -34,31 +33,6 @@ export function NotificationDropdown() {
     }
   };
 
-  const handleCreateAppointment = async (notification: any) => {
-    if (!createAppointmentFromNotification) {
-      console.warn('createAppointmentFromNotification is not available');
-      return;
-    }
-
-    try {
-      const appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at' | 'date' | 'status'> = {
-        patient_id: null,
-        professional_id: notification.appointment_id,
-        procedure_id: null,
-        start_time: new Date().toISOString(),
-        end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        notes: `Criado a partir da notificação: ${notification.title}`,
-        price: null,
-        status_id: 1,
-        user_id: '', // Will be set by the backend
-        is_blocked: false
-      };
-
-      await createAppointmentFromNotification(notification.id, appointmentData);
-    } catch (error) {
-      console.error('Error creating appointment from notification:', error);
-    }
-  };
 
   return (
     <Popover>
@@ -137,18 +111,6 @@ export function NotificationDropdown() {
                     </div>
                   </div>
                   
-                  {notification.type === 'appointment_reminder' && createAppointmentFromNotification && (
-                    <div className="mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCreateAppointment(notification)}
-                        className="text-xs"
-                      >
-                        Criar Agendamento
-                      </Button>
-                    </div>
-                  )}
                 </div>
               ))}
             </CardContent>

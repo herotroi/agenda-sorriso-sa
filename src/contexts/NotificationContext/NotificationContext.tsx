@@ -12,7 +12,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Load notifications from database and subscribe to real-time changes
   useNotificationData({ setNotifications });
 
-  const { addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotificationActions({
+  const { markAsRead, markAllAsRead, deleteNotification } = useNotificationActions({
     notifications,
     setNotifications,
   });

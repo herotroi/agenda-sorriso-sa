@@ -29,5 +29,4 @@ export interface NotificationContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
-  createAppointmentFromNotification?: (notificationId: string, appointmentData: any) => Promise<void>;
 }
