@@ -2,7 +2,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, User, FileText } from 'lucide-react';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Professional, Appointment } from '@/types';
@@ -76,20 +76,8 @@ export function DayView({
     if (type === 'vacation') return 40;
     return 30; // agendamentos normais
   };
-  const PX_PER_MIN = 1.5; // 1.5px por minuto para cards maiores
+  const PX_PER_MIN = 1.5;
   const minutesFromMidnight = (date: Date) => date.getHours() * 60 + date.getMinutes();
-
-  // Gutter responsivo: 4px (sm), 8px (md), 12px (lg+)
-  const [GUTTER, setGUTTER] = useState(8);
-  useEffect(() => {
-    const update = () => {
-      const w = window.innerWidth;
-      setGUTTER(w < 640 ? 4 : w < 1024 ? 8 : 12);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
 
   if (loading) {
     return (
@@ -218,8 +206,10 @@ export function DayView({
                 style={{
                   top: `${top}px`,
                   height: `${height}px`,
-                  left: `calc(${leftPct}% + ${GUTTER / 2}px)`,
-                  right: `calc(${100 - (leftPct + widthPct)}% + ${GUTTER / 2}px)`,
+                  left: `${leftPct}%`,
+                  width: `${widthPct}%`,
+                  paddingLeft: '2px',
+                  paddingRight: '2px',
                   zIndex: 1 + laneIndex
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
