@@ -94,7 +94,7 @@ export function ProfessionalDetailView({
 
           {/* Área de conteúdo com scroll */}
           <ScrollArea className="flex-1 h-full">
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 max-w-full overflow-x-hidden">
               <ProfessionalDetailViewHeader
                 professional={professionalWithDefaults}
                 currentDate={currentDate}

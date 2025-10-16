@@ -133,7 +133,7 @@ export function DayView({
   }, [appointments]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-full overflow-hidden">
       <div className="text-center sticky top-0 bg-background z-30 pb-4 border-b shadow-none">
         <h3 className="text-lg font-semibold">
           {format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -144,7 +144,7 @@ export function DayView({
         </p>
       </div>
 
-      <div className="relative mt-2 overflow-hidden rounded-md border bg-white" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
+      <div className="relative mt-2 overflow-x-auto overflow-y-hidden rounded-md border bg-white max-w-full" style={{ height: `${24 * 60 * PX_PER_MIN}px` }}>
         {/* Horários à esquerda (posicionados absolutamente) */}
         <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 md:w-20 border-r bg-gray-50/50 z-0">
           {timeSlots.map((slot) => (
@@ -168,7 +168,7 @@ export function DayView({
         ))}
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
-        <div className="absolute left-12 sm:left-16 md:left-20 right-0 top-0 bottom-0 relative">
+        <div className="absolute left-12 sm:left-16 md:left-20 right-0 top-0 bottom-0 relative min-w-0">
           {/* Férias como faixa de fundo (não clicável) */}
           {appointments.filter(a => (a as any).type === 'vacation').map((appointment) => {
             const start = new Date(appointment.start_time);
