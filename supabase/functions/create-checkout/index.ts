@@ -82,12 +82,14 @@ serve(async (req) => {
     // Buscar prices ativos da Stripe para o plano especificado
     let priceId;
     try {
+      const productId = planId === 'monthly' ? 'prod_TFKKD8Xe5yUOQ5' : 'prod_TFLGsfXeZxyXBs';
       const interval = planId === 'monthly' ? 'month' : 'year';
-      logStep("Searching for active prices", { interval });
+      logStep("Searching for active prices", { interval, productId });
       
       const prices = await stripe.prices.list({
         active: true,
         type: 'recurring',
+        product: productId,
         limit: 100,
       });
 
@@ -97,12 +99,12 @@ serve(async (req) => {
       );
 
       if (!matchingPrice) {
-        logStep("ERROR: No active price found", { interval, planId });
+        logStep("ERROR: No active price found", { interval, planId, productId });
         throw new Error(`Nenhum plano ativo encontrado para ${planId}. Verifique seus produtos no Stripe.`);
       }
 
       priceId = matchingPrice.id;
-      logStep("Found active price", { priceId, amount: matchingPrice.unit_amount, interval });
+      logStep("Found active price", { priceId, amount: matchingPrice.unit_amount, interval, productId });
       
     } catch (stripeError) {
       logStep("ERROR: Failed to fetch prices", { error: stripeError });

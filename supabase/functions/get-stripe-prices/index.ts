@@ -29,20 +29,32 @@ serve(async (req) => {
     
     logStep("Fetching active prices from Stripe");
     
-    const prices = await stripe.prices.list({
+    // Buscar preços dos produtos específicos
+    const monthlyPrices = await stripe.prices.list({
       active: true,
       type: 'recurring',
+      product: 'prod_TFKKD8Xe5yUOQ5',
       limit: 100,
     });
 
-    logStep("Prices fetched", { count: prices.data.length });
+    const yearlyPrices = await stripe.prices.list({
+      active: true,
+      type: 'recurring',
+      product: 'prod_TFLGsfXeZxyXBs',
+      limit: 100,
+    });
+
+    logStep("Prices fetched", { 
+      monthlyCount: monthlyPrices.data.length,
+      yearlyCount: yearlyPrices.data.length 
+    });
 
     // Filtrar e organizar preços
-    const monthlyPrice = prices.data.find(
+    const monthlyPrice = monthlyPrices.data.find(
       price => price.recurring?.interval === 'month' && price.active
     );
     
-    const yearlyPrice = prices.data.find(
+    const yearlyPrice = yearlyPrices.data.find(
       price => price.recurring?.interval === 'year' && price.active
     );
 
