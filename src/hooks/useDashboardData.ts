@@ -171,13 +171,21 @@ export function useDashboardData() {
         return sum;
       }, 0) || 0;
 
-      // Valores Cancelados: "pagamento_cancelado" ou "sem_pagamento"
-      // Não incluir mais agendamentos sem payment_status aqui
+      // Valores Cancelados: 
+      // - "pagamento_cancelado" ou "sem_pagamento"
+      // - agendamentos com status cancelado (status_id=2)
       const cancelledRevenue = revenueData?.reduce((sum, appointment) => {
+        // Incluir se status de pagamento é cancelado ou sem pagamento
         if (appointment.payment_status === 'pagamento_cancelado' || 
             appointment.payment_status === 'sem_pagamento') {
           return sum + (appointment.price || 0);
         }
+        
+        // Incluir se o agendamento está cancelado (status_id=2)
+        if (appointment.status_id === 2) {
+          return sum + (appointment.price || 0);
+        }
+        
         return sum;
       }, 0) || 0;
 
