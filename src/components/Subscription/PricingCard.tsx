@@ -16,8 +16,9 @@ interface PricingCardProps {
   quantity?: number;
   onQuantityChange?: (quantity: number) => void;
   unitPrice?: number;
-  fixedFee?: number; // tarifa fixa adicionada ao total
+  fixedFee?: number;
   maxQuantity?: number;
+  billingPeriod?: 'monthly' | 'annual';
 }
 
 export function PricingCard({ 
@@ -33,22 +34,29 @@ export function PricingCard({
   onQuantityChange,
   unitPrice = 0,
   fixedFee = 0,
-  maxQuantity = 10
+  maxQuantity = 10,
+  billingPeriod
 }: PricingCardProps) {
   const isPaidPlan = price > 0 || unitPrice > 0;
   const totalPrice = unitPrice * quantity + (fixedFee || 0);
 
   return (
     <Card className={`relative ${isPopular ? 'border-primary shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
-      {isPopular && (
-        <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
-          Mais Popular
+      {isPopular && billingPeriod === 'annual' && (
+        <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-green-600 text-white">
+          💰 Mais Econômico
         </Badge>
       )}
       
       {isCurrentPlan && (
         <Badge className="absolute -top-2 right-4 bg-primary text-primary-foreground">
           Plano Atual
+        </Badge>
+      )}
+      
+      {billingPeriod && (
+        <Badge variant="outline" className="absolute -top-2 left-4">
+          {billingPeriod === 'monthly' ? 'Mensal' : 'Anual'}
         </Badge>
       )}
       

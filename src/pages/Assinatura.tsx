@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { PricingCard } from '@/components/Subscription/PricingCard';
+import { BillingPeriodToggle } from '@/components/Subscription/BillingPeriodToggle';
 import { CouponSection } from '@/components/Configuracoes/CouponSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,37 +32,16 @@ const getDefaultPlans = () => [
     },
   },
   {
-    id: 'monthly',
-    title: 'Plano Mensal',
+    id: 'paid',
+    title: 'Planos',
     price: 45,
-    period: 'mês',
+    period: 'período',
     features: [
       'Agendamentos ilimitados',
       'Pacientes ilimitados',
       'Procedimentos ilimitados',
       'Acesso completo ao prontuário',
     ],
-    limits: {
-      appointments: -1,
-      patients: -1,
-      professionals: -1,
-      procedures: -1,
-      hasEhr: true,
-    },
-  },
-  {
-    id: 'annual',
-    title: 'Plano Anual',
-    price: 39,
-    period: 'mês',
-    features: [
-      'Agendamentos ilimitados',
-      'Pacientes ilimitados',
-      'Procedimentos ilimitados',
-      'Acesso completo ao prontuário',
-      '+ econômico',
-    ],
-    isPopular: true,
     limits: {
       appointments: -1,
       patients: -1,
@@ -81,8 +61,8 @@ export default function Assinatura() {
   const [plans, setPlans] = useState(getDefaultPlans());
   const [monthlyPrices, setMonthlyPrices] = useState<any[]>([]);
   const [yearlyPrices, setYearlyPrices] = useState<any[]>([]);
-  const [monthlyQuantity, setMonthlyQuantity] = useState(1);
-  const [annualQuantity, setAnnualQuantity] = useState(1);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [quantity, setQuantity] = useState(1);
 
   const checkSubscription = async () => {
     try {
@@ -178,14 +158,16 @@ export default function Assinatura() {
     loadData();
   }, []);
 
-  // Inicializar quantidade baseada no plano atual do usuário
+  // Inicializar quantidade e período baseado no plano atual do usuário
   useEffect(() => {
     if (currentSubscription && usageStats) {
       const contractedProfessionals = usageStats.professionals_count || 1;
-      if (currentSubscription.plan_type === 'monthly') {
-        setMonthlyQuantity(contractedProfessionals);
-      } else if (currentSubscription.plan_type === 'annual') {
-        setAnnualQuantity(contractedProfessionals);
+      setQuantity(contractedProfessionals);
+      
+      if (currentSubscription.plan_type === 'annual') {
+        setBillingPeriod('annual');
+      } else {
+        setBillingPeriod('monthly');
       }
     }
   }, [currentSubscription, usageStats]);
@@ -201,8 +183,7 @@ export default function Assinatura() {
       return;
     }
 
-    const quantity = planId === 'monthly' ? monthlyQuantity : annualQuantity;
-    const prices = planId === 'monthly' ? monthlyPrices : yearlyPrices;
+    const prices = billingPeriod === 'monthly' ? monthlyPrices : yearlyPrices;
     const selectedPrice = getPriceForQuantity(prices, quantity);
 
     if (!selectedPrice.priceId) {
@@ -210,7 +191,7 @@ export default function Assinatura() {
       return;
     }
     
-    console.log('Iniciando assinatura para:', planId, 'Quantidade:', quantity, 'Price:', selectedPrice);
+    console.log('Iniciando assinatura:', billingPeriod, 'Quantidade:', quantity, 'Price:', selectedPrice);
     setLoading(planId);
     
     try {
@@ -369,27 +350,37 @@ export default function Assinatura() {
       {!hasAutomacao && (
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Planos Disponíveis</h2>
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl">
+          
+          <BillingPeriodToggle value={billingPeriod} onChange={setBillingPeriod} />
+          
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {plans.map((plan) => {
-              const monthlyPrice = getPriceForQuantity(monthlyPrices, monthlyQuantity);
-              const yearlyPrice = getPriceForQuantity(yearlyPrices, annualQuantity);
+              const currentPrices = billingPeriod === 'monthly' ? monthlyPrices : yearlyPrices;
+              const selectedPrice = getPriceForQuantity(currentPrices, quantity);
+              const isPaidPlan = plan.id === 'paid';
+              const maxQty = currentPrices.length > 0 ? Math.max(...currentPrices.map(p => p.quantity)) : 30;
               
               return (
                 <PricingCard
                   key={plan.id}
                   title={plan.title}
-                  price={plan.id === 'monthly' ? monthlyPrice.total : plan.id === 'annual' ? yearlyPrice.total : plan.price}
-                  period={plan.period}
+                  price={isPaidPlan ? selectedPrice.total : plan.price}
+                  period={isPaidPlan ? (billingPeriod === 'monthly' ? 'mês' : 'ano') : plan.period}
                   features={plan.features}
-                  isPopular={plan.isPopular}
-                  isCurrentPlan={currentSubscription?.plan_type === plan.id}
+                  isPopular={billingPeriod === 'annual' && isPaidPlan}
+                  isCurrentPlan={
+                    (currentSubscription?.plan_type === 'monthly' && billingPeriod === 'monthly' && isPaidPlan) ||
+                    (currentSubscription?.plan_type === 'annual' && billingPeriod === 'annual' && isPaidPlan) ||
+                    (currentSubscription?.plan_type === 'free' && plan.id === 'free')
+                  }
                   onSubscribe={() => handleSubscribe(plan.id)}
                   loading={loading === plan.id}
-                  quantity={plan.id === 'monthly' ? monthlyQuantity : plan.id === 'annual' ? annualQuantity : 1}
-                  onQuantityChange={plan.id === 'monthly' ? setMonthlyQuantity : plan.id === 'annual' ? setAnnualQuantity : undefined}
-                  unitPrice={plan.id === 'monthly' ? monthlyPrice.unitAmount : plan.id === 'annual' ? yearlyPrice.unitAmount : 0}
-                  fixedFee={plan.id === 'monthly' ? (monthlyPrice.flatFee || 0) : plan.id === 'annual' ? (yearlyPrice.flatFee || 0) : 0}
-                  maxQuantity={plan.id === 'monthly' ? (monthlyPrices.length > 0 ? Math.max(...monthlyPrices.map(p => p.quantity)) : 10) : plan.id === 'annual' ? (yearlyPrices.length > 0 ? Math.max(...yearlyPrices.map(p => p.quantity)) : 10) : 1}
+                  quantity={isPaidPlan ? quantity : 1}
+                  onQuantityChange={isPaidPlan ? setQuantity : undefined}
+                  unitPrice={isPaidPlan ? selectedPrice.unitAmount : 0}
+                  fixedFee={isPaidPlan ? (selectedPrice.flatFee || 0) : 0}
+                  maxQuantity={isPaidPlan ? maxQty : 1}
+                  billingPeriod={isPaidPlan ? billingPeriod : undefined}
                 />
               );
             })}
