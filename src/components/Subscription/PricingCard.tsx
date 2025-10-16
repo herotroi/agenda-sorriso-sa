@@ -47,12 +47,18 @@ export function PricingCard({
   // Determinar o texto do botão baseado no contexto
   const getButtonText = () => {
     if (loading) return 'Processando...';
-    if (isCurrentPlan) return 'Plano Atual';
-    if (!isPaidPlan) return 'Plano Atual';
     
-    if (hasActivePaidPlan) {
+    // Se é plano gratuito e está ativo
+    if (!isPaidPlan && isCurrentPlan) return 'Plano Atual';
+    
+    if (isPaidPlan && hasActivePaidPlan) {
+      // Se mudou a quantidade, permitir upgrade/downgrade mesmo sendo o mesmo período
       if (quantity > currentProfessionals) return 'Fazer Upgrade';
       if (quantity < currentProfessionals) return 'Fazer Downgrade';
+      
+      // Se é exatamente o mesmo plano
+      if (isCurrentPlan) return 'Plano Atual';
+      
       return 'Trocar Plano';
     }
     
@@ -162,9 +168,9 @@ export function PricingCard({
         {/* Botão */}
         <Button 
           className="w-full mt-4" 
-          variant={isCurrentPlan ? "outline" : "default"}
+          variant={isCurrentPlan && !isPaidPlan ? "outline" : "default"}
           onClick={onSubscribe}
-          disabled={isCurrentPlan || loading}
+          disabled={(isCurrentPlan && !isPaidPlan) || loading}
         >
           {loading ? (
             <>

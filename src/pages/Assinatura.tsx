@@ -297,7 +297,12 @@ export default function Assinatura() {
 
       if (error) {
         console.error('Erro ao acessar portal:', error);
-        toast.error(`Erro ao acessar portal: ${error.message || 'Tente novamente.'}`);
+        // Se o erro for de configuração do portal, mostrar mensagem mais amigável
+        if (error.message?.includes('configuration')) {
+          toast.error('O portal de gerenciamento precisa ser configurado. Entre em contato com o suporte.');
+        } else {
+          toast.error(`Erro ao acessar portal: ${error.message || 'Tente novamente.'}`);
+        }
         return;
       }
 
@@ -472,8 +477,8 @@ export default function Assinatura() {
                   features={plan.features}
                   isPopular={billingPeriod === 'annual' && isPaidPlan}
                   isCurrentPlan={
-                    (currentSubscription?.plan_type === 'monthly' && billingPeriod === 'monthly' && isPaidPlan) ||
-                    (currentSubscription?.plan_type === 'annual' && billingPeriod === 'annual' && isPaidPlan) ||
+                    (currentSubscription?.plan_type === 'monthly' && billingPeriod === 'monthly' && isPaidPlan && quantity === (currentSubscription?.professionals_purchased || 1)) ||
+                    (currentSubscription?.plan_type === 'annual' && billingPeriod === 'annual' && isPaidPlan && quantity === (currentSubscription?.professionals_purchased || 1)) ||
                     (currentSubscription?.plan_type === 'free' && plan.id === 'free')
                   }
                   onSubscribe={() => handleSubscribe(plan.id)}
