@@ -28,13 +28,6 @@ export function useAppointmentsData() {
     console.log('🔄 Fetching appointments data...');
     setRefreshing(true);
     try {
-      // Buscar o status de "Cancelado"
-      const { data: statuses } = await supabase
-        .from('appointment_statuses')
-        .select('id, key')
-        .eq('key', 'cancelled')
-        .single();
-
       const appointmentsRes = await supabase
         .from('appointments')
         .select(`
@@ -45,7 +38,6 @@ export function useAppointmentsData() {
           appointment_statuses(label, color, key)
         `)
         .eq('user_id', user.id)
-        .neq('status_id', statuses?.id || 999) // Excluir cancelados
         .order('start_time', { ascending: false })
         .limit(200);
 
