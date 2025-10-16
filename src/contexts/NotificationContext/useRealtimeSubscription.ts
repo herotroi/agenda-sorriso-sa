@@ -3,17 +3,20 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from './types';
 import { detectAppointmentChanges } from './utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseRealtimeSubscriptionProps {
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
 }
 
 export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscriptionProps) => {
+  const { user } = useAuth();
   useEffect(() => {
+    if (!user) return;
     console.log('🔔 Setting up appointment change notifications...');
     
-    // Create a unique channel name
-    const channelName = `appointment-changes-${Date.now()}`;
+    // Channel name por usuário para evitar múltiplas subscrições
+    const channelName = `appointment-changes-${user.id}`;
     
     const channel = supabase
       .channel(channelName)
@@ -33,7 +36,7 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
             
             const changes = detectAppointmentChanges(oldAppointment, newAppointment);
             
-            if (changes.length > 0) {
+            if (changes.length > 0 && newAppointment.user_id === user.id) {
               console.log('📝 Changes detected:', changes);
               addNotification({
                 title: 'Agendamento Alterado',
@@ -56,6 +59,7 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           console.log('➕ New appointment created payload:', payload);
           if (payload.new) {
             const newAppointment = payload.new as any;
+            if (newAppointment.user_id !== user.id) return; // ignore other users
             addNotification({
               title: 'Novo Agendamento',
               message: 'Um novo agendamento foi criado',
@@ -76,6 +80,7 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           console.log('🗑️ Appointment deleted payload:', payload);
           if (payload.old) {
             const deletedAppointment = payload.old as any;
+            if (deletedAppointment.user_id !== user.id) return; // ignore other users
             addNotification({
               title: 'Agendamento Excluído',
               message: 'Um agendamento foi excluído',
@@ -98,5 +103,5 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
       console.log('🔕 Cleaning up appointment notifications...');
       supabase.removeChannel(channel);
     };
-  }, [addNotification]);
+  }, [addNotification, user?.id]);
 };
