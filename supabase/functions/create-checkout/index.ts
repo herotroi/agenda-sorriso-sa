@@ -64,6 +64,23 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
+    // Validar que o preço não pertence ao produto excluído
+    const EXCLUDED_PRODUCT_ID = 'prod_TFLGsfXeZxyXBs';
+    try {
+      const priceData = await stripe.prices.retrieve(priceId);
+      if (priceData.product === EXCLUDED_PRODUCT_ID) {
+        logStep("ERROR: Attempting to use excluded product", { priceId, productId: priceData.product });
+        throw new Error("Este plano não está mais disponível");
+      }
+      logStep("Price validated", { priceId, productId: priceData.product });
+    } catch (stripeError: any) {
+      if (stripeError.message?.includes("não está mais disponível")) {
+        throw stripeError;
+      }
+      logStep("ERROR: Failed to validate price", { error: stripeError });
+      throw new Error("Erro ao validar o plano selecionado");
+    }
+    
     // Verificar se já existe um cliente Stripe
     let customerId;
     try {
