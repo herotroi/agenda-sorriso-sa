@@ -134,7 +134,7 @@ export function useDashboardData() {
       // Query para receita do período - DEVE incluir user_id
       let revenueQuery = supabase
         .from('appointments')
-        .select('price, status_id, payment_status')
+        .select('price, status_id, payment_status, payment_method')
         .eq('user_id', user.id)
         .not('price', 'is', null);
 
@@ -154,19 +154,28 @@ export function useDashboardData() {
         return sum;
       }, 0) || 0;
 
-      // A Receber: "aguardando_pagamento" ou "nao_pagou"
+      // A Receber: 
+      // - "aguardando_pagamento" ou "nao_pagou"
+      // - agendamentos confirmados (status_id=1) sem payment_method ou payment_status
       const receivableRevenue = revenueData?.reduce((sum, appointment) => {
+        // Incluir se status de pagamento é "aguardando_pagamento" ou "nao_pagou"
         if (appointment.payment_status === 'aguardando_pagamento' || appointment.payment_status === 'nao_pagou') {
           return sum + (appointment.price || 0);
         }
+        
+        // Incluir se é confirmado (status_id=1) e não tem payment_method OU payment_status
+        if (appointment.status_id === 1 && (!appointment.payment_method || !appointment.payment_status)) {
+          return sum + (appointment.price || 0);
+        }
+        
         return sum;
       }, 0) || 0;
 
-      // Valores Cancelados: "pagamento_cancelado" ou "sem_pagamento" (ou null/undefined)
+      // Valores Cancelados: "pagamento_cancelado" ou "sem_pagamento"
+      // Não incluir mais agendamentos sem payment_status aqui
       const cancelledRevenue = revenueData?.reduce((sum, appointment) => {
         if (appointment.payment_status === 'pagamento_cancelado' || 
-            appointment.payment_status === 'sem_pagamento' || 
-            !appointment.payment_status) {
+            appointment.payment_status === 'sem_pagamento') {
           return sum + (appointment.price || 0);
         }
         return sum;
