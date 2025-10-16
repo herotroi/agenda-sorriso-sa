@@ -308,13 +308,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
       const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       endOfMonth.setHours(23, 59, 59, 999);
 
-      // Buscar o status de "Cancelado"
-      const { data: statuses } = await supabase
-        .from('appointment_statuses')
-        .select('id, key')
-        .eq('key', 'cancelled')
-        .single();
-
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -326,7 +319,6 @@ export function useProfessionalDetailData(professionalId: string, selectedDate: 
         `)
         .eq('professional_id', professionalId)
         .eq('user_id', user.id)
-        .neq('status_id', statuses?.id || 999) // Excluir cancelados
         .gte('start_time', startOfMonth.toISOString())
         .lte('start_time', endOfMonth.toISOString())
         .order('start_time');
