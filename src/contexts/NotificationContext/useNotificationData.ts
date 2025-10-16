@@ -13,9 +13,17 @@ export const useNotificationData = ({ setNotifications }: UseNotificationDataPro
       console.log('📊 Fetching notifications from database...');
       
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.log('📊 No user found, skipping notification fetch');
+          return;
+        }
+
         const { data, error } = await supabase
           .from('notifications')
           .select('*')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50);
 

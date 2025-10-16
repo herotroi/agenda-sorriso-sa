@@ -35,13 +35,31 @@ export default function Notificacoes() {
 
   const fetchNotifications = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotifications(data || []);
+      
+      // Remove duplicatas baseado no ID
+      const uniqueNotifications = data?.reduce((acc: Notification[], current) => {
+        const exists = acc.find(item => item.id === current.id);
+        if (!exists) {
+          acc.push(current);
+        }
+        return acc;
+      }, []) || [];
+      
+      setNotifications(uniqueNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       toast({
