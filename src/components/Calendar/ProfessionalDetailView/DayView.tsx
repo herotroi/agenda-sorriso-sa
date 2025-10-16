@@ -202,7 +202,7 @@ export function DayView({
             return (
               <Card
                 key={appointment.id}
-                className={`absolute cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)}`}
+                className={`absolute cursor-pointer overflow-hidden shadow-none ${getCardStyle(itemType)} relative`}
                 style={{
                   top: `${top}px`,
                   height: `${height}px`,
@@ -215,9 +215,9 @@ export function DayView({
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
               >
-                <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden w-full">
+                <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden w-full pr-16 sm:pr-20">
                   <div className="flex flex-col gap-1 w-full min-w-0">
-                    <div className="flex items-center justify-between gap-1 w-full min-w-0">
+                    <div className="flex items-center gap-1 w-full min-w-0">
                       <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm text-gray-600 flex-shrink min-w-0">
                         <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
                         <span className="truncate">
@@ -226,9 +226,6 @@ export function DayView({
                             : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
                         </span>
                       </div>
-                      <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}>
-                        {appointment.appointment_statuses?.label || 'Status não definido'}
-                      </Badge>
                     </div>
                     {appointment.patients && (
                       <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm min-w-0">
@@ -239,6 +236,9 @@ export function DayView({
                       </div>
                     )}
                   </div>
+                  <Badge className={`${getStatusColor(appointment.status_id, itemType)} absolute top-1 right-1 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}>
+                    {appointment.appointment_statuses?.label || 'Status não definido'}
+                  </Badge>
                   {appointment.procedures && !isSpecialItem && (
                     <div className="mt-1 sm:mt-1.5 text-[10px] sm:text-xs md:text-sm text-gray-600 flex items-center gap-1">
                       <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
