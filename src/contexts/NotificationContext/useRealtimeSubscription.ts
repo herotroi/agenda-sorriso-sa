@@ -5,6 +5,9 @@ import { Notification } from './types';
 import { detectAppointmentChanges } from './utils';
 import { useAuth } from '@/contexts/AuthContext';
 
+// In-memory dedupe for realtime events to avoid duplicate inserts due to race conditions
+const inFlightEvents = new Map<string, number>();
+
 interface UseRealtimeSubscriptionProps {
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
 }
@@ -39,6 +42,15 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
             
             if (changes.length > 0 && newAppointment.user_id === user.id) {
               console.log('📝 Changes detected:', changes);
+              const key = `appointment_updated:${newAppointment.id}`;
+              const now = Date.now();
+              const last = inFlightEvents.get(key);
+              if (last && now - last < 2500) {
+                console.log('⏭️ Skipping duplicate UPDATE notification', { key });
+                return;
+              }
+              inFlightEvents.set(key, now);
+              setTimeout(() => inFlightEvents.delete(key), 3000);
               addNotification({
                 title: 'Agendamento Alterado',
                 message: `Agendamento foi modificado: ${changes.join(', ')}`,
@@ -61,6 +73,15 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           if (payload.new) {
             const newAppointment = payload.new as any;
             if (newAppointment.user_id !== user.id) return;
+            const key = `appointment_created:${newAppointment.id}`;
+            const now = Date.now();
+            const last = inFlightEvents.get(key);
+            if (last && now - last < 2500) {
+              console.log('⏭️ Skipping duplicate CREATE notification', { key });
+              return;
+            }
+            inFlightEvents.set(key, now);
+            setTimeout(() => inFlightEvents.delete(key), 3000);
             addNotification({
               title: 'Novo Agendamento',
               message: 'Um novo agendamento foi criado',
@@ -82,6 +103,15 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           if (payload.old) {
             const deletedAppointment = payload.old as any;
             if (deletedAppointment.user_id !== user.id) return;
+            const key = `appointment_deleted:${deletedAppointment.id}`;
+            const now = Date.now();
+            const last = inFlightEvents.get(key);
+            if (last && now - last < 2500) {
+              console.log('⏭️ Skipping duplicate DELETE notification', { key });
+              return;
+            }
+            inFlightEvents.set(key, now);
+            setTimeout(() => inFlightEvents.delete(key), 3000);
             addNotification({
               title: 'Agendamento Excluído',
               message: 'Um agendamento foi excluído',
@@ -104,5 +134,5 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
       console.log('🔕 Cleaning up appointment notifications...');
       supabase.removeChannel(channel);
     };
-  }, [addNotification, user?.id]);
+  }, [user?.id]);
 };

@@ -5,6 +5,9 @@ import { Notification } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+// In-memory idempotency guard to prevent duplicate inserts from race conditions
+const inFlightNotificationKeys = new Map<string, number>();
+
 interface UseNotificationActionsProps {
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
@@ -23,6 +26,17 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     }
     
     try {
+      // In-memory idempotency guard to avoid race-condition duplicates across rapid events
+      const key = `${notification.type}:${notification.appointmentId ?? 'none'}`;
+      const now = Date.now();
+      const last = inFlightNotificationKeys.get(key);
+      if (last && now - last < 2500) {
+        console.log('⏭️ Skipping in-memory duplicate notification', { key });
+        return;
+      }
+      inFlightNotificationKeys.set(key, now);
+      setTimeout(() => inFlightNotificationKeys.delete(key), 3000);
+
       // Verificar duplicatas recentes (últimos 3 segundos) com mesmo tipo e appointment_id
       const timeWindowAgo = new Date(Date.now() - 3000).toISOString();
       
