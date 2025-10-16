@@ -217,15 +217,13 @@ export function DayView({
               >
                 <CardContent className="p-1.5 sm:p-2 md:p-3 h-full overflow-hidden w-full">
                   <div className="flex flex-col gap-1 w-full min-w-0">
-                    <div className="flex items-center justify-between gap-1 sm:gap-2 w-full min-w-0">
-                      <div className="flex items-center gap-1 text-[10px] sm:text-xs md:text-sm text-gray-600 flex-shrink min-w-0">
-                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
-                        <span className="truncate">
-                          {isSpecialItem && itemType === 'vacation'
-                            ? 'Dia todo'
-                            : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 w-full min-w-0">
+                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0 text-gray-600" />
+                      <span className="text-[10px] sm:text-xs md:text-sm text-gray-600 flex-shrink-0">
+                        {isSpecialItem && itemType === 'vacation'
+                          ? 'Dia todo'
+                          : `${format(new Date(appointment.start_time), 'HH:mm')} - ${format(new Date(appointment.end_time), 'HH:mm')}`}
+                      </span>
                       <Badge className={`${getStatusColor(appointment.status_id, itemType)} flex-shrink-0 text-[9px] sm:text-[10px] md:text-xs px-1 sm:px-1.5 py-0.5 whitespace-nowrap`}>
                         {appointment.appointment_statuses?.label || 'Status não definido'}
                       </Badge>
