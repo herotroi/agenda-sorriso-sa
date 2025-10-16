@@ -239,11 +239,11 @@ export default function Assinatura() {
       currentSubscription.plan_type !== 'free' && 
       currentSubscription.stripe_subscription_id;
 
-    // Se já tem assinatura ativa no mesmo período e está apenas mudando quantidade, usar update-subscription
+    // Se já tem assinatura ativa no mesmo período
     if (hasActiveSubscription && billingPeriod === currentSubscription.plan_type) {
       const isDowngrade = quantity < currentProfessionals;
       const isUpgrade = quantity > currentProfessionals;
-      
+
       if (isDowngrade) {
         // Verificar quantos profissionais ativos o usuário tem
         const { data: activeProfessionals } = await supabase
@@ -265,42 +265,63 @@ export default function Assinatura() {
         // Confirmação para downgrade
         const confirmDowngrade = window.confirm(
           `Tem certeza que deseja reduzir de ${currentProfessionals} para ${quantity} profissional(is)?\n\n` +
-          `O valor não será reembolsado, mas será aplicado como crédito no próximo mês.\n` +
+          `O valor não será reembolsado, mas será aplicado como crédito no próximo período.\n` +
           `A partir da próxima fatura você pagará ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}.`
         );
-        
         if (!confirmDowngrade) return;
-      } else if (isUpgrade) {
-        // Confirmação para upgrade
+
+        try {
+          setLoading(planId);
+          const { data, error } = await supabase.functions.invoke('update-subscription', {
+            body: { quantity }
+          });
+          if (error) throw error;
+          toast.success(data.message);
+          await checkSubscription();
+          await fetchUsageStats();
+        } catch (error: any) {
+          console.error('Erro ao atualizar assinatura (downgrade):', error);
+          toast.error(error.message || 'Erro ao atualizar assinatura');
+        } finally {
+          setLoading('');
+        }
+        return;
+      }
+
+      if (isUpgrade) {
+        // Confirmar upgrade com novo fluxo: contratamos NOVA assinatura e cancelamos a antiga com reembolso após pagamento
         const confirmUpgrade = window.confirm(
           `Confirmar upgrade de ${currentProfessionals} para ${quantity} profissional(is)?\n\n` +
-          `A diferença será cobrada proporcionalmente agora.\n` +
-          `A partir da próxima fatura: R$ ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}`
+          `Você será cobrado pelo novo plano agora (R$ ${selectedPrice.total.toFixed(2)}/${billingPeriod === 'monthly' ? 'mês' : 'ano'}).\n` +
+          `Após o pagamento, o plano antigo será cancelado automaticamente com reembolso proporcional do período não utilizado.`
         );
-        
         if (!confirmUpgrade) return;
+
+        try {
+          setLoading(planId);
+          const { data, error } = await supabase.functions.invoke('create-checkout', {
+            body: {
+              priceId: selectedPrice.priceId,
+              quantity,
+            },
+          });
+          if (error) throw error;
+          if (data?.url) {
+            window.open(data.url, '_blank');
+            toast.info('Abrimos a página de pagamento em uma nova aba. Após confirmar, o plano antigo será cancelado com reembolso.');
+          } else {
+            toast.error('Erro: URL de pagamento não recebida');
+          }
+        } catch (error: any) {
+          console.error('Erro ao iniciar upgrade:', error);
+          toast.error(error.message || 'Erro ao iniciar upgrade');
+        } finally {
+          setLoading('');
+        }
+        return;
       }
 
-      try {
-        setLoading(planId);
-
-        const { data, error } = await supabase.functions.invoke('update-subscription', {
-          body: { quantity }
-        });
-
-        if (error) throw error;
-
-        toast.success(data.message);
-        
-        // Atualizar dados
-        await checkSubscription();
-        await fetchUsageStats();
-      } catch (error: any) {
-        console.error('Erro ao atualizar assinatura:', error);
-        toast.error(error.message || 'Erro ao atualizar assinatura');
-      } finally {
-        setLoading('');
-      }
+      // Se não for upgrade nem downgrade, nada a fazer
       return;
     }
 

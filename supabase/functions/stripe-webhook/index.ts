@@ -70,6 +70,7 @@ serve(async (req) => {
 
       const userId = session.metadata?.user_id;
       const professionalsPurchased = parseInt(session.metadata?.professionals_count || "1", 10);
+      const previousSubscriptionId = session.metadata?.previous_subscription_id || null;
 
       if (!userId) {
         logStep("ERROR: No user_id in metadata");
@@ -77,23 +78,23 @@ serve(async (req) => {
       }
 
       // Determinar tipo de plano baseado no intervalo da assinatura
-      const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-      const planType = subscription.items.data[0].price.recurring?.interval === "year" ? "annual" : "monthly";
+      const newSubscription = await stripe.subscriptions.retrieve(session.subscription as string);
+      const planType = newSubscription.items.data[0].price.recurring?.interval === "year" ? "annual" : "monthly";
 
-      logStep("Updating subscription", { userId, planType, professionalsPurchased });
+      logStep("Upserting new subscription into DB", { userId, planType, professionalsPurchased, newSubId: newSubscription.id });
 
-      // Atualizar ou criar assinatura
+      // Upsert da nova assinatura primeiro (contrato ativo após pagamento)
       const { error: upsertError } = await supabaseClient
         .from("user_subscriptions")
         .upsert({
           user_id: userId,
           stripe_customer_id: session.customer as string,
-          stripe_subscription_id: session.subscription as string,
+          stripe_subscription_id: newSubscription.id,
           plan_type: planType,
           status: "active",
           professionals_purchased: professionalsPurchased,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_start: new Date(newSubscription.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(newSubscription.current_period_end * 1000).toISOString(),
         }, { onConflict: 'user_id' });
 
       if (upsertError) {
@@ -101,7 +102,55 @@ serve(async (req) => {
         throw upsertError;
       }
 
-      logStep("Subscription updated successfully");
+      logStep("New subscription recorded successfully");
+
+      // Se havia uma assinatura anterior, cancelar e reembolsar proporcionalmente o período não utilizado
+      if (previousSubscriptionId && previousSubscriptionId !== newSubscription.id) {
+        try {
+          logStep("Processing cancellation + refund for previous subscription", { previousSubscriptionId });
+
+          // Buscar dados da assinatura anterior para cálculo de proporcionalidade
+          const oldSub = await stripe.subscriptions.retrieve(previousSubscriptionId);
+          const periodStart = oldSub.current_period_start * 1000;
+          const periodEnd = oldSub.current_period_end * 1000;
+          const now = Date.now();
+
+          const totalMs = Math.max(periodEnd - periodStart, 1);
+          const remainingMs = Math.max(periodEnd - now, 0);
+          const ratio = Math.min(Math.max(remainingMs / totalMs, 0), 1);
+
+          // Buscar última fatura paga da assinatura antiga
+          const invoices = await stripe.invoices.list({ subscription: previousSubscriptionId, limit: 1 });
+          const lastInvoice = invoices.data[0];
+
+          if (lastInvoice?.paid && lastInvoice.payment_intent) {
+            const amountPaid = lastInvoice.amount_paid || 0; // em centavos
+            const refundAmount = Math.floor(amountPaid * ratio);
+
+            logStep("Calculated refund", { amountPaid, ratio, refundAmount });
+
+            if (refundAmount > 0) {
+              await stripe.refunds.create({
+                payment_intent: String(lastInvoice.payment_intent),
+                amount: refundAmount,
+                reason: 'requested_by_customer',
+              });
+              logStep("Refund issued successfully", { refundAmount });
+            } else {
+              logStep("No refund necessary (zero or negative amount)", { refundAmount });
+            }
+          } else {
+            logStep("No paid invoice found for previous subscription; skipping refund");
+          }
+
+          // Cancelar imediatamente a assinatura anterior (após novo pagamento concluído)
+          await stripe.subscriptions.cancel(previousSubscriptionId);
+          logStep("Previous subscription canceled successfully");
+        } catch (cancelErr) {
+          logStep("ERROR while canceling/refunding previous subscription", { error: String(cancelErr) });
+          // Não falhar o webhook, pois a nova assinatura já foi criada; operadores podem intervir pelos logs
+        }
+      }
     }
 
     // Processar evento de assinatura atualizada

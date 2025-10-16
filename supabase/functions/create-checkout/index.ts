@@ -41,6 +41,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
+    // Create an authenticated Supabase client for RLS-protected reads
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) {
@@ -100,7 +107,23 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
-    // Verificar se já tem assinatura ativa para configurar upgrade/downgrade
+    // Buscar assinatura atual do usuário para enviar no metadata (para cancelamento pós-pagamento)
+    let previousSubscriptionId: string | null = null;
+    try {
+      const { data: existingSub, error: existingSubError } = await supabaseAuth
+        .from('user_subscriptions')
+        .select('stripe_subscription_id, status')
+        .eq('user_id', user.id)
+        .single();
+      if (!existingSubError && existingSub?.stripe_subscription_id) {
+        previousSubscriptionId = existingSub.stripe_subscription_id;
+        logStep('Found existing subscription for metadata', { previousSubscriptionId });
+      }
+    } catch (e) {
+      logStep('WARN: Could not fetch existing subscription', { error: String(e) });
+    }
+    
+    // Criar sessão de checkout para NOVA assinatura (substituição do plano)
     const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -117,6 +140,7 @@ serve(async (req) => {
         user_id: user.id,
         price_id: priceId,
         professionals_count: quantity,
+        previous_subscription_id: previousSubscriptionId || '',
       },
     };
 
