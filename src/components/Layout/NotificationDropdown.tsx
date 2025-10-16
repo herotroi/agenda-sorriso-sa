@@ -1,5 +1,5 @@
 
-import { Bell, Calendar, Check } from 'lucide-react';
+import { Bell, Calendar, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,16 @@ export function NotificationDropdown() {
     notifications, 
     unreadCount,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    deleteNotification
   } = useNotifications();
+
+  const canDelete = (notification: any) => {
+    const createdAt = new Date(notification.timestamp).getTime();
+    const now = Date.now();
+    const dayInMs = 24 * 60 * 60 * 1000;
+    return now - createdAt >= dayInMs;
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -87,16 +95,28 @@ export function NotificationDropdown() {
                         </p>
                       </div>
                     </div>
-                    {!notification.read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => markAsRead(notification.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {!notification.read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsRead(notification.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {canDelete(notification) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteNotification(notification.id)}
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                 </div>

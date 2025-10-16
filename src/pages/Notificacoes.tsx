@@ -1,12 +1,19 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, Trash2 } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 
 export default function Notificacoes() {
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, deleteNotification } = useNotifications();
+
+  const canDelete = (notification: any) => {
+    const createdAt = new Date(notification.timestamp).getTime();
+    const now = Date.now();
+    const dayInMs = 24 * 60 * 60 * 1000;
+    return now - createdAt >= dayInMs;
+  };
 
 
   const getTypeColor = (type: string) => {
@@ -65,8 +72,8 @@ export default function Notificacoes() {
                       {new Date(notification.timestamp).toLocaleString('pt-BR')}
                     </p>
                   </div>
-                  {!notification.read && (
-                    <div className="ml-4">
+                  <div className="ml-4 flex gap-2">
+                    {!notification.read && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -75,8 +82,19 @@ export default function Notificacoes() {
                         <Check className="h-4 w-4 mr-1" />
                         Marcar como lida
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {canDelete(notification) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteNotification(notification.id)}
+                        className="text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
