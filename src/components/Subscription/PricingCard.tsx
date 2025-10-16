@@ -16,6 +16,7 @@ interface PricingCardProps {
   quantity?: number;
   onQuantityChange?: (quantity: number) => void;
   unitPrice?: number;
+  fixedFee?: number; // tarifa fixa adicionada ao total
   maxQuantity?: number;
 }
 
@@ -31,10 +32,11 @@ export function PricingCard({
   quantity = 1,
   onQuantityChange,
   unitPrice = 0,
+  fixedFee = 0,
   maxQuantity = 10
 }: PricingCardProps) {
   const isPaidPlan = price > 0 || unitPrice > 0;
-  const totalPrice = unitPrice * quantity;
+  const totalPrice = unitPrice * quantity + (fixedFee || 0);
   const savingsPerUnit = quantity > 1 && unitPrice > 0 ? (price / quantity - unitPrice) : 0;
 
   return (

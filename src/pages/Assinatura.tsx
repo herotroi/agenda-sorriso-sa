@@ -388,6 +388,7 @@ export default function Assinatura() {
                   quantity={plan.id === 'monthly' ? monthlyQuantity : plan.id === 'annual' ? annualQuantity : 1}
                   onQuantityChange={plan.id === 'monthly' ? setMonthlyQuantity : plan.id === 'annual' ? setAnnualQuantity : undefined}
                   unitPrice={plan.id === 'monthly' ? monthlyPrice.unitAmount : plan.id === 'annual' ? yearlyPrice.unitAmount : 0}
+                  fixedFee={plan.id === 'monthly' ? (monthlyPrice.flatFee || 0) : plan.id === 'annual' ? (yearlyPrice.flatFee || 0) : 0}
                   maxQuantity={plan.id === 'monthly' ? (monthlyPrices.length > 0 ? Math.max(...monthlyPrices.map(p => p.quantity)) : 10) : plan.id === 'annual' ? (yearlyPrices.length > 0 ? Math.max(...yearlyPrices.map(p => p.quantity)) : 10) : 1}
                 />
               );

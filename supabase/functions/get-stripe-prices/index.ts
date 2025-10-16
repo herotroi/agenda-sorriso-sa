@@ -117,33 +117,36 @@ serve(async (req) => {
       return results;
     };
 
-    // Helper para obter o preço unitário dado tiers e quantidade
-    const getUnitAmountForQuantity = (tiers: any[] | undefined, q: number, fallbackUnit?: number) => {
-      if (!tiers || tiers.length === 0) return (fallbackUnit ?? 0) / 100;
+    // Helper para obter valores do tier (unitário e tarifa fixa) para uma quantidade
+    const getAmountsForQuantity = (tiers: any[] | undefined, q: number, fallbackUnit?: number) => {
+      if (!tiers || tiers.length === 0) {
+        return { unitAmount: (fallbackUnit ?? 0) / 100, flatAmount: 0 };
+      }
       const tier = tiers.find((t: any) => t.up_to === null || t.up_to >= q) || tiers[tiers.length - 1];
-      const unit = tier?.unit_amount ?? tier?.unit_amount_decimal ?? null;
-      const flat = tier?.flat_amount ?? tier?.flat_amount_decimal ?? null;
-      if (unit !== null && unit !== undefined) return Number(unit) / 100;
-      if (flat !== null && flat !== undefined) return Number(flat) / 100 / q; // distribui flat pelo q
-      return (fallbackUnit ?? 0) / 100;
+      const unitRaw = tier?.unit_amount ?? tier?.unit_amount_decimal ?? (fallbackUnit ?? 0);
+      const flatRaw = tier?.flat_amount ?? tier?.flat_amount_decimal ?? 0;
+      const unitAmount = Number(unitRaw) / 100;
+      const flatAmount = Number(flatRaw) / 100;
+      return { unitAmount, flatAmount };
     };
 
     // Construir mapa de 1..maxQty para cada intervalo
     const MAX_QTY = 20; // limite seguro para UI
 
     // Mensal
-    const monthlyPricesArray: Array<{ quantity: number; unitAmount: number; priceId: string; total: number; currency: string }> = [];
+    const monthlyPricesArray: Array<{ quantity: number; unitAmount: number; flatFee: number; priceId: string; total: number; currency: string }> = [];
     monthlyPrices.data
       .filter(price => price.recurring?.interval === 'month' && price.active)
       .forEach(price => {
         for (let q = 1; q <= MAX_QTY; q++) {
-          const unitAmount = getUnitAmountForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
-          if (unitAmount > 0) {
+          const { unitAmount, flatAmount } = getAmountsForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
+          if (unitAmount > 0 || flatAmount > 0) {
             monthlyPricesArray.push({
               quantity: q,
               priceId: price.id,
               unitAmount,
-              total: unitAmount * q,
+              flatFee: flatAmount,
+              total: unitAmount * q + flatAmount,
               currency: price.currency,
             });
           }
@@ -151,18 +154,19 @@ serve(async (req) => {
       });
     
     // Anual
-    const yearlyPricesArray: Array<{ quantity: number; unitAmount: number; priceId: string; total: number; currency: string }> = [];
+    const yearlyPricesArray: Array<{ quantity: number; unitAmount: number; flatFee: number; priceId: string; total: number; currency: string }> = [];
     yearlyPrices.data
       .filter(price => price.recurring?.interval === 'year' && price.active)
       .forEach(price => {
         for (let q = 1; q <= MAX_QTY; q++) {
-          const unitAmount = getUnitAmountForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
-          if (unitAmount > 0) {
+          const { unitAmount, flatAmount } = getAmountsForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
+          if (unitAmount > 0 || flatAmount > 0) {
             yearlyPricesArray.push({
               quantity: q,
               priceId: price.id,
               unitAmount,
-              total: unitAmount * q,
+              flatFee: flatAmount,
+              total: unitAmount * q + flatAmount,
               currency: price.currency,
             });
           }
