@@ -281,7 +281,6 @@ export function useDashboardData() {
         .select('start_time, price, payment_status')
         .eq('user_id', user.id)
         .not('price', 'is', null)
-        .eq('payment_status', 'pagamento_realizado') // Apenas pagamento realizado no gráfico
         .order('start_time');
 
       if (startDate && endDate) {
