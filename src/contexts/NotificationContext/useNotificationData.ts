@@ -50,5 +50,100 @@ export const useNotificationData = ({ setNotifications }: UseNotificationDataPro
     };
 
     fetchNotifications();
+
+    // Setup realtime subscription for notifications table
+    const setupRealtimeNotifications = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      console.log('🔔 Setting up realtime notifications subscription...');
+      
+      const notificationsChannel = supabase
+        .channel(`notifications-realtime-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('🔔 New notification received:', payload);
+            if (payload.new) {
+              const newNotification: Notification = {
+                id: payload.new.id,
+                title: payload.new.title,
+                message: payload.new.message,
+                type: payload.new.type as any,
+                timestamp: new Date(payload.new.created_at),
+                read: payload.new.read,
+                appointmentId: payload.new.appointment_id || undefined
+              };
+              
+              setNotifications((prev) => [newNotification, ...prev]);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('🔔 Notification updated:', payload);
+            if (payload.new) {
+              setNotifications((prev) =>
+                prev.map((notif) =>
+                  notif.id === payload.new.id
+                    ? {
+                        ...notif,
+                        read: payload.new.read,
+                        title: payload.new.title,
+                        message: payload.new.message
+                      }
+                    : notif
+                )
+              );
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('🔔 Notification deleted:', payload);
+            if (payload.old) {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== payload.old.id)
+              );
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('🔗 Notifications subscription status:', status);
+        });
+
+      return notificationsChannel;
+    };
+
+    const channelPromise = setupRealtimeNotifications();
+
+    return () => {
+      channelPromise.then((channel) => {
+        if (channel) {
+          console.log('🔕 Cleaning up notifications subscription...');
+          supabase.removeChannel(channel);
+        }
+      });
+    };
   }, [setNotifications]);
 };

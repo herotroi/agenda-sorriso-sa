@@ -11,6 +11,7 @@ interface UseRealtimeSubscriptionProps {
 
 export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscriptionProps) => {
   const { user } = useAuth();
+  
   useEffect(() => {
     if (!user) return;
     console.log('🔔 Setting up appointment change notifications...');
@@ -59,7 +60,7 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           console.log('➕ New appointment created payload:', payload);
           if (payload.new) {
             const newAppointment = payload.new as any;
-            if (newAppointment.user_id !== user.id) return; // ignore other users
+            if (newAppointment.user_id !== user.id) return;
             addNotification({
               title: 'Novo Agendamento',
               message: 'Um novo agendamento foi criado',
@@ -80,7 +81,7 @@ export const useRealtimeSubscription = ({ addNotification }: UseRealtimeSubscrip
           console.log('🗑️ Appointment deleted payload:', payload);
           if (payload.old) {
             const deletedAppointment = payload.old as any;
-            if (deletedAppointment.user_id !== user.id) return; // ignore other users
+            if (deletedAppointment.user_id !== user.id) return;
             addNotification({
               title: 'Agendamento Excluído',
               message: 'Um agendamento foi excluído',
