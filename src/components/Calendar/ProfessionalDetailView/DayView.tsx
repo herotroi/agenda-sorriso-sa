@@ -168,7 +168,7 @@ export function DayView({
         ))}
 
         {/* Área de conteúdo (cards) alinhada com a coluna de horários */}
-        <div className="absolute left-10 sm:left-14 md:left-16 right-0 top-0 bottom-0 relative min-w-0">
+        <div className="absolute left-10 sm:left-14 md:left-16 right-0 top-0 bottom-0 relative min-w-0 pr-2 sm:pr-3 md:pr-4">
           {/* Férias como faixa de fundo (não clicável) */}
           {appointments.filter(a => (a as any).type === 'vacation').map((appointment) => {
             const start = new Date(appointment.start_time);
@@ -208,8 +208,9 @@ export function DayView({
                   height: `${height}px`,
                   left: `${leftPct}%`,
                   width: `${widthPct}%`,
-                  paddingLeft: '2px',
-                  paddingRight: '2px',
+                  paddingLeft: '3px',
+                  paddingRight: '3px',
+                  boxSizing: 'border-box',
                   zIndex: 1 + laneIndex
                 }}
                 onClick={() => !isSpecialItem && onAppointmentClick(appointment)}
