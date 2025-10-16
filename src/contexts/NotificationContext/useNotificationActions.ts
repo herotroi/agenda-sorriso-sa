@@ -23,41 +23,33 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
     }
     
     try {
-      // Para notificações de UPDATE, apenas verificar dentro de 2 segundos (mais permissivo)
-      // Para CREATE/DELETE, verificar se já existe
-      const timeWindowSeconds = notification.type === 'appointment_updated' ? 2 : 5;
-      const timeWindowAgo = new Date(Date.now() - (timeWindowSeconds * 1000)).toISOString();
+      // Verificar duplicatas recentes (últimos 3 segundos) com mesmo tipo e appointment_id
+      const timeWindowAgo = new Date(Date.now() - 3000).toISOString();
       
-      const { data: existingNotifications, error: checkError } = await supabase
+      let query = supabase
         .from('notifications')
-        .select('id')
+        .select('id, appointment_id')
         .eq('user_id', user.id)
         .eq('type', notification.type)
         .gte('created_at', timeWindowAgo);
+
+      // Se tem appointment_id, verificar duplicatas com mesmo appointment_id
+      if (notification.appointmentId) {
+        query = query.eq('appointment_id', notification.appointmentId);
+      }
+
+      const { data: existingNotifications, error: checkError } = await query;
 
       if (checkError) {
         console.error('Error checking for duplicate notifications:', checkError);
       }
 
-      // Para CREATE e DELETE, verificar também o appointment_id
-      if (notification.type === 'appointment_created' || notification.type === 'appointment_deleted') {
-        const duplicateExists = existingNotifications?.some(
-          n => n.id !== undefined
-        );
-        
-        if (duplicateExists && existingNotifications && existingNotifications.length > 0) {
-          console.log('📢 Duplicate notification detected, skipping insert');
-          return;
-        }
-      } else if (notification.type === 'appointment_updated') {
-        // Para UPDATE, apenas verificar duplicatas nos últimos 2 segundos
-        if (existingNotifications && existingNotifications.length > 0) {
-          console.log('📢 Recent update notification detected, skipping insert');
-          return;
-        }
+      if (existingNotifications && existingNotifications.length > 0) {
+        console.log('📢 Duplicate notification detected, skipping insert');
+        return;
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('notifications')
         .insert({
           title: notification.title,
@@ -65,27 +57,12 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
           type: notification.type,
           appointment_id: notification.appointmentId,
           user_id: user.id,
-        })
-        .select()
-        .single();
+        });
 
       if (error) {
         console.error('Error inserting notification:', error);
         return;
       }
-
-      // Convert database notification to our format
-      const newNotification: Notification = {
-        id: data.id,
-        title: data.title,
-        message: data.message,
-        type: data.type as any,
-        timestamp: new Date(data.created_at),
-        read: data.read,
-        appointmentId: data.appointment_id || undefined
-      };
-
-      setNotifications(prev => [newNotification, ...prev]);
       
       // Show toast notification
       toast({
@@ -93,7 +70,7 @@ export const useNotificationActions = ({ notifications, setNotifications }: UseN
         description: notification.message,
       });
 
-      console.log('📢 Notification added to database and state');
+      console.log('📢 Notification added to database (realtime will update state)');
     } catch (error) {
       console.error('Error adding notification:', error);
     }
