@@ -90,7 +90,7 @@ export function useSubscriptionLimits() {
       // Buscar assinatura do usuário
       const { data: subscription, error: subError } = await supabase
         .from('user_subscriptions')
-        .select('plan_type, status')
+        .select('plan_type, status, professionals_purchased')
         .eq('user_id', user.id)
         .single();
 
@@ -113,7 +113,7 @@ export function useSubscriptionLimits() {
         
         const { data: newSub, error: newSubError } = await supabase
           .from('user_subscriptions')
-          .select('plan_type, status')
+          .select('plan_type, status, professionals_purchased')
           .eq('user_id', user.id)
           .single();
 
@@ -159,6 +159,10 @@ export function useSubscriptionLimits() {
       console.log('Usage stats:', usageStats);
       console.log('Limits:', limits);
 
+      // Calcular limite de profissionais baseado na quantidade comprada
+      const professionalsPurchased = finalSubscription?.professionals_purchased || 1;
+      const maxProfessionals = limits.max_professionals === -1 ? -1 : professionalsPurchased;
+
       const subscriptionInfo: SubscriptionData = {
         plan_type: finalSubscription?.plan_type || 'free',
         status: finalSubscription?.status || 'active',
@@ -166,7 +170,7 @@ export function useSubscriptionLimits() {
         usage: usageStats,
         canCreateAppointment: limits.max_appointments === -1 || usageStats.appointments_count < limits.max_appointments,
         canCreatePatient: limits.max_patients === -1 || usageStats.patients_count < limits.max_patients,
-        canCreateProfessional: limits.max_professionals === -1 || usageStats.professionals_count < limits.max_professionals,
+        canCreateProfessional: maxProfessionals === -1 || usageStats.professionals_count < maxProfessionals,
         canCreateProcedure: limits.max_procedures === -1 || usageStats.procedures_count < limits.max_procedures,
         hasEHRAccess: limits.has_ehr_access,
         hasAutomacao: hasAutomacao
@@ -237,11 +241,15 @@ export function useSubscriptionLimits() {
   };
 
   const showLimitWarning = (type: 'appointment' | 'patient' | 'professional' | 'procedure' | 'ehr') => {
+    const professionalLimit = subscriptionData?.plan_type === 'free' 
+      ? '1 profissional' 
+      : `${subscriptionData?.limits.max_professionals === -1 ? 'profissionais ilimitados' : `${subscriptionData?.limits.max_professionals || 1} profissionais`}`;
+
     const messages = {
-      appointment: 'Você atingiu o limite de agendamentos do seu plano gratuito (50 agendamentos).',
-      patient: 'Você atingiu o limite de pacientes do seu plano gratuito (10 pacientes).',
-      professional: 'Você atingiu o limite de profissionais do seu plano gratuito (1 profissional).',
-      procedure: 'Você atingiu o limite de procedimentos do seu plano gratuito (5 procedimentos).',
+      appointment: 'Você atingiu o limite de agendamentos do seu plano.',
+      patient: 'Você atingiu o limite de pacientes do seu plano.',
+      professional: `Você atingiu o limite de profissionais do seu plano (${professionalLimit}). Faça upgrade para adicionar mais profissionais.`,
+      procedure: 'Você atingiu o limite de procedimentos do seu plano.',
       ehr: 'O prontuário eletrônico não está disponível no plano gratuito.'
     };
 
