@@ -132,11 +132,16 @@ serve(async (req) => {
 
     // Construir mapa de 1..maxQty para cada intervalo
     const MAX_QTY = 30; // limite máximo para UI
+    const EXCLUDED_PRODUCT_ID = 'prod_TFLGsfXeZxyXBs'; // Produto desvinculado
 
     // Mensal
     const monthlyPricesArray: Array<{ quantity: number; unitAmount: number; flatFee: number; priceId: string; total: number; currency: string }> = [];
     monthlyPrices.data
-      .filter(price => price.recurring?.interval === 'month' && price.active)
+      .filter(price => 
+        price.recurring?.interval === 'month' && 
+        price.active && 
+        price.product !== EXCLUDED_PRODUCT_ID
+      )
       .forEach(price => {
         for (let q = 1; q <= MAX_QTY; q++) {
           const { unitAmount, flatAmount } = getAmountsForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
@@ -156,7 +161,11 @@ serve(async (req) => {
     // Anual
     const yearlyPricesArray: Array<{ quantity: number; unitAmount: number; flatFee: number; priceId: string; total: number; currency: string }> = [];
     yearlyPrices.data
-      .filter(price => price.recurring?.interval === 'year' && price.active)
+      .filter(price => 
+        price.recurring?.interval === 'year' && 
+        price.active && 
+        price.product !== EXCLUDED_PRODUCT_ID
+      )
       .forEach(price => {
         for (let q = 1; q <= MAX_QTY; q++) {
           const { unitAmount, flatAmount } = getAmountsForQuantity((price as any).tiers, q, price.unit_amount ?? undefined);
