@@ -169,17 +169,23 @@ export function useSubscriptionLimits() {
       // Calcular limite de profissionais baseado na quantidade comprada
       const professionalsPurchased = finalSubscription?.professionals_purchased || 1;
       const maxProfessionals = limits.max_professionals === -1 ? -1 : professionalsPurchased;
+      
+      // Atualizar os limites para refletir a quantidade comprada
+      const updatedLimits = {
+        ...limits,
+        max_professionals: maxProfessionals
+      };
 
       const subscriptionInfo: SubscriptionData = {
         plan_type: finalSubscription?.plan_type || 'free',
         status: finalSubscription?.status || 'active',
-        limits: limits,
+        limits: updatedLimits,
         usage: usageStats,
-        canCreateAppointment: limits.max_appointments === -1 || usageStats.appointments_count < limits.max_appointments,
-        canCreatePatient: limits.max_patients === -1 || usageStats.patients_count < limits.max_patients,
+        canCreateAppointment: updatedLimits.max_appointments === -1 || usageStats.appointments_count < updatedLimits.max_appointments,
+        canCreatePatient: updatedLimits.max_patients === -1 || usageStats.patients_count < updatedLimits.max_patients,
         canCreateProfessional: maxProfessionals === -1 || usageStats.professionals_count < maxProfessionals,
-        canCreateProcedure: limits.max_procedures === -1 || usageStats.procedures_count < limits.max_procedures,
-        hasEHRAccess: limits.has_ehr_access,
+        canCreateProcedure: updatedLimits.max_procedures === -1 || usageStats.procedures_count < updatedLimits.max_procedures,
+        hasEHRAccess: updatedLimits.has_ehr_access,
         hasAutomacao: hasAutomacao
       };
 
