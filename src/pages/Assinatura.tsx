@@ -431,10 +431,10 @@ export default function Assinatura() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Assinatura</h1>
-        <p className="text-gray-600">Gerencie sua assinatura e planos</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Assinatura</h1>
+        <p className="text-muted-foreground">Gerencie sua assinatura e planos</p>
       </div>
 
       {/* Cupom Section */}
@@ -449,36 +449,36 @@ export default function Assinatura() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}>
                   {hasAutomacao ? 'Ilimitado' : (currentSubscription?.status === 'active' ? 'Ativo' : 'Inativo')}
                 </Badge>
                 {currentSubscription?.using_coupon && (
                   <Badge variant="outline">Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}</Badge>
                 )}
-                <span className="text-sm text-gray-600">
-                  {getCurrentPlanDescription()}
-                </span>
               </div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {getCurrentPlanDescription()}
+              </p>
               {currentSubscription?.current_period_end && !hasAutomacao && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Próxima cobrança: {new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}
                 </p>
               )}
-              <p className="text-lg font-semibold">
+              <p className="text-xl font-bold text-foreground">
                 {hasAutomacao ? 'Ilimitado' : (currentPlan.price === 0 ? 'Gratuito' : `R$ ${currentPlan.price},00/${currentPlan.period}`)}
               </p>
             </div>
             {currentSubscription?.plan_type !== 'free' && !hasAutomacao && (
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleManageSubscription}>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="outline" onClick={handleManageSubscription} className="w-full sm:w-auto">
                   <Settings className="h-4 w-4 mr-2" />
-                  Gerenciar Assinatura
+                  Gerenciar
                 </Button>
-                <Button variant="destructive" onClick={handleCancelSubscription} disabled={canceling}>
-                  {canceling ? 'Cancelando...' : 'Cancelar Assinatura'}
+                <Button variant="destructive" onClick={handleCancelSubscription} disabled={canceling} className="w-full sm:w-auto">
+                  {canceling ? 'Cancelando...' : 'Cancelar'}
                 </Button>
               </div>
             )}
@@ -496,33 +496,33 @@ export default function Assinatura() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <p className="text-2xl font-bold">{usageStats.appointments_count || 0}</p>
-                <p className="text-sm text-gray-600">
-                  Agendamentos {hasAutomacao || (currentLimits?.max_appointments === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.appointments}`}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex flex-col items-center p-4 rounded-lg bg-muted/30">
+                <Calendar className="h-8 w-8 mb-2 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{usageStats.appointments_count || 0}</p>
+                <p className="text-xs text-center text-muted-foreground mt-1">
+                  Agendamentos{hasAutomacao || (currentLimits?.max_appointments === -1) ? ' / ilimitado' : ` / ${currentPlan.limits.appointments}`}
                 </p>
               </div>
-              <div className="text-center">
-                <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <p className="text-2xl font-bold">{usageStats.patients_count || 0}</p>
-                <p className="text-sm text-gray-600">
-                  Pacientes {hasAutomacao || (currentLimits?.max_patients === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.patients}`}
+              <div className="flex flex-col items-center p-4 rounded-lg bg-muted/30">
+                <Users className="h-8 w-8 mb-2 text-secondary" />
+                <p className="text-2xl font-bold text-foreground">{usageStats.patients_count || 0}</p>
+                <p className="text-xs text-center text-muted-foreground mt-1">
+                  Pacientes{hasAutomacao || (currentLimits?.max_patients === -1) ? ' / ilimitado' : ` / ${currentPlan.limits.patients}`}
                 </p>
               </div>
-              <div className="text-center">
-                <Stethoscope className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                <p className="text-2xl font-bold">{usageStats.professionals_count || 0}</p>
-                <p className="text-sm text-gray-600">
-                  Profissionais {hasAutomacao ? '' : currentLimits?.max_professionals === -1 ? `/ ${currentSubscription?.professionals_purchased || 1}` : currentPlan.limits.professionals === -1 ? '' : `/ ${currentPlan.limits.professionals}`}
+              <div className="flex flex-col items-center p-4 rounded-lg bg-muted/30">
+                <Stethoscope className="h-8 w-8 mb-2 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{usageStats.professionals_count || 0}</p>
+                <p className="text-xs text-center text-muted-foreground mt-1">
+                  Profissionais{hasAutomacao ? '' : currentLimits?.max_professionals === -1 ? ` / ${currentSubscription?.professionals_purchased || 1}` : currentPlan.limits.professionals === -1 ? '' : ` / ${currentPlan.limits.professionals}`}
                 </p>
               </div>
-              <div className="text-center">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-                <p className="text-2xl font-bold">{usageStats.procedures_count || 0}</p>
-                <p className="text-sm text-gray-600">
-                  Procedimentos {hasAutomacao || (currentLimits?.max_procedures === -1) ? ' / ilimitado' : `/ ${currentPlan.limits.procedures}`}
+              <div className="flex flex-col items-center p-4 rounded-lg bg-muted/30">
+                <FileText className="h-8 w-8 mb-2 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{usageStats.procedures_count || 0}</p>
+                <p className="text-xs text-center text-muted-foreground mt-1">
+                  Procedimentos{hasAutomacao || (currentLimits?.max_procedures === -1) ? ' / ilimitado' : ` / ${currentPlan.limits.procedures}`}
                 </p>
               </div>
             </div>
@@ -579,22 +579,43 @@ export default function Assinatura() {
           <CardTitle>Informações do Pagamento</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
+          <div className="grid md:grid-cols-2 gap-6 text-sm">
             <div>
-              <h4 className="font-medium mb-2">Métodos de Pagamento Aceitos:</h4>
-              <ul className="space-y-1 text-gray-600">
-                <li>• Cartão de Crédito (Visa, Mastercard, American Express)</li>
-                <li>• PIX (disponível via Stripe)</li>
-                <li>• Boleto Bancário</li>
+              <h4 className="font-semibold mb-3 text-foreground">Métodos de Pagamento Aceitos:</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Cartão de Crédito (Visa, Mastercard, American Express)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>PIX (disponível via Stripe)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Boleto Bancário</span>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Política de Cancelamento:</h4>
-              <ul className="space-y-1 text-gray-600">
-                <li>• Cancele a qualquer momento</li>
-                <li>• Sem taxas de cancelamento</li>
-                <li>• Acesso mantido até o fim do período pago</li>
-                <li>• Dados preservados por 30 dias após cancelamento</li>
+              <h4 className="font-semibold mb-3 text-foreground">Política de Cancelamento:</h4>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Cancele a qualquer momento</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Sem taxas de cancelamento</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Acesso mantido até o fim do período pago</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Reembolso total se cancelado em até 7 dias</span>
+                </li>
               </ul>
             </div>
           </div>
