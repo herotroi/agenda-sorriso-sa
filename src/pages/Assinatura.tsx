@@ -90,6 +90,18 @@ export default function Assinatura() {
     return `Plano ${periodText} - ${profCount} ${profCount === 1 ? 'Profissional' : 'Profissionais'}`;
   };
 
+  // Calcular valor atual do plano baseado na quantidade de profissionais
+  const getCurrentPlanPrice = () => {
+    if (hasAutomacao) return null;
+    if (!currentSubscription || currentSubscription.plan_type === 'free') return 0;
+    
+    const profCount = currentSubscription.professionals_purchased || 1;
+    const prices = currentSubscription.plan_type === 'annual' ? yearlyPrices : monthlyPrices;
+    const priceData = prices.find(p => p.quantity === profCount);
+    
+    return priceData ? priceData.total : 0;
+  };
+
   const checkSubscription = async () => {
     try {
       console.log('Checking subscription...');
@@ -464,11 +476,19 @@ export default function Assinatura() {
               </p>
               {currentSubscription?.current_period_end && !hasAutomacao && (
                 <p className="text-sm text-muted-foreground">
-                  Próxima cobrança: {new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}
+                  {currentSubscription.status === 'canceling' 
+                    ? `Acesso até: ${new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}`
+                    : `Próxima cobrança: ${new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}`
+                  }
                 </p>
               )}
               <p className="text-xl font-bold text-foreground">
-                {hasAutomacao ? 'Ilimitado' : (currentPlan.price === 0 ? 'Gratuito' : `R$ ${currentPlan.price},00/${currentPlan.period}`)}
+                {hasAutomacao 
+                  ? 'Ilimitado' 
+                  : currentSubscription?.plan_type === 'free' 
+                    ? 'Gratuito' 
+                    : `R$ ${(getCurrentPlanPrice() || 0).toFixed(2)}/${currentSubscription?.plan_type === 'annual' ? 'ano' : 'mês'}`
+                }
               </p>
             </div>
             {currentSubscription?.plan_type !== 'free' && !hasAutomacao && (

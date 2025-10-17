@@ -51,7 +51,7 @@ serve(async (req) => {
     // Buscar assinatura do usuário
     const { data: subscription, error: subError } = await supabaseClient
       .from('user_subscriptions')
-      .select('stripe_subscription_id, plan_type')
+      .select('stripe_subscription_id, stripe_customer_id, plan_type, created_at')
       .eq('user_id', user.id)
       .single();
 
@@ -70,7 +70,10 @@ serve(async (req) => {
       throw new Error("O plano gratuito não precisa ser cancelado");
     }
 
-    logStep("Subscription found", { subscriptionId: subscription.stripe_subscription_id });
+    logStep("Subscription found", { 
+      subscriptionId: subscription.stripe_subscription_id,
+      createdAt: subscription.created_at
+    });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -129,6 +132,12 @@ serve(async (req) => {
       }
 
       // Atualizar no banco - status canceled e volta para free
+      // Criar supabaseAdmin antes de usar
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
       const { error: updateError } = await supabaseAdmin
         .from('user_subscriptions')
         .update({ 
