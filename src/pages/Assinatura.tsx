@@ -6,7 +6,9 @@ import { CouponSection } from '@/components/Configuracoes/CouponSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Settings, CreditCard, Users, Calendar, FileText, Stethoscope } from 'lucide-react';
+import { Settings, CreditCard, Users, Calendar, FileText, Stethoscope, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -464,9 +466,18 @@ export default function Assinatura() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-2 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}>
-                  {hasAutomacao ? 'Ilimitado' : (currentSubscription?.status === 'active' ? 'Ativo' : 'Inativo')}
+                <Badge 
+                  variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}
+                  className={currentSubscription?.status === 'active' && currentSubscription?.plan_type !== 'free' ? 'bg-green-500 hover:bg-green-600' : ''}
+                >
+                  Ativa
                 </Badge>
+                {currentSubscription?.status === 'canceling' && currentSubscription?.current_period_end && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>Cancela em {format(new Date(currentSubscription.current_period_end), "dd 'de' MMM.", { locale: ptBR })}</span>
+                  </div>
+                )}
                 {currentSubscription?.using_coupon && (
                   <Badge variant="outline">Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}</Badge>
                 )}
@@ -474,14 +485,6 @@ export default function Assinatura() {
               <p className="text-sm font-medium text-muted-foreground">
                 {getCurrentPlanDescription()}
               </p>
-              {currentSubscription?.current_period_end && !hasAutomacao && (
-                <p className="text-sm text-muted-foreground">
-                  {currentSubscription.status === 'canceling' 
-                    ? `Acesso até: ${new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}`
-                    : `Próxima cobrança: ${new Date(currentSubscription.current_period_end).toLocaleDateString('pt-BR')}`
-                  }
-                </p>
-              )}
               <p className="text-xl font-bold text-foreground">
                 {hasAutomacao 
                   ? 'Ilimitado' 

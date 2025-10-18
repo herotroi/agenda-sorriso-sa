@@ -172,6 +172,33 @@ export function ProfessionalForm({ isOpen, onClose, professional }: Professional
           description: 'Profissional atualizado com sucesso',
         });
       } else {
+        // Verificar limite antes de criar
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select('professionals_purchased, plan_type')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const { data: currentProfessionals } = await supabase
+          .from('professionals')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user.id)
+          .eq('active', true);
+
+        const currentCount = currentProfessionals?.length || 0;
+        const maxProfessionals = subscription?.professionals_purchased || 1;
+        const hasAutomacao = subscription?.plan_type === 'automacao';
+
+        if (!hasAutomacao && currentCount >= maxProfessionals) {
+          toast({
+            title: 'Limite atingido',
+            description: `Você atingiu o limite de ${maxProfessionals} profissionais do seu plano. Faça upgrade para cadastrar mais.`,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase
           .from('professionals')
           .insert(data);

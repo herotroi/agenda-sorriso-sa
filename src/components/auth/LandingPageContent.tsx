@@ -103,57 +103,51 @@ export const LandingPageContent = () => {
 
   const plans = [
     {
-      name: "Free",
-      price: "Grátis",
+      name: "Gratuito",
+      price: "R$ 0",
       period: "para sempre",
       description: "Ideal para começar",
       features: [
-        "10 agendamentos/mês",
-        "3 pacientes",
+        "50 agendamentos/mês",
+        "10 pacientes",
         "1 profissional",
-        "3 procedimentos",
+        "5 procedimentos",
         "Dashboard básico",
         "Suporte por email"
       ],
-      highlight: false
+      highlight: false,
+      monthlyPricePerUnit: 0,
+      limits: {
+        appointments: 50,
+        patients: 10,
+        professionals: 1,
+        procedures: 5
+      }
     },
     {
-      name: "Professional",
-      price: "R$ 49,90",
-      period: "/mês",
-      description: "Para consultórios em crescimento",
+      name: "Profissional",
+      price: "R$ 39,90",
+      period: "/profissional/mês",
+      description: "Melhor custo-benefício",
       features: [
-        "150 agendamentos/mês",
-        "50 pacientes",
-        "3 profissionais",
+        "Agendamentos ilimitados",
+        "Pacientes ilimitados",
         "Procedimentos ilimitados",
         "Prontuário eletrônico completo",
         "Relatórios avançados",
         "Notificações automáticas",
-        "Suporte prioritário"
+        "Suporte prioritário",
+        "Preço por profissional"
       ],
       highlight: true,
-      badge: "Mais Popular"
-    },
-    {
-      name: "Premium",
-      price: "R$ 99,90",
-      period: "/mês",
-      description: "Para clínicas completas",
-      features: [
-        "Agendamentos ilimitados",
-        "Pacientes ilimitados",
-        "Profissionais ilimitados",
-        "Procedimentos ilimitados",
-        "Prontuário eletrônico completo",
-        "Todos os relatórios",
-        "Automação de mensagens",
-        "Integração WhatsApp",
-        "Backup diário",
-        "Suporte 24/7"
-      ],
-      highlight: false,
-      badge: "Completo"
+      badge: "Mais Popular",
+      monthlyPricePerUnit: 39.90,
+      limits: {
+        appointments: -1,
+        patients: -1,
+        professionals: 999999,
+        procedures: -1
+      }
     }
   ];
 
