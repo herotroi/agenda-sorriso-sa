@@ -65,7 +65,6 @@ serve(async (req) => {
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
       limit: 1,
     });
     
@@ -73,6 +72,7 @@ serve(async (req) => {
     let status = 'active';
     let currentPeriodStart: string | null = null;
     let currentPeriodEnd: string | null = null;
+    let cancelAt: string | null = null;
     let stripeSubscriptionId: string | null = null;
     let professionalsPurchased = 1;
 
@@ -81,13 +81,19 @@ serve(async (req) => {
       stripeSubscriptionId = subscription.id;
       currentPeriodStart = new Date(subscription.current_period_start * 1000).toISOString();
       currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      
+      // Verificar se está em período de cancelamento
+      if (subscription.cancel_at) {
+        cancelAt = new Date(subscription.cancel_at * 1000).toISOString();
+      }
+      
       status = subscription.status;
 
       const interval = subscription.items.data[0].price.recurring?.interval;
       planType = interval === 'year' ? 'annual' : 'monthly';
       professionalsPurchased = subscription.items.data[0].quantity || 1;
 
-      logStep("Active subscription found", { subscriptionId: subscription.id, planType, professionalsPurchased });
+      logStep("Active subscription found", { subscriptionId: subscription.id, planType, professionalsPurchased, cancelAt });
     } else {
       logStep("No active subscription found");
     }
@@ -132,6 +138,7 @@ serve(async (req) => {
       plan_type: planType,
       status: status,
       current_period_end: currentPeriodEnd,
+      cancel_at: cancelAt,
       professionals_purchased: professionalsPurchased,
       using_coupon: usingCoupon,
       coupon_code: couponCode

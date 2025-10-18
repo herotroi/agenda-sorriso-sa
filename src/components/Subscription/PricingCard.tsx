@@ -78,103 +78,106 @@ export function PricingCard({
   return (
     <Card className={`relative ${isPopular ? 'border-primary shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
       {isPopular && billingPeriod === 'annual' && (
-        <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-green-600 text-white">
+        <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600 hover:bg-green-600 text-white">
           💰 Mais Econômico
         </Badge>
       )}
       
       {isCurrentPlan && (
-        <Badge className="absolute -top-2 right-4 bg-primary text-primary-foreground">
+        <Badge className="absolute -top-3 right-4 bg-primary text-primary-foreground">
           Plano Atual
         </Badge>
       )}
       
       {billingPeriod && (
-        <Badge variant="outline" className="absolute -top-2 left-4">
+        <Badge variant="outline" className="absolute -top-3 left-4">
           {billingPeriod === 'monthly' ? 'Mensal' : 'Anual'}
         </Badge>
       )}
       
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-xl">{title}</CardTitle>
+      <CardHeader className="text-center pb-4 pt-6">
+        <CardTitle className="text-2xl font-bold">{title}</CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Preço */}
-        <div className="text-center">
+        <div className="text-center py-4 bg-muted/30 rounded-lg">
           {!isPaidPlan ? (
-            <div className="text-4xl font-bold">Gratuito</div>
-          ) : null}
+            <div className="text-5xl font-bold text-foreground">Gratuito</div>
+          ) : (
+            <>
+              <div className="text-5xl font-bold text-foreground">
+                R$ {totalPrice.toFixed(2).replace('.', ',')}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">por {period}</p>
+            </>
+          )}
         </div>
 
         {/* Seletor de Quantidade */}
         {isPaidPlan && onQuantityChange && (
-          <div className="bg-muted/50 rounded-lg p-4">
-            <label className="text-xs font-medium text-muted-foreground mb-2 block text-center">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <label className="text-sm font-semibold text-foreground mb-3 block text-center">
               Número de Profissionais
             </label>
-            <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="flex items-center justify-center gap-3">
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-10 w-10"
                 onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
                 disabled={quantity <= 1}
               >
                 -
               </Button>
-              <input
-                type="number"
-                min="1"
-                max={maxQuantity}
-                value={quantity}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  onQuantityChange(Math.min(maxQuantity, Math.max(1, val)));
-                }}
-                className="w-16 text-center border rounded-md px-2 py-1 font-medium bg-background"
-              />
+              <div className="w-20 text-center">
+                <input
+                  type="number"
+                  min="1"
+                  max={maxQuantity}
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    onQuantityChange(Math.min(maxQuantity, Math.max(1, val)));
+                  }}
+                  className="w-full text-center text-2xl font-bold border-0 bg-transparent focus:outline-none focus:ring-0"
+                />
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-10 w-10"
                 onClick={() => onQuantityChange(Math.min(maxQuantity, quantity + 1))}
                 disabled={quantity >= maxQuantity}
               >
                 +
               </Button>
             </div>
-            <div className="text-center border-t pt-3">
-              <p className="text-2xl font-bold">
-                R$ {totalPrice.toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground">total por {period}</p>
-            </div>
           </div>
         )}
 
         {/* Features */}
-        <ul className="space-y-2 pt-2">
+        <ul className="space-y-3">
           {displayFeatures.map((feature, index) => (
             <li key={index} className="flex items-start">
-              <Check className="h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-              <span className="text-sm">{feature}</span>
+              <Check className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-foreground">{feature}</span>
             </li>
           ))}
         </ul>
         
         {/* Botão */}
         <Button 
-          className="w-full mt-4" 
+          className="w-full mt-6 h-12 text-base font-semibold" 
           variant={isCurrentPlan && !isPaidPlan ? "outline" : "default"}
           onClick={onSubscribe}
           disabled={(isCurrentPlan && !isPaidPlan) || loading}
         >
           {loading ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Processando...
             </>
           ) : (

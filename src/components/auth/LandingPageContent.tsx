@@ -15,7 +15,8 @@ import {
   Cloud,
   Lock,
   Smartphone,
-  TrendingUp
+  TrendingUp,
+  Check
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -103,52 +104,31 @@ export const LandingPageContent = () => {
 
   const plans = [
     {
-      name: "Gratuito",
-      price: "R$ 0",
-      period: "para sempre",
-      description: "Ideal para começar",
+      id: 'free',
+      title: 'Plano Gratuito',
+      price: 'Gratuito',
       features: [
-        "50 agendamentos/mês",
-        "10 pacientes",
-        "1 profissional",
-        "5 procedimentos",
-        "Dashboard básico",
-        "Suporte por email"
+        '50 agendamentos',
+        '10 pacientes',
+        '1 profissional',
+        '5 procedimentos',
+        'Sem acesso ao prontuário',
       ],
-      highlight: false,
-      monthlyPricePerUnit: 0,
-      limits: {
-        appointments: 50,
-        patients: 10,
-        professionals: 1,
-        procedures: 5
-      }
     },
     {
-      name: "Profissional",
-      price: "R$ 39,90",
-      period: "/profissional/mês",
-      description: "Melhor custo-benefício",
+      id: 'paid',
+      title: 'Plano Profissional',
+      price: 'A partir de R$ 45,00/mês',
       features: [
-        "Agendamentos ilimitados",
-        "Pacientes ilimitados",
-        "Procedimentos ilimitados",
-        "Prontuário eletrônico completo",
-        "Relatórios avançados",
-        "Notificações automáticas",
-        "Suporte prioritário",
-        "Preço por profissional"
+        'Agendamentos ilimitados',
+        'Pacientes ilimitados',
+        'Múltiplos profissionais',
+        'Procedimentos ilimitados',
+        'Acesso completo ao prontuário eletrônico',
+        'Suporte prioritário',
       ],
-      highlight: true,
-      badge: "Mais Popular",
-      monthlyPricePerUnit: 39.90,
-      limits: {
-        appointments: -1,
-        patients: -1,
-        professionals: 999999,
-        procedures: -1
-      }
-    }
+      popular: true,
+    },
   ];
 
   return (
@@ -238,55 +218,46 @@ export const LandingPageContent = () => {
       </section>
 
       {/* Pricing Plans */}
-      <section className="space-y-8">
+      <section className="space-y-8 py-16 px-4 bg-muted/30">
         <div className="text-center space-y-3">
-          <h2 className="text-3xl md:text-4xl font-bold">Planos e Preços</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">Planos Disponíveis</h2>
           <p className="text-muted-foreground text-lg">
-            Escolha o plano ideal para o seu consultório
+            Escolha o plano ideal para o seu consultório. <strong>Cadastre-se para começar!</strong>
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-          {plans.map((plan, index) => (
-            <Card 
-              key={plan.name}
-              className={`relative ${
-                plan.highlight 
-                  ? 'border-primary shadow-xl scale-105 lg:scale-110' 
-                  : 'border-border/50'
-              }`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground shadow-lg">
-                    {plan.badge}
-                  </Badge>
-                </div>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {plans.map((plan) => (
+            <Card key={plan.id} className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''}`}>
+              {plan.popular && (
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
+                  Mais Popular
+                </Badge>
               )}
               
-              <CardHeader className="text-center pb-8">
-                <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                <div className="space-y-1">
-                  <div className="text-4xl font-bold text-primary">
-                    {plan.price}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{plan.period}</p>
-                </div>
-                <CardDescription className="text-base pt-2">
-                  {plan.description}
-                </CardDescription>
+              <CardHeader className="text-center pb-4 pt-6">
+                <CardTitle className="text-2xl font-bold">{plan.title}</CardTitle>
               </CardHeader>
               
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                <div className="text-center py-6 bg-muted/30 rounded-lg">
+                  <div className="text-4xl font-bold text-foreground">
+                    {plan.price}
+                  </div>
+                </div>
+
                 <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start text-sm">
-                      <CheckCircle2 className="h-5 w-5 text-primary mr-3 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
+                
+                <div className="pt-4 text-center text-sm text-muted-foreground border-t">
+                  Faça seu cadastro para contratar este plano
+                </div>
               </CardContent>
             </Card>
           ))}
