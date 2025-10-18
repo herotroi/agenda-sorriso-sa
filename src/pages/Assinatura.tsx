@@ -6,7 +6,8 @@ import { CouponSection } from '@/components/Configuracoes/CouponSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Settings, CreditCard, Users, Calendar, FileText, Stethoscope, Clock } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Settings, CreditCard, Users, FileText, Stethoscope, Clock, Info, ChevronDown, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -464,35 +465,54 @@ export default function Assinatura() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-2 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge 
-                  variant={currentSubscription?.plan_type === 'free' ? 'secondary' : 'default'}
-                  className={currentSubscription?.status === 'active' && currentSubscription?.plan_type !== 'free' ? 'bg-green-500 hover:bg-green-600' : ''}
-                >
-                  Ativa
-                </Badge>
-                {currentSubscription?.status === 'canceling' && currentSubscription?.current_period_end && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>Cancela em {format(new Date(currentSubscription.current_period_end), "dd 'de' MMM.", { locale: ptBR })}</span>
-                  </div>
-                )}
-                {currentSubscription?.using_coupon && (
-                  <Badge variant="outline">Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}</Badge>
-                )}
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">
-                {getCurrentPlanDescription()}
-              </p>
-              <p className="text-xl font-bold text-foreground">
+            <div className="space-y-3 flex-1">
+              {currentSubscription?.cancel_at && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Info className="h-4 w-4" />
+                  <span className="text-sm">
+                    Cancela em {format(new Date(currentSubscription.cancel_at), "dd 'de' MMM'.'", { locale: ptBR })}
+                  </span>
+                </div>
+              )}
+              
+              <h3 className="text-lg font-semibold">
+                {currentSubscription?.plan_type === 'free' 
+                  ? 'Plano Gratuito'
+                  : `Planos (×${currentSubscription?.professionals_purchased || 1})`
+                }
+              </h3>
+              
+              <p className="text-3xl font-bold">
                 {hasAutomacao 
                   ? 'Ilimitado' 
                   : currentSubscription?.plan_type === 'free' 
                     ? 'Gratuito' 
-                    : `R$ ${(getCurrentPlanPrice() || 0).toFixed(2)}/${currentSubscription?.plan_type === 'annual' ? 'ano' : 'mês'}`
+                    : `R$ ${(getCurrentPlanPrice() || 0).toFixed(2).replace('.', ',')} por mês`
                 }
               </p>
+              
+              {currentSubscription?.plan_type !== 'free' && currentSubscription?.current_period_end && (
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Ver detalhes
+                    <ChevronDown className="h-4 w-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        Esta assinatura será {currentSubscription?.cancel_at ? 'cancelada' : 'renovada'} em {format(new Date(currentSubscription.current_period_end), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}.
+                      </span>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+              
+              {currentSubscription?.using_coupon && (
+                <Badge variant="outline" className="w-fit">
+                  Cupom Ativo{currentSubscription?.coupon_code ? `: ${currentSubscription.coupon_code}` : ''}
+                </Badge>
+              )}
             </div>
             {currentSubscription?.plan_type !== 'free' && !hasAutomacao && (
               <div className="flex flex-col sm:flex-row gap-2">
